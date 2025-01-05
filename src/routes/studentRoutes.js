@@ -19,6 +19,10 @@ router.use((req, res, next) => {
     next();
 });
 
+// IMPORTANTE: Rotte specifiche PRIMA delle rotte parametriche
+router.get('/search', studentController.searchByName.bind(studentController));
+
+
 // Rotte pubbliche (saranno protette in seguito)
 router.get('/', studentController.getAll.bind(studentController));
 router.get('/:id', studentController.getById.bind(studentController));
@@ -32,6 +36,9 @@ router.get('/:studentId/results', studentController.getTestResults.bind(studentC
 router.post('/', studentController.create.bind(studentController));
 router.put('/:id', studentController.update.bind(studentController));
 router.delete('/:id', studentController.delete.bind(studentController));
+
+// Dopo le altre rotte ma prima del middleware di errore
+router.put('/:id/assign-class', studentController.assignToClass.bind(studentController));
 
 // Error handling specifico per student routes
 router.use((err, req, res, next) => {

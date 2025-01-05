@@ -114,6 +114,25 @@ class BaseRepository {
             );
         }
     }
+
+    /**
+     * Elimina più documenti in base al filtro
+     */
+    async deleteMany(filter = {}) {
+        try {
+            return await this.model.deleteMany(filter);
+        } catch (error) {
+            throw new AppError(
+                'Errore nell\'eliminazione multipla',
+                500,
+                'DELETE_MANY_ERROR',
+                { error: error.message }
+            );
+        }
+    }
+
+
+
 }
 
 module.exports = BaseRepository;

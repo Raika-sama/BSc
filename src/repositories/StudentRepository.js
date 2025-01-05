@@ -56,23 +56,80 @@ class StudentRepository extends BaseRepository {
         }
     }
 
-    /**
-     * Assegna uno studente a una classe
-     * @param {String} studentId - ID dello studente
+/**
+     * Trova una classe per ID
      * @param {String} classId - ID della classe
-     * @param {Object} classDetails - Dettagli della classe (section, teachers)
+     * @returns {Promise} Classe trovata
+     */
+    async findClass(classId) {
+        try {
+            return await Class.findById(classId);
+        } catch (error) {
+            throw new AppError(
+                'Errore nel recupero della classe',
+                500,
+                'CLASS_FETCH_ERROR',
+                { error: error.message }
+            );
+        }
+    }
+
+
+    /**
+     * Trova una classe per anno e sezione in una scuola
+     * @param {String} schoolId - ID della scuola
+     * @param {Number} year - Anno scolastico
+     * @param {String} section - Sezione
+     * @returns {Promise} Classe trovata
+     */
+    async findClassByYearAndSection(schoolId, year, section) {
+        try {
+            return await Class.findOne({ schoolId, year, section });
+        } catch (error) {
+            throw new AppError(
+                'Errore nel recupero della classe',
+                500,
+                'CLASS_FETCH_ERROR',
+                { error: error.message }
+            );
+        }
+    }
+
+
+    /**
+     * Assegna uno studente a una classe con gestione dello storico
+     * @param {String} studentId - ID dello studente
+     * @param {Object} updateData - Dati per l'aggiornamento incluso lo storico
      * @returns {Promise} Studente aggiornato
      */
-    async assignToClass(studentId, classId, classDetails) {
+    async assignToClass(studentId, updateData) {
         try {
             const student = await this.findById(studentId);
-
-            // Aggiorna i dati dello studente
-            student.classId = classId;
-            student.section = classDetails.section;
-            student.mainTeacher = classDetails.mainTeacher;
-            student.teachers = classDetails.teachers;
+            
+            // Aggiorna i campi base
+            student.classId = updateData.classId;
+            student.section = updateData.section;
+            student.currentYear = updateData.currentYear;
+            student.mainTeacher = updateData.mainTeacher;
+            student.teachers = updateData.teachers;
+            student.lastClassChangeDate = updateData.lastClassChangeDate;
             student.needsClassAssignment = false;
+
+            // Aggiungi la voce allo storico
+            if (!student.classChangeHistory) {
+                student.classChangeHistory = [];
+            }
+
+            student.classChangeHistory.push({
+                fromClass: updateData.fromClass,
+                toClass: updateData.classId,
+                fromSection: updateData.fromSection,
+                toSection: updateData.section,
+                fromYear: updateData.fromYear,
+                toYear: updateData.currentYear,
+                date: updateData.lastClassChangeDate,
+                reason: updateData.reason
+            });
 
             await student.save();
             return student;
@@ -86,20 +143,40 @@ class StudentRepository extends BaseRepository {
         }
     }
 
+
     /**
-     * Rimuove uno studente da una classe
+     * Rimuove uno studente da una classe con registrazione storico
      * @param {String} studentId - ID dello studente
+     * @param {String} reason - Motivo della rimozione
      * @returns {Promise} Studente aggiornato
      */
-    async removeFromClass(studentId) {
+    async removeFromClass(studentId, reason = 'Rimozione dalla classe') {
         try {
             const student = await this.findById(studentId);
+            
+            // Aggiungi la voce allo storico prima della rimozione
+            if (!student.classChangeHistory) {
+                student.classChangeHistory = [];
+            }
 
+            student.classChangeHistory.push({
+                fromClass: student.classId,
+                toClass: null,
+                fromSection: student.section,
+                toSection: null,
+                fromYear: student.currentYear,
+                toYear: null,
+                date: new Date(),
+                reason: reason
+            });
+
+            // Rimuovi l'assegnazione alla classe
             student.classId = null;
             student.section = null;
             student.mainTeacher = null;
             student.teachers = [];
             student.needsClassAssignment = true;
+            student.lastClassChangeDate = new Date();
 
             await student.save();
             return student;

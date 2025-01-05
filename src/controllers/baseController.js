@@ -119,6 +119,30 @@ class BaseController {
             this.sendError(res, error);
         }
     }
+
+     /**
+     * Elimina tutti i documenti
+     */
+    async deleteAll(req, res) {
+        try {
+            const result = await this.repository.deleteMany({});
+            this.sendResponse(res, { 
+                message: `Tutti i documenti ${this.resourceName} sono stati eliminati`,
+                count: result.deletedCount 
+            });
+        } catch (error) {
+            this.sendError(res, error);
+        }
+    }
 }
+
+
+
+
+
+
+
+
+
 
 module.exports = BaseController;

@@ -19,6 +19,9 @@ router.use((req, res, next) => {
     next();
 });
 
+// Rotte base per le classi (protette)
+router.use(protect); // Tutte le rotte richiedono autenticazione
+
 // Rotte base per le classi
 router.get('/', classController.getAll.bind(classController));
 router.get('/:id', classController.getById.bind(classController));
@@ -31,6 +34,8 @@ router.get('/school/:schoolId', classController.getBySchool.bind(classController
 router.post('/', classController.create.bind(classController));
 router.put('/:id', classController.update.bind(classController));
 router.delete('/:id', classController.delete.bind(classController));
+router.delete('/', classController.deleteAll.bind(classController));
+
 
 // Rotte per la gestione degli studenti nella classe
 router.post('/:classId/students', classController.addStudents.bind(classController));
