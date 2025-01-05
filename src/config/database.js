@@ -1,7 +1,7 @@
 // src/config/database.js
 
 const mongoose = require('mongoose');
-const logger = require('../utils/logger');
+const logger = require('../utils/errors/logger/logger');
 const config = require('./config');
 
 /**

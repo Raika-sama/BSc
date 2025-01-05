@@ -7,7 +7,7 @@
  * @date 2025-01-05
  */
 
-const logger = require('../utils/logger/logger');
+const logger = require('../utils/errors/logger/logger');
 
 class BaseController {
     constructor(repository, modelName) {

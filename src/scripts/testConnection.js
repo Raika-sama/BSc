@@ -1,7 +1,7 @@
 // src/scripts/testConnection.js
 require('dotenv').config({ path: '.env.development' });
 const connectDB = require('../config/database');
-const logger = require('../utils/logger/logger');
+const logger = require('../utils/errors/logger/logger');
 
 const testConnection = async () => {
     try {

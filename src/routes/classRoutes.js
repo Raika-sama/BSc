@@ -10,7 +10,7 @@
 const express = require('express');
 const router = express.Router();
 const { class: classController } = require('../controllers');
-const logger = require('../utils/logger/logger');
+const logger = require('../utils/errors/logger/logger');
 // const { protect, restrictTo } = require('../middleware/auth'); // TODO: Implementare
 
 // Middleware di logging specifico per class routes

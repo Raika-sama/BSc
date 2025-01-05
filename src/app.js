@@ -7,7 +7,7 @@ const { connectDB } = require('./config/database');
 const { requestLogger, errorLogger } = require('./middleware/loggerMiddleware');
 const errorHandler = require('./middleware/errorHandler');
 const config = require('./config/config');
-const logger = require('./utils/logger/logger');
+const logger = require('./utils/errors/logger/logger');
 const apiRoutes = require('./routes');
 
 // Inizializza express

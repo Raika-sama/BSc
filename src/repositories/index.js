@@ -15,7 +15,7 @@ const UserRepository = require('./UserRepository');
 const ClassRepository = require('./ClassRepository');
 const StudentRepository = require('./StudentRepository');
 const TestRepository = require('./TestRepository');
-const logger = require('../utils/logger/logger');
+const logger = require('../utils/errors/logger/logger');
 
 /**
  * Oggetto che contiene le istanze singleton dei repository

@@ -7,7 +7,7 @@
 
 const BaseController = require('./baseController');
 const { school: SchoolRepository } = require('../repositories');
-const logger = require('../utils/logger/logger');
+const logger = require('../utils/errors/logger/logger');
 
 class SchoolController extends BaseController {
     constructor() {

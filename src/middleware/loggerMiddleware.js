@@ -4,7 +4,7 @@
  * Registra dettagli delle richieste evitando dati sensibili.
  */
 
-const logger = require('../utils/logger/logger');
+const logger = require('../utils/errors/logger/logger');
 
 /**
  * Pulisce i dati sensibili dalle richieste prima del logging

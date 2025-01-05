@@ -1,4 +1,6 @@
 // src/models/Test.js
+const mongoose = require('mongoose');
+
 const testSchema = new mongoose.Schema({
     nome: {
         type: String,
@@ -78,7 +80,6 @@ const School = require('./School');
 const User = require('./User');
 const Class = require('./Class');
 const Student = require('./Student');
-const { Test, Result } = require('./Test');
 
 module.exports = {
     School,

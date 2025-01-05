@@ -11,7 +11,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
-const logger = require('../utils/logger/logger');
+const logger = require('../utils/errors/logger/logger');
 
 // Middleware di logging
 router.use((req, res, next) => {

@@ -11,7 +11,7 @@ const jwt = require('jsonwebtoken');
 const { UserRepository } = require('../repositories');
 const config = require('../config/config');
 const { AppError } = require('../utils/errors/AppError');
-const logger = require('../utils/logger/logger');
+const logger = require('../utils/errors/logger/logger');
 
 class AuthController {
     constructor() {

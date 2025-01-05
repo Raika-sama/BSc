@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const logger = require('../utils/logger/logger');
+const logger = require('../utils/errors/logger/logger');
 
 // Import dei router specifici (da implementare)
 const schoolRoutes = require('./schoolRoutes');

@@ -8,7 +8,7 @@
 const express = require('express');
 const router = express.Router();
 const { isConnected } = require('../config/database');
-const logger = require('../utils/logger/logger');
+const logger = require('../utils/errors/logger/logger');
 
 router.get('/', async (req, res) => {
     try {
