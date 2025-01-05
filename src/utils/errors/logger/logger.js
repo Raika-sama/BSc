@@ -8,8 +8,8 @@ const winston = require('winston');
 const path = require('path');
 const fs = require('fs');
 require('winston-daily-rotate-file');
-const config = require('../../config/config');
-const loggerConfig = require('../../config/logger.config');
+const config = require('../../../config/config');
+const loggerConfig = require('../../../config/logger.config');
 
 // Creazione directory logs se non esiste
 if (!fs.existsSync(loggerConfig.directory)) {

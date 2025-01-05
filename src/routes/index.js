@@ -18,6 +18,13 @@ const classRoutes = require('./classRoutes');
 const studentRoutes = require('./studentRoutes');
 const testRoutes = require('./testRoutes');
 const healthRoutes = require('./healthRoutes');
+const authRoutes = require('./authRoutes');
+
+
+
+// Aggiungi PRIMA delle altre routes
+router.use('/auth', authRoutes);
+
 
 // Middleware per logging delle routes
 router.use((req, res, next) => {

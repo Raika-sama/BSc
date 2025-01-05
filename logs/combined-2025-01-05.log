@@ -1,0 +1,16 @@
+{"level":"error","message":"connect ECONNREFUSED ::1:27017","reason":{"commonWireVersion":0,"compatible":true,"heartbeatFrequencyMS":10000,"localThresholdMS":15,"logicalSessionTimeoutMinutes":null,"maxElectionId":null,"maxSetVersion":null,"servers":{},"setName":null,"stale":false,"type":"Unknown"},"timestamp":"2025-01-05T15:01:46.076Z"}
+{"level":"info","message":"Database connection closed","timestamp":"2025-01-05T15:01:46.086Z"}
+{"level":"info","message":"Starting database migration...","timestamp":"2025-01-05T15:05:52.196Z"}
+{"level":"info","message":"Attempting to connect to MongoDB Atlas...","timestamp":"2025-01-05T15:05:52.200Z"}
+{"error":"connect ECONNREFUSED ::1:27017","level":"error","message":"Migration failed:","stack":"MongooseServerSelectionError: connect ECONNREFUSED ::1:27017\n    at _handleConnectionErrors (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\connection.js:816:11)\n    at NativeConnection.openUri (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\connection.js:791:11)\n    at async runMigration (C:\\Users\\ricca\\Desktop\\BSc\\src\\database\\migrations\\initial-setup.js:13:9)","timestamp":"2025-01-05T15:06:22.227Z"}
+{"level":"info","message":"Database connection closed","timestamp":"2025-01-05T15:06:22.236Z"}
+{"level":"info","message":"Starting database migration...","timestamp":"2025-01-05T15:16:02.982Z"}
+{"level":"info","message":"Attempting to connect to MongoDB Atlas...","timestamp":"2025-01-05T15:16:02.986Z"}
+{"level":"info","message":"Successfully connected to MongoDB Atlas","timestamp":"2025-01-05T15:16:03.485Z"}
+{"level":"info","message":"Created collection: users","timestamp":"2025-01-05T15:16:03.533Z"}
+{"level":"info","message":"Created collection: schools","timestamp":"2025-01-05T15:16:03.583Z"}
+{"level":"info","message":"Created collection: classes","timestamp":"2025-01-05T15:16:03.633Z"}
+{"level":"info","message":"Created index on users.email","timestamp":"2025-01-05T15:16:03.682Z"}
+{"level":"info","message":"Created index on schools.name","timestamp":"2025-01-05T15:16:03.749Z"}
+{"level":"info","message":"Migration completed successfully","timestamp":"2025-01-05T15:16:03.750Z"}
+{"level":"info","message":"Database connection closed","timestamp":"2025-01-05T15:16:03.757Z"}
