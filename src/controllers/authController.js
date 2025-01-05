@@ -8,14 +8,14 @@
  */
 
 const jwt = require('jsonwebtoken');
-const { UserRepository } = require('../repositories');
+const repositories = require('../repositories');  // Modifica qui - rimuovi le parentesi graffe
 const config = require('../config/config');
 const { AppError } = require('../utils/errors/AppError');
 const logger = require('../utils/errors/logger/logger');
 
 class AuthController {
     constructor() {
-        this.userRepository = new UserRepository();
+        this.userRepository = repositories.user;
     }
 
     /**

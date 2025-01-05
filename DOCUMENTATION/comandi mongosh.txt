@@ -1,0 +1,14 @@
+CREARE NUOVO UTENTE:
+
+
+ricca@DESKTOP-VSL5OA3 MINGW64 ~
+$ curl -X POST http://localhost:5000/api/v1/auth/register \
+-H "Content-Type: application/json" \
+-d '{
+    "firstName": "Test",
+    "lastName": "User",
+    "email": "test@example.com",
+    "password": "123"
+}'
+{"status":"success","data":{"user":{"firstName":"Test","lastName":"User","email":"test@example.com","role":"teacher","isActive":true,"_id":"677abd7a4fce72d2489a3c60","createdAt":"2025-01-05T17:12:26.518Z","updatedAt":"2025-01-05T17:12:26.518Z","__v":0},"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FiZDdhNGZjZTcyZDI0ODlhM2M2MCIsImlhdCI6MTczNjA5NzE0NiwiZXhwIjoxNzM2MTgzNTQ2fQ.gXe_pB_g-xGTdvBHR3P0NcJOYtcKVbInmO6NXpFJYcA"}}
+ricca@DESKTOP-VSL5OA3 MINGW64 ~

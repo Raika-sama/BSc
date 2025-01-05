@@ -2,9 +2,11 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 const { AppError } = require('../utils/errors/AppError');
-const { UserRepository } = require('../repositories');
+const repositories = require('../repositories'); 
 
-const userRepository = new UserRepository();
+
+// Usa l'istanza singleton invece di crearne una nuova
+const userRepository = repositories.user;  // Modifica qui
 
 exports.protect = async (req, res, next) => {
     try {

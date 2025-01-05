@@ -14,3 +14,42 @@
 {"level":"info","message":"Created index on schools.name","timestamp":"2025-01-05T15:16:03.749Z"}
 {"level":"info","message":"Migration completed successfully","timestamp":"2025-01-05T15:16:03.750Z"}
 {"level":"info","message":"Database connection closed","timestamp":"2025-01-05T15:16:03.757Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T17:10:58.524Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-05T17:10:59.035Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T17:10:59.046Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T17:10:59.047Z"}
+{"body":{"email":"test@example.com","firstName":"Test","lastName":"User","password":"[REDACTED]"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736097146380_l0rd8jw0u","timestamp":"2025-01-05T17:12:26.380Z","url":"/api/v1/auth/register","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Auth Route Called: POST /api/v1/auth/register","timestamp":"2025-01-05T17:12:26.382Z"}
+{"level":"info","message":"Nuovo utente registrato","timestamp":"2025-01-05T17:12:26.548Z","userId":"677abd7a4fce72d2489a3c60"}
+{"duration":"173ms","ip":"::1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736097146380_l0rd8jw0u","responseSize":"436 Bytes","statusCode":201,"timestamp":"2025-01-05T17:12:26.554Z","url":"/api/v1/auth/register","userAgent":"curl/8.11.0"}
+{"body":{"email":"test@example.com","password":"[REDACTED]"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736097272391_kq5k73j30","timestamp":"2025-01-05T17:14:32.392Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Auth Route Called: POST /api/v1/auth/login","timestamp":"2025-01-05T17:14:32.393Z"}
+{"level":"info","message":"Login utente effettuato","timestamp":"2025-01-05T17:14:32.519Z","userId":"677abd7a4fce72d2489a3c60"}
+{"duration":"129ms","ip":"::1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736097272391_kq5k73j30","responseSize":"475 Bytes","statusCode":200,"timestamp":"2025-01-05T17:14:32.520Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736097280942_ftxx6yom3","timestamp":"2025-01-05T17:14:40.942Z","url":"/api/v1/protected-route","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [GET] /api/v1/protected-route","timestamp":"2025-01-05T17:14:40.943Z"}
+{"level":"warn","message":"Route non trovata: GET /api/v1/protected-route","timestamp":"2025-01-05T17:14:40.943Z"}
+{"duration":"2ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1736097280942_ftxx6yom3","responseSize":"83 Bytes","statusCode":404,"timestamp":"2025-01-05T17:14:40.944Z","url":"/api/v1/protected-route","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T17:16:09.873Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T17:16:10.369Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T17:16:10.378Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T17:16:10.380Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T17:17:04.490Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T17:17:04.972Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T17:17:04.978Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T17:17:04.979Z"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736097435880_xuawcccq1","timestamp":"2025-01-05T17:17:15.880Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Auth Route Called: GET /api/v1/auth/me","timestamp":"2025-01-05T17:17:15.882Z"}
+{"duration":"37ms","ip":"::1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736097435880_xuawcccq1","responseSize":"367 Bytes","statusCode":200,"timestamp":"2025-01-05T17:17:15.917Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T17:18:22.987Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-05T17:18:23.375Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T17:18:23.381Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T17:18:23.383Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T17:18:53.228Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T17:18:53.605Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T17:18:53.612Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T17:18:53.613Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T17:24:19.318Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T17:24:19.746Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T17:24:19.759Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T17:24:19.760Z"}

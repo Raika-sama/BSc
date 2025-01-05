@@ -29,4 +29,14 @@ router.post('/reset-password', authController.resetPassword.bind(authController)
 router.use(protect);
 router.post('/logout', authController.logout.bind(authController));
 
+// Aggiungi questa route di test
+router.get('/me', (req, res) => {
+    res.status(200).json({
+        status: 'success',
+        data: {
+            user: req.user
+        }
+    });
+});
+
 module.exports = router;
