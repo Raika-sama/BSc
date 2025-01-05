@@ -5,6 +5,8 @@ src/
 │   └── database.js           # Nuova configurazione DB
 ├── middleware/
 │   ├── errorHandler.js
+│   ├── auth.js
+│   ├── validate.js
 │   └── loggerMiddleware.js
 ├── utils/
 │   └── logger/
@@ -31,13 +33,24 @@ src/
 │   ├── UserRepository.js
 │   ├── ClassRepository.js
 │   ├── StudentRepository.js
-│   └── TestRepository.js
+│   ├── TestRepository.js
+│   └── index.js
 │
 ├── database/               # Utilities DB
 │   ├── connection.js      # Gestione connessione
 │   └── migrations/        # Per eventuali migrazioni future
-
-
+├── routes/
+│   ├── schoolRoutes.js
+│   ├── userRoutes.js
+│   ├── classRoutes.js
+│   ├── studentRoutes.js
+│   └── testRoutes.js
+├── controllers/
+│   ├── schoolController.js
+│   ├── userController.js
+│   ├── classController.js
+│   ├── studentController.js
+│   └── testController.js
 
 
 

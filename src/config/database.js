@@ -14,7 +14,10 @@ const mongooseOptions = {
     maxPoolSize: 10,                 // Limite connessioni nel pool
     serverSelectionTimeoutMS: 5000,  // Timeout selezione server
     socketTimeoutMS: 45000,          // Timeout socket
-    family: 4                        // Forza IPv4
+    family: 4,                       // Forza IPv4
+    retryWrites: true,              // Aggiunto per MongoDB Atlas
+    w: 'majority',                  // Aggiunto per MongoDB Atlas
+    connectTimeoutMS: 10000         // Aumentato per Atlas
 };
 
 /**
@@ -24,14 +27,23 @@ const mongooseOptions = {
  */
 const connectDB = async (uri = config.mongodb.uri) => {
     try {
+        // Sostituisci la password nell'URI
+        const connectionString = uri.replace(
+            '<password>',
+            process.env.MONGODB_PASSWORD || 'H9Fm51BisUke4rPK'
+        );
+
         // Connessione al database
-        const conn = await mongoose.connect(uri, mongooseOptions);
+        const conn = await mongoose.connect(connectionString, {
+            ...mongooseOptions,
+            dbName: config.mongodb.options.dbName
+        });
         
         logger.info(`MongoDB Connected: ${conn.connection.host}`);
 
         // Gestione eventi di connessione
         mongoose.connection.on('connected', () => {
-            logger.info('Mongoose connected to DB');
+            logger.info('Mongoose connected to MongoDB Atlas');
         });
 
         mongoose.connection.on('error', (err) => {
@@ -56,8 +68,12 @@ const connectDB = async (uri = config.mongodb.uri) => {
 
         return conn;
     } catch (error) {
-        logger.error('Error connecting to MongoDB:', error);
-        process.exit(1);
+        logger.error('Error connecting to MongoDB Atlas:', error);
+        // Implementa logica di retry se necessario
+        if (!process.env.JEST_WORKER_ID) { // Non uscire se in modalità test
+            process.exit(1);
+        }
+        throw error;
     }
 };
 

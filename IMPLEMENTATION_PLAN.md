@@ -72,20 +72,3 @@ Error handling enhancement
 
 
 
-Per ogni fase dovremmo:
-
-Definire i modelli
-Implementare i servizi
-Creare i controller
-Definire le routes
-Testare
-Documentare
-
-Vuoi che procediamo con la Fase 1 creando il setup base? Possiamo:
-
-Creare la struttura cartelle
-Setup delle dipendenze base
-Implementare il sistema di configurazione
-Setup della gestione errori
-
-Come preferisci procedere?
