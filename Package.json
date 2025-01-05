@@ -8,10 +8,10 @@
         "dev": "nodemon src/app.js",
         "test": "jest",
         "migrate:create": "migrate-mongo create",
-         "migrate": "node src/database/migrations/initial-setup.js",
-    "migrate:up": "migrate-mongo up",
-    "migrate:down": "migrate-mongo down",
-    "migrate:status": "migrate-mongo status",
+        "migrate": "node src/database/migrations/initial-setup.js",
+        "migrate:up": "migrate-mongo up",
+        "migrate:down": "migrate-mongo down",
+        "migrate:status": "migrate-mongo status",
         "test:db": "node src/scripts/testConnection.js"
     },
     "dependencies": {

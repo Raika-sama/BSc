@@ -13,6 +13,27 @@ class ClassRepository extends BaseRepository {
         super(Class);
     }
 
+
+
+    /**
+     * Trova un utente con i dettagli della scuola
+     * @param {String} userId - ID dell'utente
+     * @returns {Promise} Utente con dettagli scuola
+     */
+    async findUserWithSchool(userId) {
+        try {
+            return await User.findById(userId).populate('schoolId');
+        } catch (error) {
+            throw new AppError(
+                'Errore nel recupero dei dettagli utente',
+                500,
+                'USER_DETAILS_ERROR',
+                { error: error.message }
+            );
+        }
+    }
+
+    
     /**
      * Trova una classe con tutti i dettagli popolati
      * @param {String} id - ID della classe

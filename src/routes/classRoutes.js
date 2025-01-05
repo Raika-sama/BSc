@@ -19,8 +19,6 @@ router.use((req, res, next) => {
     next();
 });
 
-// Rotte base per le classi (protette)
-router.use(protect); // Tutte le rotte richiedono autenticazione
 
 // Rotte base per le classi
 router.get('/', classController.getAll.bind(classController));

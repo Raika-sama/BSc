@@ -68,6 +68,39 @@ class UserController extends BaseController {
         // TODO: Implementare logica reset password
         this.sendResponse(res, { message: 'Email di reset inviata' });
     }
+
+    /**
+     * Trova un utente per criteri specifici
+     * @param {Object} criteria - Criteri di ricerca
+     * @param {Object} options - Opzioni aggiuntive (select, populate)
+     * @returns {Promise} Utente trovato
+     */
+    async findOne(criteria, options = {}) {
+        try {
+            let query = this.model.findOne(criteria);
+
+            if (options.select) {
+                query = query.select(options.select);
+            }
+
+            if (options.populate) {
+                query = query.populate(options.populate);
+            }
+
+            return await query.exec();
+        } catch (error) {
+            throw new AppError(
+                'Errore nella ricerca dell\'utente',
+                500,
+                'USER_FIND_ERROR',
+                { error: error.message }
+            );
+        }
+    }
+
+
+    
+
 }
 
 module.exports = new UserController();

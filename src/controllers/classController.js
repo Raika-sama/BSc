@@ -3,11 +3,64 @@
 const BaseController = require('./baseController');
 const { class: ClassRepository } = require('../repositories');
 const logger = require('../utils/errors/logger/logger');
+const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+
 
 class ClassController extends BaseController {
     constructor() {
         super(ClassRepository, 'class');
     }
+
+ /**
+     * Elimina tutte le classi della scuola dell'utente corrente
+     */
+    async deleteAll(req, res, next) {
+        try {
+            // 1. Verifica l'utente
+            if (!req.user) {
+                return next(createError(
+                    ErrorTypes.AUTH.UNAUTHORIZED,
+                    'Utente non autenticato'
+                ));
+            }
+
+            // 2. Verifica che l'utente abbia una scuola associata
+            const userWithSchool = await this.repository.findUserWithSchool(req.user.id);
+            if (!userWithSchool || !userWithSchool.schoolId) {
+                return next(createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Nessuna scuola associata all\'utente'
+                ));
+            }
+
+            // 3. Elimina le classi
+            const result = await this.repository.deleteMany({ 
+                schoolId: userWithSchool.schoolId 
+            });
+            
+            // 4. Log dell'operazione
+            logger.info('Classi eliminate', { 
+                userId: req.user.id,
+                schoolId: userWithSchool.schoolId,
+                deletedCount: result.deletedCount 
+            });
+
+            // 5. Invia risposta
+            this.sendResponse(res, { 
+                message: `Eliminate ${result.deletedCount} classi dalla scuola`,
+                count: result.deletedCount 
+            });
+
+        } catch (error) {
+            logger.error('Errore nell\'eliminazione delle classi:', error);
+            next(createError(
+                ErrorTypes.INTERNAL.SERVER_ERROR,
+                'Errore durante l\'eliminazione delle classi'
+            ));
+        }
+    }
+
+
 
     /**
      * Ottiene le classi per scuola
@@ -44,15 +97,39 @@ class ClassController extends BaseController {
 
 
     /**
-     * Ottiene tutte le classi della scuola dell'utente corrente
+     * Ottiene tutte le classi
      */
-    async getAll(req, res) {
+    async getAll(req, res, next) {
         try {
-            // Ottiene le classi solo della scuola dell'utente corrente
-            const classes = await this.repository.findBySchool(req.user.schoolId);
+            // 1. Verifica l'utente
+            if (!req.user) {
+                return next(createError(
+                    ErrorTypes.AUTH.UNAUTHORIZED,
+                    'Utente non autenticato'
+                ));
+            }
+
+            // 2. Verifica che l'utente abbia una scuola associata
+            const userWithSchool = await this.repository.findUserWithSchool(req.user.id);
+            if (!userWithSchool || !userWithSchool.schoolId) {
+                return next(createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Nessuna scuola associata all\'utente'
+                ));
+            }
+
+            // 3. Recupera le classi
+            const classes = await this.repository.findBySchool(userWithSchool.schoolId);
+            
+            // 4. Invia risposta
             this.sendResponse(res, { classes });
+
         } catch (error) {
-            this.sendError(res, error);
+            logger.error('Errore nel recupero delle classi:', error);
+            next(createError(
+                ErrorTypes.INTERNAL.SERVER_ERROR,
+                'Errore durante il recupero delle classi'
+            ));
         }
     }
 
@@ -90,23 +167,10 @@ class ClassController extends BaseController {
         }
     }
 
-    /**
+   /**
      * Elimina tutte le classi della scuola dell'utente corrente
      */
-    async deleteAll(req, res) {
-        try {
-            const result = await this.repository.deleteMany({ 
-                schoolId: req.user.schoolId 
-            });
-            
-            this.sendResponse(res, { 
-                message: `Tutte le classi della scuola sono state eliminate`,
-                count: result.deletedCount 
-            });
-        } catch (error) {
-            this.sendError(res, error);
-        }
-    }
+  
 
 
 

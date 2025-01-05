@@ -3,13 +3,13 @@ const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
-
 const { user: UserRepository } = require('../repositories');
 
 exports.protect = async (req, res, next) => {
     try {
+        // 1) Controlla se il token esiste
         let token;
-        if (req.headers.authorization?.startsWith('Bearer')) {
+        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
             token = req.headers.authorization.split(' ')[1];
         }
 
@@ -20,23 +20,25 @@ exports.protect = async (req, res, next) => {
             ));
         }
 
+        // 2) Verifica il token
         const decoded = jwt.verify(token, config.jwt.secret);
-        const currentUser = await UserRepository.findById(decoded.id);
 
-        if (!currentUser) {
-            return next(createError(
-                ErrorTypes.AUTH.UNAUTHORIZED,
-                'L\'utente non esiste più'
-            ));
+        // Non popolare schoolId per ora
+        const user = await User.findById(decoded.id);
+        
+        if (!user) {
+            throw createError(
+                ErrorTypes.AUTH.NOT_AUTHENTICATED,
+                'Utente non trovato'
+            );
         }
 
-        req.user = currentUser;
+        req.user = user;
         next();
     } catch (error) {
-        logger.error('Errore di autenticazione', { error });
         next(createError(
-            ErrorTypes.AUTH.TOKEN_INVALID,
-            'Token non valido o scaduto'
+            ErrorTypes.AUTH.NOT_AUTHENTICATED,
+            'Non autorizzato ad accedere a questa risorsa'
         ));
     }
 };

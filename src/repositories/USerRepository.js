@@ -21,9 +21,13 @@ class UserRepository extends BaseRepository {
      * @param {String} email - Email dell'utente
      * @returns {Promise} Utente trovato
      */
-    async findByEmail(email) {
+    async findByEmail(email, includePassword = false) {
         try {
-            const user = await this.model.findOne({ email });
+            const query = this.model.findOne({ email });
+            if (includePassword) {
+                query.select('+password');
+            }
+            const user = await query;
             return user;
         } catch (error) {
             throw new AppError(
@@ -76,7 +80,7 @@ class UserRepository extends BaseRepository {
      */
     async verifyCredentials(email, password) {
         try {
-            const user = await this.findByEmail(email);
+            const user = await this.findByEmail(email, true); // includiamo la password
             
             if (!user) {
                 throw new AppError(
@@ -85,7 +89,7 @@ class UserRepository extends BaseRepository {
                     'INVALID_CREDENTIALS'
                 );
             }
-
+    
             if (!user.isActive) {
                 throw new AppError(
                     'Account disattivato',
@@ -93,7 +97,7 @@ class UserRepository extends BaseRepository {
                     'ACCOUNT_INACTIVE'
                 );
             }
-
+    
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) {
                 throw new AppError(
@@ -102,11 +106,13 @@ class UserRepository extends BaseRepository {
                     'INVALID_CREDENTIALS'
                 );
             }
-
+    
             // Aggiorna ultimo accesso
             user.lastLogin = new Date();
             await user.save();
-
+    
+            // Rimuovi la password prima di restituire l'utente
+            user.password = undefined;
             return user;
         } catch (error) {
             throw new AppError(
@@ -211,8 +217,8 @@ class UserRepository extends BaseRepository {
      */
     async changePassword(userId, currentPassword, newPassword) {
         try {
-            const user = await this.findById(userId);
-
+            const user = await this.findById(userId, { select: '+password' });
+    
             // Verifica password attuale
             const isMatch = await bcrypt.compare(currentPassword, user.password);
             if (!isMatch) {
@@ -222,12 +228,15 @@ class UserRepository extends BaseRepository {
                     'INVALID_CURRENT_PASSWORD'
                 );
             }
-
+    
             // Aggiorna password
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(newPassword, salt);
             
             await user.save();
+            
+            // Rimuovi la password prima di restituire l'utente
+            user.password = undefined;
             return user;
         } catch (error) {
             throw new AppError(
@@ -238,6 +247,37 @@ class UserRepository extends BaseRepository {
             );
         }
     }
+
+    async updateUser(userId, updateData) {
+        try {
+            // Rimuovi campi sensibili se presenti
+            const { password, passwordResetToken, passwordResetExpires, ...safeData } = updateData;
+            
+            const user = await this.findByIdAndUpdate(
+                userId,
+                safeData,
+                { new: true, runValidators: true }
+            );
+    
+            if (!user) {
+                throw new AppError(
+                    'Utente non trovato',
+                    404,
+                    'USER_NOT_FOUND'
+                );
+            }
+    
+            return user;
+        } catch (error) {
+            throw new AppError(
+                'Errore nell\'aggiornamento utente',
+                error.statusCode || 500,
+                error.code || 'USER_UPDATE_ERROR',
+                { error: error.message }
+            );
+        }
+    }
+
 }
 
 module.exports = UserRepository;

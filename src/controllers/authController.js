@@ -90,25 +90,15 @@ class AuthController {
     async login(req, res, next) {
         try {
             const { email, password } = req.body;
-
-            // Verifica email e password
+    
             if (!email || !password) {
                 throw createError(
                     ErrorTypes.VALIDATION.MISSING_FIELD,
                     'Inserire email e password'
                 );
             }
-
-            // Trova utente e verifica password
-            const user = await this.repository.findOne({ email }).select('+password');
-            if (!user || !(await user.matchPassword(password))) {
-                throw createError(
-                    ErrorTypes.AUTH.INVALID_CREDENTIALS,
-                    'Email o password non validi'
-                );
-            }
-
-            logger.info('Login effettuato con successo', { userId: user._id });
+    
+            const user = await this.repository.verifyCredentials(email, password);
             this._sendTokenResponse(user, 200, res);
         } catch (error) {
             logger.error('Errore durante il login', { error });
@@ -207,19 +197,22 @@ class AuthController {
      */
     async updatePassword(req, res, next) {
         try {
-            const user = await this.repository.findById(req.user.id).select('+password');
-
-            // Verifica password corrente
-            if (!(await user.matchPassword(req.body.currentPassword))) {
+            const user = await this.repository.findOne(
+                { _id: req.user.id },
+                { select: '+password' }
+            );
+    
+            // Usa comparePassword invece di matchPassword
+            if (!(await user.comparePassword(req.body.currentPassword))) {
                 throw createError(
                     ErrorTypes.AUTH.INVALID_CREDENTIALS,
                     'Password corrente non valida'
                 );
             }
-
+    
             user.password = req.body.newPassword;
             await user.save();
-
+    
             logger.info('Password aggiornata con successo', { userId: user._id });
             this._sendTokenResponse(user, 200, res);
         } catch (error) {
