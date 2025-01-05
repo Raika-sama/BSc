@@ -316,3 +316,94 @@ Database
 MongoDB Atlas
 Connection String: mongodb+srv://RaikaSama:<password>@cluster0.4nf56.mongodb.net/
 Database: brainScannerDB
+
+
+Documentazione Database - Brain Scanner Backend
+Data ultimo aggiornamento: 2025-01-05
+
+1. Configurazione Database
+1.1 Connessione
+Tipo: MongoDB Atlas
+Database Nome: brainScannerDB
+Ambiente: Development
+Configurazione: .env.development
+1.2 Struttura Collections
+JavaScript
+// Collections create durante la migrazione iniziale
+├── users
+│   └── Indici: { email: 1 } (unique)
+├── schools
+│   └── Indici: { name: 1 } (unique)
+└── classes
+1.3 File di Configurazione
+plaintext
+src/
+├── .env.development (file di configurazione principale)
+├── .env.example (template per configurazione)
+└── config/
+    └── config.js (gestione configurazione)
+1.4 Variabili Ambiente Necessarie
+Dotenv
+# Server
+NODE_ENV=development
+PORT=5000
+HOST=localhost
+
+# Database
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/brainScannerDB
+DB_NAME=brainScannerDB
+
+# Authentication
+JWT_SECRET=<your_secret>
+JWT_EXPIRES_IN=24h
+
+# Frontend URL (CORS)
+FRONTEND_URL=http://localhost:3000
+
+# Logging
+LOG_LEVEL=debug
+LOG_FILE=logs/app-dev.log
+
+# Rate Limiting
+RATE_LIMIT_MAX=100
+2. Migrazione Iniziale
+2.1 Script di Migrazione
+Location: src/database/migrations/initial-setup.js
+
+2.2 Operazioni Eseguite
+Connessione al database
+Creazione collections:
+users
+schools
+classes
+Creazione indici:
+Indice unique su users.email
+Indice unique su schools.name
+2.3 Logging
+Sistema di logging configurato per tracciare:
+Connessioni database
+Creazione collections
+Creazione indici
+Errori e warning
+3. Best Practices per il Team
+3.1 Gestione Configurazioni
+Mai committare .env o .env.development con credenziali reali
+Utilizzare .env.example come template
+Mantenere aggiornato .gitignore
+3.2 Sicurezza
+Ruotare regolarmente le credenziali MongoDB Atlas
+Limitare gli accessi IP su MongoDB Atlas
+Utilizzare variabili ambiente per dati sensibili
+3.3 Sviluppo
+Eseguire npm run migrate dopo il clone del repository
+Verificare la connessione al database prima di sviluppare
+Testare le queries su un dataset di test
+4. Prossimi Passi
+4.1 Testing
+Implementare test unitari per i modelli
+Creare test di integrazione per le API
+Configurare un database di test separato
+4.2 Monitoraggio
+Implementare logging avanzato
+Configurare monitoring su MongoDB Atlas
+Implementare health checks
