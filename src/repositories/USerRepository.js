@@ -1,9 +1,9 @@
-// gestirà tutte le operazioni specifiche per gli utenti.
 // src/repositories/UserRepository.js
 
 const BaseRepository = require('./base/BaseRepository');
 const { User } = require('../models');
-const { AppError } = require('../utils/errors/AppError');
+const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+const logger = require('../utils/errors/logger/logger');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
@@ -16,11 +16,6 @@ class UserRepository extends BaseRepository {
         super(User);
     }
 
-    /**
-     * Trova un utente per email
-     * @param {String} email - Email dell'utente
-     * @returns {Promise} Utente trovato
-     */
     async findByEmail(email, includePassword = false) {
         try {
             const query = this.model.findOne({ email });
@@ -30,148 +25,121 @@ class UserRepository extends BaseRepository {
             const user = await query;
             return user;
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nella ricerca utente per email', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella ricerca utente per email',
-                500,
-                'EMAIL_SEARCH_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Crea un nuovo utente con password criptata
-     * @param {Object} userData - Dati dell'utente
-     * @returns {Promise} Utente creato
-     */
     async createUser(userData) {
         try {
-            // Verifica se l'email esiste già
             const existingUser = await this.findByEmail(userData.email);
             if (existingUser) {
-                throw new AppError(
-                    'Email già registrata',
-                    400,
-                    'EMAIL_EXISTS'
+                logger.warn('Tentativo di registrazione con email esistente', { email: userData.email });
+                throw createError(
+                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
+                    'Email già registrata'
                 );
             }
 
-            // Cripta la password
             const salt = await bcrypt.genSalt(10);
             userData.password = await bcrypt.hash(userData.password, salt);
 
-            // Crea l'utente
             return await this.create(userData);
         } catch (error) {
-            throw new AppError(
+            if (error.code) throw error;
+            logger.error('Errore nella creazione utente', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella creazione utente',
-                error.statusCode || 500,
-                error.code || 'USER_CREATION_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Verifica le credenziali dell'utente
-     * @param {String} email - Email dell'utente
-     * @param {String} password - Password da verificare
-     * @returns {Promise} Utente autenticato
-     */
     async verifyCredentials(email, password) {
         try {
-            const user = await this.findByEmail(email, true); // includiamo la password
+            const user = await this.findByEmail(email, true);
             
             if (!user) {
-                throw new AppError(
-                    'Credenziali non valide',
-                    401,
-                    'INVALID_CREDENTIALS'
+                logger.warn('Tentativo di login con email non esistente', { email });
+                throw createError(
+                    ErrorTypes.AUTH.INVALID_CREDENTIALS,
+                    'Credenziali non valide'
                 );
             }
     
             if (!user.isActive) {
-                throw new AppError(
-                    'Account disattivato',
-                    401,
-                    'ACCOUNT_INACTIVE'
+                logger.warn('Tentativo di login con account disattivato', { email });
+                throw createError(
+                    ErrorTypes.AUTH.UNAUTHORIZED,
+                    'Account disattivato'
                 );
             }
     
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) {
-                throw new AppError(
-                    'Credenziali non valide',
-                    401,
-                    'INVALID_CREDENTIALS'
+                logger.warn('Tentativo di login con password errata', { email });
+                throw createError(
+                    ErrorTypes.AUTH.INVALID_CREDENTIALS,
+                    'Credenziali non valide'
                 );
             }
     
-            // Aggiorna ultimo accesso
             user.lastLogin = new Date();
             await user.save();
     
-            // Rimuovi la password prima di restituire l'utente
             user.password = undefined;
             return user;
         } catch (error) {
-            throw new AppError(
+            if (error.code) throw error;
+            logger.error('Errore nella verifica delle credenziali', { error });
+            throw createError(
+                ErrorTypes.AUTH.UNAUTHORIZED,
                 'Errore nella verifica delle credenziali',
-                error.statusCode || 500,
-                error.code || 'AUTH_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Genera token per reset password
-     * @param {String} email - Email dell'utente
-     * @returns {Promise<{token: String, user: Object}>} Token e utente
-     */
     async createPasswordResetToken(email) {
         try {
             const user = await this.findByEmail(email);
             if (!user) {
-                throw new AppError(
-                    'Nessun account trovato con questa email',
-                    404,
-                    'EMAIL_NOT_FOUND'
+                logger.warn('Tentativo di reset password per email non esistente', { email });
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Nessun account trovato con questa email'
                 );
             }
 
-            // Genera token
             const resetToken = crypto.randomBytes(32).toString('hex');
             user.passwordResetToken = crypto
                 .createHash('sha256')
                 .update(resetToken)
                 .digest('hex');
                 
-            // Token valido per 1 ora
             user.passwordResetExpires = Date.now() + 3600000;
             
             await user.save({ validateBeforeSave: false });
 
             return { token: resetToken, user };
         } catch (error) {
-            throw new AppError(
+            if (error.code) throw error;
+            logger.error('Errore nella creazione del token di reset', { error });
+            throw createError(
+                ErrorTypes.SYSTEM.INTERNAL_ERROR,
                 'Errore nella creazione del token di reset',
-                error.statusCode || 500,
-                error.code || 'RESET_TOKEN_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Reset della password utente
-     * @param {String} token - Token di reset
-     * @param {String} newPassword - Nuova password
-     * @returns {Promise} Utente aggiornato
-     */
     async resetPassword(token, newPassword) {
         try {
-            // Cerca utente con token valido
             const hashedToken = crypto
                 .createHash('sha256')
                 .update(token)
@@ -183,14 +151,13 @@ class UserRepository extends BaseRepository {
             });
 
             if (!user) {
-                throw new AppError(
-                    'Token non valido o scaduto',
-                    400,
-                    'INVALID_TOKEN'
+                logger.warn('Tentativo di reset password con token non valido', { token });
+                throw createError(
+                    ErrorTypes.AUTH.TOKEN_INVALID,
+                    'Token non valido o scaduto'
                 );
             }
 
-            // Aggiorna password
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(newPassword, salt);
             user.passwordResetToken = undefined;
@@ -199,58 +166,49 @@ class UserRepository extends BaseRepository {
             await user.save();
             return user;
         } catch (error) {
-            throw new AppError(
+            if (error.code) throw error;
+            logger.error('Errore nel reset della password', { error });
+            throw createError(
+                ErrorTypes.SYSTEM.INTERNAL_ERROR,
                 'Errore nel reset della password',
-                error.statusCode || 500,
-                error.code || 'PASSWORD_RESET_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Cambio password utente
-     * @param {String} userId - ID dell'utente
-     * @param {String} currentPassword - Password attuale
-     * @param {String} newPassword - Nuova password
-     * @returns {Promise} Utente aggiornato
-     */
     async changePassword(userId, currentPassword, newPassword) {
         try {
             const user = await this.findById(userId, { select: '+password' });
     
-            // Verifica password attuale
             const isMatch = await bcrypt.compare(currentPassword, user.password);
             if (!isMatch) {
-                throw new AppError(
-                    'Password attuale non corretta',
-                    400,
-                    'INVALID_CURRENT_PASSWORD'
+                logger.warn('Tentativo di cambio password con password corrente errata', { userId });
+                throw createError(
+                    ErrorTypes.AUTH.INVALID_CREDENTIALS,
+                    'Password attuale non corretta'
                 );
             }
     
-            // Aggiorna password
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(newPassword, salt);
             
             await user.save();
             
-            // Rimuovi la password prima di restituire l'utente
             user.password = undefined;
             return user;
         } catch (error) {
-            throw new AppError(
+            if (error.code) throw error;
+            logger.error('Errore nel cambio password', { error });
+            throw createError(
+                ErrorTypes.SYSTEM.INTERNAL_ERROR,
                 'Errore nel cambio password',
-                error.statusCode || 500,
-                error.code || 'PASSWORD_CHANGE_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
     async updateUser(userId, updateData) {
         try {
-            // Rimuovi campi sensibili se presenti
             const { password, passwordResetToken, passwordResetExpires, ...safeData } = updateData;
             
             const user = await this.findByIdAndUpdate(
@@ -260,24 +218,24 @@ class UserRepository extends BaseRepository {
             );
     
             if (!user) {
-                throw new AppError(
-                    'Utente non trovato',
-                    404,
-                    'USER_NOT_FOUND'
+                logger.warn('Tentativo di aggiornamento utente non esistente', { userId });
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente non trovato'
                 );
             }
     
             return user;
         } catch (error) {
-            throw new AppError(
+            if (error.code) throw error;
+            logger.error('Errore nell\'aggiornamento utente', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nell\'aggiornamento utente',
-                error.statusCode || 500,
-                error.code || 'USER_UPDATE_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
-
 }
 
 module.exports = UserRepository;

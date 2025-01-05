@@ -23,8 +23,8 @@ exports.protect = async (req, res, next) => {
         // 2) Verifica il token
         const decoded = jwt.verify(token, config.jwt.secret);
 
-        // Non popolare schoolId per ora
-        const user = await User.findById(decoded.id);
+        // Usa UserRepository invece di User direttamente
+        const user = await UserRepository.findById(decoded.id);
         
         if (!user) {
             throw createError(
@@ -36,6 +36,7 @@ exports.protect = async (req, res, next) => {
         req.user = user;
         next();
     } catch (error) {
+        logger.error('Errore di autenticazione:', error);  // Aggiungi log per debug
         next(createError(
             ErrorTypes.AUTH.NOT_AUTHENTICATED,
             'Non autorizzato ad accedere a questa risorsa'

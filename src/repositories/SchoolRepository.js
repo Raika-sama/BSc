@@ -2,7 +2,8 @@
 
 const BaseRepository = require('./base/BaseRepository');
 const { School } = require('../models');
-const { AppError } = require('../utils/errors/AppError');
+const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+const logger = require('../utils/errors/logger/logger');
 
 /**
  * Repository per la gestione delle operazioni specifiche delle scuole
@@ -29,11 +30,11 @@ class SchoolRepository extends BaseRepository {
 
             return school;
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nel recupero della scuola con utenti', { error, schoolId: id });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nel recupero della scuola con utenti',
-                error.statusCode || 500,
-                error.code || 'SCHOOL_USERS_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
@@ -55,10 +56,13 @@ class SchoolRepository extends BaseRepository {
             );
 
             if (existingUser) {
-                throw new AppError(
-                    'Utente già associato alla scuola',
-                    400,
-                    'USER_ALREADY_EXISTS'
+                logger.warn('Tentativo di aggiungere un utente già presente nella scuola', { 
+                    schoolId, 
+                    userId 
+                });
+                throw createError(
+                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
+                    'Utente già associato alla scuola'
                 );
             }
 
@@ -68,11 +72,16 @@ class SchoolRepository extends BaseRepository {
 
             return school;
         } catch (error) {
-            throw new AppError(
+            if (error.code) throw error;
+            logger.error('Errore nell\'aggiunta dell\'utente alla scuola', { 
+                error, 
+                schoolId, 
+                userId 
+            });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nell\'aggiunta dell\'utente alla scuola',
-                error.statusCode || 500,
-                error.code || 'ADD_USER_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
@@ -92,10 +101,13 @@ class SchoolRepository extends BaseRepository {
                               school.users.find(u => u.user.toString() === userId)?.role === 'admin';
 
             if (isLastAdmin) {
-                throw new AppError(
-                    'Impossibile rimuovere l\'ultimo admin della scuola',
-                    400,
-                    'LAST_ADMIN_ERROR'
+                logger.warn('Tentativo di rimuovere l\'ultimo admin della scuola', { 
+                    schoolId, 
+                    userId 
+                });
+                throw createError(
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
+                    'Impossibile rimuovere l\'ultimo admin della scuola'
                 );
             }
 
@@ -106,11 +118,16 @@ class SchoolRepository extends BaseRepository {
             await school.save();
             return school;
         } catch (error) {
-            throw new AppError(
+            if (error.code) throw error;
+            logger.error('Errore nella rimozione dell\'utente dalla scuola', { 
+                error, 
+                schoolId, 
+                userId 
+            });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella rimozione dell\'utente dalla scuola',
-                error.statusCode || 500,
-                error.code || 'REMOVE_USER_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
@@ -127,11 +144,14 @@ class SchoolRepository extends BaseRepository {
                 { sort: { name: 1 } }
             );
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nella ricerca delle scuole per regione', { 
+                error, 
+                region 
+            });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella ricerca delle scuole per regione',
-                500,
-                'REGION_SEARCH_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }

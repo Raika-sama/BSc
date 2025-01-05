@@ -928,3 +928,207 @@
 {"body":{},"error":{"message":"Non autorizzato ad accedere a questa risorsa"},"level":"error","message":"Errore richiesta","method":"GET","query":{},"requestId":"req_1736108965282_9r4uvbru0","timestamp":"2025-01-05T20:29:25.287Z","url":"/api/v1/auth/me"}
 {"level":"error","message":"Non autorizzato ad accedere a questa risorsa","timestamp":"2025-01-05T20:29:25.288Z"}
 {"duration":"8ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1736108965282_9r4uvbru0","responseSize":"180 Bytes","statusCode":500,"timestamp":"2025-01-05T20:29:25.290Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: school repository potrebbe mancare il modelName","repository":"school","timestamp":"2025-01-05T20:32:16.610Z"}
+{"level":"warn","message":"Warning: user repository potrebbe mancare il modelName","repository":"user","timestamp":"2025-01-05T20:32:16.617Z"}
+{"level":"warn","message":"Warning: class repository potrebbe mancare il modelName","repository":"class","timestamp":"2025-01-05T20:32:16.618Z"}
+{"level":"warn","message":"Warning: student repository potrebbe mancare il modelName","repository":"student","timestamp":"2025-01-05T20:32:16.620Z"}
+{"level":"warn","message":"Warning: test repository potrebbe mancare il modelName","repository":"test","timestamp":"2025-01-05T20:32:16.621Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T20:32:16.622Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T20:32:17.219Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T20:32:17.227Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T20:32:17.228Z"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736109142972_wsojboo1b","timestamp":"2025-01-05T20:32:22.972Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [GET] /api/v1/auth/me","timestamp":"2025-01-05T20:32:22.973Z"}
+{"level":"info","message":"Auth Route Called: GET /api/v1/auth/me","timestamp":"2025-01-05T20:32:22.974Z"}
+{"duration":"55ms","ip":"::1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736109142972_wsojboo1b","responseSize":"290 Bytes","statusCode":200,"timestamp":"2025-01-05T20:32:23.028Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"body":{"currentPassword":"12345678","newPassword":"87654321"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736109166086_upfrbl0mw","timestamp":"2025-01-05T20:32:46.086Z","url":"/api/v1/auth/updatepassword","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [POST] /api/v1/auth/updatepassword","timestamp":"2025-01-05T20:32:46.087Z"}
+{"level":"info","message":"Auth Route Called: POST /api/v1/auth/updatepassword","timestamp":"2025-01-05T20:32:46.088Z"}
+{"level":"warn","message":"Route non trovata: POST /api/v1/auth/updatepassword","timestamp":"2025-01-05T20:32:46.109Z"}
+{"duration":"25ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736109166086_upfrbl0mw","responseSize":"83 Bytes","statusCode":404,"timestamp":"2025-01-05T20:32:46.111Z","url":"/api/v1/auth/updatepassword","userAgent":"curl/8.11.0"}
+{"body":{"currentPassword":"12345678","newPassword":"87654321"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"PUT","query":{},"requestId":"req_1736109286395_g58fuw95y","timestamp":"2025-01-05T20:34:46.395Z","url":"/api/v1/auth/update-password","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [PUT] /api/v1/auth/update-password","timestamp":"2025-01-05T20:34:46.395Z"}
+{"level":"info","message":"Auth Route Called: PUT /api/v1/auth/update-password","timestamp":"2025-01-05T20:34:46.396Z"}
+{"error":{"code":"AUTH_001","message":"Password corrente non valida","metadata":{},"status":401},"level":"error","message":"Errore nell'aggiornamento della password","timestamp":"2025-01-05T20:34:46.436Z"}
+{"body":{"currentPassword":"12345678","newPassword":"87654321"},"error":{"code":"AUTH_001","message":"Password corrente non valida"},"level":"error","message":"Errore richiesta","method":"PUT","query":{},"requestId":"req_1736109286395_g58fuw95y","timestamp":"2025-01-05T20:34:46.437Z","url":"/api/v1/auth/update-password"}
+{"level":"error","message":"Password corrente non valida","timestamp":"2025-01-05T20:34:46.438Z"}
+{"duration":"45ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"PUT","requestId":"req_1736109286395_g58fuw95y","responseSize":"113 Bytes","statusCode":401,"timestamp":"2025-01-05T20:34:46.440Z","url":"/api/v1/auth/update-password","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: school repository potrebbe mancare il modelName","repository":"school","timestamp":"2025-01-05T20:40:44.867Z"}
+{"level":"warn","message":"Warning: user repository potrebbe mancare il modelName","repository":"user","timestamp":"2025-01-05T20:40:44.871Z"}
+{"level":"warn","message":"Warning: class repository potrebbe mancare il modelName","repository":"class","timestamp":"2025-01-05T20:40:44.871Z"}
+{"level":"warn","message":"Warning: student repository potrebbe mancare il modelName","repository":"student","timestamp":"2025-01-05T20:40:44.873Z"}
+{"level":"warn","message":"Warning: test repository potrebbe mancare il modelName","repository":"test","timestamp":"2025-01-05T20:40:44.873Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T20:40:44.874Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T20:40:45.341Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T20:40:45.348Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T20:40:45.349Z"}
+{"body":{"currentPassword":"12345678","newPassword":"87654321"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"PUT","query":{},"requestId":"req_1736109667603_yojzukv9f","timestamp":"2025-01-05T20:41:07.604Z","url":"/api/v1/auth/update-password","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [PUT] /api/v1/auth/update-password","timestamp":"2025-01-05T20:41:07.605Z"}
+{"level":"info","message":"Auth Route Called: PUT /api/v1/auth/update-password","timestamp":"2025-01-05T20:41:07.606Z"}
+{"error":{"code":"AUTH_001","message":"Password corrente non valida","metadata":{},"status":401},"level":"error","message":"Errore nell'aggiornamento della password","timestamp":"2025-01-05T20:41:07.660Z"}
+{"body":{"currentPassword":"12345678","newPassword":"87654321"},"error":{"code":"AUTH_001","message":"Password corrente non valida"},"level":"error","message":"Errore richiesta","method":"PUT","query":{},"requestId":"req_1736109667603_yojzukv9f","timestamp":"2025-01-05T20:41:07.661Z","url":"/api/v1/auth/update-password"}
+{"level":"error","message":"Password corrente non valida","timestamp":"2025-01-05T20:41:07.662Z"}
+{"duration":"65ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"PUT","requestId":"req_1736109667603_yojzukv9f","responseSize":"113 Bytes","statusCode":401,"timestamp":"2025-01-05T20:41:07.668Z","url":"/api/v1/auth/update-password","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: school repository potrebbe mancare il modelName","repository":"school","timestamp":"2025-01-05T20:43:15.044Z"}
+{"level":"warn","message":"Warning: user repository potrebbe mancare il modelName","repository":"user","timestamp":"2025-01-05T20:43:15.048Z"}
+{"level":"warn","message":"Warning: class repository potrebbe mancare il modelName","repository":"class","timestamp":"2025-01-05T20:43:15.049Z"}
+{"level":"warn","message":"Warning: student repository potrebbe mancare il modelName","repository":"student","timestamp":"2025-01-05T20:43:15.050Z"}
+{"level":"warn","message":"Warning: test repository potrebbe mancare il modelName","repository":"test","timestamp":"2025-01-05T20:43:15.051Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T20:43:15.051Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T20:43:15.437Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T20:43:15.443Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T20:43:15.443Z"}
+{"body":{"currentPassword":"12345678","newPassword":"87654321"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"PUT","query":{},"requestId":"req_1736109801083_vj7p0uk7j","timestamp":"2025-01-05T20:43:21.083Z","url":"/api/v1/auth/update-password","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [PUT] /api/v1/auth/update-password","timestamp":"2025-01-05T20:43:21.084Z"}
+{"level":"info","message":"Auth Route Called: PUT /api/v1/auth/update-password","timestamp":"2025-01-05T20:43:21.085Z"}
+{"level":"info","message":"Password aggiornata con successo","timestamp":"2025-01-05T20:43:21.331Z","userId":"677ae8b6d5e344b79318553a"}
+{"duration":"255ms","ip":"::1","level":"http","message":"Risposta inviata","method":"PUT","requestId":"req_1736109801083_vj7p0uk7j","responseSize":"546 Bytes","statusCode":200,"timestamp":"2025-01-05T20:43:21.338Z","url":"/api/v1/auth/update-password","userAgent":"curl/8.11.0"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736109863415_nbzsvndiw","timestamp":"2025-01-05T20:44:23.415Z","url":"/api/v1/auth/logout","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [POST] /api/v1/auth/logout","timestamp":"2025-01-05T20:44:23.416Z"}
+{"level":"info","message":"Auth Route Called: POST /api/v1/auth/logout","timestamp":"2025-01-05T20:44:23.416Z"}
+{"level":"warn","message":"Route non trovata: POST /api/v1/auth/logout","timestamp":"2025-01-05T20:44:23.437Z"}
+{"duration":"23ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736109863415_nbzsvndiw","responseSize":"83 Bytes","statusCode":404,"timestamp":"2025-01-05T20:44:23.438Z","url":"/api/v1/auth/logout","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: school repository potrebbe mancare il modelName","repository":"school","timestamp":"2025-01-05T20:47:27.959Z"}
+{"level":"warn","message":"Warning: user repository potrebbe mancare il modelName","repository":"user","timestamp":"2025-01-05T20:47:27.963Z"}
+{"level":"warn","message":"Warning: class repository potrebbe mancare il modelName","repository":"class","timestamp":"2025-01-05T20:47:27.964Z"}
+{"level":"warn","message":"Warning: student repository potrebbe mancare il modelName","repository":"student","timestamp":"2025-01-05T20:47:27.965Z"}
+{"level":"warn","message":"Warning: test repository potrebbe mancare il modelName","repository":"test","timestamp":"2025-01-05T20:47:27.965Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T20:47:27.966Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T20:47:28.487Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T20:47:28.494Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T20:47:28.494Z"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736110051167_uy664dcbr","timestamp":"2025-01-05T20:47:31.168Z","url":"/api/v1/auth/logout","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [POST] /api/v1/auth/logout","timestamp":"2025-01-05T20:47:31.169Z"}
+{"level":"info","message":"Auth Route Called: POST /api/v1/auth/logout","timestamp":"2025-01-05T20:47:31.170Z"}
+{"duration":"35ms","ip":"::1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736110051167_uy664dcbr","responseSize":"32 Bytes","statusCode":200,"timestamp":"2025-01-05T20:47:31.203Z","url":"/api/v1/auth/logout","userAgent":"curl/8.11.0"}
+{"body":{"email":"admin@test.com","password":"[REDACTED]"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736110061668_s83srpor6","timestamp":"2025-01-05T20:47:41.668Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [POST] /api/v1/auth/login","timestamp":"2025-01-05T20:47:41.670Z"}
+{"level":"info","message":"Auth Route Called: POST /api/v1/auth/login","timestamp":"2025-01-05T20:47:41.671Z"}
+{"duration":"149ms","ip":"::1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736110061668_s83srpor6","responseSize":"472 Bytes","statusCode":200,"timestamp":"2025-01-05T20:47:41.817Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"body":{"email":"admin@test.com","password":"[REDACTED]"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736110159759_nt5bv6dp5","timestamp":"2025-01-05T20:49:19.759Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [POST] /api/v1/auth/login","timestamp":"2025-01-05T20:49:19.759Z"}
+{"level":"info","message":"Auth Route Called: POST /api/v1/auth/login","timestamp":"2025-01-05T20:49:19.760Z"}
+{"error":{},"level":"error","message":"Errore durante il login","timestamp":"2025-01-05T20:49:19.853Z"}
+{"body":{"email":"admin@test.com","password":"[REDACTED]"},"error":{"message":"AppError is not a constructor","stack":"TypeError: AppError is not a constructor\n    at UserRepository.verifyCredentials (C:\\Users\\ricca\\Desktop\\BSc\\src\\repositories\\UserRepository.js:118:19)\n    at async AuthController.login (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\authController.js:101:26)"},"level":"error","message":"Errore richiesta","method":"POST","query":{},"requestId":"req_1736110159759_nt5bv6dp5","timestamp":"2025-01-05T20:49:19.855Z","url":"/api/v1/auth/login"}
+{"level":"error","message":"AppError is not a constructor","stack":"TypeError: AppError is not a constructor\n    at UserRepository.verifyCredentials (C:\\Users\\ricca\\Desktop\\BSc\\src\\repositories\\UserRepository.js:118:19)\n    at async AuthController.login (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\authController.js:101:26)","timestamp":"2025-01-05T20:49:19.856Z"}
+{"duration":"98ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736110159759_nt5bv6dp5","responseSize":"447 Bytes","statusCode":500,"timestamp":"2025-01-05T20:49:19.857Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"body":{"email":"admin@test.com"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736110165745_zmi8zz0kk","timestamp":"2025-01-05T20:49:25.745Z","url":"/api/v1/auth/forgot-password","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [POST] /api/v1/auth/forgot-password","timestamp":"2025-01-05T20:49:25.746Z"}
+{"level":"info","message":"Auth Route Called: POST /api/v1/auth/forgot-password","timestamp":"2025-01-05T20:49:25.746Z"}
+{"error":{},"level":"error","message":"Errore nella procedura di reset password","timestamp":"2025-01-05T20:49:25.782Z"}
+{"body":{"email":"admin@test.com"},"error":{"message":"crypto.randomBytes is not a function","stack":"TypeError: crypto.randomBytes is not a function\n    at userSchema.methods.getResetPasswordToken (C:\\Users\\ricca\\Desktop\\BSc\\src\\models\\User.js:91:35)\n    at AuthController.forgotPassword (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\authController.js:141:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"},"level":"error","message":"Errore richiesta","method":"POST","query":{},"requestId":"req_1736110165745_zmi8zz0kk","timestamp":"2025-01-05T20:49:25.783Z","url":"/api/v1/auth/forgot-password"}
+{"level":"error","message":"crypto.randomBytes is not a function","stack":"TypeError: crypto.randomBytes is not a function\n    at userSchema.methods.getResetPasswordToken (C:\\Users\\ricca\\Desktop\\BSc\\src\\models\\User.js:91:35)\n    at AuthController.forgotPassword (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\authController.js:141:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-01-05T20:49:25.784Z"}
+{"duration":"40ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736110165745_zmi8zz0kk","responseSize":"539 Bytes","statusCode":500,"timestamp":"2025-01-05T20:49:25.785Z","url":"/api/v1/auth/forgot-password","userAgent":"curl/8.11.0"}
+{"body":{"currentPassword":"passwordsbagliata","newPassword":"nuovapassword"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"PUT","query":{},"requestId":"req_1736110175428_8vvt9lrvk","timestamp":"2025-01-05T20:49:35.428Z","url":"/api/v1/auth/update-password","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [PUT] /api/v1/auth/update-password","timestamp":"2025-01-05T20:49:35.429Z"}
+{"level":"info","message":"Auth Route Called: PUT /api/v1/auth/update-password","timestamp":"2025-01-05T20:49:35.429Z"}
+{"error":{"code":"AUTH_001","message":"Password corrente non valida","metadata":{},"status":401},"level":"error","message":"Errore nell'aggiornamento della password","timestamp":"2025-01-05T20:49:35.551Z"}
+{"body":{"currentPassword":"passwordsbagliata","newPassword":"nuovapassword"},"error":{"code":"AUTH_001","message":"Password corrente non valida"},"level":"error","message":"Errore richiesta","method":"PUT","query":{},"requestId":"req_1736110175428_8vvt9lrvk","timestamp":"2025-01-05T20:49:35.552Z","url":"/api/v1/auth/update-password"}
+{"level":"error","message":"Password corrente non valida","timestamp":"2025-01-05T20:49:35.553Z"}
+{"duration":"126ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"PUT","requestId":"req_1736110175428_8vvt9lrvk","responseSize":"113 Bytes","statusCode":401,"timestamp":"2025-01-05T20:49:35.554Z","url":"/api/v1/auth/update-password","userAgent":"curl/8.11.0"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736110181595_z3ryqts5t","timestamp":"2025-01-05T20:49:41.595Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [GET] /api/v1/auth/me","timestamp":"2025-01-05T20:49:41.596Z"}
+{"level":"info","message":"Auth Route Called: GET /api/v1/auth/me","timestamp":"2025-01-05T20:49:41.597Z"}
+{"level":"error","message":"jwt malformed","name":"JsonWebTokenError","timestamp":"2025-01-05T20:49:41.597Z"}
+{"body":{},"error":{"message":"Non autorizzato ad accedere a questa risorsa"},"level":"error","message":"Errore richiesta","method":"GET","query":{},"requestId":"req_1736110181595_z3ryqts5t","timestamp":"2025-01-05T20:49:41.598Z","url":"/api/v1/auth/me"}
+{"level":"error","message":"Non autorizzato ad accedere a questa risorsa","timestamp":"2025-01-05T20:49:41.598Z"}
+{"duration":"5ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1736110181595_z3ryqts5t","responseSize":"180 Bytes","statusCode":500,"timestamp":"2025-01-05T20:49:41.600Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: school repository potrebbe mancare il modelName","repository":"school","timestamp":"2025-01-05T20:52:05.309Z"}
+{"level":"warn","message":"Warning: user repository potrebbe mancare il modelName","repository":"user","timestamp":"2025-01-05T20:52:05.313Z"}
+{"level":"warn","message":"Warning: class repository potrebbe mancare il modelName","repository":"class","timestamp":"2025-01-05T20:52:05.315Z"}
+{"level":"warn","message":"Warning: student repository potrebbe mancare il modelName","repository":"student","timestamp":"2025-01-05T20:52:05.316Z"}
+{"level":"warn","message":"Warning: test repository potrebbe mancare il modelName","repository":"test","timestamp":"2025-01-05T20:52:05.316Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T20:52:05.317Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T20:52:06.773Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T20:52:06.782Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T20:52:06.783Z"}
+{"level":"warn","message":"Warning: school repository potrebbe mancare il modelName","repository":"school","timestamp":"2025-01-05T20:56:23.637Z"}
+{"level":"warn","message":"Warning: user repository potrebbe mancare il modelName","repository":"user","timestamp":"2025-01-05T20:56:23.641Z"}
+{"level":"warn","message":"Warning: class repository potrebbe mancare il modelName","repository":"class","timestamp":"2025-01-05T20:56:23.642Z"}
+{"level":"warn","message":"Warning: student repository potrebbe mancare il modelName","repository":"student","timestamp":"2025-01-05T20:56:23.643Z"}
+{"level":"warn","message":"Warning: test repository potrebbe mancare il modelName","repository":"test","timestamp":"2025-01-05T20:56:23.643Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T20:56:23.644Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-05T20:56:24.031Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T20:56:24.037Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T20:56:24.037Z"}
+{"body":{"email":"admin@test.com","password":"[REDACTED]"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736110611715_cbsbz2nka","timestamp":"2025-01-05T20:56:51.715Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [POST] /api/v1/auth/login","timestamp":"2025-01-05T20:56:51.716Z"}
+{"level":"info","message":"Auth Route Called: POST /api/v1/auth/login","timestamp":"2025-01-05T20:56:51.717Z"}
+{"error":{},"level":"error","message":"Errore durante il login","timestamp":"2025-01-05T20:56:51.832Z"}
+{"body":{"email":"admin@test.com","password":"[REDACTED]"},"error":{"message":"createError is not defined","stack":"ReferenceError: createError is not defined\n    at UserRepository.verifyCredentials (C:\\Users\\ricca\\Desktop\\BSc\\src\\repositories\\UserRepository.js:115:13)\n    at async AuthController.login (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\authController.js:101:26)"},"level":"error","message":"Errore richiesta","method":"POST","query":{},"requestId":"req_1736110611715_cbsbz2nka","timestamp":"2025-01-05T20:56:51.834Z","url":"/api/v1/auth/login"}
+{"level":"error","message":"createError is not defined","stack":"ReferenceError: createError is not defined\n    at UserRepository.verifyCredentials (C:\\Users\\ricca\\Desktop\\BSc\\src\\repositories\\UserRepository.js:115:13)\n    at async AuthController.login (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\authController.js:101:26)","timestamp":"2025-01-05T20:56:51.835Z"}
+{"duration":"124ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736110611715_cbsbz2nka","responseSize":"446 Bytes","statusCode":500,"timestamp":"2025-01-05T20:56:51.839Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: school repository potrebbe mancare il modelName","repository":"school","timestamp":"2025-01-05T20:58:03.113Z"}
+{"level":"warn","message":"Warning: user repository potrebbe mancare il modelName","repository":"user","timestamp":"2025-01-05T20:58:03.117Z"}
+{"level":"warn","message":"Warning: class repository potrebbe mancare il modelName","repository":"class","timestamp":"2025-01-05T20:58:03.118Z"}
+{"level":"warn","message":"Warning: student repository potrebbe mancare il modelName","repository":"student","timestamp":"2025-01-05T20:58:03.119Z"}
+{"level":"warn","message":"Warning: test repository potrebbe mancare il modelName","repository":"test","timestamp":"2025-01-05T20:58:03.120Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T20:58:03.120Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T20:58:03.510Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T20:58:03.517Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T20:58:03.518Z"}
+{"body":{"email":"admin@test.com","password":"[REDACTED]"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736110690732_15543nlhf","timestamp":"2025-01-05T20:58:10.732Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Route chiamata: [POST] /api/v1/auth/login","timestamp":"2025-01-05T20:58:10.733Z"}
+{"level":"info","message":"Auth Route Called: POST /api/v1/auth/login","timestamp":"2025-01-05T20:58:10.734Z"}
+{"error":{},"level":"error","message":"Errore durante il login","timestamp":"2025-01-05T20:58:10.864Z"}
+{"body":{"email":"admin@test.com","password":"[REDACTED]"},"error":{"message":"createError is not defined","stack":"ReferenceError: createError is not defined\n    at UserRepository.verifyCredentials (C:\\Users\\ricca\\Desktop\\BSc\\src\\repositories\\UserRepository.js:115:13)\n    at async AuthController.login (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\authController.js:101:26)"},"level":"error","message":"Errore richiesta","method":"POST","query":{},"requestId":"req_1736110690732_15543nlhf","timestamp":"2025-01-05T20:58:10.866Z","url":"/api/v1/auth/login"}
+{"level":"error","message":"createError is not defined","stack":"ReferenceError: createError is not defined\n    at UserRepository.verifyCredentials (C:\\Users\\ricca\\Desktop\\BSc\\src\\repositories\\UserRepository.js:115:13)\n    at async AuthController.login (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\authController.js:101:26)","timestamp":"2025-01-05T20:58:10.869Z"}
+{"duration":"142ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736110690732_15543nlhf","responseSize":"446 Bytes","statusCode":500,"timestamp":"2025-01-05T20:58:10.874Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: school repository potrebbe mancare il modelName","repository":"school","timestamp":"2025-01-05T21:03:46.074Z"}
+{"level":"warn","message":"Warning: user repository potrebbe mancare il modelName","repository":"user","timestamp":"2025-01-05T21:03:46.078Z"}
+{"level":"warn","message":"Warning: class repository potrebbe mancare il modelName","repository":"class","timestamp":"2025-01-05T21:03:46.078Z"}
+{"level":"warn","message":"Warning: student repository potrebbe mancare il modelName","repository":"student","timestamp":"2025-01-05T21:03:46.080Z"}
+{"level":"warn","message":"Warning: test repository potrebbe mancare il modelName","repository":"test","timestamp":"2025-01-05T21:03:46.080Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T21:03:46.081Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T21:03:46.547Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T21:03:46.554Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T21:03:46.555Z"}
+{"level":"warn","message":"Warning: school repository potrebbe mancare il modelName","repository":"school","timestamp":"2025-01-05T21:04:35.502Z"}
+{"level":"warn","message":"Warning: user repository potrebbe mancare il modelName","repository":"user","timestamp":"2025-01-05T21:04:35.505Z"}
+{"level":"warn","message":"Warning: class repository potrebbe mancare il modelName","repository":"class","timestamp":"2025-01-05T21:04:35.507Z"}
+{"level":"warn","message":"Warning: student repository potrebbe mancare il modelName","repository":"student","timestamp":"2025-01-05T21:04:35.508Z"}
+{"level":"warn","message":"Warning: test repository potrebbe mancare il modelName","repository":"test","timestamp":"2025-01-05T21:04:35.509Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T21:04:35.509Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T21:04:35.908Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T21:04:35.917Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T21:04:35.917Z"}
+{"level":"warn","message":"Warning: school repository potrebbe mancare il modelName","repository":"school","timestamp":"2025-01-05T21:09:48.350Z"}
+{"level":"warn","message":"Warning: user repository potrebbe mancare il modelName","repository":"user","timestamp":"2025-01-05T21:09:48.353Z"}
+{"level":"warn","message":"Warning: class repository potrebbe mancare il modelName","repository":"class","timestamp":"2025-01-05T21:09:48.354Z"}
+{"level":"warn","message":"Warning: student repository potrebbe mancare il modelName","repository":"student","timestamp":"2025-01-05T21:09:48.355Z"}
+{"level":"warn","message":"Warning: test repository potrebbe mancare il modelName","repository":"test","timestamp":"2025-01-05T21:09:48.355Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T21:09:48.356Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-05T21:09:48.758Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T21:09:48.764Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T21:09:48.765Z"}
+{"level":"warn","message":"Warning: school repository potrebbe mancare il modelName","repository":"school","timestamp":"2025-01-05T21:11:07.797Z"}
+{"level":"warn","message":"Warning: user repository potrebbe mancare il modelName","repository":"user","timestamp":"2025-01-05T21:11:07.801Z"}
+{"level":"warn","message":"Warning: class repository potrebbe mancare il modelName","repository":"class","timestamp":"2025-01-05T21:11:07.802Z"}
+{"level":"warn","message":"Warning: student repository potrebbe mancare il modelName","repository":"student","timestamp":"2025-01-05T21:11:07.804Z"}
+{"level":"warn","message":"Warning: test repository potrebbe mancare il modelName","repository":"test","timestamp":"2025-01-05T21:11:07.804Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T21:11:07.805Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-05T21:11:08.222Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T21:11:08.229Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T21:11:08.229Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T21:23:04.926Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T21:23:04.929Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T21:23:04.930Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T21:23:04.931Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T21:23:04.931Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T21:23:04.932Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T21:23:04.937Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T21:23:04.948Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T21:23:05.315Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T21:23:05.321Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T21:23:05.322Z"}
+{"body":{"email":"test@brainscanner.com","firstName":"Test","lastName":"User","password":"[REDACTED]"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736112632238_fvcevltg8","timestamp":"2025-01-05T21:30:32.238Z","url":"/api/v1/auth/register","userAgent":"curl/8.11.0"}
+{"correlationId":"ce7c5aa6-29d6-418d-8e35-2619c0428209","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/auth/register","timestamp":"2025-01-05T21:30:32.240Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/register","timestamp":"2025-01-05T21:30:32.250Z","userAgent":"curl/8.11.0"}
+{"error":{"_message":"User validation failed","errors":{"role":{"kind":"required","message":"Path `role` is required.","name":"ValidatorError","path":"role","properties":{"message":"Path `role` is required.","path":"role","type":"required"}}},"message":"User validation failed: role: Path `role` is required.","name":"ValidationError"},"level":"error","message":"Errore nella creazione di User","timestamp":"2025-01-05T21:30:32.259Z"}
+{"error":{"code":"DB_001","message":"Errore nella creazione di User","metadata":{"originalError":"User validation failed: role: Path `role` is required."},"status":500},"level":"error","message":"Errore durante la registrazione","timestamp":"2025-01-05T21:30:32.260Z"}
+{"duration":"26ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736112632238_fvcevltg8","responseSize":"77 Bytes","statusCode":500,"timestamp":"2025-01-05T21:30:32.264Z","url":"/api/v1/auth/register","userAgent":"curl/8.11.0"}
+{"body":{"email":"admin@test.com","firstName":"Admin","lastName":"Test","password":"[REDACTED]","role":"admin"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736112678632_bvtvuh29f","timestamp":"2025-01-05T21:31:18.632Z","url":"/api/v1/auth/register","userAgent":"curl/8.11.0"}
+{"correlationId":"cef5037c-d228-4d70-ad3f-cf4b977c5864","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/auth/register","timestamp":"2025-01-05T21:31:18.633Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/register","timestamp":"2025-01-05T21:31:18.634Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Utente registrato con successo","timestamp":"2025-01-05T21:31:18.761Z","userId":"677afa2672313bb6224448ec"}
+{"duration":"146ms","ip":"::1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736112678632_bvtvuh29f","responseSize":"507 Bytes","statusCode":201,"timestamp":"2025-01-05T21:31:18.778Z","url":"/api/v1/auth/register","userAgent":"curl/8.11.0"}

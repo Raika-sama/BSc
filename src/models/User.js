@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const logger = require('../utils/errors/logger/logger'); // Assicurati che il path sia corretto
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
     firstName: {
@@ -84,7 +85,7 @@ userSchema.pre('save', async function(next) {
             return false;
         }
     };
-    
+
     // Metodo per generare token reset password
     userSchema.methods.getResetPasswordToken = function() {
         // Generate token

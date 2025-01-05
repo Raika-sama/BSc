@@ -15,6 +15,7 @@ const UserRepository = require('./UserRepository');
 const ClassRepository = require('./ClassRepository');
 const StudentRepository = require('./StudentRepository');
 const TestRepository = require('./TestRepository');
+const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
 /**
@@ -58,21 +59,34 @@ const repositories = {
  * @private
  */
 const validateRepositories = () => {
-    Object.entries(repositories).forEach(([name, repository]) => {
-        if (!repository.model) {
-            logger.error(`Errore di inizializzazione repository: ${name}`, {
-                repository: name,
-                error: 'Model non inizializzato'
-            });
-            throw new Error(`Repository ${name} non inizializzato correttamente`);
-        }
+    try {
+        Object.entries(repositories).forEach(([name, repository]) => {
+            if (!repository.model) {
+                logger.error(`Repository non inizializzato correttamente`, {
+                    repository: name,
+                    error: 'Model non inizializzato'
+                });
+                throw createError(
+                    ErrorTypes.SYSTEM.INTERNAL_ERROR,
+                    `Repository ${name} non inizializzato correttamente`
+                );
+            }
 
-        if (!repository.modelName) {
-            logger.warn(`Warning: ${name} repository potrebbe mancare il modelName`, {
-                repository: name
-            });
-        }
-    });
+            if (!repository.modelName) {
+                logger.warn(`Warning: ModelName mancante nel repository`, {
+                    repository: name
+                });
+            }
+        });
+    } catch (error) {
+        if (error.code) throw error;
+        logger.error('Errore durante la validazione dei repository', { error });
+        throw createError(
+            ErrorTypes.SYSTEM.INTERNAL_ERROR,
+            'Errore durante l\'inizializzazione dei repository',
+            { originalError: error.message }
+        );
+    }
 };
 
 /**
@@ -80,10 +94,15 @@ const validateRepositories = () => {
  * @private
  */
 const logLoadedRepositories = () => {
-    logger.info('Repository caricati con successo', {
-        repositories: Object.keys(repositories),
-        timestamp: new Date().toISOString()
-    });
+    try {
+        logger.info('Repository caricati con successo', {
+            repositories: Object.keys(repositories),
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        logger.error('Errore durante il logging dei repository', { error });
+        // Non lanciamo l'errore qui perché il logging è non critico
+    }
 };
 
 // Esegue le verifiche di inizializzazione

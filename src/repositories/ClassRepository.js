@@ -2,43 +2,27 @@
 
 const BaseRepository = require('./base/BaseRepository');
 const { Class } = require('../models');
-const { AppError } = require('../utils/errors/AppError');
+const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+const logger = require('../utils/errors/logger/logger');
 
-/**
- * Repository per la gestione delle operazioni specifiche delle classi
- * Estende le funzionalità base del BaseRepository
- */
 class ClassRepository extends BaseRepository {
     constructor() {
         super(Class);
     }
 
-
-
-    /**
-     * Trova un utente con i dettagli della scuola
-     * @param {String} userId - ID dell'utente
-     * @returns {Promise} Utente con dettagli scuola
-     */
     async findUserWithSchool(userId) {
         try {
             return await User.findById(userId).populate('schoolId');
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nel recupero dei dettagli utente', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nel recupero dei dettagli utente',
-                500,
-                'USER_DETAILS_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    
-    /**
-     * Trova una classe con tutti i dettagli popolati
-     * @param {String} id - ID della classe
-     * @returns {Promise} Classe con dettagli
-     */
     async findWithDetails(id) {
         try {
             const classData = await this.findById(id, {
@@ -64,21 +48,15 @@ class ClassRepository extends BaseRepository {
 
             return classData;
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nel recupero dei dettagli della classe', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nel recupero dei dettagli della classe',
-                error.statusCode || 500,
-                error.code || 'CLASS_DETAILS_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Trova tutte le classi di una scuola
-     * @param {String} schoolId - ID della scuola
-     * @param {String} academicYear - Anno accademico (opzionale)
-     * @returns {Promise} Array di classi
-     */
     async findBySchool(schoolId, academicYear) {
         try {
             const filter = { schoolId, isActive: true };
@@ -96,30 +74,24 @@ class ClassRepository extends BaseRepository {
                 ]
             });
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nella ricerca delle classi della scuola', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella ricerca delle classi della scuola',
-                500,
-                'SCHOOL_CLASSES_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Aggiunge un insegnante alla classe
-     * @param {String} classId - ID della classe
-     * @param {String} teacherId - ID dell'insegnante
-     * @returns {Promise} Classe aggiornata
-     */
     async addTeacher(classId, teacherId) {
         try {
             const classData = await this.findById(classId);
 
             if (classData.teachers.includes(teacherId)) {
-                throw new AppError(
-                    'Insegnante già assegnato alla classe',
-                    400,
-                    'TEACHER_ALREADY_ASSIGNED'
+                logger.warn('Tentativo di aggiungere un insegnante già assegnato', { classId, teacherId });
+                throw createError(
+                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
+                    'Insegnante già assegnato alla classe'
                 );
             }
 
@@ -128,31 +100,25 @@ class ClassRepository extends BaseRepository {
 
             return classData;
         } catch (error) {
-            throw new AppError(
+            if (error.code) throw error; // Se è già un errore formattato
+            logger.error('Errore nell\'aggiunta dell\'insegnante alla classe', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nell\'aggiunta dell\'insegnante alla classe',
-                error.statusCode || 500,
-                error.code || 'ADD_TEACHER_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Rimuove un insegnante dalla classe
-     * @param {String} classId - ID della classe
-     * @param {String} teacherId - ID dell'insegnante
-     * @returns {Promise} Classe aggiornata
-     */
     async removeTeacher(classId, teacherId) {
         try {
             const classData = await this.findById(classId);
 
-            // Non permettere la rimozione del mainTeacher
             if (classData.mainTeacher.toString() === teacherId) {
-                throw new AppError(
-                    'Impossibile rimuovere l\'insegnante principale',
-                    400,
-                    'MAIN_TEACHER_REMOVAL_ERROR'
+                logger.warn('Tentativo di rimuovere l\'insegnante principale', { classId, teacherId });
+                throw createError(
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
+                    'Impossibile rimuovere l\'insegnante principale'
                 );
             }
 
@@ -163,30 +129,25 @@ class ClassRepository extends BaseRepository {
             await classData.save();
             return classData;
         } catch (error) {
-            throw new AppError(
+            if (error.code) throw error;
+            logger.error('Errore nella rimozione dell\'insegnante dalla classe', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella rimozione dell\'insegnante dalla classe',
-                error.statusCode || 500,
-                error.code || 'REMOVE_TEACHER_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Aggiunge uno studente alla classe
-     * @param {String} classId - ID della classe
-     * @param {String} studentId - ID dello studente
-     * @returns {Promise} Classe aggiornata
-     */
     async addStudent(classId, studentId) {
         try {
             const classData = await this.findById(classId);
 
             if (classData.students.includes(studentId)) {
-                throw new AppError(
-                    'Studente già presente nella classe',
-                    400,
-                    'STUDENT_ALREADY_ASSIGNED'
+                logger.warn('Tentativo di aggiungere uno studente già presente', { classId, studentId });
+                throw createError(
+                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
+                    'Studente già presente nella classe'
                 );
             }
 
@@ -195,21 +156,16 @@ class ClassRepository extends BaseRepository {
 
             return classData;
         } catch (error) {
-            throw new AppError(
+            if (error.code) throw error;
+            logger.error('Errore nell\'aggiunta dello studente alla classe', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nell\'aggiunta dello studente alla classe',
-                error.statusCode || 500,
-                error.code || 'ADD_STUDENT_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Rimuove uno studente dalla classe
-     * @param {String} classId - ID della classe
-     * @param {String} studentId - ID dello studente
-     * @returns {Promise} Classe aggiornata
-     */
     async removeStudent(classId, studentId) {
         try {
             const classData = await this.findById(classId);
@@ -221,40 +177,29 @@ class ClassRepository extends BaseRepository {
             await classData.save();
             return classData;
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nella rimozione dello studente dalla classe', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella rimozione dello studente dalla classe',
-                error.statusCode || 500,
-                error.code || 'REMOVE_STUDENT_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Verifica se una classe esiste con determinati criteri
-     * @param {Object} criteria - Criteri di ricerca
-     * @returns {Promise<boolean>} True se la classe esiste
-     */
     async exists(criteria) {
         try {
             const count = await this.count(criteria);
             return count > 0;
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nella verifica esistenza classe', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella verifica esistenza classe',
-                500,
-                'CLASS_EXISTS_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Trova classi per insegnante
-     * @param {String} teacherId - ID dell'insegnante
-     * @param {String} academicYear - Anno accademico (opzionale)
-     * @returns {Promise} Array di classi
-     */
     async findByTeacher(teacherId, academicYear) {
         try {
             const filter = {
@@ -277,11 +222,11 @@ class ClassRepository extends BaseRepository {
                 }
             });
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nella ricerca delle classi per insegnante', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella ricerca delle classi per insegnante',
-                500,
-                'TEACHER_CLASSES_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }

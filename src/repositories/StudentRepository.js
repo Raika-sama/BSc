@@ -1,8 +1,9 @@
 // src/repositories/StudentRepository.js
 
 const BaseRepository = require('./base/BaseRepository');
-const { Student } = require('../models');
-const { AppError } = require('../utils/errors/AppError');
+const { Student, Class } = require('../models');
+const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+const logger = require('../utils/errors/logger/logger');
 
 /**
  * Repository per la gestione delle operazioni specifiche degli studenti
@@ -13,11 +14,6 @@ class StudentRepository extends BaseRepository {
         super(Student);
     }
 
-    /**
-     * Trova uno studente con tutti i dettagli popolati
-     * @param {String} id - ID dello studente
-     * @returns {Promise} Studente con dettagli
-     */
     async findWithDetails(id) {
         try {
             const student = await this.findById(id, {
@@ -47,66 +43,45 @@ class StudentRepository extends BaseRepository {
 
             return student;
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nel recupero dei dettagli dello studente', { error, studentId: id });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nel recupero dei dettagli dello studente',
-                error.statusCode || 500,
-                error.code || 'STUDENT_DETAILS_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-/**
-     * Trova una classe per ID
-     * @param {String} classId - ID della classe
-     * @returns {Promise} Classe trovata
-     */
     async findClass(classId) {
         try {
             return await Class.findById(classId);
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nel recupero della classe', { error, classId });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nel recupero della classe',
-                500,
-                'CLASS_FETCH_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-
-    /**
-     * Trova una classe per anno e sezione in una scuola
-     * @param {String} schoolId - ID della scuola
-     * @param {Number} year - Anno scolastico
-     * @param {String} section - Sezione
-     * @returns {Promise} Classe trovata
-     */
     async findClassByYearAndSection(schoolId, year, section) {
         try {
             return await Class.findOne({ schoolId, year, section });
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nel recupero della classe', { error, schoolId, year, section });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nel recupero della classe',
-                500,
-                'CLASS_FETCH_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-
-    /**
-     * Assegna uno studente a una classe con gestione dello storico
-     * @param {String} studentId - ID dello studente
-     * @param {Object} updateData - Dati per l'aggiornamento incluso lo storico
-     * @returns {Promise} Studente aggiornato
-     */
     async assignToClass(studentId, updateData) {
         try {
             const student = await this.findById(studentId);
             
-            // Aggiorna i campi base
             student.classId = updateData.classId;
             student.section = updateData.section;
             student.currentYear = updateData.currentYear;
@@ -115,7 +90,6 @@ class StudentRepository extends BaseRepository {
             student.lastClassChangeDate = updateData.lastClassChangeDate;
             student.needsClassAssignment = false;
 
-            // Aggiungi la voce allo storico
             if (!student.classChangeHistory) {
                 student.classChangeHistory = [];
             }
@@ -134,27 +108,19 @@ class StudentRepository extends BaseRepository {
             await student.save();
             return student;
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nell\'assegnazione della classe', { error, studentId, updateData });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nell\'assegnazione della classe',
-                error.statusCode || 500,
-                error.code || 'CLASS_ASSIGNMENT_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-
-    /**
-     * Rimuove uno studente da una classe con registrazione storico
-     * @param {String} studentId - ID dello studente
-     * @param {String} reason - Motivo della rimozione
-     * @returns {Promise} Studente aggiornato
-     */
     async removeFromClass(studentId, reason = 'Rimozione dalla classe') {
         try {
             const student = await this.findById(studentId);
             
-            // Aggiungi la voce allo storico prima della rimozione
             if (!student.classChangeHistory) {
                 student.classChangeHistory = [];
             }
@@ -170,7 +136,6 @@ class StudentRepository extends BaseRepository {
                 reason: reason
             });
 
-            // Rimuovi l'assegnazione alla classe
             student.classId = null;
             student.section = null;
             student.mainTeacher = null;
@@ -181,20 +146,15 @@ class StudentRepository extends BaseRepository {
             await student.save();
             return student;
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nella rimozione dalla classe', { error, studentId, reason });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella rimozione dalla classe',
-                error.statusCode || 500,
-                error.code || 'CLASS_REMOVAL_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Trova studenti senza classe assegnata
-     * @param {String} schoolId - ID della scuola
-     * @returns {Promise} Array di studenti
-     */
     async findUnassigned(schoolId) {
         try {
             return await this.find(
@@ -208,20 +168,15 @@ class StudentRepository extends BaseRepository {
                 }
             );
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nella ricerca degli studenti non assegnati', { error, schoolId });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella ricerca degli studenti non assegnati',
-                500,
-                'UNASSIGNED_SEARCH_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Trova studenti per classe
-     * @param {String} classId - ID della classe
-     * @returns {Promise} Array di studenti
-     */
     async findByClass(classId) {
         try {
             return await this.find(
@@ -229,21 +184,15 @@ class StudentRepository extends BaseRepository {
                 { sort: { lastName: 1, firstName: 1 } }
             );
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nella ricerca degli studenti della classe', { error, classId });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella ricerca degli studenti della classe',
-                500,
-                'CLASS_STUDENTS_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Aggiorna i dati degli insegnanti per gli studenti di una classe
-     * @param {String} classId - ID della classe
-     * @param {Object} teacherData - Dati degli insegnanti da aggiornare
-     * @returns {Promise} Numero di studenti aggiornati
-     */
     async updateClassTeachers(classId, teacherData) {
         try {
             const result = await this.model.updateMany(
@@ -258,21 +207,15 @@ class StudentRepository extends BaseRepository {
 
             return result.modifiedCount;
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nell\'aggiornamento degli insegnanti', { error, classId, teacherData });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nell\'aggiornamento degli insegnanti',
-                500,
-                'TEACHER_UPDATE_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }
 
-    /**
-     * Cerca studenti per nome o cognome
-     * @param {String} searchTerm - Termine di ricerca
-     * @param {String} schoolId - ID della scuola
-     * @returns {Promise} Array di studenti
-     */
     async searchByName(searchTerm, schoolId) {
         try {
             const regex = new RegExp(searchTerm, 'i');
@@ -294,11 +237,11 @@ class StudentRepository extends BaseRepository {
                 }
             );
         } catch (error) {
-            throw new AppError(
+            logger.error('Errore nella ricerca degli studenti per nome', { error, searchTerm, schoolId });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella ricerca degli studenti per nome',
-                500,
-                'NAME_SEARCH_ERROR',
-                { error: error.message }
+                { originalError: error.message }
             );
         }
     }

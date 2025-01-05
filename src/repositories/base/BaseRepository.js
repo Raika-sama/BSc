@@ -21,9 +21,17 @@ class BaseRepository {
         }
     }
 
-    async findById(id) {
+    async findById(id, options = {}) {
         try {
-            const doc = await this.model.findById(id);
+            let query = this.model.findById(id);
+            
+            // Gestione dell'opzione select
+            if (options.select) {
+                query = query.select(options.select);
+            }
+            
+            const doc = await query;
+            
             if (!doc) {
                 throw createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,
@@ -42,9 +50,16 @@ class BaseRepository {
         }
     }
 
-    async findOne(filter) {
+    async findOne(filter, options = {}) {
         try {
-            const doc = await this.model.findOne(filter);
+            let query = this.model.findOne(filter);
+            
+            // Gestione dell'opzione select
+            if (options.select) {
+                query = query.select(options.select);
+            }
+            
+            const doc = await query;
             return doc;
         } catch (error) {
             logger.error(`Errore nella ricerca di ${this.model.modelName}`, { error });
@@ -122,11 +137,11 @@ class BaseRepository {
         try {
             return await this.model.deleteMany(filter);
         } catch (error) {
-            throw new AppError(
-                'Errore nell\'eliminazione multipla',
-                500,
-                'DELETE_MANY_ERROR',
-                { error: error.message }
+            logger.error(`Errore nell'eliminazione multipla di ${this.model.modelName}`, { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                `Errore nell'eliminazione multipla di ${this.model.modelName}`,
+                { originalError: error.message }
             );
         }
     }
