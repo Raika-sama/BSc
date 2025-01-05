@@ -33,6 +33,20 @@ router.use('/students', studentRoutes);
 router.use('/tests', testRoutes);
 router.use('/health', healthRoutes);
 
+
+// 404 handler
+router.use((req, res) => {
+    logger.warn(`Route non trovata: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({
+        status: 'error',
+        error: {
+            code: 'ROUTE_NOT_FOUND',
+            message: 'Route non trovata'
+        }
+    });
+});
+
+
 // Route base API per health check
 router.get('/health', (req, res) => {
     res.status(200).json({
