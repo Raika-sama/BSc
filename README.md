@@ -81,43 +81,7 @@ Brain-Scanner è un'applicazione web progettata per aiutare gli istituti scolast
 
 ## 🚀 Installazione
 
-1. Clona il repository
-```bash
-git clone https://github.com/Raika-sama/Brain-Scanner.git
-```
 
-2. Installa le dipendenze per il backend
-```bash
-cd server
-npm install
-```
-
-3. Installa le dipendenze per il frontend
-```bash
-cd client
-npm install
-```
-
-4. Configura le variabili d'ambiente
-```bash
-# Server (.env)
-MONGODB_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
-PORT=5000
-
-# Client (.env)
-REACT_APP_API_URL=http://localhost:5000
-```
-
-5. Avvia l'applicazione
-```bash
-# Backend
-cd server
-npm start
-
-# Frontend
-cd client
-npm start
 ```
 
 ## 👥 Contribuire
