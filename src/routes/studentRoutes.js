@@ -10,6 +10,7 @@
 const express = require('express');
 const router = express.Router();
 const { student: studentController } = require('../controllers');
+const logger = require('../utils/errors/logger/logger');  // Aggiunto import del logger
 // const { protect, restrictTo } = require('../middleware/auth'); // TODO: Implementare
 
 // Middleware di logging specifico per student routes
@@ -34,12 +35,19 @@ router.delete('/:id', studentController.delete.bind(studentController));
 
 // Error handling specifico per student routes
 router.use((err, req, res, next) => {
-    logger.error('Student Route Error:', err);
+    logger.error('Student Route Error:', { 
+        message: err.message,
+        stack: err.stack,
+        code: err.code
+    });
+    
     res.status(err.statusCode || 500).json({
-        status: 'error',
+        success: false,
         error: {
             message: err.message,
-            code: err.code || 'STUDENT_ROUTE_ERROR'
+            code: err.code || 'STUDENT_ROUTE_ERROR',
+            status: err.statusCode || 500,
+            metadata: err.metadata || {}
         }
     });
 });

@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/authController');
+const { auth: authController } = require('../controllers');  // Modifica qui
 const { protect } = require('../middleware/authMiddleware');
 const logger = require('../utils/errors/logger/logger');
 
@@ -23,20 +23,14 @@ router.use((req, res, next) => {
 router.post('/register', authController.register.bind(authController));
 router.post('/login', authController.login.bind(authController));
 router.post('/forgot-password', authController.forgotPassword.bind(authController));
-router.post('/reset-password', authController.resetPassword.bind(authController));
+router.put('/reset-password/:token', authController.resetPassword.bind(authController));
 
 // Routes protette
 router.use(protect);
-router.post('/logout', authController.logout.bind(authController));
+router.get('/me', authController.getMe.bind(authController));
+router.put('/update-password', authController.updatePassword.bind(authController));
+router.get('/logout', authController.logout.bind(authController));
 
-// Aggiungi questa route di test
-router.get('/me', (req, res) => {
-    res.status(200).json({
-        status: 'success',
-        data: {
-            user: req.user
-        }
-    });
-});
+
 
 module.exports = router;
