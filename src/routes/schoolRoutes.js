@@ -7,46 +7,21 @@
 
 const express = require('express');
 const router = express.Router();
+const { school: schoolController } = require('../controllers');
+const { protect, restrictTo } = require('../middleware/authMiddleware');
 // const { protect, restrictTo } = require('../middleware/auth'); // Da implementare
 // const SchoolController = require('../controllers/schoolController'); // Da implementare
 
 // Rotte pubbliche
-router.get('/', async (req, res) => {
-    res.status(200).json({
-        status: 'success',
-        message: 'Lista scuole - Da implementare'
-    });
-});
+router.get('/', schoolController.getAll.bind(schoolController));
+router.get('/:id', schoolController.getById.bind(schoolController));
+router.get('/region/:region', schoolController.getByRegion.bind(schoolController));
+router.get('/type/:type', schoolController.getByType.bind(schoolController));
 
-router.get('/:id', async (req, res) => {
-    res.status(200).json({
-        status: 'success',
-        message: `Dettagli scuola ${req.params.id} - Da implementare`
-    });
-});
-
-// Rotte protette (richiederanno autenticazione)
-// router.use(protect);
-
-router.post('/', async (req, res) => {
-    res.status(201).json({
-        status: 'success',
-        message: 'Creazione scuola - Da implementare'
-    });
-});
-
-router.put('/:id', async (req, res) => {
-    res.status(200).json({
-        status: 'success',
-        message: `Aggiornamento scuola ${req.params.id} - Da implementare`
-    });
-});
-
-router.delete('/:id', async (req, res) => {
-    res.status(200).json({
-        status: 'success',
-        message: `Eliminazione scuola ${req.params.id} - Da implementare`
-    });
-});
+// Rotte protette
+router.use(protect);
+router.post('/', restrictTo('admin'), schoolController.create.bind(schoolController));
+router.put('/:id', restrictTo('admin'), schoolController.update.bind(schoolController));
+router.delete('/:id', restrictTo('admin'), schoolController.delete.bind(schoolController));
 
 module.exports = router;

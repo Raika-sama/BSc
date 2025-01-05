@@ -9,7 +9,7 @@ const errorHandler = require('./middleware/errorHandler');
 const config = require('./config/config');
 const logger = require('./utils/errors/logger/logger');
 //const apiRoutes = require('./routes');
-const authRoutes = require('./routes/authRoutes');
+const apiRoutes = require('./routes');  // Importa il router principale
 // Inizializza express
 const app = express();
 
@@ -24,7 +24,7 @@ app.use(requestLogger);
 
 // Routes (da implementare)
 //app.use('/api/v1', apiRoutes);
-app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1', apiRoutes);
 
 // app.use('/api/schools', require('./routes/schoolRoutes'));
 // app.use('/api/users', require('./routes/userRoutes'));

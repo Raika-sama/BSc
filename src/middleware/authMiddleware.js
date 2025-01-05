@@ -1,55 +1,41 @@
 // src/middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
-const { AppError } = require('../utils/errors/AppError');
-const repositories = require('../repositories'); 
-
-
-// Usa l'istanza singleton invece di crearne una nuova
-const userRepository = repositories.user;  // Modifica qui
+const  AppError  = require('../utils/errors/AppError');  // Assicurati che il path sia corretto
+const { user: UserRepository } = require('../repositories');
 
 exports.protect = async (req, res, next) => {
     try {
-        // 1. Ottieni il token
+        // 1) Verifica se il token esiste
         let token;
-        if (req.headers.authorization?.startsWith('Bearer')) {
+        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
             token = req.headers.authorization.split(' ')[1];
-        } else if (req.cookies?.jwt) {
-            token = req.cookies.jwt;
         }
 
         if (!token) {
             throw new AppError(
-                'Non sei autenticato',
+                'Non sei loggato. Effettua il login per accedere.',
                 401,
                 'AUTH_REQUIRED'
             );
         }
 
-        // 2. Verifica il token
+        // 2) Verifica il token
         const decoded = jwt.verify(token, config.jwt.secret);
 
-        // 3. Verifica se l'utente esiste ancora
-        const user = await userRepository.findById(decoded.id);
-        if (!user) {
+        // 3) Verifica se l'utente esiste ancora
+        const currentUser = await UserRepository.findById(decoded.id);
+        if (!currentUser) {
             throw new AppError(
-                'Utente non più esistente',
+                'L\'utente di questo token non esiste più.',
                 401,
                 'USER_NOT_FOUND'
             );
         }
 
-        // 4. Controlla se l'utente è attivo
-        if (!user.isActive) {
-            throw new AppError(
-                'Account disattivato',
-                401,
-                'ACCOUNT_INACTIVE'
-            );
-        }
 
-        // Aggiungi l'utente alla request
-        req.user = user;
+        // Concedi accesso alla route protetta
+        req.user = currentUser;
         next();
     } catch (error) {
         next(error);
@@ -59,12 +45,10 @@ exports.protect = async (req, res, next) => {
 exports.restrictTo = (...roles) => {
     return (req, res, next) => {
         if (!roles.includes(req.user.role)) {
-            return next(
-                new AppError(
-                    'Non hai i permessi per questa azione',
-                    403,
-                    'FORBIDDEN_ACCESS'
-                )
+            throw new AppError(
+                'Non hai i permessi per questa azione',
+                403,
+                'FORBIDDEN_ACCESS'
             );
         }
         next();
