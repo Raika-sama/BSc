@@ -1,0 +1,230 @@
+// src/repositories/StudentRepository.js
+
+const BaseRepository = require('./base/BaseRepository');
+const { Student } = require('../models');
+const { AppError } = require('../utils/errors/AppError');
+
+/**
+ * Repository per la gestione delle operazioni specifiche degli studenti
+ * Estende le funzionalità base del BaseRepository
+ */
+class StudentRepository extends BaseRepository {
+    constructor() {
+        super(Student);
+    }
+
+    /**
+     * Trova uno studente con tutti i dettagli popolati
+     * @param {String} id - ID dello studente
+     * @returns {Promise} Studente con dettagli
+     */
+    async findWithDetails(id) {
+        try {
+            const student = await this.findById(id, {
+                populate: [
+                    {
+                        path: 'classId',
+                        select: 'year section academicYear',
+                        populate: {
+                            path: 'mainTeacher',
+                            select: 'firstName lastName email'
+                        }
+                    },
+                    {
+                        path: 'schoolId',
+                        select: 'name schoolType'
+                    },
+                    {
+                        path: 'mainTeacher',
+                        select: 'firstName lastName email'
+                    },
+                    {
+                        path: 'teachers',
+                        select: 'firstName lastName email'
+                    }
+                ]
+            });
+
+            return student;
+        } catch (error) {
+            throw new AppError(
+                'Errore nel recupero dei dettagli dello studente',
+                error.statusCode || 500,
+                error.code || 'STUDENT_DETAILS_ERROR',
+                { error: error.message }
+            );
+        }
+    }
+
+    /**
+     * Assegna uno studente a una classe
+     * @param {String} studentId - ID dello studente
+     * @param {String} classId - ID della classe
+     * @param {Object} classDetails - Dettagli della classe (section, teachers)
+     * @returns {Promise} Studente aggiornato
+     */
+    async assignToClass(studentId, classId, classDetails) {
+        try {
+            const student = await this.findById(studentId);
+
+            // Aggiorna i dati dello studente
+            student.classId = classId;
+            student.section = classDetails.section;
+            student.mainTeacher = classDetails.mainTeacher;
+            student.teachers = classDetails.teachers;
+            student.needsClassAssignment = false;
+
+            await student.save();
+            return student;
+        } catch (error) {
+            throw new AppError(
+                'Errore nell\'assegnazione della classe',
+                error.statusCode || 500,
+                error.code || 'CLASS_ASSIGNMENT_ERROR',
+                { error: error.message }
+            );
+        }
+    }
+
+    /**
+     * Rimuove uno studente da una classe
+     * @param {String} studentId - ID dello studente
+     * @returns {Promise} Studente aggiornato
+     */
+    async removeFromClass(studentId) {
+        try {
+            const student = await this.findById(studentId);
+
+            student.classId = null;
+            student.section = null;
+            student.mainTeacher = null;
+            student.teachers = [];
+            student.needsClassAssignment = true;
+
+            await student.save();
+            return student;
+        } catch (error) {
+            throw new AppError(
+                'Errore nella rimozione dalla classe',
+                error.statusCode || 500,
+                error.code || 'CLASS_REMOVAL_ERROR',
+                { error: error.message }
+            );
+        }
+    }
+
+    /**
+     * Trova studenti senza classe assegnata
+     * @param {String} schoolId - ID della scuola
+     * @returns {Promise} Array di studenti
+     */
+    async findUnassigned(schoolId) {
+        try {
+            return await this.find(
+                {
+                    schoolId,
+                    needsClassAssignment: true,
+                    isActive: true
+                },
+                {
+                    sort: { lastName: 1, firstName: 1 }
+                }
+            );
+        } catch (error) {
+            throw new AppError(
+                'Errore nella ricerca degli studenti non assegnati',
+                500,
+                'UNASSIGNED_SEARCH_ERROR',
+                { error: error.message }
+            );
+        }
+    }
+
+    /**
+     * Trova studenti per classe
+     * @param {String} classId - ID della classe
+     * @returns {Promise} Array di studenti
+     */
+    async findByClass(classId) {
+        try {
+            return await this.find(
+                { classId, isActive: true },
+                { sort: { lastName: 1, firstName: 1 } }
+            );
+        } catch (error) {
+            throw new AppError(
+                'Errore nella ricerca degli studenti della classe',
+                500,
+                'CLASS_STUDENTS_ERROR',
+                { error: error.message }
+            );
+        }
+    }
+
+    /**
+     * Aggiorna i dati degli insegnanti per gli studenti di una classe
+     * @param {String} classId - ID della classe
+     * @param {Object} teacherData - Dati degli insegnanti da aggiornare
+     * @returns {Promise} Numero di studenti aggiornati
+     */
+    async updateClassTeachers(classId, teacherData) {
+        try {
+            const result = await this.model.updateMany(
+                { classId },
+                {
+                    $set: {
+                        mainTeacher: teacherData.mainTeacher,
+                        teachers: teacherData.teachers
+                    }
+                }
+            );
+
+            return result.modifiedCount;
+        } catch (error) {
+            throw new AppError(
+                'Errore nell\'aggiornamento degli insegnanti',
+                500,
+                'TEACHER_UPDATE_ERROR',
+                { error: error.message }
+            );
+        }
+    }
+
+    /**
+     * Cerca studenti per nome o cognome
+     * @param {String} searchTerm - Termine di ricerca
+     * @param {String} schoolId - ID della scuola
+     * @returns {Promise} Array di studenti
+     */
+    async searchByName(searchTerm, schoolId) {
+        try {
+            const regex = new RegExp(searchTerm, 'i');
+            return await this.find(
+                {
+                    schoolId,
+                    isActive: true,
+                    $or: [
+                        { firstName: { $regex: regex } },
+                        { lastName: { $regex: regex } }
+                    ]
+                },
+                {
+                    sort: { lastName: 1, firstName: 1 },
+                    populate: {
+                        path: 'classId',
+                        select: 'year section'
+                    }
+                }
+            );
+        } catch (error) {
+            throw new AppError(
+                'Errore nella ricerca degli studenti per nome',
+                500,
+                'NAME_SEARCH_ERROR',
+                { error: error.message }
+            );
+        }
+    }
+}
+
+module.exports = StudentRepository;

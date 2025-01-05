@@ -1,0 +1,144 @@
+/**
+ * @file logger.js
+ * @description Core sistema di logging dell'applicazione.
+ * Configura Winston per gestire diversi livelli di log e destinazioni.
+ * Fornisce un'interfaccia unificata per il logging in tutta l'applicazione.
+ */
+
+const winston = require('winston');
+const path = require('path');
+require('winston-daily-rotate-file');
+const config = require('../../config/config');
+
+// Definizione dei livelli di logging personalizzati
+const levels = {
+    error: 0,    // Errori critici che richiedono intervento immediato
+    warn: 1,     // Warning che potrebbero diventare errori
+    info: 2,     // Informazioni generali sul funzionamento
+    http: 3,     // Richieste HTTP
+    debug: 4     // Informazioni dettagliate per debug
+};
+
+// Colori per i diversi livelli (usati in development)
+const colors = {
+    error: 'red',
+    warn: 'yellow',
+    info: 'green',
+    http: 'magenta',
+    debug: 'blue'
+};
+
+// Aggiungiamo i colori a winston
+winston.addColors(colors);
+
+/**
+ * Formato base per i log
+ * Include timestamp, livello e messaggio
+ */
+const baseFormat = winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    winston.format.errors({ stack: true }),
+    winston.format.splat()
+);
+
+/**
+ * Formato per output console (development)
+ */
+const consoleFormat = winston.format.combine(
+    baseFormat,
+    winston.format.colorize({ all: true }),
+    winston.format.printf(
+        ({ timestamp, level, message, stack, ...metadata }) => {
+            let log = `${timestamp} [${level}]: ${message}`;
+            
+            // Aggiungi metadata se presenti
+            if (Object.keys(metadata).length > 0) {
+                log += ` ${JSON.stringify(metadata)}`;
+            }
+            // Aggiungi stack trace se presente
+            if (stack) {
+                log += `\n${stack}`;
+            }
+            return log;
+        }
+    )
+);
+
+/**
+ * Formato per file di log (production)
+ */
+const fileFormat = winston.format.combine(
+    baseFormat,
+    winston.format.json()
+);
+
+/**
+ * Configurazione rotazione file di log
+ */
+const rotateOptions = {
+    datePattern: 'YYYY-MM-DD',
+    maxSize: '20m',
+    maxFiles: '14d',
+    createSymlink: true
+};
+
+/**
+ * Creazione del logger
+ */
+const logger = winston.createLogger({
+    level: config.env === 'development' ? 'debug' : 'info',
+    levels,
+    transports: [
+        // Log di errore
+        new winston.transports.DailyRotateFile({
+            ...rotateOptions,
+            filename: path.join('logs', 'error-%DATE%.log'),
+            symlinkName: 'error.log',
+            level: 'error',
+            format: fileFormat
+        }),
+        
+        // Log combinati
+        new winston.transports.DailyRotateFile({
+            ...rotateOptions,
+            filename: path.join('logs', 'combined-%DATE%.log'),
+            symlinkName: 'combined.log',
+            format: fileFormat
+        }),
+
+        // Log HTTP
+        new winston.transports.DailyRotateFile({
+            ...rotateOptions,
+            filename: path.join('logs', 'access-%DATE%.log'),
+            symlinkName: 'access.log',
+            level: 'http',
+            format: fileFormat
+        })
+    ]
+});
+
+// In development, aggiungiamo output console
+if (config.env === 'development') {
+    logger.add(new winston.transports.Console({
+        format: consoleFormat
+    }));
+}
+
+/**
+ * Wrapper per metodi di logging comuni
+ */
+const log = {
+    error: (message, metadata = {}) => logger.error(message, metadata),
+    warn: (message, metadata = {}) => logger.warn(message, metadata),
+    info: (message, metadata = {}) => logger.info(message, metadata),
+    http: (message, metadata = {}) => logger.http(message, metadata),
+    debug: (message, metadata = {}) => logger.debug(message, metadata)
+};
+
+// Creazione cartella logs se non esiste
+const fs = require('fs');
+if (!fs.existsSync('logs')) {
+    fs.mkdirSync('logs');
+}
+
+module.exports = log;
