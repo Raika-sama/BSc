@@ -1,0 +1,138 @@
+Operazioni di GET (Recupero dati)
+bash
+# 1.1 Recuperare tutti gli studenti di una classe OK
+curl -X GET "http://localhost:5000/api/v1/students?classId=677acfd6d33af57f632c3156" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4"
+
+# 1.2 Recuperare i dettagli di uno studente specifico OK
+curl -X GET "http://localhost:5000/api/v1/students/677ad0f3336e847351cad2f0" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4"
+
+# 1.3 Cercare studenti per nome OK
+curl -X GET "http://localhost:5000/api/v1/students/search?name=Mario&schoolId=677acf7ed33af57f632c3153" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4"
+2. Operazioni di UPDATE (Aggiornamento dati)
+bash
+# 2.1 Aggiornare i dati di uno studente OK
+curl -X PUT "http://localhost:5000/api/v1/students/677ad0f3336e847351cad2f0" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4" \
+-d '{
+    "firstName": "Mario Updated",
+    "lastName": "Rossi Updated",
+    "email": "mario.rossi.updated@student.test.com"
+}'
+
+# 2.2 Assegnare uno studente a una classe diversa
+curl -X PUT "http://localhost:5000/api/v1/students/677ad0f3336e847351cad2f0/assign-class" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4" \
+-d '{
+    "classId": "677acfd6d33af57f632c3156",
+    "section": "B"
+}'
+
+# 2.2.0 Test Cambio Sezione (stesso anno)
+bash
+# .1 Cambio da sezione A a B
+curl -X PUT "http://localhost:5000/api/v1/students/677ad0f3336e847351cad2f0/assign-class" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4" \
+-d '{
+    "section": "B",
+    "reason": "Cambio sezione richiesto dalla famiglia"
+}'
+Test Avanzamento Anno (con cambio sezione)
+bash
+# .2 Promozione al secondo anno, sezione C
+curl -X PUT "http://localhost:5000/api/v1/students/677ad0f3336e847351cad2f0/assign-class" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4" \
+-d '{
+    "year": 2,
+    "section": "C",
+    "reason": "Promozione al secondo anno"
+}'
+# .3 Test Errore - Salto di Due Anni (dovrebbe fallire)
+bash
+curl -X PUT "http://localhost:5000/api/v1/students/677ad0f3336e847351cad2f0/assign-class" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4" \
+-d '{
+    "year": 3,
+    "section": "A",
+    "reason": "Tentativo di salto multiplo"
+}'
+# 4. Test Errore - Dati Mancanti (dovrebbe fallire) OK
+bash
+curl -X PUT "http://localhost:5000/api/v1/students/677ad0f3336e847351cad2f0/assign-class" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4" \
+-d '{}'
+Verifica Storia Cambi Classe
+bash
+# 5. Get dello studente per vedere lo storico
+curl -X GET "http://localhost:5000/api/v1/students/677ad0f3336e847351cad2f0" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4"
+Test Cambio Completo Classe (usando classId)
+bash
+# Assumendo che abbiamo l'ID della classe 2C
+curl -X PUT "http://localhost:5000/api/v1/students/677ad0f3336e847351cad2f0/assign-class" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4" \
+-d '{
+    "classId": "ID_DELLA_CLASSE_2C",
+    "reason": "Trasferimento alla classe 2C"
+}'
+
+
+
+3. Test di Validazione (Casi di errore)
+bash
+# 3.1 Tentativo di creare uno studente con email duplicata
+curl -X POST "http://localhost:5000/api/v1/students" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4" \
+-d '{
+    "firstName": "Test",
+    "lastName": "Duplicate",
+    "gender": "M",
+    "email": "mario.rossi@student.test.com",
+    "schoolId": "677acf7ed33af57f632c3153"
+}'
+
+# 3.2 Tentativo di aggiornare con dati non validi
+curl -X PUT "http://localhost:5000/api/v1/students/677ad0f3336e847351cad2f0" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4" \
+-d '{
+    "gender": "X"
+}'
+4. Operazioni Avanzate
+bash
+# 4.1 Recuperare i test di uno studente
+curl -X GET "http://localhost:5000/api/v1/students/677ad0f3336e847351cad2f0/tests" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4"
+
+# 4.2 Recuperare i risultati dei test
+curl -X GET "http://localhost:5000/api/v1/students/677ad0f3336e847351cad2f0/results" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2FjZDhjMmNkODdlNTAyZTU4NDAyMyIsImlhdCI6MTczNjEwMTI2MCwiZXhwIjoxNzM2MTg3NjYwfQ.MKWkK85WXd8JPzSF68L3tq0ywlRTU1PTG-cLjqXcbE4"
+Risultati Attesi:
+Operazioni GET:
+
+Dovrebbero restituire status 200
+I dati dovrebbero essere popolati con le relazioni
+La ricerca dovrebbe funzionare con query parziali
+Operazioni UPDATE:
+
+Dovrebbero restituire status 200
+I dati aggiornati dovrebbero essere riflessi nel database
+Le validazioni dovrebbero essere rispettate
+Test di Validazione:
+
+Dovrebbero restituire errori appropriati (400 per validazione, 409 per duplicati)
+I messaggi di errore dovrebbero essere chiari e descrittivi
+Operazioni Avanzate:
+
+Dovrebbero gestire correttamente i casi di dati non trovati
+Dovrebbero rispettare le autorizzazioni

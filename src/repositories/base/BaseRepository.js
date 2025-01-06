@@ -9,15 +9,16 @@ class BaseRepository {
 
     async create(data) {
         try {
+            logger.debug('Creazione documento:', {
+                modelName: this.model.modelName,
+                data
+            });
+    
             const doc = await this.model.create(data);
             return doc;
         } catch (error) {
             logger.error(`Errore nella creazione di ${this.model.modelName}`, { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                `Errore nella creazione di ${this.model.modelName}`,
-                { originalError: error.message }
-            );
+            throw error; // Passa l'errore originale invece di crearne uno nuovo
         }
     }
 

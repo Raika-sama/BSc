@@ -5,6 +5,7 @@ const schoolSchema = new mongoose.Schema({
     name: {
         type: String,
         required: [true, 'Nome scuola richiesto'],
+        unique: true, // Questo crea l'indice unico
         trim: true
     },
     schoolType: {

@@ -1,5 +1,3 @@
-// src/routes/authRoutes.js
-
 /**
  * @file authRoutes.js
  * @description Router per la gestione dell'autenticazione
@@ -10,8 +8,7 @@
 const express = require('express');
 const router = express.Router();
 const { auth: authController } = require('../controllers');
-const { protect } = require('../middleware/authMiddleware');
-const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+const { protect, restrictTo } = require('../middleware/authMiddleware');const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
 /**
@@ -62,6 +59,41 @@ router.put('/reset-password/:token',
     asyncHandler(authController.resetPassword.bind(authController))
 );
 
+// Rotta per verificare il token
+router.get('/verify', protect, asyncHandler(async (req, res) => {
+    try {
+        logger.info('Verifica token in corso per utente:', {
+            userId: req.user._id
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                valid: true,
+                user: {
+                    id: req.user._id,
+                    schoolId: req.user.schoolId || null,  // Gestiamo il caso null
+                    role: req.user.role,
+                    tokenExpiresAt: new Date(req.user.tokenExp * 1000).toISOString()
+                }
+            }
+        });
+    } catch (error) {
+        logger.error('Errore nella verifica del token:', {
+            error: error.message,
+            stack: error.stack
+        });
+
+        res.status(500).json({
+            status: 'error',
+            error: {
+                message: 'Errore nella verifica del token',
+                code: 'AUTH_VERIFY_ERROR'
+            }
+        });
+    }
+}));
+
 // Middleware di protezione per le route autenticate
 router.use(protect);
 
@@ -77,6 +109,8 @@ router.put('/update-password',
 router.post('/logout', 
     asyncHandler(authController.logout.bind(authController))
 );
+
+
 
 // Error handler specifico per le route di autenticazione
 router.use((err, req, res, next) => {

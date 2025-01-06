@@ -98,6 +98,38 @@ class UserController extends BaseController {
         }
     }
 
+    async updateMe(req, res) {
+        try {
+            logger.debug('Aggiornamento profilo utente:', {
+                userId: req.user.id,
+                updates: req.body
+            });
+
+            const updatedUser = await this.repository.updateUser(req.user.id, {
+                ...req.body,
+                schoolId: req.body.schoolId
+            });
+
+            logger.info('Profilo utente aggiornato con successo:', {
+                userId: updatedUser._id,
+                schoolId: updatedUser.schoolId
+            });
+
+            this.sendResponse(res, { 
+                user: {
+                    id: updatedUser._id,
+                    firstName: updatedUser.firstName,
+                    lastName: updatedUser.lastName,
+                    email: updatedUser.email,
+                    role: updatedUser.role,
+                    schoolId: updatedUser.schoolId
+                }
+            });
+        } catch (error) {
+            logger.error('Errore nell\'aggiornamento del profilo:', error);
+            this.sendError(res, error);
+        }
+    }
 
     
 

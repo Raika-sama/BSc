@@ -8,6 +8,7 @@ const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const { school: SchoolRepository } = require('../repositories');
 
+
 class SchoolController extends BaseController {
     constructor() {
         super(SchoolRepository, 'school');
@@ -17,24 +18,26 @@ class SchoolController extends BaseController {
         this.getByType = this.getByType.bind(this);
     }
 
+
+
+    
     /**
      * Crea una nuova scuola
      * @override
      */
-    async create(req, res, next) {
+    async create(req, res) {
         try {
-            // Validazione iniziale dei dati richiesti
             const schoolData = {
                 ...req.body,
+                manager: req.user.id,
                 users: [{ 
                     user: req.user.id, 
                     role: 'admin' 
-                }],
-                manager: req.user.id // L'utente che crea la scuola ne diventa il manager
+                }]
             };
-
+    
             logger.debug('Tentativo di creazione scuola', { data: schoolData });
-
+    
             const school = await this.repository.create(schoolData);
             
             logger.info('Scuola creata con successo', { 
@@ -42,42 +45,39 @@ class SchoolController extends BaseController {
                 schoolName: school.name,
                 createdBy: req.user.id
             });
-
-            res.status(201).json({
-                status: 'success',
-                data: { school }
-            });
+    
+            return this.sendResponse(res, { school }, 201);
         } catch (error) {
-            logger.error('Errore nella creazione della scuola', { 
-                error,
-                requestBody: req.body 
-            });
-
-            // Gestione errori specifici
+            logger.error('Errore nella creazione della scuola', { error });
+    
+            // Gestione errore duplicato
             if (error.code === 11000) {
-                return next(createError(
-                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
-                    'Esiste già una scuola con questo nome',
-                    { field: 'name' }
-                ));
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'Esiste già una scuola con questo nome',
+                    code: 'SCHOOL_001'
+                });
             }
-
+    
+            // Errori di validazione
             if (error.name === 'ValidationError') {
-                return next(createError(
-                    ErrorTypes.VALIDATION.INVALID_INPUT,
-                    'Dati scuola non validi',
-                    { errors: Object.values(error.errors).map(err => ({
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'Dati scuola non validi',
+                    code: 'SCHOOL_002',
+                    errors: Object.values(error.errors).map(err => ({
                         field: err.path,
                         message: err.message
-                    }))}
-                ));
+                    }))
+                });
             }
-
-            next(createError(
-                ErrorTypes.SYSTEM.INTERNAL_ERROR,
-                'Errore nella creazione della scuola',
-                { originalError: error.message }
-            ));
+    
+            // Altri errori
+            return this.sendError(res, {
+                statusCode: 500,
+                message: 'Errore nella creazione della scuola',
+                code: 'SCHOOL_003'
+            });
         }
     }
 
@@ -125,6 +125,19 @@ class SchoolController extends BaseController {
                 error,
                 type: req.params.type 
             });
+            next(error);
+        }
+    }
+    async getAll(req, res, next) {
+        try {
+            const schools = await this.repository.find({}); // Usa find invece di findAll
+            
+            res.status(200).json({
+                status: 'success',
+                results: schools.length,
+                data: { schools }
+            });
+        } catch (error) {
             next(error);
         }
     }

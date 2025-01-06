@@ -222,18 +222,55 @@ class AuthController {
     }
 
     /**
-     * Ottieni utente corrente
-     * @public
-     */
+ * Ottieni utente corrente
+ * @public
+ */
     async getMe(req, res, next) {
         try {
-            const user = await this.repository.findById(req.user.id);
+            // Log per debug
+            logger.debug('GetMe - Request user:', { 
+                userId: req.user.id, 
+                user_Id: req.user._id 
+            });
+
+            // Usa sia id che _id per essere sicuri
+            const user = await this.repository.findById(req.user._id || req.user.id);
+
+            if (!user) {
+                logger.error('Utente non trovato nel database', {
+                    requestedId: req.user.id,
+                    requested_Id: req.user._id
+                });
+                return res.status(404).json({
+                    status: 'error',
+                    code: 'RES_001',
+                    message: 'User non trovato'
+                });
+            }
+
+            logger.info('Utente trovato con successo', {
+                userId: user._id,
+                email: user.email
+            });
+
             res.status(200).json({
                 status: 'success',
-                data: { user }
+                data: { 
+                    user: {
+                        id: user._id,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        email: user.email,
+                        role: user.role,
+                        schoolId: user.schoolId
+                    }
+                }
             });
         } catch (error) {
-            logger.error('Errore nel recupero del profilo utente', { error });
+            logger.error('Errore nel recupero del profilo utente', { 
+                error: error.message,
+                stack: error.stack 
+            });
             next(error);
         }
     }

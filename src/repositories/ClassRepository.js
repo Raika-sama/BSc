@@ -1,13 +1,112 @@
 // src/repositories/ClassRepository.js
-
+const mongoose = require('mongoose');  // Aggiungi questo import
 const BaseRepository = require('./base/BaseRepository');
-const { Class } = require('../models');
+const { Class, User, School } = require('../models');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
 class ClassRepository extends BaseRepository {
     constructor() {
         super(Class);
+    }
+
+
+    async exists(criteria) {
+        try {
+            logger.debug('Verifica esistenza classe con criteri:', criteria);
+            
+            // Verifica che l'ID della scuola sia valido
+            if (!mongoose.Types.ObjectId.isValid(criteria.schoolId)) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'ID scuola non valido'
+                );
+            }
+
+            // Usa il modello Class direttamente
+            const existingClass = await Class.findOne({
+                schoolId: criteria.schoolId,
+                year: criteria.year,
+                section: criteria.section,
+                academicYear: criteria.academicYear
+            }).exec(); // Aggiungi .exec() per assicurarti che la promise sia risolta
+
+            logger.debug('Risultato verifica esistenza:', { 
+                exists: !!existingClass,
+                searchCriteria: criteria 
+            });
+
+            return !!existingClass;
+        } catch (error) {
+            logger.error('Errore nella verifica esistenza classe:', {
+                error: error.message,
+                stack: error.stack,
+                criteria
+            });
+            
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nella verifica esistenza classe',
+                { originalError: error.message }
+            );
+        }
+    }
+
+
+    async create(data) {
+        try {
+            // Verifica stato connessione database
+            if (mongoose.connection.readyState !== 1) {
+                throw createError(
+                    ErrorTypes.DATABASE.CONNECTION_ERROR,
+                    'Database non connesso'
+                );
+            }
+
+            // Verifica che i dati siano validi
+            if (!data || !data.schoolId || !data.mainTeacher) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Dati classe incompleti'
+                );
+            }
+
+            // Crea un nuovo documento usando il modello direttamente
+            const classDoc = new Class(data);
+            
+            // Valida il documento
+            await classDoc.validate();
+
+            // Salva il documento
+            const savedClass = await classDoc.save();
+
+            logger.info('Classe creata con successo:', {
+                classId: savedClass._id,
+                schoolId: savedClass.schoolId
+            });
+
+            return savedClass;
+
+        } catch (error) {
+            logger.error('Errore creazione classe:', {
+                message: error.message,
+                stack: error.stack,
+                validationErrors: error.errors,
+                data: data
+            });
+
+            if (error.name === 'ValidationError') {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Errore di validazione: ' + error.message
+                );
+            }
+
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nella creazione della classe: ' + error.message
+            );
+        }
     }
 
     async findUserWithSchool(userId) {
@@ -166,6 +265,27 @@ class ClassRepository extends BaseRepository {
         }
     }
 
+    async addStudents(classId, studentIds) {
+        try {
+            const classData = await this.findById(classId);
+            const newStudents = studentIds.filter(id => 
+                !classData.students.includes(id)
+            );
+            
+            if (newStudents.length) {
+                classData.students.push(...newStudents);
+                await classData.save();
+            }
+            return classData;
+        } catch (error) {
+            logger.error('Errore nell\'aggiunta degli studenti', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nell\'aggiunta degli studenti'
+            );
+        }
+    }
+
     async removeStudent(classId, studentId) {
         try {
             const classData = await this.findById(classId);
@@ -186,19 +306,6 @@ class ClassRepository extends BaseRepository {
         }
     }
 
-    async exists(criteria) {
-        try {
-            const count = await this.count(criteria);
-            return count > 0;
-        } catch (error) {
-            logger.error('Errore nella verifica esistenza classe', { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella verifica esistenza classe',
-                { originalError: error.message }
-            );
-        }
-    }
 
     async findByTeacher(teacherId, academicYear) {
         try {

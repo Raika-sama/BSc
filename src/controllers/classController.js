@@ -136,42 +136,93 @@ class ClassController extends BaseController {
     /**
      * Crea una nuova classe nella scuola dell'utente corrente
      */
+    
+    async exists(criteria) {
+        try {
+            // Aggiungiamo log per debug
+            logger.debug('Verifica esistenza classe con criteri:', criteria);
+
+            // Usiamo this.model direttamente invece di count
+            const existingClass = await this.model.findOne(criteria);
+            
+            logger.debug('Risultato verifica:', { exists: !!existingClass });
+            
+            return !!existingClass;
+        } catch (error) {
+            logger.error('Errore nella verifica esistenza classe', { 
+                error,
+                criteria 
+            });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nella verifica esistenza classe',
+                { originalError: error.message }
+            );
+        }
+    }
+
     async create(req, res) {
         try {
-            // Assicura che la classe venga creata nella scuola dell'utente
+            // Verifica utente
+            if (!req.user) {
+                return this.sendError(res, {
+                    statusCode: 401,
+                    message: 'Utente non autenticato',
+                    code: 'AUTH_001'
+                });
+            }
+    
+            // Verifica schoolId
+            if (!req.user.schoolId) {
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'Nessuna scuola associata all\'utente',
+                    code: 'CLASS_002'
+                });
+            }
+    
+            // Prepara i dati della classe
             const classData = {
                 ...req.body,
                 schoolId: req.user.schoolId
             };
-
-            // Verifica che non esista già una classe con stessi parametri
+    
+            // Verifica esistenza
             const exists = await this.repository.exists({
                 schoolId: req.user.schoolId,
                 year: classData.year,
                 section: classData.section,
                 academicYear: classData.academicYear
             });
-
+    
             if (exists) {
                 return this.sendError(res, {
                     statusCode: 400,
                     message: 'Classe già esistente per questo anno e sezione',
-                    code: 'CLASS_ALREADY_EXISTS'
+                    code: 'CLASS_003'
                 });
             }
-
+    
+            // Crea la classe
             const newClass = await this.repository.create(classData);
             this.sendResponse(res, { class: newClass });
         } catch (error) {
+            logger.error('Errore nella creazione della classe:', error);
             this.sendError(res, error);
         }
     }
+    
 
    /**
      * Elimina tutte le classi della scuola dell'utente corrente
      */
   
-
+   async validateAcademicYear(academicYear) {
+    const currentYear = new Date().getFullYear();
+    const [startYear, endYear] = academicYear.split('/');
+    return parseInt(startYear) === currentYear && 
+           parseInt(endYear) === currentYear + 1;
+}
 
 
 }

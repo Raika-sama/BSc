@@ -9,11 +9,20 @@
 
 const logger = require('../utils/errors/logger/logger');
 
-class BaseController {
-    constructor(repository, modelName) {
-        this.repository = repository;
-        this.modelName = modelName;
+    class BaseController {
+        constructor(repository, modelName) {
+            this.repository = repository;
+            this.modelName = modelName;
+        // Binding esplicito dei metodi
+        this.sendResponse = this.sendResponse.bind(this);
+        this.sendError = this.sendError.bind(this);
+        this.getAll = this.getAll.bind(this);
+        this.getById = this.getById.bind(this);
+        this.create = this.create.bind(this);
+        this.update = this.update.bind(this);
+        this.delete = this.delete.bind(this);
     }
+        
 
     /**
      * Gestisce le risposte HTTP
@@ -28,7 +37,12 @@ class BaseController {
     /**
      * Gestisce gli errori
      */
-    sendError(res, error) {
+    sendError(res, error, next) {
+        if (next) {
+            next(error);
+            return;
+        }
+        
         logger.error(`${this.modelName} error:`, error);
         res.status(error.statusCode || 500).json({
             status: 'error',

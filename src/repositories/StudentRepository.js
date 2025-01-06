@@ -52,9 +52,37 @@ class StudentRepository extends BaseRepository {
         }
     }
 
+    async updateClass(classId, update) {
+        try {
+            logger.debug('Aggiornamento classe:', { classId, update });
+
+            const result = await Class.updateOne(
+                { _id: classId },
+                update
+            ).exec();
+
+            logger.debug('Risultato aggiornamento classe:', { result });
+
+            return result;
+        } catch (error) {
+            logger.error('Errore nell\'aggiornamento della classe:', {
+                error,
+                classId,
+                update
+            });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nell\'aggiornamento della classe',
+                { originalError: error.message }
+            );
+        }
+    }
+
     async findClass(classId) {
         try {
-            return await Class.findById(classId);
+            return await Class.findById(classId)
+                .populate('mainTeacher', 'firstName lastName email')
+                .populate('teachers', 'firstName lastName email');
         } catch (error) {
             logger.error('Errore nel recupero della classe', { error, classId });
             throw createError(
@@ -67,12 +95,31 @@ class StudentRepository extends BaseRepository {
 
     async findClassByYearAndSection(schoolId, year, section) {
         try {
-            return await Class.findOne({ schoolId, year, section });
+            logger.debug('Ricerca classe:', { schoolId, year, section });
+
+            const classData = await Class.findOne({
+                schoolId,
+                year,
+                section,
+                isActive: true
+            }).exec();
+
+            logger.debug('Risultato ricerca classe:', { 
+                found: !!classData,
+                classId: classData?._id 
+            });
+
+            return classData;
         } catch (error) {
-            logger.error('Errore nel recupero della classe', { error, schoolId, year, section });
+            logger.error('Errore nella ricerca della classe:', {
+                error,
+                schoolId,
+                year,
+                section
+            });
             throw createError(
                 ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nel recupero della classe',
+                'Errore nella ricerca della classe',
                 { originalError: error.message }
             );
         }

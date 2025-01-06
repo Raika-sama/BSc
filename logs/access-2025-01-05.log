@@ -1132,3 +1132,493 @@
 {"ip":"::1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/register","timestamp":"2025-01-05T21:31:18.634Z","userAgent":"curl/8.11.0"}
 {"level":"info","message":"Utente registrato con successo","timestamp":"2025-01-05T21:31:18.761Z","userId":"677afa2672313bb6224448ec"}
 {"duration":"146ms","ip":"::1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736112678632_bvtvuh29f","responseSize":"507 Bytes","statusCode":201,"timestamp":"2025-01-05T21:31:18.778Z","url":"/api/v1/auth/register","userAgent":"curl/8.11.0"}
+{"body":{"email":"admin@test.com","password":"[REDACTED]"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736112989983_qjtfgqc4i","timestamp":"2025-01-05T21:36:29.983Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"correlationId":"df8c10b1-7691-4920-8944-677f25e9edad","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-05T21:36:29.984Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-05T21:36:29.985Z","userAgent":"curl/8.11.0"}
+{"duration":"145ms","ip":"::1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736112989983_qjtfgqc4i","responseSize":"472 Bytes","statusCode":200,"timestamp":"2025-01-05T21:36:30.128Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736113022391_xx5tmk7dz","timestamp":"2025-01-05T21:37:02.391Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"correlationId":"71ffcfb4-2dfa-49cf-8648-ba4bee334601","ip":"::1","level":"info","message":"Route Called","method":"GET","path":"/api/v1/auth/me","timestamp":"2025-01-05T21:37:02.392Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/me","timestamp":"2025-01-05T21:37:02.393Z","userAgent":"curl/8.11.0"}
+{"duration":"42ms","ip":"::1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736113022391_xx5tmk7dz","responseSize":"290 Bytes","statusCode":200,"timestamp":"2025-01-05T21:37:02.433Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"body":{"email":"teacher@test.com","firstName":"Teacher","lastName":"Test","password":"[REDACTED]","role":"teacher"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736113038100_8yiobo3cc","timestamp":"2025-01-05T21:37:18.100Z","url":"/api/v1/auth/register","userAgent":"curl/8.11.0"}
+{"correlationId":"3e3ebe30-6343-4b5b-912e-d2ad92bafd0c","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/auth/register","timestamp":"2025-01-05T21:37:18.101Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/register","timestamp":"2025-01-05T21:37:18.102Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Utente registrato con successo","timestamp":"2025-01-05T21:37:18.200Z","userId":"677afb8e72313bb6224448f2"}
+{"duration":"103ms","ip":"::1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736113038100_8yiobo3cc","responseSize":"513 Bytes","statusCode":201,"timestamp":"2025-01-05T21:37:18.203Z","url":"/api/v1/auth/register","userAgent":"curl/8.11.0"}
+{"body":{"email":"admin@test.com","firstName":"Teacher","lastName":"Test","password":"[REDACTED]","role":"teacher"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736113052769_w6432w6cq","timestamp":"2025-01-05T21:37:32.769Z","url":"/api/v1/auth/register","userAgent":"curl/8.11.0"}
+{"correlationId":"51e06ab7-065a-4599-9079-39c553c25caf","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/auth/register","timestamp":"2025-01-05T21:37:32.770Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/register","timestamp":"2025-01-05T21:37:32.770Z","userAgent":"curl/8.11.0"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"admin@test.com"}},"level":"error","message":"Errore nella creazione di User","timestamp":"2025-01-05T21:37:32.868Z"}
+{"error":{"code":"DB_001","message":"Errore nella creazione di User","metadata":{"originalError":"E11000 duplicate key error collection: brainScannerDB.users index: email_1 dup key: { email: \"admin@test.com\" }"},"status":500},"level":"error","message":"Errore durante la registrazione","timestamp":"2025-01-05T21:37:32.869Z"}
+{"duration":"101ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736113052769_w6432w6cq","responseSize":"77 Bytes","statusCode":500,"timestamp":"2025-01-05T21:37:32.870Z","url":"/api/v1/auth/register","userAgent":"curl/8.11.0"}
+{"body":{"currentPassword":"12345678","newPassword":"87654321"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"PUT","query":{},"requestId":"req_1736113093412_kyy0sahxa","timestamp":"2025-01-05T21:38:13.412Z","url":"/api/v1/auth/update-password","userAgent":"curl/8.11.0"}
+{"correlationId":"6c390ab5-9996-4165-b1a3-91bc48788643","ip":"::1","level":"info","message":"Route Called","method":"PUT","path":"/api/v1/auth/update-password","timestamp":"2025-01-05T21:38:13.413Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"PUT","path":"/api/v1/auth/update-password","timestamp":"2025-01-05T21:38:13.414Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Password aggiornata con successo","timestamp":"2025-01-05T21:38:13.625Z","userId":"677afa2672313bb6224448ec"}
+{"duration":"215ms","ip":"::1","level":"http","message":"Risposta inviata","method":"PUT","requestId":"req_1736113093412_kyy0sahxa","responseSize":"546 Bytes","statusCode":200,"timestamp":"2025-01-05T21:38:13.627Z","url":"/api/v1/auth/update-password","userAgent":"curl/8.11.0"}
+{"body":{"email":"teacher@test.com"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736113104462_w0rfxtxqv","timestamp":"2025-01-05T21:38:24.462Z","url":"/api/v1/auth/forgot-password","userAgent":"curl/8.11.0"}
+{"correlationId":"19d0436e-7593-4d4c-be70-7ad2996f6c3d","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/auth/forgot-password","timestamp":"2025-01-05T21:38:24.463Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/forgot-password","timestamp":"2025-01-05T21:38:24.463Z","userAgent":"curl/8.11.0"}
+{"duration":"42ms","ip":"::1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736113104462_w0rfxtxqv","responseSize":"103 Bytes","statusCode":200,"timestamp":"2025-01-05T21:38:24.504Z","url":"/api/v1/auth/forgot-password","userAgent":"curl/8.11.0"}
+{"body":{"email":"invalid-email","firstName":"","lastName":"Test","password":"[REDACTED]","role":"invalid-role"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736113116678_nhlqen4hu","timestamp":"2025-01-05T21:38:36.678Z","url":"/api/v1/auth/register","userAgent":"curl/8.11.0"}
+{"correlationId":"00d19892-89f2-4e1c-b30d-eeb6a00cdf1b","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/auth/register","timestamp":"2025-01-05T21:38:36.679Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/register","timestamp":"2025-01-05T21:38:36.679Z","userAgent":"curl/8.11.0"}
+{"error":{"_message":"User validation failed","errors":{"email":{"kind":"user defined","message":"invalid-email non è un'email valida!","name":"ValidatorError","path":"email","properties":{"message":"invalid-email non è un'email valida!","path":"email","type":"user defined","value":"invalid-email"},"value":"invalid-email"},"firstName":{"kind":"required","message":"Path `firstName` is required.","name":"ValidatorError","path":"firstName","properties":{"message":"Path `firstName` is required.","path":"firstName","type":"required","value":""},"value":""},"password":{"kind":"minlength","message":"Path `password` (`123`) is shorter than the minimum allowed length (8).","name":"ValidatorError","path":"password","properties":{"message":"Path `password` (`123`) is shorter than the minimum allowed length (8).","minlength":8,"path":"password","type":"minlength","value":"123"},"value":"123"},"role":{"kind":"enum","message":"`invalid-role` is not a valid enum value for path `role`.","name":"ValidatorError","path":"role","properties":{"enumValues":["teacher","admin"],"message":"`invalid-role` is not a valid enum value for path `role`.","path":"role","type":"enum","value":"invalid-role"},"value":"invalid-role"}},"message":"User validation failed: firstName: Path `firstName` is required., email: invalid-email non è un'email valida!, password: Path `password` (`123`) is shorter than the minimum allowed length (8)., role: `invalid-role` is not a valid enum value for path `role`.","name":"ValidationError"},"level":"error","message":"Errore nella creazione di User","timestamp":"2025-01-05T21:38:36.681Z"}
+{"error":{"code":"DB_001","message":"Errore nella creazione di User","metadata":{"originalError":"User validation failed: firstName: Path `firstName` is required., email: invalid-email non è un'email valida!, password: Path `password` (`123`) is shorter than the minimum allowed length (8)., role: `invalid-role` is not a valid enum value for path `role`."},"status":500},"level":"error","message":"Errore durante la registrazione","timestamp":"2025-01-05T21:38:36.682Z"}
+{"duration":"6ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736113116678_nhlqen4hu","responseSize":"77 Bytes","statusCode":500,"timestamp":"2025-01-05T21:38:36.684Z","url":"/api/v1/auth/register","userAgent":"curl/8.11.0"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736113145594_fawcp1sue","timestamp":"2025-01-05T21:39:05.594Z","url":"/api/v1/auth/logout","userAgent":"curl/8.11.0"}
+{"correlationId":"0a820f99-b80b-413c-87ab-86b772bfa5b1","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-01-05T21:39:05.595Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-01-05T21:39:05.596Z","userAgent":"curl/8.11.0"}
+{"duration":"22ms","ip":"::1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736113145594_fawcp1sue","responseSize":"32 Bytes","statusCode":200,"timestamp":"2025-01-05T21:39:05.616Z","url":"/api/v1/auth/logout","userAgent":"curl/8.11.0"}
+{"body":{"address":"Via Test 123","institutionType":"none","name":"Scuola Media Test","numberOfYears":3,"province":"Milano","region":"Lombardia","schoolType":"middle_school","sections":["A","B","C"]},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736113360991_1yyfo97fa","timestamp":"2025-01-05T21:42:40.991Z","url":"/api/v1/schools","userAgent":"curl/8.11.0"}
+{"correlationId":"b9d6286a-130e-422d-a22e-6be36c9cfd7f","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/schools","timestamp":"2025-01-05T21:42:40.992Z","userAgent":"curl/8.11.0"}
+{"level":"error","message":"jwt malformed","name":"JsonWebTokenError","timestamp":"2025-01-05T21:42:40.993Z"}
+{"error":{"message":"Non autorizzato ad accedere a questa risorsa","metadata":{}},"ip":"::1","level":"error","message":"Global Error Handler","method":"POST","path":"/api/v1/schools","timestamp":"2025-01-05T21:42:40.994Z"}
+{"duration":"4ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736113360991_1yyfo97fa","responseSize":"172 Bytes","statusCode":500,"timestamp":"2025-01-05T21:42:40.995Z","url":"/api/v1/schools","userAgent":"curl/8.11.0"}
+{"body":{"address":"Via Test 123","institutionType":"none","name":"Scuola Media Test","numberOfYears":3,"province":"Milano","region":"Lombardia","schoolType":"middle_school","sections":["A","B","C"]},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736113497883_3700sglgd","timestamp":"2025-01-05T21:44:57.884Z","url":"/api/v1/schools","userAgent":"curl/8.11.0"}
+{"correlationId":"808c75f7-b7c1-431e-99d8-675a6ce51b75","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/schools","timestamp":"2025-01-05T21:44:57.885Z","userAgent":"curl/8.11.0"}
+{"createdBy":"677afa2672313bb6224448ec","level":"info","message":"Scuola creata con successo","schoolId":"677afd5972313bb6224448fe","schoolName":"Scuola Media Test","timestamp":"2025-01-05T21:44:57.948Z"}
+{"duration":"67ms","ip":"::1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736113497883_3700sglgd","responseSize":"496 Bytes","statusCode":201,"timestamp":"2025-01-05T21:44:57.950Z","url":"/api/v1/schools","userAgent":"curl/8.11.0"}
+{"body":{"address":"Via Liceo 456","institutionType":"scientific","name":"Liceo Scientifico Test","numberOfYears":5,"province":"Milano","region":"Lombardia","schoolType":"high_school","sections":["A","B"]},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736113502838_xcldxmvvv","timestamp":"2025-01-05T21:45:02.838Z","url":"/api/v1/schools","userAgent":"curl/8.11.0"}
+{"correlationId":"c98cb4ec-9a33-492c-960a-4a773ab8bd5c","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/schools","timestamp":"2025-01-05T21:45:02.839Z","userAgent":"curl/8.11.0"}
+{"createdBy":"677afa2672313bb6224448ec","level":"info","message":"Scuola creata con successo","schoolId":"677afd5e72313bb622444902","schoolName":"Liceo Scientifico Test","timestamp":"2025-01-05T21:45:02.881Z"}
+{"duration":"45ms","ip":"::1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736113502838_xcldxmvvv","responseSize":"502 Bytes","statusCode":201,"timestamp":"2025-01-05T21:45:02.883Z","url":"/api/v1/schools","userAgent":"curl/8.11.0"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736113507977_ilw4wfmx3","timestamp":"2025-01-05T21:45:07.977Z","url":"/api/v1/schools","userAgent":"curl/8.11.0"}
+{"correlationId":"0872fe2e-23de-4e67-a1d4-2e35e048c1b9","ip":"::1","level":"info","message":"Route Called","method":"GET","path":"/api/v1/schools","timestamp":"2025-01-05T21:45:07.978Z","userAgent":"curl/8.11.0"}
+{"level":"error","message":"school error:","timestamp":"2025-01-05T21:45:07.979Z"}
+{"duration":"4ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1736113507977_ilw4wfmx3","responseSize":"113 Bytes","statusCode":500,"timestamp":"2025-01-05T21:45:07.981Z","url":"/api/v1/schools","userAgent":"curl/8.11.0"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736113560436_6zk5zcnyo","timestamp":"2025-01-05T21:46:00.436Z","url":"/api/v1/schools/677afd5e72313bb622444902","userAgent":"curl/8.11.0"}
+{"correlationId":"1ae66b17-34d8-4455-9c3f-952279f0eb82","ip":"::1","level":"info","message":"Route Called","method":"GET","path":"/api/v1/schools/677afd5e72313bb622444902","timestamp":"2025-01-05T21:46:00.437Z","userAgent":"curl/8.11.0"}
+{"duration":"23ms","ip":"::1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736113560436_6zk5zcnyo","responseSize":"502 Bytes","statusCode":200,"timestamp":"2025-01-05T21:46:00.459Z","url":"/api/v1/schools/677afd5e72313bb622444902","userAgent":"curl/8.11.0"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736113567720_wzo1x80kk","timestamp":"2025-01-05T21:46:07.720Z","url":"/api/v1/schools/region/Lombardia","userAgent":"curl/8.11.0"}
+{"correlationId":"b6cfb794-23a6-4f42-ba0d-8443dc0257d1","ip":"::1","level":"info","message":"Route Called","method":"GET","path":"/api/v1/schools/region/Lombardia","timestamp":"2025-01-05T21:46:07.721Z","userAgent":"curl/8.11.0"}
+{"duration":"22ms","ip":"::1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736113567720_wzo1x80kk","responseSize":"1.4 KB","statusCode":200,"timestamp":"2025-01-05T21:46:07.742Z","url":"/api/v1/schools/region/Lombardia","userAgent":"curl/8.11.0"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736113573266_lc2f5yl9k","timestamp":"2025-01-05T21:46:13.266Z","url":"/api/v1/schools/type/high_school","userAgent":"curl/8.11.0"}
+{"correlationId":"fe6993b5-ad81-4026-8f21-7e95b180a452","ip":"::1","level":"info","message":"Route Called","method":"GET","path":"/api/v1/schools/type/high_school","timestamp":"2025-01-05T21:46:13.267Z","userAgent":"curl/8.11.0"}
+{"duration":"20ms","ip":"::1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736113573266_lc2f5yl9k","responseSize":"517 Bytes","statusCode":200,"timestamp":"2025-01-05T21:46:13.286Z","url":"/api/v1/schools/type/high_school","userAgent":"curl/8.11.0"}
+{"body":{"address":"","name":"","numberOfYears":4,"province":"","region":"","schoolType":"invalid_type","sections":["AA"]},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736113580201_rq7f1so22","timestamp":"2025-01-05T21:46:20.201Z","url":"/api/v1/schools","userAgent":"curl/8.11.0"}
+{"correlationId":"2f4c306b-7856-4911-a4e6-9314ada6da26","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/schools","timestamp":"2025-01-05T21:46:20.202Z","userAgent":"curl/8.11.0"}
+{"error":{"_message":"School validation failed","errors":{"address":{"kind":"required","message":"Path `address` is required.","name":"ValidatorError","path":"address","properties":{"message":"Path `address` is required.","path":"address","type":"required","value":""},"value":""},"name":{"kind":"required","message":"Nome scuola richiesto","name":"ValidatorError","path":"name","properties":{"message":"Nome scuola richiesto","path":"name","type":"required","value":""},"value":""},"numberOfYears":{"kind":"user defined","message":"Numero di anni non valido per il tipo di scuola","name":"ValidatorError","path":"numberOfYears","properties":{"message":"Numero di anni non valido per il tipo di scuola","path":"numberOfYears","type":"user defined","value":4},"value":4},"province":{"kind":"required","message":"Path `province` is required.","name":"ValidatorError","path":"province","properties":{"message":"Path `province` is required.","path":"province","type":"required","value":""},"value":""},"region":{"kind":"required","message":"Path `region` is required.","name":"ValidatorError","path":"region","properties":{"message":"Path `region` is required.","path":"region","type":"required","value":""},"value":""},"schoolType":{"kind":"enum","message":"`invalid_type` is not a valid enum value for path `schoolType`.","name":"ValidatorError","path":"schoolType","properties":{"enumValues":["middle_school","high_school"],"message":"`invalid_type` is not a valid enum value for path `schoolType`.","path":"schoolType","type":"enum","value":"invalid_type"},"value":"invalid_type"},"sections.0":{"kind":"user defined","message":"AA non è una sezione valida!","name":"ValidatorError","path":"sections.0","properties":{"message":"AA non è una sezione valida!","path":"sections.0","type":"user defined","value":"AA"},"value":"AA"}},"message":"School validation failed: name: Nome scuola richiesto, schoolType: `invalid_type` is not a valid enum value for path `schoolType`., numberOfYears: Numero di anni non valido per il tipo di scuola, region: Path `region` is required., province: Path `province` is required., address: Path `address` is required., sections.0: AA non è una sezione valida!","name":"ValidationError"},"level":"error","message":"Errore nella creazione di School","timestamp":"2025-01-05T21:46:20.223Z"}
+{"error":{"code":"DB_001","message":"Errore nella creazione di School","metadata":{"originalError":"School validation failed: name: Nome scuola richiesto, schoolType: `invalid_type` is not a valid enum value for path `schoolType`., numberOfYears: Numero di anni non valido per il tipo di scuola, region: Path `region` is required., province: Path `province` is required., address: Path `address` is required., sections.0: AA non è una sezione valida!"},"status":500},"level":"error","message":"Errore nella creazione della scuola","requestBody":{"address":"","name":"","numberOfYears":4,"province":"","region":"","schoolType":"invalid_type","sections":["AA"]},"timestamp":"2025-01-05T21:46:20.226Z"}
+{"error":{"code":"SYS_001","message":"Errore nella creazione della scuola","metadata":{"originalError":"Errore nella creazione di School"},"status":500},"ip":"::1","level":"error","message":"Global Error Handler","method":"POST","path":"/api/v1/schools","timestamp":"2025-01-05T21:46:20.226Z"}
+{"duration":"26ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736113580201_rq7f1so22","responseSize":"170 Bytes","statusCode":500,"timestamp":"2025-01-05T21:46:20.227Z","url":"/api/v1/schools","userAgent":"curl/8.11.0"}
+{"body":{"name":"Scuola Media Test Updated","sections":["A","B","C","D"]},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"PUT","query":{},"requestId":"req_1736113633254_5hn5sjewn","timestamp":"2025-01-05T21:47:13.254Z","url":"/api/v1/schools/677afa2672313bb6224448ec","userAgent":"curl/8.11.0"}
+{"correlationId":"0e78ee67-7b67-44a1-a881-84b642614e5c","ip":"::1","level":"info","message":"Route Called","method":"PUT","path":"/api/v1/schools/677afa2672313bb6224448ec","timestamp":"2025-01-05T21:47:13.255Z","userAgent":"curl/8.11.0"}
+{"code":"RES_001","level":"error","message":"School non trovato","metadata":{},"status":404,"timestamp":"2025-01-05T21:47:13.309Z"}
+{"duration":"57ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"PUT","requestId":"req_1736113633254_5hn5sjewn","responseSize":"76 Bytes","statusCode":500,"timestamp":"2025-01-05T21:47:13.311Z","url":"/api/v1/schools/677afa2672313bb6224448ec","userAgent":"curl/8.11.0"}
+{"body":{"name":"Scuola Media Test Updated","sections":["A","B","C","D"]},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"PUT","query":{},"requestId":"req_1736113690693_t19nqe0hv","timestamp":"2025-01-05T21:48:10.693Z","url":"/api/v1/schools/677afd5972313bb6224448fe","userAgent":"curl/8.11.0"}
+{"correlationId":"edb3252b-48ce-4f90-b8f0-915266605bd3","ip":"::1","level":"info","message":"Route Called","method":"PUT","path":"/api/v1/schools/677afd5972313bb6224448fe","timestamp":"2025-01-05T21:48:10.694Z","userAgent":"curl/8.11.0"}
+{"duration":"43ms","ip":"::1","level":"http","message":"Risposta inviata","method":"PUT","requestId":"req_1736113690693_t19nqe0hv","responseSize":"508 Bytes","statusCode":200,"timestamp":"2025-01-05T21:48:10.736Z","url":"/api/v1/schools/677afd5972313bb6224448fe","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T21:50:15.633Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T21:50:15.636Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T21:50:15.638Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T21:50:15.639Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T21:50:15.640Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T21:50:15.641Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T21:50:15.648Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T21:50:15.662Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T21:50:16.089Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T21:50:16.098Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T21:50:16.098Z"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736113829454_r7si33gtu","timestamp":"2025-01-05T21:50:29.454Z","url":"/api/v1/schools","userAgent":"curl/8.11.0"}
+{"correlationId":"34c81b10-62e0-45c3-9fd9-04cc8913a9fc","ip":"::1","level":"info","message":"Route Called","method":"GET","path":"/api/v1/schools","timestamp":"2025-01-05T21:50:29.455Z","userAgent":"curl/8.11.0"}
+{"duration":"37ms","ip":"::1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736113829454_r7si33gtu","responseSize":"1.41 KB","statusCode":200,"timestamp":"2025-01-05T21:50:29.491Z","url":"/api/v1/schools","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T21:53:54.648Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T21:53:54.653Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T21:53:54.654Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T21:53:54.655Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T21:53:54.656Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T21:53:54.657Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T21:53:54.664Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T21:53:54.677Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-05T21:53:55.088Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T21:53:55.099Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T21:53:55.100Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T21:53:56.283Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T21:53:56.287Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T21:53:56.288Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T21:53:56.289Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T21:53:56.290Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T21:53:56.291Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T21:53:56.297Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T21:53:56.309Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T21:53:56.681Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T21:53:56.689Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T21:53:56.690Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T21:54:36.487Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T21:54:36.491Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T21:54:36.492Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T21:54:36.493Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T21:54:36.494Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T21:54:36.494Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T21:54:36.500Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T21:54:36.512Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-05T21:54:36.887Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T21:54:36.895Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T21:54:36.896Z"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","year":1},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736114089464_xb29q130m","timestamp":"2025-01-05T21:54:49.464Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"correlationId":"818c1539-742d-47a7-a2ff-e77edad509bc","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/classes","timestamp":"2025-01-05T21:54:49.467Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Class Route Called: POST /api/v1/classes","timestamp":"2025-01-05T21:54:49.468Z"}
+{"level":"error","message":"class error:","timestamp":"2025-01-05T21:54:49.469Z"}
+{"duration":"9ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736114089464_xb29q130m","responseSize":"128 Bytes","statusCode":500,"timestamp":"2025-01-05T21:54:49.473Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T21:56:21.562Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T21:56:21.567Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T21:56:21.568Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T21:56:21.569Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T21:56:21.570Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T21:56:21.572Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T21:56:21.597Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T21:56:21.618Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T21:56:22.055Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T21:56:22.063Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T21:56:22.063Z"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","teachers":["677afa2672313bb6224448ec"],"year":1},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736114187743_51228xo52","timestamp":"2025-01-05T21:56:27.744Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"correlationId":"7bcbfd1f-c804-404b-94cc-b91b7ca77ad2","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/classes","timestamp":"2025-01-05T21:56:27.745Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Class Route Called: POST /api/v1/classes","timestamp":"2025-01-05T21:56:27.746Z"}
+{"error":{},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T21:56:27.747Z"}
+{"code":"DB_001","level":"error","message":"Errore nella verifica esistenza classe","metadata":{"originalError":"this.count is not a function"},"status":500,"timestamp":"2025-01-05T21:56:27.748Z"}
+{"code":"CLASS_CREATE_ERROR","level":"error","message":"Errore nella verifica esistenza classe","statusCode":500,"timestamp":"2025-01-05T21:56:27.748Z"}
+{"duration":"9ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736114187743_51228xo52","responseSize":"107 Bytes","statusCode":500,"timestamp":"2025-01-05T21:56:27.753Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T21:57:41.769Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T21:57:41.773Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T21:57:41.774Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T21:57:41.775Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T21:57:41.775Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T21:57:41.776Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T21:57:41.782Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T21:57:41.795Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T21:57:42.191Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T21:57:42.201Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T21:57:42.202Z"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736114269514_ipnmadqia","timestamp":"2025-01-05T21:57:49.514Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T21:59:23.118Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T21:59:23.122Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T21:59:23.122Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T21:59:23.123Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T21:59:23.124Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T21:59:23.124Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T21:59:23.130Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T21:59:23.139Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T21:59:24.387Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T21:59:24.396Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T21:59:24.397Z"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736114367663_5virr2mmq","timestamp":"2025-01-05T21:59:27.664Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T21:59:58.220Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T21:59:58.226Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T21:59:58.227Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T21:59:58.228Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T21:59:58.228Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T21:59:58.229Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T21:59:58.234Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T21:59:58.246Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T21:59:58.628Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T21:59:58.636Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T21:59:58.637Z"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736114406293_iz21tacgj","timestamp":"2025-01-05T22:00:06.294Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:00:51.430Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:00:51.434Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:00:51.435Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:00:51.436Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:00:51.437Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:00:51.438Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:00:51.444Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:00:51.457Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-05T22:00:51.882Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:00:51.891Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:00:51.891Z"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736114454434_njbq5931l","timestamp":"2025-01-05T22:00:54.434Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:01:24.696Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:01:24.700Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:01:24.701Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:01:24.702Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:01:24.702Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:01:24.703Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:01:24.710Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:01:24.729Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T22:01:25.123Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:01:25.133Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:01:25.134Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:02:55.559Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:02:55.563Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:02:55.564Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:02:55.565Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:02:55.565Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:02:55.566Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:02:55.572Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:02:55.586Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-05T22:02:57.934Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:02:57.942Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:02:57.943Z"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736114613784_v0ur755f6","timestamp":"2025-01-05T22:03:33.785Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"correlationId":"55125c92-eebc-48af-bc10-c105d3563cd1","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/classes","timestamp":"2025-01-05T22:03:33.787Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Class Route Called: POST /api/v1/classes","timestamp":"2025-01-05T22:03:33.789Z"}
+{"error":{},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T22:03:33.791Z"}
+{"code":"DB_001","level":"error","message":"Errore nella verifica esistenza classe","metadata":{"originalError":"this.count is not a function"},"status":500,"timestamp":"2025-01-05T22:03:33.792Z"}
+{"code":"DB_001","level":"error","message":"Errore nella verifica esistenza classe","statusCode":500,"timestamp":"2025-01-05T22:03:33.793Z"}
+{"duration":"12ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736114613784_v0ur755f6","responseSize":"95 Bytes","statusCode":500,"timestamp":"2025-01-05T22:03:33.797Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:03:49.903Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:03:49.907Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:03:49.909Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:03:49.911Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:03:49.912Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:03:49.913Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:03:49.921Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:03:49.937Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T22:03:50.326Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:03:50.335Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:03:50.335Z"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736114633446_mj27cv79c","timestamp":"2025-01-05T22:03:53.446Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"correlationId":"4f2bb98e-2610-467f-89ca-1e07e41a77f2","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/classes","timestamp":"2025-01-05T22:03:53.448Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Class Route Called: POST /api/v1/classes","timestamp":"2025-01-05T22:03:53.449Z"}
+{"error":{},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T22:03:53.450Z"}
+{"code":"DB_001","level":"error","message":"Errore nella verifica esistenza classe","metadata":{"originalError":"this.count is not a function"},"status":500,"timestamp":"2025-01-05T22:03:53.452Z"}
+{"code":"DB_001","level":"error","message":"Errore nella verifica esistenza classe","statusCode":500,"timestamp":"2025-01-05T22:03:53.453Z"}
+{"duration":"10ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736114633446_mj27cv79c","responseSize":"95 Bytes","statusCode":500,"timestamp":"2025-01-05T22:03:53.457Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:05:52.646Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:05:52.650Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:05:52.651Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:05:52.652Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:05:52.652Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:05:52.653Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:05:52.659Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:05:52.669Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T22:05:53.050Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:05:53.056Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:05:53.056Z"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736114762723_y9vjn7ax2","timestamp":"2025-01-05T22:06:02.723Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"correlationId":"abc35df9-2c2f-4413-8bcc-317044756aa1","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/classes","timestamp":"2025-01-05T22:06:02.725Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Class Route Called: POST /api/v1/classes","timestamp":"2025-01-05T22:06:02.726Z"}
+{"error":{},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T22:06:02.727Z"}
+{"code":"DB_001","level":"error","message":"Errore nella verifica esistenza classe","metadata":{"originalError":"this.count is not a function"},"status":500,"timestamp":"2025-01-05T22:06:02.729Z"}
+{"code":"DB_001","level":"error","message":"Errore nella verifica esistenza classe","statusCode":500,"timestamp":"2025-01-05T22:06:02.730Z"}
+{"duration":"10ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736114762723_y9vjn7ax2","responseSize":"95 Bytes","statusCode":500,"timestamp":"2025-01-05T22:06:02.733Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:07:33.467Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:07:33.471Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:07:33.471Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:07:33.472Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:07:33.473Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:07:33.474Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:07:33.481Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:07:33.492Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T22:07:33.875Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:07:33.886Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:07:33.887Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:07:50.137Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:07:50.140Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:07:50.141Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:07:50.142Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:07:50.143Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:07:50.143Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:07:50.149Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:07:50.159Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-05T22:07:50.520Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:07:50.527Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:07:50.528Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:08:16.068Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:08:16.072Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:08:16.073Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:08:16.074Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:08:16.075Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:08:16.075Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:08:16.081Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:08:16.092Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T22:08:16.457Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:08:16.464Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:08:16.464Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:08:20.651Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:08:20.654Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:08:20.655Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:08:20.656Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:08:20.656Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:08:20.657Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:08:20.662Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:08:20.673Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T22:08:21.041Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:08:21.050Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:08:21.051Z"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736114904284_jon873hsy","timestamp":"2025-01-05T22:08:24.284Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"correlationId":"44b7730e-af36-40ec-b972-195c70932074","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/classes","timestamp":"2025-01-05T22:08:24.285Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Class Route Called: POST /api/v1/classes","timestamp":"2025-01-05T22:08:24.286Z"}
+{"error":{},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T22:08:24.288Z"}
+{"error":"Errore nella verifica esistenza classe","level":"error","message":"Errore nella verifica:","timestamp":"2025-01-05T22:08:24.289Z"}
+{"data":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T22:08:24.290Z"}
+{"code":"DB_001","level":"error","message":"Errore nella verifica esistenza classe","statusCode":500,"timestamp":"2025-01-05T22:08:24.291Z"}
+{"duration":"11ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736114904284_jon873hsy","responseSize":"95 Bytes","statusCode":500,"timestamp":"2025-01-05T22:08:24.295Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:10:09.227Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:10:09.231Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:10:09.232Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:10:09.234Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:10:09.234Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:10:09.235Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:10:09.241Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:10:09.260Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T22:10:09.739Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:10:09.753Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:10:09.754Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:10:38.286Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:10:38.289Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:10:38.290Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:10:38.292Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:10:38.292Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:10:38.293Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:10:38.298Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:10:38.307Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T22:10:38.674Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:10:38.682Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:10:38.683Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:11:03.324Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:11:03.329Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:11:03.330Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:11:03.331Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:11:03.331Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:11:03.332Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:11:03.338Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:11:03.351Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T22:11:03.731Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:11:03.738Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:11:03.739Z"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736115073692_1wapbl0e1","timestamp":"2025-01-05T22:11:13.692Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"correlationId":"ec16809e-80b2-4652-b686-0840f2e2bdf1","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/classes","timestamp":"2025-01-05T22:11:13.694Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Class Route Called: POST /api/v1/classes","timestamp":"2025-01-05T22:11:13.695Z"}
+{"error":{},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T22:11:13.698Z"}
+{"error":"Errore nella verifica esistenza classe","level":"error","message":"Errore nella verifica:","timestamp":"2025-01-05T22:11:13.700Z"}
+{"data":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T22:11:13.701Z"}
+{"code":"DB_001","level":"error","message":"Errore nella verifica esistenza classe","statusCode":500,"timestamp":"2025-01-05T22:11:13.702Z"}
+{"duration":"14ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736115073692_1wapbl0e1","responseSize":"95 Bytes","statusCode":500,"timestamp":"2025-01-05T22:11:13.707Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":2},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736115113153_mmqzoihhm","timestamp":"2025-01-05T22:11:53.153Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"correlationId":"0776c9a8-741c-417e-903d-7b98e19570fa","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/classes","timestamp":"2025-01-05T22:11:53.154Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Class Route Called: POST /api/v1/classes","timestamp":"2025-01-05T22:11:53.155Z"}
+{"error":{},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T22:11:53.156Z"}
+{"error":"Errore nella verifica esistenza classe","level":"error","message":"Errore nella verifica:","timestamp":"2025-01-05T22:11:53.157Z"}
+{"data":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":2},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T22:11:53.157Z"}
+{"code":"DB_001","level":"error","message":"Errore nella verifica esistenza classe","statusCode":500,"timestamp":"2025-01-05T22:11:53.158Z"}
+{"duration":"6ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736115113153_mmqzoihhm","responseSize":"95 Bytes","statusCode":500,"timestamp":"2025-01-05T22:11:53.159Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736115274281_io6is0zpj","timestamp":"2025-01-05T22:14:34.281Z","url":"/api/v1/auth/verify","userAgent":"curl/8.11.0"}
+{"correlationId":"077b1caf-8c4e-4836-8946-c2e37b038db5","ip":"::1","level":"info","message":"Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-05T22:14:34.282Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-05T22:14:34.283Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"warn","message":"Route non trovata","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-05T22:14:34.315Z"}
+{"duration":"36ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1736115274281_io6is0zpj","responseSize":"130 Bytes","statusCode":404,"timestamp":"2025-01-05T22:14:34.317Z","url":"/api/v1/auth/verify","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:17:21.760Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:17:21.763Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:17:21.764Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:17:21.765Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:17:21.765Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:17:21.766Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:17:21.774Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:17:21.785Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T22:17:23.120Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:17:23.127Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:17:23.128Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:18:14.083Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:18:14.088Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:18:14.089Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:18:14.090Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:18:14.091Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:18:14.091Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:18:14.098Z"}
+{"level":"info","message":"Routers inizializzati con successo","routes":["health","auth","schools","users","classes","students","tests"],"timestamp":"2025-01-05T22:18:14.112Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T22:18:14.497Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:18:14.504Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:18:14.505Z"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736115543915_tdn555fyf","timestamp":"2025-01-05T22:19:03.915Z","url":"/api/v1/auth/verify","userAgent":"curl/8.11.0"}
+{"correlationId":"1ccd89af-3d52-4ad8-977b-e527fd3650f4","ip":"::1","level":"info","message":"Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-05T22:19:03.916Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-05T22:19:03.917Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Token verificato con successo:","timestamp":"2025-01-05T22:19:03.946Z","userId":"677afa2672313bb6224448ec"}
+{"duration":"36ms","ip":"::1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736115543915_tdn555fyf","responseSize":"83 Bytes","statusCode":200,"timestamp":"2025-01-05T22:19:03.951Z","url":"/api/v1/auth/verify","userAgent":"curl/8.11.0"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736115562757_gbaa2ny7t","timestamp":"2025-01-05T22:19:22.757Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"correlationId":"899505fe-5ada-42dd-abbf-fc7b79f581de","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/classes","timestamp":"2025-01-05T22:19:22.759Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Class Route Called: POST /api/v1/classes","timestamp":"2025-01-05T22:19:22.759Z"}
+{"error":{},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T22:19:22.761Z"}
+{"error":"Errore nella verifica esistenza classe","level":"error","message":"Errore nella verifica:","timestamp":"2025-01-05T22:19:22.762Z"}
+{"data":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T22:19:22.762Z"}
+{"code":"DB_001","level":"error","message":"Errore nella verifica esistenza classe","statusCode":500,"timestamp":"2025-01-05T22:19:22.763Z"}
+{"duration":"7ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736115562757_gbaa2ny7t","responseSize":"95 Bytes","statusCode":500,"timestamp":"2025-01-05T22:19:22.764Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"body":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736115565234_895ragxk8","timestamp":"2025-01-05T22:19:25.234Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"correlationId":"eb0e7c32-acdc-4d84-9942-d254407ef19b","ip":"::1","level":"info","message":"Route Called","method":"POST","path":"/api/v1/classes","timestamp":"2025-01-05T22:19:25.235Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Class Route Called: POST /api/v1/classes","timestamp":"2025-01-05T22:19:25.236Z"}
+{"error":{},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T22:19:25.237Z"}
+{"error":"Errore nella verifica esistenza classe","level":"error","message":"Errore nella verifica:","timestamp":"2025-01-05T22:19:25.238Z"}
+{"data":{"academicYear":"2024/2025","mainTeacher":"677afa2672313bb6224448ec","schoolId":"677afd5e72313bb622444902","section":"A","students":[],"teachers":["677afa2672313bb6224448ec"],"year":1},"level":"error","message":"Errore nella verifica esistenza classe","timestamp":"2025-01-05T22:19:25.238Z"}
+{"code":"DB_001","level":"error","message":"Errore nella verifica esistenza classe","statusCode":500,"timestamp":"2025-01-05T22:19:25.239Z"}
+{"duration":"6ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736115565234_895ragxk8","responseSize":"95 Bytes","statusCode":500,"timestamp":"2025-01-05T22:19:25.240Z","url":"/api/v1/classes","userAgent":"curl/8.11.0"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736115579369_gy16qtcxb","timestamp":"2025-01-05T22:19:39.369Z","url":"/api/v1/auth/verify","userAgent":"curl/8.11.0"}
+{"correlationId":"ef81d7af-f2b8-4891-afb4-d0002a5bc98b","ip":"::1","level":"info","message":"Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-05T22:19:39.370Z","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-05T22:19:39.370Z","userAgent":"curl/8.11.0"}
+{"level":"info","message":"Token verificato con successo:","timestamp":"2025-01-05T22:19:39.391Z","userId":"677afa2672313bb6224448ec"}
+{"duration":"23ms","ip":"::1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736115579369_gy16qtcxb","responseSize":"83 Bytes","statusCode":200,"timestamp":"2025-01-05T22:19:39.392Z","url":"/api/v1/auth/verify","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:42:43.554Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:42:43.557Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:42:43.558Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:42:43.559Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:42:43.559Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:42:43.560Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:42:43.570Z"}
+{"level":"info","message":"Routes caricate:","routes":["/auth","/classes","/schools","/users","/students","/tests"],"timestamp":"2025-01-05T22:42:43.580Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-05T22:42:43.976Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:42:43.982Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:42:43.982Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:43:11.758Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:43:11.762Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:43:11.763Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:43:11.765Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:43:11.766Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:43:11.767Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:43:11.778Z"}
+{"level":"info","message":"Routes caricate:","routes":["/auth","/classes","/schools","/users","/students","/tests"],"timestamp":"2025-01-05T22:43:11.794Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T22:43:12.168Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:43:12.179Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:43:12.180Z"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736117086835_fne5v8kn1","timestamp":"2025-01-05T22:44:46.835Z","url":"/api/v1/auth/verify","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-05T22:44:46.837Z","userAgent":"curl/8.11.0"}
+{"error":"Utente non associato ad alcuna scuola","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-05T22:44:46.873Z"}
+{"duration":"42ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1736117086835_fne5v8kn1","responseSize":"98 Bytes","statusCode":401,"timestamp":"2025-01-05T22:44:46.877Z","url":"/api/v1/auth/verify","userAgent":"curl/8.11.0"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736117201096_k6n2ugbwj","timestamp":"2025-01-05T22:46:41.096Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/me","timestamp":"2025-01-05T22:46:41.097Z","userAgent":"curl/8.11.0"}
+{"error":"Utente non associato ad alcuna scuola","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-05T22:46:41.118Z"}
+{"duration":"24ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1736117201096_k6n2ugbwj","responseSize":"98 Bytes","statusCode":401,"timestamp":"2025-01-05T22:46:41.120Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:52:01.268Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:52:01.272Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:52:01.272Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:52:01.274Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:52:01.274Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:52:01.275Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:52:01.284Z"}
+{"level":"info","message":"Routes caricate:","routes":["/auth","/classes","/schools","/users","/students","/tests"],"timestamp":"2025-01-05T22:52:01.296Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T22:52:01.712Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:52:01.718Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:52:01.719Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:53:11.840Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:53:11.844Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:53:11.845Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:53:11.846Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:53:11.846Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:53:11.847Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:53:11.858Z"}
+{"level":"info","message":"Routes caricate:","routes":["/auth","/classes","/schools","/users","/students","/tests"],"timestamp":"2025-01-05T22:53:11.869Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-05T22:53:12.253Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:53:12.259Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:53:12.260Z"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736117605282_xelhdgr02","timestamp":"2025-01-05T22:53:25.282Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/me","timestamp":"2025-01-05T22:53:25.283Z","userAgent":"curl/8.11.0"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-05T22:53:25.314Z","userId":"677afa2672313bb6224448ec"}
+{"error":{"code":"RES_001","message":"User non trovato","metadata":{},"status":404},"level":"error","message":"Errore nel recupero del profilo utente","timestamp":"2025-01-05T22:53:25.332Z"}
+{"duration":"56ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1736117605282_xelhdgr02","responseSize":"64 Bytes","statusCode":404,"timestamp":"2025-01-05T22:53:25.338Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"body":{"email":"admin@test.com","password":"[REDACTED]"},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736117754871_s1tccart3","timestamp":"2025-01-05T22:55:54.871Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-05T22:55:54.872Z","userAgent":"curl/8.11.0"}
+{"duration":"157ms","ip":"::1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736117754871_s1tccart3","responseSize":"472 Bytes","statusCode":200,"timestamp":"2025-01-05T22:55:55.028Z","url":"/api/v1/auth/login","userAgent":"curl/8.11.0"}
+{"body":{},"ip":"::1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736117840927_uyi5w8xcv","timestamp":"2025-01-05T22:57:20.927Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/me","timestamp":"2025-01-05T22:57:20.927Z","userAgent":"curl/8.11.0"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-05T22:57:20.948Z","userId":"677afa2672313bb6224448ec"}
+{"error":{"code":"RES_001","message":"User non trovato","metadata":{},"status":404},"level":"error","message":"Errore nel recupero del profilo utente","timestamp":"2025-01-05T22:57:20.967Z"}
+{"duration":"42ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1736117840927_uyi5w8xcv","responseSize":"64 Bytes","statusCode":404,"timestamp":"2025-01-05T22:57:20.969Z","url":"/api/v1/auth/me","userAgent":"curl/8.11.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-05T22:58:16.477Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-05T22:58:16.481Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-05T22:58:16.482Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-05T22:58:16.483Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-05T22:58:16.483Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-05T22:58:16.484Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-05T22:58:16.493Z"}
+{"level":"info","message":"Routes caricate:","routes":["/auth","/classes","/schools","/users","/students","/tests"],"timestamp":"2025-01-05T22:58:16.502Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-05T22:58:16.882Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-05T22:58:16.889Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-05T22:58:16.890Z"}

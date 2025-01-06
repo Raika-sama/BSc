@@ -1,5 +1,4 @@
 // src/app.js
-
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -8,8 +7,8 @@ const { requestLogger, errorLogger } = require('./middleware/loggerMiddleware');
 const errorHandler = require('./middleware/errorHandler');
 const config = require('./config/config');
 const logger = require('./utils/errors/logger/logger');
-//const apiRoutes = require('./routes');
-const apiRoutes = require('./routes');  // Importa il router principale
+const routes = require('./routes');  // Importa il router principale
+
 // Inizializza express
 const app = express();
 
@@ -22,27 +21,23 @@ app.use(express.urlencoded({ extended: true }));
 // Logging
 app.use(requestLogger);
 
-// Routes (da implementare)
-//app.use('/api/v1', apiRoutes);
-app.use('/api/v1', apiRoutes);
-
-// app.use('/api/schools', require('./routes/schoolRoutes'));
-// app.use('/api/users', require('./routes/userRoutes'));
-// app.use('/api/classes', require('./routes/classRoutes'));
-// app.use('/api/students', require('./routes/studentRoutes'));
-// app.use('/api/tests', require('./routes/testRoutes'));
+// Routes - Usa un unico punto di ingresso per tutte le route
+app.use('/api/v1', routes);
 
 // Gestione errori
 app.use(errorLogger);
 app.use(errorHandler);
 
 // Gestione route non trovata
-app.use((req, res, next) => {
+app.use((req, res) => {
     res.status(404).json({
-        success: false,
+        status: 'error',
         error: {
             message: 'Route non trovata',
-            code: 'ROUTE_NOT_FOUND'
+            code: 'RES_001',
+            metadata: {
+                path: req.originalUrl
+            }
         }
     });
 });
@@ -73,4 +68,4 @@ process.on('unhandledRejection', (err) => {
 // Avvia il server
 startServer();
 
-module.exports = app; // Per testing
+module.exports = app;

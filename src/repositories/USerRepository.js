@@ -16,6 +16,28 @@ class UserRepository extends BaseRepository {
         super(User);
     }
 
+    async findById(id) {
+        try {
+            logger.debug('Finding user by id:', { id });
+            const user = await this.model.findById(id).select('+schoolId +role');
+            
+            if (!user) {
+                logger.debug('No user found with id:', { id });
+                return null;
+            }
+            
+            logger.debug('User found:', { userId: user._id });
+            return user;
+        } catch (error) {
+            logger.error('Error finding user by id:', { 
+                error: error.message, 
+                id 
+            });
+            throw error;
+        }
+    }
+
+
     async findByEmail(email, includePassword = false) {
         try {
             const query = this.model.findOne({ email });
