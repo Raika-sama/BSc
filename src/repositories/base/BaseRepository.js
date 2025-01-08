@@ -92,28 +92,33 @@ class BaseRepository {
     }
 
     async update(id, data) {
-        try {
-            const doc = await this.model.findByIdAndUpdate(id, data, {
+    try {
+        const doc = await this.model.findByIdAndUpdate(
+            id, 
+            data, 
+            {
                 new: true,
-                runValidators: true
-            });
-            if (!doc) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    `${this.model.modelName} non trovato`
-                );
+                runValidators: true,
+                context: 'query'  // Aggiunta questa opzione
             }
-            return doc;
-        } catch (error) {
-            if (error.code) throw error; // Se è già un errore formattato
-            logger.error(`Errore nell'aggiornamento di ${this.model.modelName}`, { error });
+        );
+        if (!doc) {
             throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                `Errore nell'aggiornamento di ${this.model.modelName}`,
-                { originalError: error.message }
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                `${this.model.modelName} non trovato`
             );
         }
+        return doc;
+    } catch (error) {
+        if (error.code) throw error;
+        logger.error(`Errore nell'aggiornamento di ${this.model.modelName}`, { error });
+        throw createError(
+            ErrorTypes.DATABASE.QUERY_FAILED,
+            `Errore nell'aggiornamento di ${this.model.modelName}`,
+            { originalError: error.message }
+        );
     }
+}
 
     async delete(id) {
         try {

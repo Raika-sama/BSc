@@ -1,360 +1,347 @@
-Funzionalità Core di un Frontend Amministrativo per Sistema Scolastico
-Implementato Finora
-Gestione Autenticazione e Sicurezza
-✅ Login con JWT
-✅ Gestione sessioni tramite token
-✅ Protezione route con middleware
-✅ Validazione input
-✅ Logging delle attività di autenticazione
-Gestione Utenti
-✅ CRUD Operazioni:
-JavaScript
-// Implementato in UserManagement.js e UserForm.js
-- Create: Creazione nuovo utente con validazione
-- Read: Lista utenti con ruoli
-- Update: Modifica dati utente
-- Delete: Eliminazione con conferma
-✅ Gestione Ruoli Base:
-JavaScript
-const roles = {
-  admin: 'Amministratore',
-  teacher: 'Insegnante'
-}
-✅ Validazione Form:
-JavaScript
-const validateForm = () => {
-  const newErrors = {};
-  if (!formData.firstName) newErrors.firstName = 'Nome richiesto';
-  if (!formData.lastName) newErrors.lastName = 'Cognome richiesto';
-  if (!formData.email) newErrors.email = 'Email richiesta';
-  // ...
-};
-Struttura Repository
-✅ Base Repository Pattern:
-JavaScript
-class BaseRepository {
-  constructor(model) {
-    this.model = model;
-  }
-  // Metodi CRUD base
-}
-✅ User Repository con metodi specifici:
-JavaScript
-class UserRepository extends BaseRepository {
-  async updateUser(userId, updateData) {
-    // Logica sicura di aggiornamento
-  }
-  async findByEmail(email) {
-    // Ricerca per email
-  }
-  // Altri metodi specifici
-}
-Gestione Errori
-✅ Sistema centralizzato:
-JavaScript
-const ErrorTypes = {
-  AUTH: { ... },
-  RESOURCE: { ... },
-  DATABASE: { ... }
-}
-✅ Logger configurato:
-JavaScript
-logger.info('Operazione completata', { metadata });
-logger.error('Errore', { error });
-logger.debug('Debug info', { data });
-UI Components
-✅ Dialog di conferma
-✅ Form di gestione
-✅ Notifiche sistema
-✅ Tabelle dati
-✅ Loading states
-Prossimi Passi
-1. Gestione Scuole
-JavaScript
-// TODO: Implementare SchoolManagement.js
-class SchoolManagement {
-  // CRUD operations
-  // Associazione utenti
-  // Gestione classi
-}
-2. Sistema Permessi Avanzato
-JavaScript
-// TODO: Implementare PermissionSystem
-const Permissions = {
-  SCHOOLS: {
-    CREATE: 'school:create',
-    READ: 'school:read',
-    UPDATE: 'school:update',
-    DELETE: 'school:delete'
-  },
-  USERS: {
-    MANAGE: 'users:manage'
-  }
-}
-3. Dashboard
-Overview sistema
-Statistiche utenti
-Statistiche scuole
-Notifiche sistema
-4. Miglioramenti Sicurezza
-Implementare 2FA
-Rate limiting
-Session management avanzato
-Audit logging completo
-5. Ottimizzazioni
-JavaScript
-// TODO: Implementare
-- Caching dati
-- Lazy loading componenti
-- Ottimizzazione query
-- Gestione stato globale
-Best Practices Implementate
-1. Struttura Codice
-JavaScript
-src/
-  ├── components/
-  │   ├── users/
-  │   ├── schools/
-  │   └── common/
-  ├── services/
-  ├── utils/
-  └── context/
-2. Gestione Stato
-JavaScript
-// Context per auth
-const AuthContext = createContext({
-  user: null,
-  login: () => {},
-  logout: () => {}
-});
+# Piano di Implementazione: Gestione Classi e Sezioni Brain Scanner
 
-// Context per notifiche
-const NotificationContext = createContext({
-  showNotification: () => {}
-});
-3. Validazione
-JavaScript
-// Frontend
-const validateForm = (data) => {
-  // Validazione client-side
-};
+## 1. Fase Preparazione
 
-// Backend
-const validateRequest = (req) => {
-  // Validazione server-side
-};
-4. Error Handling
-JavaScript
-try {
-  // Operazione
-} catch (error) {
-  logger.error('Errore operazione', { error });
-  showNotification('Errore', 'error');
-}
-Linee Guida per Sviluppi Futuri
-Modularità
+### 1.1 Database Schema Updates
 
-Mantenere componenti piccoli e riutilizzabili
-Separare logica business da UI
-Sicurezza
-
-Validare sempre input/output
-Implementare rate limiting
-Mantenere dipendenze aggiornate
-Performance
-
-Implementare caching
-Ottimizzare query
-Lazy load quando possibile
-Testing
-
-Unit test per logica business
-Integration test per API
-E2E test per flussi critici
-Documentazione
-
-Mantenere README aggiornato
-Documentare API
-Commentare codice complesso
-Questo documento verrà aggiornato man mano che il progetto evolve.
-
-cco l'aggiornamento del documento tecnico con le implementazioni che abbiamo fatto oggi:
-
-Markdown
-# Documentazione Tecnica Sistema Gestione Scuole - Aggiornamento 2025-01-06
-
-## Implementazioni Completate
-
-### 1. Gestione Scuole (Completato)
+#### School Model
 ```javascript
-// Modello Scuola
-const schoolSchema = new mongoose.Schema({
-    name: { type: String, required: true, unique: true },
-    schoolType: { type: String, enum: ['middle_school', 'high_school'] },
-    institutionType: { type: String, enum: ['scientific', 'classical', 'artistic', 'none'] },
-    sections: [{ type: String, validate: /^[A-Z]$/ }],
-    numberOfYears: Number,
-    region: String,
-    province: String,
-    address: String,
-    users: [{
-        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-        role: { type: String, enum: ['teacher', 'admin'] }
-    }],
-    manager: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    isActive: Boolean
-});
-2. Sistema Context Completo
-JavaScript
-// SchoolContext
-const SchoolContext = createContext({
-    schools: [],
-    selectedSchool: null,
-    loading: false,
-    error: null,
-    totalSchools: 0,
-    fetchSchools: () => {},
-    getSchoolById: () => {},
-    createSchool: () => {},
-    updateSchool: () => {},
-    deleteSchool: () => {},
-    updateSchoolUser: () => {},
-    validateSchoolData: () => {}
-});
-3. Componenti Implementati
-SchoolManagement
-Gestione lista scuole
-Paginazione
-Filtri (tipo, regione, istituto)
-Integrazione con CRUD operations
-SchoolList
-Visualizzazione tabellare
-Azioni inline (modifica, elimina, dettagli)
-Gestione stati (loading, empty, error)
-Chip per visualizzazione stati e sezioni
-SchoolForm
-Validazione completa
-Gestione automatica numberOfYears
-Autocomplete per sezioni
-Gestione errori backend
-SchoolDetails
-Visualizzazione completa dati scuola
-Gestione utenti associati
-Modifica inline
-Navigazione integrata
-4. Repository Pattern Esteso
-JavaScript
-class SchoolRepository extends BaseRepository {
-    async findWithUsers(id) {
-        // Implementato recupero scuola con utenti
-    }
-    
-    async addUser(schoolId, userId, role) {
-        // Implementata gestione utenti
-    }
-    
-    async removeUser(schoolId, userId) {
-        // Implementata rimozione utenti
-    }
+{
+  // Campi esistenti
+  name: String,
+  schoolType: 'middle_school' | 'high_school',
+  institutionType: String,
+  region: String,
+  province: String,
+  address: String,
+  
+  // Nuovi campi
+  academicYears: [{
+    year: String,          // es: '2024/2025'
+    status: 'active' | 'planned' | 'archived',
+    startDate: Date,
+    endDate: Date,
+    createdAt: Date,
+    createdBy: ObjectId    // Admin reference
+  }],
+  
+  sections: [{
+    name: String,          // es: 'A'
+    isActive: Boolean,
+    createdAt: Date,
+    academicYears: [{
+      year: String,        // '2024/2025'
+      status: 'active' | 'planned' | 'archived',
+      maxStudents: Number,
+      activatedAt: Date,
+      deactivatedAt: Date,
+      notes: String
+    }]
+  }],
+  
+  defaultMaxStudentsPerClass: Number
 }
-5. Validazioni Implementate
-JavaScript
-const validateSchoolData = (schoolData) => {
-    const errors = {};
-    // Validazione nome
-    if (!schoolData.name?.trim()) errors.name = 'Nome richiesto';
-    
-    // Validazione tipo scuola
-    if (!['middle_school', 'high_school'].includes(schoolData.schoolType)) {
-        errors.schoolType = 'Tipo scuola non valido';
-    }
-    
-    // Validazione sezioni
-    if (schoolData.sections) {
-        const invalidSections = schoolData.sections.filter(s => !/^[A-Z]$/.test(s));
-        if (invalidSections.length > 0) errors.sections = 'Sezioni non valide';
-    }
-    
-    // Altre validazioni...
-    return Object.keys(errors).length > 0 ? errors : null;
-};
-Miglioramenti Implementati
-1. Gestione Stati
-Loading state centralizzato
-Error handling migliorato
-Feedback utente consistente
-2. UX Miglioramenti
-Conferme per azioni distruttive
-Feedback visivi immediati
-Navigazione intuitiva
-3. Performance
-Paginazione implementata
-Gestione cache base
-Ottimizzazione re-render
-TODO Prioritari
-1. Implementazioni Immediate
-JavaScript
-// 1. AddUserForm per SchoolDetails
-const AddUserForm = () => {
-    // TODO: Implementare form aggiunta utenti
-};
+```
 
-// 2. Filtri avanzati per SchoolList
-const AdvancedFilters = () => {
-    // TODO: Implementare filtri avanzati
-};
+#### Class Model
+```javascript
+{
+  // Campi esistenti
+  schoolId: ObjectId,
+  year: Number,           // 1-5
+  section: String,        // 'A'
+  
+  // Nuovi campi
+  academicYear: String,   // '2024/2025'
+  status: 'active' | 'planned' | 'archived',
+  students: [{
+    studentId: ObjectId,
+    joinedAt: Date,
+    leftAt: Date,
+    status: 'active' | 'transferred' | 'graduated'
+  }],
+  capacity: Number,
+  mainTeacher: ObjectId,
+  teachers: [ObjectId],
+  notes: String
+}
+```
 
-// 3. Validazioni avanzate
-const validateSchoolRelations = () => {
-    // TODO: Implementare validazioni relazioni
-};
-2. Ottimizzazioni Necessarie
-Implementare caching dati scuola
-Ottimizzare query utenti
-Migliorare gestione form grandi dimensioni
-3. Testing Necessario
-JavaScript
-describe('SchoolManagement', () => {
-    // TODO: Unit test componenti
-    // TODO: Integration test CRUD
-    // TODO: E2E test flussi principali
+### 1.2 Backend Services
+
+#### SchoolService
+```javascript
+class SchoolService {
+  async createSchool(basicData)
+  async setupAcademicYear(schoolId, yearData)
+  async addSection(schoolId, sectionData)
+  async updateSection(schoolId, sectionId, updates)
+  async planNextAcademicYear(schoolId, yearData)
+}
+```
+
+#### ClassService
+```javascript
+class ClassService {
+  async createInitialClasses(schoolId, academicYear)
+  async promoteClasses(schoolId, fromYear, toYear)
+  async assignTeacher(classId, teacherId)
+  async addStudent(classId, studentId)
+  async transferStudent(studentId, fromClassId, toClassId)
+}
+```
+
+#### AcademicYearService
+```javascript
+class AcademicYearService {
+  async planAcademicYear(schoolId, yearData)
+  async activateAcademicYear(schoolId, year)
+  async closeAcademicYear(schoolId, year)
+  async handleYearTransition(schoolId, fromYear, toYear)
+}
+```
+
+## 2. Frontend Implementation
+
+### 2.1 School Creation Wizard
+
+#### Step 1: Basic Info
+```jsx
+const Step1BasicInfo = () => (
+  <Form>
+    <TextField name="name" label="Nome Scuola" required />
+    <Select name="schoolType" label="Tipo Scuola">
+      <MenuItem value="middle_school">Scuola Media</MenuItem>
+      <MenuItem value="high_school">Superiori</MenuItem>
+    </Select>
+    <TextField name="region" label="Regione" />
+    <TextField name="province" label="Provincia" />
+    <TextField name="address" label="Indirizzo" />
+  </Form>
+);
+```
+
+#### Step 2: Academic Year Setup
+```jsx
+const Step2AcademicYear = () => (
+  <Form>
+    <AcademicYearSelector 
+      startYear={new Date().getFullYear()}
+    />
+    <DateRangePicker 
+      startDate={yearStart}
+      endDate={yearEnd}
+    />
+    <TextField
+      name="defaultMaxStudents"
+      type="number"
+      label="Studenti massimi per classe"
+    />
+  </Form>
+);
+```
+
+#### Step 3: Sections Configuration
+```jsx
+const Step3Sections = () => (
+  <Form>
+    <SectionsList 
+      sections={sections}
+      onAdd={handleAddSection}
+      onRemove={handleRemoveSection}
+    />
+    <SectionConfig
+      showMaxStudents
+      showNotes
+    />
+  </Form>
+);
+```
+
+#### Step 4: Review & Create
+```jsx
+const Step4Review = () => (
+  <ReviewPanel>
+    <SchoolSummary data={schoolData} />
+    <ClassesList 
+      sections={sections}
+      academicYear={academicYear}
+    />
+    <ConfirmationButtons
+      onBack={handleBack}
+      onConfirm={handleCreate}
+    />
+  </ReviewPanel>
+);
+```
+
+### 2.2 School Management Dashboard
+
+```jsx
+const SchoolDashboard = () => (
+  <DashboardLayout>
+    <Header>
+      <SchoolInfo />
+      <YearSelector />
+    </Header>
+    
+    <TabPanel>
+      <TabList>
+        <Tab>Panoramica</Tab>
+        <Tab>Classi</Tab>
+        <Tab>Sezioni</Tab>
+        <Tab>Configurazione</Tab>
+      </TabList>
+      
+      <TabPanels>
+        <Overview />
+        <ClassesManagement />
+        <SectionsManagement />
+        <Configuration />
+      </TabPanels>
+    </TabPanel>
+  </DashboardLayout>
+);
+```
+
+## 3. API Endpoints
+
+### 3.1 School Setup
+```javascript
+// School creation flow
+POST /api/v1/schools                    // Basic school creation
+POST /api/v1/schools/:id/academic-years // Add academic year
+POST /api/v1/schools/:id/sections      // Add sections
+POST /api/v1/schools/:id/classes       // Create classes
+
+// School management
+GET  /api/v1/schools/:id/academic-years
+PUT  /api/v1/schools/:id/academic-years/:year
+GET  /api/v1/schools/:id/sections
+PUT  /api/v1/schools/:id/sections/:sectionId
+```
+
+### 3.2 Class Management
+```javascript
+// Class operations
+GET    /api/v1/classes                  // List with filters
+POST   /api/v1/classes                  // Create single class
+PUT    /api/v1/classes/:id             // Update class
+DELETE /api/v1/classes/:id             // Archive class
+
+// Student management
+POST   /api/v1/classes/:id/students    // Add students
+DELETE /api/v1/classes/:id/students/:studentId
+POST   /api/v1/classes/transfer        // Transfer students
+```
+
+## 4. Implementation Timeline
+
+### 4.1 Fase 1: Database & Backend (2 settimane)
+- Aggiornamento schemi MongoDB
+- Implementazione servizi base
+- API endpoints essenziali
+- Test unitari backend
+
+### 4.2 Fase 2: Frontend Creation Flow (2 settimane)
+- Wizard creazione scuola
+- Form di configurazione
+- Validazioni frontend
+- Test integrazione wizard
+
+### 4.3 Fase 3: Management Interface (2 settimane)
+- Dashboard gestione scuola
+- Gestione classi e sezioni
+- Configurazione anni accademici
+- UI per transizioni anno
+
+### 4.4 Fase 4: Testing & Refinement (1 settimana)
+- Test end-to-end
+- Performance testing
+- UI/UX refinements
+- Documentazione
+
+## 5. Testing Strategy
+
+### 5.1 Unit Tests
+```javascript
+// School service tests
+describe('SchoolService', () => {
+  it('should create school with basic info')
+  it('should setup academic year correctly')
+  it('should handle section creation')
+  it('should validate class capacities')
 });
-Best Practices da Mantenere
-Gestione Stati
 
-Utilizzare loading states
-Gestire errori consistentemente
-Mantenere feedback utente
-Validazioni
+// Class service tests
+describe('ClassService', () => {
+  it('should create initial classes')
+  it('should handle class promotion')
+  it('should manage student transfers')
+});
+```
 
-Client-side prima di chiamate API
-Server-side per sicurezza
-Feedback errori immediato
-Performance
+### 5.2 Integration Tests
+```javascript
+describe('School Creation Flow', () => {
+  it('should complete full creation workflow')
+  it('should handle validation errors')
+  it('should rollback on failures')
+});
+```
 
-Implementare paginazione
-Utilizzare memo/callback
-Ottimizzare render
-Codice
+### 5.3 E2E Tests
+```javascript
+describe('School Management', () => {
+  it('should create school through wizard')
+  it('should manage academic year transition')
+  it('should handle class assignments')
+});
+```
 
-Mantenere componenti piccoli
-Riutilizzare logica comune
-Documentare parti complesse
-Note Tecniche Importanti
-Routing
+## 6. Migration Strategy
 
-Mantenere struttura /admin/schools/:id
-Gestire navigazione programmatica
-Proteggere route sensibili
-Context
+### 6.1 Data Migration
+```javascript
+async function migrateExistingSchools() {
+  // 1. Add academic years
+  // 2. Setup sections
+  // 3. Update class references
+  // 4. Validate data integrity
+}
+```
 
-Minimizzare re-render
-Separare logica business
-Mantenere stati coerenti
-Form
+### 6.2 Rollback Plan
+```javascript
+// Backup current data
+// Version control on schema
+// Feature flags for gradual rollout
+```
 
-Validare input real-time
-Gestire stati loading
-Mantenere UX consistente
-Questo documento riflette lo stato attuale del sistema e fornisce una base per futuri sviluppi.
+## 7. Monitoring & Maintenance
 
+### 7.1 Performance Metrics
+- Query response times
+- Memory usage
+- Operation logs
+- Error tracking
+
+### 7.2 Maintenance Tasks
+- Daily backups
+- Index optimization
+- Cache invalidation
+- Log rotation
+
+## 8. Future Improvements
+
+### 8.1 Phase 2 Features
+- Multi-year planning
+- Automatic teacher assignment
+- Advanced reporting
+- Bulk operations UI
+
+### 8.2 Optimizations
+- Cache layer
+- Batch operations
+- Real-time updates
+- Performance monitoring

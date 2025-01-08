@@ -3,6 +3,7 @@ import Dashboard from '../components/Dashboard';
 import UserManagement from '../components/users/UserManagement';
 import SchoolManagement from '../components/school/SchoolManagement';
 import SchoolDetails from '../components/school/SchoolDetails';
+import ClassManagement from '../components/classes/ClassManagement';    // Importa la pagina delle classi
 
 // Importa le icone da Material-UI
 import {
@@ -41,7 +42,7 @@ export const adminRoutes = [
     },
     {
         path: 'classes',
-        element: null, // ClassManagement component quando lo creerai
+        element: ClassManagement, // ClassManagement component quando lo creerai
         title: 'Gestione Classi',
         icon: ClassIcon
     },

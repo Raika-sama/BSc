@@ -11,6 +11,8 @@ import Login from './components/Login';
 import Unauthorized from './components/Unauthorized';
 import PrivateRoute from './routes/PrivateRoute';
 import { adminRoutes } from './routes/routes';
+import { Class } from '@mui/icons-material';
+import { ClassProvider } from './context/ClassContext';
 
 setupAxiosInterceptors();
 
@@ -19,35 +21,37 @@ function App() {
         <Router>
             <AuthProvider>
                 <NotificationProvider>
-                    <SchoolProvider>
-                        <UserProvider>
-                            <Routes>
-                                <Route path="/login" element={<Login />} />
-                                <Route path="/unauthorized" element={<Unauthorized />} />
-                                <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
-                                <Route
-                                    path="/admin/*"
-                                    element={
-                                        <PrivateRoute>
-                                            <MainLayout>
-                                                <Routes>
-                                                    {adminRoutes.map((route) => (
-                                                        route.element && (
-                                                            <Route
-                                                                key={route.path}
-                                                                path={route.path}
-                                                                element={<route.element />}
-                                                            />
-                                                        )
-                                                    ))}
-                                                </Routes>
-                                            </MainLayout>
-                                        </PrivateRoute>
-                                    }
-                                />
-                            </Routes>
-                        </UserProvider>
-                    </SchoolProvider>
+                    <ClassProvider>
+                        <SchoolProvider>
+                            <UserProvider>
+                                <Routes>
+                                    <Route path="/login" element={<Login />} />
+                                    <Route path="/unauthorized" element={<Unauthorized />} />
+                                    <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+                                    <Route
+                                        path="/admin/*"
+                                        element={
+                                            <PrivateRoute>
+                                                <MainLayout>
+                                                    <Routes>
+                                                        {adminRoutes.map((route) => (
+                                                            route.element && (
+                                                                <Route
+                                                                    key={route.path}
+                                                                    path={route.path}
+                                                                    element={<route.element />}
+                                                                />
+                                                            )
+                                                        ))}
+                                                    </Routes>
+                                                </MainLayout>
+                                            </PrivateRoute>
+                                        }
+                                    />
+                                </Routes>
+                            </UserProvider>
+                        </SchoolProvider>
+                    </ClassProvider>    
                 </NotificationProvider>
             </AuthProvider>
         </Router>

@@ -445,3 +445,81 @@
 {"error":{"_message":"Validation failed","errors":{"numberOfYears":{"kind":"user defined","message":"Numero di anni non valido per il tipo di scuola","name":"ValidatorError","path":"numberOfYears","properties":{"fullPath":"numberOfYears","message":"Numero di anni non valido per il tipo di scuola","path":"numberOfYears","type":"user defined","value":3},"value":3}},"message":"Validation failed: numberOfYears: Numero di anni non valido per il tipo di scuola","name":"ValidationError"},"level":"error","message":"Errore nell'aggiornamento di School","timestamp":"2025-01-08T19:16:35.536Z"}
 {"code":"DB_001","level":"error","message":"Errore nell'aggiornamento di School","metadata":{"originalError":"Validation failed: numberOfYears: Numero di anni non valido per il tipo di scuola"},"status":500,"timestamp":"2025-01-08T19:16:35.537Z"}
 {"duration":"26ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"PUT","requestId":"req_1736363795512_w2o7zqtqt","responseSize":"92 Bytes","statusCode":500,"timestamp":"2025-01-08T19:16:35.538Z","url":"/api/v1/schools/677eb1207593da253cdbdf29","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-08T19:29:41.565Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-08T19:29:41.570Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-08T19:29:41.571Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-08T19:29:41.574Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-08T19:29:41.575Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-08T19:29:41.577Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-08T19:29:41.603Z"}
+{"level":"info","message":"Routes caricate:","routes":["/auth","/classes","/schools","/users","/students","/tests"],"timestamp":"2025-01-08T19:29:41.644Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-08T19:29:42.127Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-08T19:29:42.444Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-08T19:29:42.445Z"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-08T19:29:57.029Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:29:57.078Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-08T19:29:57.079Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:30:42.235Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":{"_message":"Validation failed","errors":{"numberOfYears":{"kind":"user defined","message":"Numero di anni non valido per il tipo di scuola","name":"ValidatorError","path":"numberOfYears","properties":{"fullPath":"numberOfYears","message":"Numero di anni non valido per il tipo di scuola","path":"numberOfYears","type":"user defined","value":3},"value":3}},"message":"Validation failed: numberOfYears: Numero di anni non valido per il tipo di scuola","name":"ValidationError"},"level":"error","message":"Errore nell'aggiornamento di School","timestamp":"2025-01-08T19:30:42.242Z"}
+{"code":"DB_001","level":"error","message":"Errore nell'aggiornamento di School","metadata":{"originalError":"Validation failed: numberOfYears: Numero di anni non valido per il tipo di scuola"},"status":500,"timestamp":"2025-01-08T19:30:42.243Z"}
+{"duration":"33ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"PUT","requestId":"req_1736364642213_07k522jep","responseSize":"92 Bytes","statusCode":500,"timestamp":"2025-01-08T19:30:42.246Z","url":"/api/v1/schools/677eb1207593da253cdbdf29","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:30:57.136Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:31:12.190Z","userId":"677bfe44f6789c907c9f3766"}
+{"createdBy":"677bfe44f6789c907c9f3766","level":"info","message":"Scuola creata con successo","schoolId":"677ed280743da58fe65f489e","schoolName":"Scuola Media Test Updated2333","timestamp":"2025-01-08T19:31:12.245Z"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:31:23.940Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":{"_message":"Validation failed","errors":{"numberOfYears":{"kind":"user defined","message":"Numero di anni non valido per il tipo di scuola","name":"ValidatorError","path":"numberOfYears","properties":{"fullPath":"numberOfYears","message":"Numero di anni non valido per il tipo di scuola","path":"numberOfYears","type":"user defined","value":3},"value":3}},"message":"Validation failed: numberOfYears: Numero di anni non valido per il tipo di scuola","name":"ValidationError"},"level":"error","message":"Errore nell'aggiornamento di School","timestamp":"2025-01-08T19:31:23.942Z"}
+{"code":"DB_001","level":"error","message":"Errore nell'aggiornamento di School","metadata":{"originalError":"Validation failed: numberOfYears: Numero di anni non valido per il tipo di scuola"},"status":500,"timestamp":"2025-01-08T19:31:23.943Z"}
+{"duration":"30ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"PUT","requestId":"req_1736364683914_sogl6ief0","responseSize":"92 Bytes","statusCode":500,"timestamp":"2025-01-08T19:31:23.944Z","url":"/api/v1/schools/677ed280743da58fe65f489e","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-08T19:35:27.033Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-08T19:35:27.037Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-08T19:35:27.038Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-08T19:35:27.039Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-08T19:35:27.039Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-08T19:35:27.040Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-08T19:35:27.054Z"}
+{"level":"info","message":"Routes caricate:","routes":["/auth","/classes","/schools","/users","/students","/tests"],"timestamp":"2025-01-08T19:35:27.069Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-08T19:35:27.427Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-08T19:35:27.433Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-08T19:35:27.434Z"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-08T19:35:49.844Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:35:49.884Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-08T19:35:49.885Z","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-08T19:35:55.349Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:35:55.371Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-08T19:35:55.372Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:36:02.831Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":{"_message":"Validation failed","errors":{"numberOfYears":{"kind":"user defined","message":"Numero di anni non valido per il tipo di scuola","name":"ValidatorError","path":"numberOfYears","properties":{"fullPath":"numberOfYears","message":"Numero di anni non valido per il tipo di scuola","path":"numberOfYears","type":"user defined","value":3},"value":3}},"message":"Validation failed: numberOfYears: Numero di anni non valido per il tipo di scuola","name":"ValidationError"},"level":"error","message":"Errore nell'aggiornamento di School","timestamp":"2025-01-08T19:36:02.838Z"}
+{"code":"DB_001","level":"error","message":"Errore nell'aggiornamento di School","metadata":{"originalError":"Validation failed: numberOfYears: Numero di anni non valido per il tipo di scuola"},"status":500,"timestamp":"2025-01-08T19:36:02.840Z"}
+{"duration":"35ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"PUT","requestId":"req_1736364962807_shnexmuvy","responseSize":"92 Bytes","statusCode":500,"timestamp":"2025-01-08T19:36:02.842Z","url":"/api/v1/schools/677eb1207593da253cdbdf29","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:36:13.130Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-08T19:36:31.039Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-08T19:36:31.043Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-08T19:36:31.044Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-08T19:36:31.046Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-08T19:36:31.046Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-08T19:36:31.047Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-08T19:36:31.059Z"}
+{"level":"info","message":"Routes caricate:","routes":["/auth","/classes","/schools","/users","/students","/tests"],"timestamp":"2025-01-08T19:36:31.073Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-08T19:36:31.499Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-08T19:36:31.506Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-08T19:36:31.507Z"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-08T19:36:43.395Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:36:43.443Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-08T19:36:43.445Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:37:24.331Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-08T19:38:08.688Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-08T19:38:08.853Z"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:39:25.372Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:39:33.352Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:39:39.817Z","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-08T19:58:53.524Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T19:58:53.551Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-08T19:58:53.552Z","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-08T20:15:54.362Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T20:15:54.387Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-08T20:15:54.387Z","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-08T20:18:07.178Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T20:18:07.203Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-08T20:18:07.204Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T20:57:26.874Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T20:57:30.207Z","userId":"677bfe44f6789c907c9f3766"}

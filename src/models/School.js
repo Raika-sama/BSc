@@ -30,12 +30,21 @@ const schoolSchema = new mongoose.Schema({
     numberOfYears: {
         type: Number,
         validate: {
-            validator: function(v) {
+            validator: async function(v) {
+                // Se siamo in un'operazione di update
+                if (this.op === 'findOneAndUpdate') {
+                    // Ottieni il tipo di scuola dal documento che stiamo aggiornando
+                    const schoolType = this._update.schoolType || 
+                                    (await this.model.findOne(this.getQuery())).schoolType;
+                    return schoolType === 'middle_school' ? v === 3 : v === 5;
+                }
+                // Per le operazioni di creazione
                 return this.schoolType === 'middle_school' ? v === 3 : v === 5;
             },
             message: props => 'Numero di anni non valido per il tipo di scuola'
         }
     },
+    
     region: {
         type: String,
         required: true,
