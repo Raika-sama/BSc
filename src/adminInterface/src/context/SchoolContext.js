@@ -12,47 +12,63 @@ export const SchoolProvider = ({ children }) => {
     const [totalSchools, setTotalSchools] = useState(0);
     const { showNotification } = useNotification();
     const [selectedSchool, setSelectedSchool] = useState(null);
+    
     const validateSchoolData = (schoolData) => {
         const errors = {};
-
+    
+        // Validazione nome
         if (!schoolData.name?.trim()) {
             errors.name = 'Nome scuola richiesto';
         }
-
+    
+        // Validazione tipo scuola
         if (!['middle_school', 'high_school'].includes(schoolData.schoolType)) {
             errors.schoolType = 'Tipo scuola non valido';
         }
-
-        if (!['scientific', 'classical', 'artistic', 'none'].includes(schoolData.institutionType)) {
-            errors.institutionType = 'Tipo istituto non valido';
+    
+        // Validazione tipo istituto in base al tipo di scuola
+        if (schoolData.schoolType === 'middle_school') {
+            if (schoolData.institutionType !== 'none') {
+                errors.institutionType = 'Le scuole medie devono avere tipo istituto impostato come "nessuno"';
+            }
+        } else if (schoolData.schoolType === 'high_school') {
+            if (!['scientific', 'classical', 'artistic', 'none'].includes(schoolData.institutionType)) {
+                errors.institutionType = 'Tipo istituto non valido per scuola superiore';
+            }
         }
-
+    
+        // Validazione sezioni
         if (schoolData.sections) {
             const invalidSections = schoolData.sections.filter(section => !/^[A-Z]$/.test(section));
             if (invalidSections.length > 0) {
                 errors.sections = 'Le sezioni devono essere lettere maiuscole';
             }
         }
-
-        // Validazione numberOfYears basata sul tipo di scuola
-        if (schoolData.schoolType === 'middle_school' && schoolData.numberOfYears !== 3) {
-            errors.numberOfYears = 'La scuola media deve avere 3 anni';
-        } else if (schoolData.schoolType === 'high_school' && schoolData.numberOfYears !== 5) {
-            errors.numberOfYears = 'La scuola superiore deve avere 5 anni';
+    
+        // Validazione numero anni in base al tipo di scuola
+        if (schoolData.schoolType === 'middle_school') {
+            if (schoolData.numberOfYears !== 3) {
+                errors.numberOfYears = 'La scuola media deve avere 3 anni';
+            }
+        } else if (schoolData.schoolType === 'high_school') {
+            if (schoolData.numberOfYears !== 5) {
+                errors.numberOfYears = 'La scuola superiore deve avere 5 anni';
+            }
         }
-
+    
+        // Validazione campi obbligatori
         if (!schoolData.region?.trim()) {
             errors.region = 'Regione richiesta';
         }
-
+    
         if (!schoolData.province?.trim()) {
             errors.province = 'Provincia richiesta';
         }
-
+    
         if (!schoolData.address?.trim()) {
             errors.address = 'Indirizzo richiesto';
         }
-
+    
         return Object.keys(errors).length > 0 ? errors : null;
     };
 
@@ -78,8 +94,6 @@ export const SchoolProvider = ({ children }) => {
             setLoading(false);
         }
     };
-
-
 
 
     const fetchSchools = useCallback(async (page = 1, limit = 10, filters = {}) => {
@@ -168,8 +182,11 @@ export const SchoolProvider = ({ children }) => {
     };
 
     const updateSchool = async (id, schoolData) => {
+        console.log('### SchoolContext - Dati ricevuti per update:', schoolData);
         const validationErrors = validateSchoolData(schoolData);
         if (validationErrors) {
+            console.log('### SchoolContext - Errori di validazione:', validationErrors);
+
             throw { response: { data: { error: { errors: validationErrors } } } };
         }
 
@@ -186,6 +203,7 @@ export const SchoolProvider = ({ children }) => {
                 return response.data.data.school;
             }
         } catch (error) {
+            console.log('### SchoolContext - Errore nella risposta:', error);
             const errorMessage = error.response?.data?.error?.message || 'Errore nell\'aggiornamento della scuola';
             setError(errorMessage);
             showNotification(errorMessage, 'error');

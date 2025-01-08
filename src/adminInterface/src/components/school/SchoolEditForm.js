@@ -42,6 +42,7 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
 
     useEffect(() => {
         if (open && school) {
+            console.log('### SchoolEditForm - Dati iniziali:', school);
             setFormData({
                 name: school.name || '',
                 schoolType: school.schoolType || 'middle_school',
@@ -62,11 +63,17 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
         setFormData(prev => {
             const newData = { ...prev, [name]: value };
             
-            // Gestione automatica di institutionType e numberOfYears in base a schoolType
+            // Gestione automatica quando cambia il tipo di scuola
             if (name === 'schoolType') {
-                newData.numberOfYears = value === 'middle_school' ? 3 : 5;
                 if (value === 'middle_school') {
                     newData.institutionType = 'none';
+                    newData.numberOfYears = 3;
+                } else {
+                    newData.numberOfYears = 5;
+                    // Per le superiori, manteniamo l'institutionType se valido
+                    if (!['scientific', 'classical', 'artistic', 'none'].includes(newData.institutionType)) {
+                        newData.institutionType = 'none';
+                    }
                 }
             }
             
@@ -78,38 +85,52 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
     };
-
+    
     const validateForm = () => {
         const newErrors = {};
-
+    
+        // Validazione campi obbligatori
         if (!formData.name?.trim()) {
             newErrors.name = 'Nome scuola richiesto';
         }
-
+    
         if (!['middle_school', 'high_school'].includes(formData.schoolType)) {
             newErrors.schoolType = 'Tipo scuola non valido';
         }
-
-        // Validazione institutionType in base a schoolType
-        if (formData.schoolType === 'middle_school' && formData.institutionType !== 'none') {
-            newErrors.institutionType = 'Le scuole medie non possono avere un tipo di istituto';
+    
+        // Validazione combinata tipo scuola, anni e tipo istituto
+        if (formData.schoolType === 'middle_school') {
+            if (formData.institutionType !== 'none') {
+                newErrors.institutionType = 'Le scuole medie devono avere tipo istituto impostato come "nessuno"';
+            }
+            if (formData.numberOfYears !== 3) {
+                newErrors.numberOfYears = 'Le scuole medie devono avere 3 anni';
+            }
+        } else if (formData.schoolType === 'high_school') {
+            if (!['scientific', 'classical', 'artistic', 'none'].includes(formData.institutionType)) {
+                newErrors.institutionType = 'Tipo istituto non valido per scuola superiore';
+            }
+            if (formData.numberOfYears !== 5) {
+                newErrors.numberOfYears = 'Le scuole superiori devono avere 5 anni';
+            }
         }
-
+    
+        // Validazione altri campi obbligatori
         if (!formData.region?.trim()) {
             newErrors.region = 'Regione richiesta';
         }
-
+    
         if (!formData.province?.trim()) {
             newErrors.province = 'Provincia richiesta';
         }
-
+    
         if (!formData.address?.trim()) {
             newErrors.address = 'Indirizzo richiesto';
         }
-
+    
         return Object.keys(newErrors).length > 0 ? newErrors : null;
     };
-
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         
@@ -118,10 +139,22 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
             setErrors(validationErrors);
             return;
         }
-
+    
         try {
             setLoading(true);
-            await onSave(formData);
+            
+            // Prepara i dati da inviare
+            const dataToSend = { ...formData };
+            
+            // Assicurati che i valori siano corretti in base al tipo di scuola
+            if (dataToSend.schoolType === 'middle_school') {
+                dataToSend.institutionType = 'none';
+                dataToSend.numberOfYears = 3;
+            } else {
+                dataToSend.numberOfYears = 5;
+            }
+            console.log('### SchoolEditForm - Dati prima del submit:', formData);
+            await onSave(dataToSend);
             handleClose();
             showNotification('Scuola aggiornata con successo', 'success');
         } catch (error) {
