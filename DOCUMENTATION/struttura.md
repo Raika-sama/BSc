@@ -1,86 +1,66 @@
-src/
-├── config/
-│   ├── config.js
-│   └── logger.config.js
-│   └── database.js           # Nuova configurazione DB
-├── middleware/
-│   ├── errorHandler.js
-│   ├── auth.js
-│   ├── validate.js
-│   └── loggerMiddleware.js
-├── utils/
-│   └── logger/
-│   │    └── logger.js
-│   └── errors/
-│       ├── AppError.js
-│       └── errorTypes.js
-│
-└── logs/
-│   └── error.log
-│
-├── models/                   # Schema e modelli MongoDB
-│   ├── index.js             # Esporta tutti i modelli
-│   ├── School.js
-│   ├── User.js
-│   ├── Class.js
-│   ├── Student.js
-│   └── Test.js
-│
-├── repositories/            # Layer per operazioni DB
-│   ├── base/
-│   │   └── BaseRepository.js
-│   ├── SchoolRepository.js
-│   ├── UserRepository.js
-│   ├── ClassRepository.js
-│   ├── StudentRepository.js
-│   ├── TestRepository.js
-│   └── index.js
-│
-├── database/               # Utilities DB
-│   ├── connection.js      # Gestione connessione
-│   └── migrations/        # Per eventuali migrazioni future
-├── routes/
-│   ├── schoolRoutes.js
-│   ├── userRoutes.js
-│   ├── classRoutes.js
-│   ├── studentRoutes.js
-│   └── testRoutes.js
-├── controllers/
-│   ├── schoolController.js
-│   ├── userController.js
-│   ├── classController.js
-│   ├── studentController.js
-│   └── testController.js
-
-
-
-
-
-Spiegazione delle cartelle e file:
-
-config/database.js
-
-Configurazioni MongoDB
-Opzioni di connessione
-Variabili ambiente DB
-
-
-models/
-
-Contiene gli schemi Mongoose
-Ogni modello in un file separato
-index.js per esportare tutti i modelli
-
-
-repositories/
-
-Pattern Repository per separare logica DB
-BaseRepository.js con operazioni CRUD comuni
-Repository specifici per ogni modello
-
-
-database/
-
-Gestione connessione DB
-Supporto per future migrazioni
-Utilities database-specifiche
+BSc/
+├── src/
+│    ├── adminInterface/
+│    │    ├── public/
+│    │    │   ├── index.html
+│    │    │   └── favicon.ico
+│    │    ├── src/
+│    │    │   ├── components/
+│    │    │   │   ├── common/
+│    │    │   │   │   ├── SearchInput.js
+│    │    │   │   │   ├── LoadingSpinner.js
+│    │    │   │   │   └── ConfirmDialog.js
+│    │    │   │   ├── users/
+│    │    │   │   │   ├── UserManagement.js
+│    │    │   │   │   ├── UserForm.js
+│    │    │   │   │   └── UsersList.js
+│    │    │   │   └── schools/
+│    │    │   │       ├── SchoolManagement.js
+│    │    │   │       ├── SchoolForm.js
+│    │    │   │       └── SchoolsList.js
+│    │    │   ├── contexts/
+│    │    │   │   ├── UserContext.js
+│    │    │   │   ├── SchoolContext.js
+│    │    │   │   └── NotificationContext.js
+│    │    │   ├── services/
+│    │    │   │   ├── api.js
+│    │    │   │   ├── userService.js
+│    │    │   │   └── schoolService.js
+│    │    │   ├── utils/
+│    │    │   │   ├── constants.js
+│    │    │   │   └── validation.js
+│    │    │   ├── App.js
+│    │    │   ├── index.js
+│    │    │   └── theme.js
+│    │    ├── package.json
+│    │    └── README.md
+│    ├── config/                   # Backend Configuration
+│    │   ├── config.js
+│    │   ├── database.js
+│    │   └── logger.config.js
+│    ├── controllers/              # API Controllers
+│    │   ├── userController.js
+│    │   └── schoolController.js
+│    ├── middleware/               # Express Middleware
+│    │   ├── auth.js
+│    │   └── errorHandler.js
+│    ├── models/                   # MongoDB Models
+│    │   ├── User.js
+│    │   └── School.js
+│    ├── routes/                   # API Routes
+│    │   ├── userRoutes.js
+│    │   └── schoolRoutes.js
+│    ├── services/                 # Business Logic
+│    │   ├── userService.js
+│    │   └── schoolService.js
+│    └── app.js                    # Main Express App
+│    ├── tests/                        # Test Files
+│    ├── unit/
+│    └── integration/
+├── logs/                         # Application Logs
+├── docs/                         # Documentation
+├── .env.development
+├── .env.production
+├── .env.test
+├── package.json
+└── README.md

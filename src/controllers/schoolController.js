@@ -128,6 +128,7 @@ class SchoolController extends BaseController {
             next(error);
         }
     }
+
     async getAll(req, res, next) {
         try {
             const schools = await this.repository.find({}); // Usa find invece di findAll
@@ -141,6 +142,32 @@ class SchoolController extends BaseController {
             next(error);
         }
     }
+
+    async getById(req, res) {
+        try {
+            logger.debug('Recupero scuola con dettagli utenti', { 
+                schoolId: req.params.id 
+            });
+    
+            // Usa findWithUsers invece di findById
+            const school = await this.repository.findWithUsers(req.params.id);
+            
+            logger.debug('Scuola recuperata con successo', { 
+                schoolId: school._id,
+                usersCount: school.users.length,
+                users: JSON.stringify(school.users) // Aggiungi questo per debug
+            });
+    
+            this.sendResponse(res, { school });
+        } catch (error) {
+            logger.error('Errore nel recupero della scuola', { 
+                error,
+                schoolId: req.params.id 
+            });
+            this.sendError(res, error);
+        }
+    }
+
 }
 
 module.exports = new SchoolController();

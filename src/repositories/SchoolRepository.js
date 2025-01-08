@@ -21,16 +21,49 @@ class SchoolRepository extends BaseRepository {
      */
     async findWithUsers(id) {
         try {
-            const school = await this.findById(id, {
-                populate: {
-                    path: 'users.user',
-                    select: 'firstName lastName email role'
-                }
+            console.log('Fetching school with users for ID:', id);
+    
+            // Prima troviamo la scuola senza populate per vedere i dati grezzi
+            const rawSchool = await this.model.findById(id);
+            console.log('Raw school data:', {
+                id: rawSchool._id,
+                users: rawSchool.users,
+                manager: rawSchool.manager
             });
-
+    
+            const school = await this.model.findById(id)
+                .populate({
+                    path: 'users.user',
+                    select: 'firstName lastName email role',
+                    model: 'User'
+                })
+                .populate('manager')
+                .exec();
+    
+            console.log('Populated school data:', {
+                id: school._id,
+                users: school.users.map(u => ({
+                    _id: u._id,
+                    userId: u.user?._id,
+                    userEmail: u.user?.email,
+                    role: u.role
+                })),
+                manager: school.manager
+            });
+    
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'School non trovata'
+                );
+            }
+    
             return school;
         } catch (error) {
-            logger.error('Errore nel recupero della scuola con utenti', { error, schoolId: id });
+            logger.error('Errore nel recupero della scuola con utenti', { 
+                error, 
+                schoolId: id 
+            });
             throw createError(
                 ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nel recupero della scuola con utenti',

@@ -233,9 +233,10 @@ class UserRepository extends BaseRepository {
         try {
             const { password, passwordResetToken, passwordResetExpires, ...safeData } = updateData;
             
-            const user = await this.findByIdAndUpdate(
+            // Usa this.model.findByIdAndUpdate invece di this.findByIdAndUpdate
+            const user = await this.model.findByIdAndUpdate(
                 userId,
-                safeData,
+                { $set: safeData },
                 { new: true, runValidators: true }
             );
     

@@ -72,14 +72,54 @@ class AuthController {
      * Registrazione nuovo utente
      * @public
      */
-    async register(req, res, next) {
+    async register(req, res) {
         try {
-            const newUser = await this.repository.create(req.body);
-            logger.info('Utente registrato con successo', { userId: newUser._id });
-            this._sendTokenResponse(newUser, 201, res);
+            const { email, password, firstName, lastName, role } = req.body;
+            logger.debug('Registering new user:', { email, firstName, lastName, role });
+    
+            if (!email || !password || !firstName || !lastName || !role) {
+                logger.warn('Missing required fields for user registration');
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'Dati utente incompleti',
+                    code: 'VALIDATION_ERROR'
+                });
+            }
+    
+            // Verifica se l'email esiste già
+            const existingUser = await this.repository.findByEmail(email);
+            if (existingUser) {
+                logger.warn('Email already exists:', email);
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'Email già registrata',
+                    code: 'DUPLICATE_EMAIL'
+                });
+            }
+    
+            const user = await this.repository.create({
+                email,
+                password,
+                role,
+                firstName,
+                lastName
+            });
+    
+            logger.info('New user registered successfully:', { userId: user._id });
+            
+            // Rimuovi la password dalla risposta
+            const userResponse = user.toObject();
+            delete userResponse.password;
+    
+            return this.sendResponse(res, { 
+                status: 'success',
+                data: {
+                    user: userResponse
+                }
+            }, 201);
         } catch (error) {
-            logger.error('Errore durante la registrazione', { error });
-            next(error);
+            logger.error('Error in user registration:', error);
+            return this.sendError(res, error);
         }
     }
 

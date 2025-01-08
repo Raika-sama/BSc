@@ -19,6 +19,80 @@ router.post('/forgot-password', (req, res, next) => userController.forgotPasswor
 router.use(protect);
 
 // Rotte protette
+
+// Aggiunta della nuova rotta POST - Creazione nuovo utente da app
+router.post('/', async (req, res, next) => {
+    try {
+        logger.debug('Creating new user:', req.body);
+        const result = await userController.register(req, res, next);
+        logger.debug('User created:', result);
+        return result;
+    } catch (error) {
+        logger.error('Error creating user:', error);
+        next(error);
+    }
+});
+
+// Modifica utente
+router.put('/:id', async (req, res, next) => {
+    try {
+        logger.debug('Updating user:', {
+            userId: req.params.id,
+            updates: req.body
+        });
+        const result = await userController.update(req, res, next);
+        logger.debug('User updated:', result);
+        return result;
+    } catch (error) {
+        logger.error('Error updating user:', error);
+        next(error);
+    }
+});
+
+// Eliminazione utente
+router.delete('/:id', async (req, res, next) => {
+    try {
+        logger.debug('Deleting user:', {
+            userId: req.params.id
+        });
+        const result = await userController.delete(req, res, next);
+        logger.debug('User deleted:', result);
+        return result;
+    } catch (error) {
+        logger.error('Error deleting user:', error);
+        next(error);
+    }
+});
+
+
+
+// Lista utenti
+router.get('/', async (req, res, next) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+
+        const result = await userController.getAll({
+            page,
+            limit,
+            search
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                users: result.users,
+                total: result.total,
+                page,
+                limit
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.get('/me', (req, res, next) => {
     const userId = req.user.id;
     req.params.id = userId; // Imposta l'id nei params per il getById

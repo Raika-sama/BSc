@@ -31,7 +31,12 @@ class BaseRepository {
                 query = query.select(options.select);
             }
             
-            const doc = await query;
+            // Aggiungi supporto per populate
+            if (options.populate) {
+                query = query.populate(options.populate);
+            }
+
+            const doc = await query.exec(); // Aggiungi exec()
             
             if (!doc) {
                 throw createError(
