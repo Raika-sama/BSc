@@ -14,10 +14,35 @@ class SchoolController extends BaseController {
         super(SchoolRepository, 'school');
         // Binding dei metodi
         this.create = this.create.bind(this);
+        this.sendError = this.sendError.bind(this);
+        this.sendResponse = this.sendResponse.bind(this);
         this.getByRegion = this.getByRegion.bind(this);
         this.getByType = this.getByType.bind(this);
+        this.setupInitialConfiguration = this.setupInitialConfiguration.bind(this);
+        this.classRepository = require('../repositories').class; // Aggiungi questa riga
     }
-   
+
+    // Aggiungi questi metodi di utility
+    sendError(res, error) {
+        const statusCode = error.statusCode || 500;
+        res.status(statusCode).json({
+            status: 'error',
+            error: {
+                message: error.message,
+                code: error.code || 'UNKNOWN_ERROR'
+            }
+        });
+    }
+
+    sendResponse(res, data, statusCode = 200) {
+        res.status(statusCode).json({
+            status: 'success',
+            data
+        });
+    }
+
+
+
     /**
      * Crea una nuova scuola
      * @override
@@ -167,8 +192,23 @@ class SchoolController extends BaseController {
 
     async setupInitialConfiguration(req, res) {
         try {
+            if (!req.user) {
+                return this.sendError(res, {
+                    statusCode: 401,
+                    message: 'Authentication required'
+                });
+            }
+    
             const { academicYear, sections } = req.body;
             const schoolId = req.params.id;
+    
+            // Verifica i dati richiesti
+            if (!academicYear || !sections || !sections.length) {
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'Missing required data'
+                });
+            }
     
             const academicYearSetup = await this.repository.setupAcademicYear(schoolId, {
                 year: academicYear,
@@ -178,7 +218,7 @@ class SchoolController extends BaseController {
                 createdBy: req.user.id
             });
     
-            const sectionsSetup = await this.repository.configureSections(
+            const { sections: configuredSections } = await this.repository.configureSections(
                 schoolId, 
                 sections
             );
@@ -189,14 +229,19 @@ class SchoolController extends BaseController {
                 sections
             );
     
-            this.sendResponse(res, { 
+            return this.sendResponse(res, {
                 academicYear: academicYearSetup,
-                sections: sectionsSetup
+                sections: configuredSections
             });
         } catch (error) {
-            this.sendError(res, error);
+            logger.error('Setup configuration error:', error);
+            return this.sendError(res, {
+                statusCode: error.statusCode || 500,
+                message: error.message
+            });
         }
     }
+
 
     async getAcademicYears(req, res) {
         try {
@@ -226,6 +271,7 @@ class SchoolController extends BaseController {
         }
     }
 
+    
 }
 
 module.exports = new SchoolController();

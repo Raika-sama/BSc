@@ -249,13 +249,21 @@ class ClassController extends BaseController {
     async getByAcademicYear(req, res) {
         try {
             const { schoolId, year } = req.params;
+            console.log('Searching classes with params:', { schoolId, year }); // debug log
+    
+            // Normalizza il formato dell'anno accademico (supporta sia 2024-2025 che 2024/2025)
+            const normalizedYear = year.includes('/') ? year : year.replace('-', '/');
+    
             const classes = await this.repository.find({
                 schoolId,
-                academicYear: year
+                academicYear: normalizedYear
             });
-
+    
+            console.log('Found classes:', classes); // debug log
+    
             this.sendResponse(res, { classes });
         } catch (error) {
+            console.error('Error in getByAcademicYear:', error);
             this.sendError(res, error);
         }
     }

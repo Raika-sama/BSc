@@ -54,15 +54,19 @@ describe('SchoolRepository', () => {
        });
 
        it('should validate academic year format', async () => {
-           const yearData = {
-               year: '2024-2025', // Invalid format
-               startDate: new Date()
-           };
+        const yearData = {
+            year: '2024-2025', // Formato non valido
+            startDate: new Date()
+        };
 
-           await expect(repository.setupAcademicYear(mockSchool._id, yearData))
-               .rejects.toThrow(ErrorTypes.VALIDATION.INVALID_INPUT.message);
-       });
-   });
+        try {
+            await repository.setupAcademicYear(mockSchool._id, yearData);
+            fail('Should have thrown an error');
+        } catch (error) {
+            expect(error.message).toBe(ErrorTypes.VALIDATION.INVALID_INPUT.message);
+        }
+        });
+    });
 
    describe('configureSections', () => {
        it('should configure sections with academic year', async () => {

@@ -21,6 +21,14 @@ app.use(express.urlencoded({ extended: true }));
 // Logging
 app.use(requestLogger);
 
+app.use((req, res, next) => {
+    console.log('Headers at app level:', {
+        auth: req.headers.authorization,
+        path: req.path
+    });
+    next();
+});
+
 // Routes - Usa un unico punto di ingresso per tutte le route
 app.use('/api/v1', routes);
 

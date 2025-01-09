@@ -190,6 +190,11 @@ class SchoolRepository extends BaseRepository {
     }
 
     async setupAcademicYear(schoolId, yearData) {
+         // Valida il formato dell'anno accademico
+         const yearFormat = /^\d{4}\/\d{4}$/;
+         if (!yearFormat.test(yearData.year)) {
+             throw new Error(ErrorTypes.VALIDATION.INVALID_INPUT.message);
+         }
         try {
           return await this.model.findByIdAndUpdate(
             schoolId,
@@ -216,28 +221,49 @@ class SchoolRepository extends BaseRepository {
       }
       
       async configureSections(schoolId, sectionsData) {
-        try {
-          const school = await this.findById(schoolId);
-          const sections = sectionsData.map(section => ({
-            name: section.name,
-            isActive: true,
-            academicYears: [{
-              year: section.academicYear,
-              status: 'active',
-              maxStudents: section.maxStudents
-            }]
-          }));
-      
-          school.sections = sections;
-          return await school.save();
-        } catch (error) {
-          logger.error('Error in configureSections:', error);
-          throw createError(
-            ErrorTypes.DATABASE.QUERY_FAILED,
-            'Errore nella configurazione sezioni'
-          );
+        // Valida il formato delle sezioni
+        const sectionFormat = /^[A-Z]$/;
+        const invalidSections = sectionsData.some(section => !sectionFormat.test(section.name));
+        if (invalidSections) {
+            throw new Error(ErrorTypes.VALIDATION.INVALID_INPUT.message);
         }
-      }
+    
+        try {
+            const school = await this.findById(schoolId);
+            if (!school) {
+                throw createError(ErrorTypes.NOT_FOUND, 'School not found');
+            }
+    
+            // Crea le sezioni con la struttura corretta
+            const sections = sectionsData.map(section => ({
+                name: section.name,
+                isActive: true,
+                academicYears: [{
+                    status: 'active',
+                    maxStudents: section.maxStudents
+                }],
+                createdAt: new Date()
+            }));
+    
+            // Aggiorna la scuola con le nuove sezioni
+            school.sections = sections;
+            const updatedSchool = await school.save();
+    
+            // Restituisci le sezioni in un formato che corrisponde ai test
+            return {
+                sections: updatedSchool.sections.map(section => ({
+                    name: section.name,
+                    academicYears: section.academicYears
+                }))
+            };
+        } catch (error) {
+            logger.error('Error in configureSections:', error);
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nella configurazione sezioni'
+            );
+        }
+    }
       
       async updateSectionStatus(schoolId, sectionName, yearData) {
         try {
@@ -266,6 +292,7 @@ class SchoolRepository extends BaseRepository {
         }
       }
 
+      
 }
 
 module.exports = SchoolRepository;

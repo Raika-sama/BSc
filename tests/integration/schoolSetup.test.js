@@ -1,141 +1,246 @@
 // tests/integration/schoolSetup.test.js
+// tests/integration/schoolSetup.test.js
 
 const mongoose = require('mongoose');
 const request = require('supertest');
 const app = require('../../src/app');
-const { School, Class } = require('../../src/models');
+const { School, Class, User } = require('../../src/models');
 
 describe('School Setup Integration', () => {
-   let authToken;
-   let adminUser;
+    let authToken;
+    let adminUser;
 
-   beforeAll(async () => {
-    await mongoose.connect(process.env.MONGODB_URI);       // Setup admin user and get token
-       const loginResponse = await request(app)
-           .post('/api/v1/auth/login')
-           .send({ email: 'admin@test.com', password: 'password123' });
-       authToken = loginResponse.body.token;
-       adminUser = loginResponse.body.user;
-   });
+    beforeAll(async () => {
+        try {
+            await mongoose.connect(process.env.MONGODB_URI);
+    
+            // Pulisci il database
+            await Promise.all([
+                User.deleteMany({}),
+                School.deleteMany({}),
+                Class.deleteMany({})
+            ]);
+    
+            // Crea l'utente admin con tutti i campi necessari
+            const adminData = {
+                email: 'admin@test.com',
+                password: 'password123',
+                firstName: 'Admin',
+                lastName: 'Test',
+                role: 'admin',
+                isActive: true // Aggiungi questo
+            };
+    
+            // Crea il nuovo admin
+            adminUser = await User.create(adminData);
+            console.log('Admin user created successfully:', adminUser._id);
+    
+            // Login con gestione errori dettagliata
+            const loginResponse = await request(app)
+                .post('/api/v1/auth/login')
+                .send({
+                    email: adminData.email,
+                    password: adminData.password
+                });
+    
+            if (!loginResponse.body.token) {
+                console.error('Login failed:', loginResponse.body);
+                throw new Error('Login failed: ' + JSON.stringify(loginResponse.body));
+            }
+            console.log('Login response:', loginResponse.body);
 
-   afterAll(async () => {
-       await mongoose.connection.close();
-   });
+            authToken = loginResponse.body.token;
+    
+            // Verifica il token immediatamente
+            const verifyResponse = await request(app)
+                .get('/api/v1/auth/verify')
+                .set('Authorization', `Bearer ${authToken}`);
+    
+            if (verifyResponse.status !== 200) {
+                throw new Error('Token verification failed');
+            }
+    
+        } catch (error) {
+            console.error('Setup failed:', error);
+            throw error;
+        }
+    });
+    // Modifica la funzione helper per l'autenticazione
+    const makeAuthorizedRequest = (request) => {
+        console.log('Making authorized request with token:', authToken ? 'Token present' : 'No token');
+        if (!authToken) {
+            throw new Error('Auth token not available');
+        }
+        return request.set('Authorization', `Bearer ${authToken}`);
+    };
+    
 
-   afterEach(async () => {
-       await School.deleteMany({});
-       await Class.deleteMany({});
-   });
+    // Test per la creazione della scuola
+    describe('Complete School Setup Flow', () => {
+        it('should handle full school setup process', async () => {
+            // Step 1: Create School
+            const schoolData = {
+                name: 'Integration Test School',
+                schoolType: 'middle_school',
+                region: 'Test Region',
+                province: 'Test Province',
+                address: 'Test Address'
+            };
 
-   describe('Complete School Setup Flow', () => {
-       it('should handle full school setup process', async () => {
-           // Step 1: Create School
-           const schoolResponse = await request(app)
-               .post('/api/v1/schools')
-               .set('Authorization', `Bearer ${authToken}`)
-               .send({
-                   name: 'Integration Test School',
-                   schoolType: 'middle_school',
-                   region: 'Test Region',
-                   province: 'Test Province',
-                   address: 'Test Address'
-               });
+            const schoolResponse = await makeAuthorizedRequest(
+                request(app)
+                    .post('/api/v1/schools')
+            ).send(schoolData);
 
-           expect(schoolResponse.status).toBe(201);
-           const schoolId = schoolResponse.body.data.school._id;
+            expect(schoolResponse.status).toBe(201);
+            const schoolId = schoolResponse.body.data.school._id;
 
-           // Step 2: Setup Initial Configuration
-           const setupResponse = await request(app)
-               .post(`/api/v1/schools/${schoolId}/setup`)
-               .set('Authorization', `Bearer ${authToken}`)
-               .send({
-                   academicYear: '2024/2025',
-                   startDate: '2024-09-01',
-                   endDate: '2025-06-30',
-                   sections: [
-                       { name: 'A', maxStudents: 25 },
-                       { name: 'B', maxStudents: 25 }
-                   ]
-               });
+            // Step 2: Setup Initial Configuration
+            const setupData = {
+                academicYear: '2024/2025',
+                startDate: '2024-09-01',
+                endDate: '2025-06-30',
+                sections: [
+                    { name: 'A', maxStudents: 25 },
+                    { name: 'B', maxStudents: 25 }
+                ]
+            };
 
-           expect(setupResponse.status).toBe(200);
-           expect(setupResponse.body.data.sections).toHaveLength(2);
+            const setupResponse = await makeAuthorizedRequest(
+                request(app)
+                    .post(`/api/v1/schools/${schoolId}/setup`)
+            ).send(setupData);
 
-           // Step 3: Verify Created Classes
-           const classesResponse = await request(app)
-               .get(`/api/v1/classes/school/${schoolId}/year/2024/2025`)
-               .set('Authorization', `Bearer ${authToken}`);
+            expect(setupResponse.status).toBe(200);
+            expect(setupResponse.body.data).toBeDefined();
+            expect(Array.isArray(setupResponse.body.data.sections)).toBe(true);
+            expect(setupResponse.body.data.sections.length).toBe(2);
 
-           expect(classesResponse.status).toBe(200);
-           expect(classesResponse.body.data.classes).toHaveLength(6); // 3 years * 2 sections
-       });
-   });
+            // Verifica delle classi create
+            const classesResponse = await makeAuthorizedRequest(
+                request(app)
+                  .get(`/api/v1/classes/school/${schoolId}/year/${encodeURIComponent('2024/2025')}`)
+            );
 
-   describe('Year Transition Flow', () => {
-       let schoolId;
+            expect(classesResponse.status).toBe(200);
+            const classes = classesResponse.body.data.classes;
+            expect(classes).toHaveLength(6); // 3 anni * 2 sezioni
+        });
+    });
 
-       beforeEach(async () => {
-           // Setup initial school and classes
-           const school = await School.create({
-               name: 'Year Transition Test School',
-               schoolType: 'middle_school',
-               region: 'Test Region',
-               province: 'Test Province',
-               address: 'Test Address',
-               manager: adminUser._id
-           });
-           schoolId = school._id;
 
-           await Class.create([
-               {
-                   schoolId,
-                   year: 1,
-                   section: 'A',
-                   academicYear: '2024/2025',
-                   status: 'active',
-                   capacity: 25
-               },
-               {
-                   schoolId,
-                   year: 2,
-                   section: 'A',
-                   academicYear: '2024/2025',
-                   status: 'active',
-                   capacity: 25
-               }
-           ]);
-       });
 
-       it('should handle academic year transition', async () => {
-           const response = await request(app)
-               .post('/api/v1/classes/transition')
-               .set('Authorization', `Bearer ${authToken}`)
-               .send({
-                   schoolId,
-                   fromYear: '2024/2025',
-                   toYear: '2025/2026',
-                   sections: [{ name: 'A', maxStudents: 25 }]
-               });
+    describe('Year Transition Flow', () => {
+        let schoolId;
 
-           expect(response.status).toBe(200);
+        beforeEach(async () => {
+            const school = await School.create({
+                name: 'Year Transition Test School',
+                schoolType: 'middle_school',
+                region: 'Test Region',
+                province: 'Test Province',
+                address: 'Test Address',
+                manager: adminUser._id,
+                isActive: true
+            });
+            schoolId = school._id;
 
-           // Verify new classes
-           const newClasses = await Class.find({
-               schoolId,
-               academicYear: '2025/2026'
-           });
+            await Class.create([
+                {
+                    schoolId,
+                    year: 1,
+                    section: 'A',
+                    academicYear: '2024/2025',
+                    status: 'active',
+                    capacity: 25,
+                    mainTeacher: adminUser._id
+                },
+                {
+                    schoolId,
+                    year: 2,
+                    section: 'A',
+                    academicYear: '2024/2025',
+                    status: 'active',
+                    capacity: 25,
+                    mainTeacher: adminUser._id
+                }
+            ]);
+        });
 
-           expect(newClasses).toHaveLength(3); // 2 promoted + 1 new first year
-           
-           // Verify old classes status
-           const oldClasses = await Class.find({
-               schoolId,
-               academicYear: '2024/2025'
-           });
+        it('should handle academic year transition', async () => {
+            const response = await makeAuthorizedRequest(
+                request(app)
+                    .post('/api/v1/classes/transition')
+            ).send({
+                schoolId,
+                fromYear: '2024/2025',
+                toYear: '2025/2026',
+                sections: [{ name: 'A', maxStudents: 25 }]
+            });
 
-           oldClasses.forEach(cls => {
-               expect(cls.status).toBe('archived');
-           });
-       });
-   });
+            expect(response.status).toBe(200);
+
+            const newClasses = await Class.find({
+                schoolId,
+                academicYear: '2025/2026'
+            });
+
+            expect(newClasses).toHaveLength(3);
+
+            const oldClasses = await Class.find({
+                schoolId,
+                academicYear: '2024/2025'
+            });
+
+            oldClasses.forEach(cls => {
+                expect(cls.status).toBe('archived');
+            });
+
+            const promotedClasses = newClasses.filter(c => c.year > 1);
+            expect(promotedClasses).toHaveLength(2);
+            expect(promotedClasses.some(c => c.year === 2)).toBe(true);
+            expect(promotedClasses.some(c => c.year === 3)).toBe(true);
+
+            const newFirstYearClass = newClasses.find(c => c.year === 1);
+            expect(newFirstYearClass).toBeDefined();
+            expect(newFirstYearClass.section).toBe('A');
+            expect(newFirstYearClass.capacity).toBe(25);
+        });
+    });
+
+    describe('Error Handling', () => {
+        it('should handle invalid school creation', async () => {
+            const response = await makeAuthorizedRequest(
+                request(app)
+                    .post('/api/v1/schools')
+            ).send({
+                name: 'Test School' // Dati incompleti
+            });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toBeDefined();
+        });
+
+        it('should handle invalid setup configuration', async () => {
+            const school = await School.create({
+                name: 'Error Test School',
+                schoolType: 'middle_school',
+                region: 'Test Region',
+                province: 'Test Province',
+                address: 'Test Address',
+                manager: adminUser._id,
+                isActive: true
+            });
+
+            const response = await makeAuthorizedRequest(
+                request(app)
+                    .post(`/api/v1/schools/${school._id}/setup`)
+            ).send({
+                academicYear: '2024/2025' // Dati incompleti
+            });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toBeDefined();
+        });
+    });
 });

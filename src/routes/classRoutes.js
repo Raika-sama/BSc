@@ -1,55 +1,56 @@
-// src/routes/classRoutes.js
-
-/**
- * @file classRoutes.js
- * @description Router per la gestione delle classi
- * @author Raika-sama
- * @date 2025-01-05
- */
-
 const express = require('express');
 const router = express.Router();
 const { class: classController } = require('../controllers');
 const logger = require('../utils/errors/logger/logger');
 const { protect } = require('../middleware/authMiddleware');
 
-// Middleware di logging specifico per class routes
-router.use((req, res, next) => {
-    logger.info(`Class Route Called: ${req.method} ${req.originalUrl}`);
-    next();
+
+
+
+// Route specifiche (devono venire PRIMA delle route generiche)
+router.get('/school/:schoolId/year/:year(*)', async (req, res, next) => {
+    try {
+        const { schoolId, year } = req.params;
+        const normalizedYear = year.includes('/') ? 
+            year : 
+            year.replace('-', '/');
+
+        await classController.getByAcademicYear(
+            { ...req, params: { schoolId, year: normalizedYear } }, 
+            res, 
+            next
+        );
+    } catch (error) {
+        next(error);
+    }
 });
 
-
-router.use(protect);
-
-router.use(protect);
-router.post('/transition', classController.handleYearTransition);
-router.get('/school/:schoolId/year/:year', classController.getByAcademicYear);
-
-// Rotte base per le classi
-router.get('/', classController.getAll.bind(classController));
-router.get('/:id', classController.getById.bind(classController));
-
-// Rotte specifiche per le classi
 router.get('/school/:schoolId', classController.getBySchool.bind(classController));
+router.post('/transition', classController.handleYearTransition.bind(classController));
 
-// Rotte protette (richiederanno autenticazione)
-
-router.post('/', classController.create.bind(classController));
-router.put('/:id', classController.update.bind(classController));
-router.delete('/:id', classController.delete.bind(classController));
-router.delete('/', classController.deleteAll.bind(classController));
-
-
-// Rotte per la gestione degli studenti nella classe
+// Rotte per la gestione degli studenti
 router.post('/:classId/students', classController.addStudents.bind(classController));
-// TODO: Implementare rimozione studenti
-// router.delete('/:classId/students/:studentId', classController.removeStudent.bind(classController));
 
-// Error handling specifico per class routes
+// Rotte base per le classi (devono venire DOPO le route specifiche)
+router.route('/')
+    .get(classController.getAll.bind(classController))
+    .post(classController.create.bind(classController))
+    .delete(classController.deleteAll.bind(classController));
+
+router.route('/:id')
+    .get(classController.getById.bind(classController))
+    .put(classController.update.bind(classController))
+    .delete(classController.delete.bind(classController));
+
+// Error handling
 router.use((err, req, res, next) => {
-    logger.error('Class Route Error:', err);
-    // Importante: usiamo lo statusCode dell'errore o 401 per errori di autenticazione
+    logger.error('Class Route Error:', {
+        error: err.message,
+        stack: err.stack,
+        path: req.path,
+        method: req.method
+    });
+
     const statusCode = err.code === 'AUTH_004' ? 401 : (err.statusCode || 500);
     res.status(statusCode).json({
         status: 'error',
