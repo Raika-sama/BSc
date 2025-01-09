@@ -523,3 +523,6 @@
 {"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-08T20:18:07.204Z","userId":"677bfe44f6789c907c9f3766"}
 {"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T20:57:26.874Z","userId":"677bfe44f6789c907c9f3766"}
 {"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T20:57:30.207Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T21:30:34.281Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T21:30:36.310Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-08T21:30:39.468Z","userId":"677bfe44f6789c907c9f3766"}

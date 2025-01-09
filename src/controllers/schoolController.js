@@ -17,10 +17,7 @@ class SchoolController extends BaseController {
         this.getByRegion = this.getByRegion.bind(this);
         this.getByType = this.getByType.bind(this);
     }
-
-
-
-    
+   
     /**
      * Crea una nuova scuola
      * @override
@@ -164,6 +161,67 @@ class SchoolController extends BaseController {
                 error,
                 schoolId: req.params.id 
             });
+            this.sendError(res, error);
+        }
+    }
+
+    async setupInitialConfiguration(req, res) {
+        try {
+            const { academicYear, sections } = req.body;
+            const schoolId = req.params.id;
+    
+            const academicYearSetup = await this.repository.setupAcademicYear(schoolId, {
+                year: academicYear,
+                status: 'active',
+                startDate: req.body.startDate,
+                endDate: req.body.endDate,
+                createdBy: req.user.id
+            });
+    
+            const sectionsSetup = await this.repository.configureSections(
+                schoolId, 
+                sections
+            );
+    
+            await this.classRepository.createInitialClasses(
+                schoolId,
+                academicYear,
+                sections
+            );
+    
+            this.sendResponse(res, { 
+                academicYear: academicYearSetup,
+                sections: sectionsSetup
+            });
+        } catch (error) {
+            this.sendError(res, error);
+        }
+    }
+
+    async getAcademicYears(req, res) {
+        try {
+            const schoolId = req.params.id;
+            const school = await this.repository.findById(schoolId);
+            this.sendResponse(res, { academicYears: school.academicYears });
+        } catch (error) {
+            this.sendError(res, error);
+        }
+    }
+
+    async setupAcademicYear(req, res) {
+        try {
+            const schoolId = req.params.id;
+            const yearData = {
+                year: req.body.year,
+                startDate: req.body.startDate,
+                endDate: req.body.endDate,
+                status: req.body.status || 'planned',
+                createdBy: req.user.id
+            };
+            
+            const school = await this.repository.setupAcademicYear(schoolId, yearData);
+            this.sendResponse(res, { school });
+        } catch (error) {
             this.sendError(res, error);
         }
     }

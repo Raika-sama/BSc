@@ -337,6 +337,82 @@ class ClassRepository extends BaseRepository {
             );
         }
     }
+
+    async createInitialClasses(schoolId, academicYear, sections) {
+        try {
+          const school = await this.model('School').findById(schoolId);
+          const years = school.schoolType === 'middle_school' ? 3 : 5;
+          
+          const classes = sections.flatMap(section => 
+            Array.from({ length: years }, (_, i) => ({
+              schoolId,
+              year: i + 1,
+              section: section.name,
+              academicYear,
+              status: 'planned',
+              capacity: section.maxStudents
+            }))
+          );
+      
+          return await this.model.insertMany(classes);
+        } catch (error) {
+          logger.error('Error in createInitialClasses:', error);
+          throw createError(
+            ErrorTypes.DATABASE.QUERY_FAILED,
+            'Errore nella creazione classi iniziali'
+          );
+        }
+      }
+      
+      async promoteStudents(fromYear, toYear) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+      
+        try {
+          const oldClasses = await this.find({ 
+            academicYear: fromYear,
+            status: 'active'
+          });
+      
+          for (const oldClass of oldClasses) {
+            if (oldClass.year < (oldClass.schoolType === 'middle_school' ? 3 : 5)) {
+              const newClass = await this.create({
+                schoolId: oldClass.schoolId,
+                year: oldClass.year + 1,
+                section: oldClass.section,
+                academicYear: toYear,
+                status: 'active',
+                capacity: oldClass.capacity
+              });
+      
+              await this.model.updateMany(
+                { 
+                  _id: oldClass._id,
+                  'students.status': 'active'
+                },
+                { 
+                  $set: {
+                    'students.$[].status': 'transferred',
+                    'students.$[].leftAt': new Date()
+                  }
+                }
+              );
+            }
+          }
+      
+          await session.commitTransaction();
+          session.endSession();
+        } catch (error) {
+          await session.abortTransaction();
+          session.endSession();
+          logger.error('Error in promoteStudents:', error);
+          throw createError(
+            ErrorTypes.DATABASE.QUERY_FAILED,
+            'Errore nella promozione studenti'
+          );
+        }
+      }
+
 }
 
 module.exports = ClassRepository;

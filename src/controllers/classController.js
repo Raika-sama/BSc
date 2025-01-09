@@ -222,7 +222,43 @@ class ClassController extends BaseController {
     const [startYear, endYear] = academicYear.split('/');
     return parseInt(startYear) === currentYear && 
            parseInt(endYear) === currentYear + 1;
-}
+    }
+
+    async handleYearTransition(req, res) {
+        try {
+            const { fromYear, toYear } = req.body;
+            const schoolId = req.params.schoolId;
+
+            await this.repository.promoteStudents(fromYear, toYear);
+            
+            const newClasses = await this.repository.createInitialClasses(
+                schoolId,
+                toYear,
+                req.body.sections
+            );
+
+            this.sendResponse(res, { 
+                message: 'Transizione anno completata',
+                newClasses 
+            });
+        } catch (error) {
+            this.sendError(res, error);
+        }
+    }
+
+    async getByAcademicYear(req, res) {
+        try {
+            const { schoolId, year } = req.params;
+            const classes = await this.repository.find({
+                schoolId,
+                academicYear: year
+            });
+
+            this.sendResponse(res, { classes });
+        } catch (error) {
+            this.sendError(res, error);
+        }
+    }
 
 
 }

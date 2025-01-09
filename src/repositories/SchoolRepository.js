@@ -188,6 +188,84 @@ class SchoolRepository extends BaseRepository {
             );
         }
     }
+
+    async setupAcademicYear(schoolId, yearData) {
+        try {
+          return await this.model.findByIdAndUpdate(
+            schoolId,
+            {
+              $push: {
+                academicYears: {
+                  year: yearData.year,
+                  status: yearData.status || 'planned',
+                  startDate: yearData.startDate,
+                  endDate: yearData.endDate,
+                  createdBy: yearData.createdBy
+                }
+              }
+            },
+            { new: true }
+          );
+        } catch (error) {
+          logger.error('Error in setupAcademicYear:', error);
+          throw createError(
+            ErrorTypes.DATABASE.QUERY_FAILED,
+            'Errore nella configurazione anno accademico'
+          );
+        }
+      }
+      
+      async configureSections(schoolId, sectionsData) {
+        try {
+          const school = await this.findById(schoolId);
+          const sections = sectionsData.map(section => ({
+            name: section.name,
+            isActive: true,
+            academicYears: [{
+              year: section.academicYear,
+              status: 'active',
+              maxStudents: section.maxStudents
+            }]
+          }));
+      
+          school.sections = sections;
+          return await school.save();
+        } catch (error) {
+          logger.error('Error in configureSections:', error);
+          throw createError(
+            ErrorTypes.DATABASE.QUERY_FAILED,
+            'Errore nella configurazione sezioni'
+          );
+        }
+      }
+      
+      async updateSectionStatus(schoolId, sectionName, yearData) {
+        try {
+          return await this.model.findOneAndUpdate(
+            { 
+              _id: schoolId,
+              'sections.name': sectionName 
+            },
+            {
+              $push: {
+                'sections.$.academicYears': {
+                  year: yearData.year,
+                  status: yearData.status,
+                  maxStudents: yearData.maxStudents
+                }
+              }
+            },
+            { new: true }
+          );
+        } catch (error) {
+          logger.error('Error in updateSectionStatus:', error);
+          throw createError(
+            ErrorTypes.DATABASE.QUERY_FAILED,
+            'Errore nell\'aggiornamento stato sezione'
+          );
+        }
+      }
+
 }
 
 module.exports = SchoolRepository;

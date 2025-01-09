@@ -6,13 +6,14 @@
     "scripts": {
         "start": "node src/app.js",
         "dev": "nodemon src/app.js",
-        "test": "jest",
         "migrate:create": "migrate-mongo create",
         "migrate": "node src/database/migrations/initial-setup.js",
         "migrate:up": "migrate-mongo up",
         "migrate:down": "migrate-mongo down",
         "migrate:status": "migrate-mongo status",
-        "test:db": "node src/scripts/testConnection.js"
+        "test:db": "node src/scripts/testConnection.js",
+         "test": "jest",
+         "test:watch": "jest --watch"
     },
     "dependencies": {
         "@emotion/react": "^11.14.0",
@@ -51,6 +52,14 @@
     },
     "engines": {
         "node": ">=18.0.0"
+    },
+    "jest": {
+        "testEnvironment": "node",
+        "setupFiles": ["<rootDir>/tests/setup.js"],
+        "testTimeout": 50000,
+        "bufferTimeoutMS": 20000,
+        "rootDir": ".",
+        "moduleDirectories": ["node_modules", "src"]
     },
     "author": "Raika-sama",
     "license": "MIT",
