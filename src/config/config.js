@@ -6,8 +6,15 @@
  */
 
 const path = require('path');
+
+// Determina il file .env appropriato in base all'ambiente
+const envFile = process.env.NODE_ENV === 'test' 
+    ? '.env.test'
+    : `.env.${process.env.NODE_ENV || 'development'}`;
+
+// Carica le variabili d'ambiente
 require('dotenv').config({
-    path: path.join(__dirname, `../../.env.${process.env.NODE_ENV || 'development'}`)
+    path: path.join(__dirname, `../../${envFile}`)
 });
 
 /**
@@ -30,7 +37,9 @@ const config = {
         options: {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            dbName: process.env.DB_NAME || 'brainScannerDB'
+            dbName: process.env.NODE_ENV === 'test' 
+                ? 'brainscanner_test' 
+                : (process.env.DB_NAME || 'brainScannerDB')
         }
     },
 
@@ -38,6 +47,7 @@ const config = {
     jwt: {
         secret: process.env.JWT_SECRET,
         expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+        cookieExpiresIn: parseInt(process.env.JWT_COOKIE_EXPIRES_IN || '1', 10),
         cookieOptions: {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -57,7 +67,7 @@ const config = {
 
     // Configurazione Logging
     logging: {
-        level: process.env.LOG_LEVEL || 'info',
+        level: process.env.NODE_ENV === 'test' ? 'error' : (process.env.LOG_LEVEL || 'info'),
         file: process.env.LOG_FILE || 'app.log'
     },
 
@@ -86,11 +96,17 @@ const requiredKeys = [
  * @throws {Error} Se manca una configurazione richiesta
  */
 const validateConfig = (cfg, keys, prefix = '') => {
+    const missing = [];
+    
     for (const key of keys) {
-        const value = key.split('.').reduce((o, i) => o[i], cfg);
+        const value = key.split('.').reduce((o, i) => o?.[i], cfg);
         if (!value) {
-            throw new Error(`Configurazione mancante: ${prefix}${key}`);
+            missing.push(`${prefix}${key}`);
         }
+    }
+    
+    if (missing.length > 0) {
+        throw new Error(`Configurazione mancante: ${missing.join(', ')}`);
     }
 };
 
@@ -98,8 +114,12 @@ const validateConfig = (cfg, keys, prefix = '') => {
 try {
     validateConfig(config, requiredKeys);
 } catch (error) {
-    console.error('Errore di configurazione:', error.message);
-    process.exit(1);
+    if (process.env.NODE_ENV === 'test') {
+        console.warn('Warning: Missing configuration in test environment:', error.message);
+    } else {
+        console.error('Errore di configurazione:', error.message);
+        process.exit(1);
+    }
 }
 
 module.exports = config;

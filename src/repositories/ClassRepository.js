@@ -5,6 +5,10 @@ const { Class, User, School } = require('../models');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
+
+
+
+
 class ClassRepository extends BaseRepository {
     constructor() {
         super(Class);
@@ -338,80 +342,98 @@ class ClassRepository extends BaseRepository {
         }
     }
 
+    // src/repositories/ClassRepository.js
+
     async createInitialClasses(schoolId, academicYear, sections) {
         try {
-          const school = await this.model('School').findById(schoolId);
-          const years = school.schoolType === 'middle_school' ? 3 : 5;
-          
-          const classes = sections.flatMap(section => 
-            Array.from({ length: years }, (_, i) => ({
-              schoolId,
-              year: i + 1,
-              section: section.name,
-              academicYear,
-              status: 'planned',
-              capacity: section.maxStudents
-            }))
-          );
-      
-          return await this.model.insertMany(classes);
+            const school = await School.findById(schoolId);
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+
+            const years = school.schoolType === 'middle_school' ? 3 : 5;
+            const classesToCreate = [];
+
+            for (const section of sections) {
+                for (let year = 1; year <= years; year++) {
+                    classesToCreate.push({
+                        schoolId,
+                        year,
+                        section: section.name,
+                        academicYear,
+                        status: 'planned',
+                        capacity: section.maxStudents,
+                        mainTeacher: null // Assicurati che questo campo sia gestito correttamente
+                    });
+                }
+            }
+
+            const createdClasses = await Class.insertMany(classesToCreate);
+            return createdClasses;
         } catch (error) {
-          logger.error('Error in createInitialClasses:', error);
-          throw createError(
-            ErrorTypes.DATABASE.QUERY_FAILED,
-            'Errore nella creazione classi iniziali'
-          );
+            logger.error('Error in createInitialClasses:', error);
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nella creazione classi iniziali',
+                { originalError: error.message }
+            );
         }
-      }
-      
-      async promoteStudents(fromYear, toYear) {
+    }
+
+    async promoteStudents(fromYear, toYear) {
         const session = await mongoose.startSession();
         session.startTransaction();
-      
+    
         try {
-          const oldClasses = await this.find({ 
-            academicYear: fromYear,
-            status: 'active'
-          });
-      
-          for (const oldClass of oldClasses) {
-            if (oldClass.year < (oldClass.schoolType === 'middle_school' ? 3 : 5)) {
-              const newClass = await this.create({
-                schoolId: oldClass.schoolId,
-                year: oldClass.year + 1,
-                section: oldClass.section,
-                academicYear: toYear,
-                status: 'active',
-                capacity: oldClass.capacity
-              });
-      
-              await this.model.updateMany(
-                { 
-                  _id: oldClass._id,
-                  'students.status': 'active'
-                },
-                { 
-                  $set: {
-                    'students.$[].status': 'transferred',
-                    'students.$[].leftAt': new Date()
-                  }
+            const oldClasses = await this.find({ 
+                academicYear: fromYear,
+                status: 'active'
+            });
+    
+            for (const oldClass of oldClasses) {
+                if (oldClass.year < (oldClass.schoolType === 'middle_school' ? 3 : 5)) {
+                    // Crea la nuova classe e salva il riferimento
+                    await this.create({
+                        schoolId: oldClass.schoolId,
+                        year: oldClass.year + 1,
+                        section: oldClass.section,
+                        academicYear: toYear,
+                        status: 'active',
+                        capacity: oldClass.capacity
+                    }, { session });
+    
+                    // Aggiorna lo stato della vecchia classe
+                    await this.model.updateMany(
+                        { 
+                            _id: oldClass._id
+                        },
+                        { 
+                            $set: {
+                                status: 'archived',
+                                'students.$[].status': 'transferred',
+                                'students.$[].leftAt': new Date()
+                            }
+                        },
+                        { session }
+                    );
                 }
-              );
             }
-          }
-      
-          await session.commitTransaction();
-          session.endSession();
+    
+            await session.commitTransaction();
         } catch (error) {
-          await session.abortTransaction();
-          session.endSession();
-          logger.error('Error in promoteStudents:', error);
-          throw createError(
-            ErrorTypes.DATABASE.QUERY_FAILED,
-            'Errore nella promozione studenti'
-          );
+            await session.abortTransaction();
+            logger.error('Error in promoteStudents:', error);
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nella promozione studenti'
+            );
+        } finally {
+            session.endSession();
         }
-      }
+    }
 
 }
 

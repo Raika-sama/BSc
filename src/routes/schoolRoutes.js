@@ -23,8 +23,7 @@ router.get('/:id', schoolController.getById);
 router.get('/region/:region', schoolController.getByRegion);
 router.get('/type/:type', schoolController.getByType);
 
-// Middleware protect
-router.use(protect);
+
 
 // Rotte protette
 

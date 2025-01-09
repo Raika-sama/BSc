@@ -1,5 +1,5 @@
 {
-    "name": "brain-scanner-backend",
+    "name": "bsc-project",
     "version": "1.0.0",
     "description": "Backend sistema Brain Scanner per gestione scolastica",
     "main": "src/app.js",
@@ -12,8 +12,8 @@
         "migrate:down": "migrate-mongo down",
         "migrate:status": "migrate-mongo status",
         "test:db": "node src/scripts/testConnection.js",
-         "test": "jest",
-         "test:watch": "jest --watch"
+        "test": "jest --runInBand --detectOpenHandles --forceExit",
+        "test:watch": "jest --watch --runInBand"
     },
     "dependencies": {
         "@emotion/react": "^11.14.0",
@@ -54,12 +54,26 @@
         "node": ">=18.0.0"
     },
     "jest": {
+        "testTimeout": 500000,
+        "verbose": true,
         "testEnvironment": "node",
-        "setupFiles": ["<rootDir>/tests/setup.js"],
-        "testTimeout": 50000,
-        "bufferTimeoutMS": 20000,
-        "rootDir": ".",
-        "moduleDirectories": ["node_modules", "src"]
+        "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+        "detectOpenHandles": true,
+        "testPathIgnorePatterns": [
+            "/node_modules/"
+        ],
+        "moduleDirectories": [
+            "node_modules",
+            "src"
+        ],
+        "collectCoverage": true,
+        "coveragePathIgnorePatterns": [
+            "/node_modules/",
+            "/tests/"
+        ],
+        "forceExit": true,
+        "clearMocks": true,
+        "restoreMocks": true
     },
     "author": "Raika-sama",
     "license": "MIT",

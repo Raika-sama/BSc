@@ -13,8 +13,10 @@ const { user: UserRepository } = require('../repositories');
  */
 const protect = async (req, res, next) => {
     try {
-        logger.debug('Verifica autenticazione iniziata');
-
+        logger.debug('Token ricevuto:', {
+            authHeader: req.headers.authorization,
+            token: req.headers.authorization?.split(' ')[1]?.substring(0, 20) + '...'
+        });
         // 1. Verifica presenza del token
         let token;
         const authHeader = req.headers.authorization;
