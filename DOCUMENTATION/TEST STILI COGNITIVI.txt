@@ -1,0 +1,200 @@
+### Test sugli Stili Cognitivi
+
+#### **Introduzione**
+Questo questionario mira a identificare il tuo stile cognitivo predominante. Rispondi a ciascuna affermazione utilizzando questa scala di valori:
+
+- **1 = Per niente**
+- **2 = Poco**
+- **3 = Abbastanza**
+- **4 = Molto**
+- **5 = Completamente**
+
+Ogni domanda contribuisce a uno dei seguenti stili cognitivi:
+- **Creatività**: Intuitivo vs. Sistematico
+- **Elaborazione**: Analitico vs. Globale
+- **Decisione**: Impulsivo vs. Riflessivo
+- **Preferenza visiva**: Visualizzatore vs. Verbalizzatore
+- **Autonomia**: Poco autonomo vs. Molto autonomo
+
+---
+
+#### **Domande del Test**
+
+**Stile Creatività: Intuitivo vs. Sistematico**
+1. Trovo soluzioni creative ai problemi senza bisogno di analizzare tutti i dettagli. (+)
+2. Preferisco avere regole chiare e precise prima di iniziare un lavoro. (+)
+3. Capisco velocemente i concetti senza bisogno di molte spiegazioni. (-)
+4. Mi piace pianificare tutto nei minimi dettagli prima di agire. (+)
+5. Mi capita spesso di avere intuizioni improvvise che mi aiutano a risolvere problemi. (-)
+6. Preferisco seguire un approccio strutturato per affrontare un compito complesso. (+)
+
+**Stile Elaborazione: Analitico vs. Globale**
+7. Mi concentro sui dettagli prima di considerare il quadro generale. (+)
+8. Riesco a sintetizzare rapidamente le informazioni in una visione complessiva. (-)
+9. Mi piace scomporre un problema in parti più piccole per risolverlo. (+)
+10. Preferisco affrontare i problemi considerando tutti gli aspetti contemporaneamente. (-)
+11. Mi sento più a mio agio seguendo un metodo sequenziale per risolvere problemi. (+)
+12. Capisco meglio un argomento se prima mi viene presentata una visione generale. (-)
+
+**Stile Decisione: Impulsivo vs. Riflessivo**
+13. Rispondo immediatamente alle domande senza pensarci troppo. (-)
+14. Preferisco riflettere attentamente prima di dare una risposta. (+)
+15. Mi capita di agire rapidamente senza considerare tutte le conseguenze. (-)
+16. Valuto attentamente tutte le opzioni prima di prendere una decisione. (+)
+17. Mi piace risolvere problemi velocemente anche se non ho tutte le informazioni. (-)
+18. Prima di completare un compito, mi assicuro di aver analizzato tutti i dettagli. (+)
+
+**Stile Preferenza Visiva: Visualizzatore vs. Verbalizzatore**
+19. Ricordo meglio le informazioni se sono presentate in forma di immagini o grafici. (+)
+20. Preferisco leggere spiegazioni dettagliate piuttosto che osservare schemi. (+)
+21. Capisco meglio un argomento guardando un video piuttosto che leggendo un testo. (+)
+22. Mi aiuta prendere appunti dettagliati durante le lezioni. (-)
+23. Preferisco usare mappe mentali per organizzare le mie idee. (+)
+24. Mi trovo a mio agio leggendo testi lunghi con molte spiegazioni. (-)
+
+**Stile Autonomia: Poco autonomo vs. Molto autonomo**
+25. Preferisco che qualcuno mi guidi passo passo in un nuovo compito. (-)
+26. Mi piace gestire autonomamente i miei tempi e le mie attività. (+)
+27. Trovo difficile organizzarmi senza indicazioni esterne. (-)
+28. Mi sento motivato quando ho il controllo totale su quello che faccio. (+)
+29. Ho bisogno di supervisione frequente per portare a termine un lavoro. (-)
+30. Riesco a completare un progetto da solo senza bisogno di supporto. (+)
+
+---
+
+#### **Calcolo dei Punteggi**
+
+**Regole di Calcolo:**
+- **Domande con segno (+):** Usa il valore attribuito dall'utente.
+- **Domande con segno (-):** Inverti il valore: 1 diventa 5, 2 diventa 4, 3 resta invariato, 4 diventa 2, 5 diventa 1.
+
+**Totale per ogni stile:**
+- **Creatività:** Somma delle risposte alle domande 1-6.
+- **Elaborazione:** Somma delle risposte alle domande 7-12.
+- **Decisione:** Somma delle risposte alle domande 13-18.
+- **Preferenza Visiva:** Somma delle risposte alle domande 19-24.
+- **Autonomia:** Somma delle risposte alle domande 25-30.
+
+---
+
+#### **Interpretazione dei Risultati**
+
+**Creatività: Intuitivo vs. Sistematico**
+- Punteggio basso: Predominanza intuitiva (preferisci approcci creativi e poco strutturati).
+- Punteggio alto: Predominanza sistematica (preferisci regole e strutture definite).
+
+**Elaborazione: Analitico vs. Globale**
+- Punteggio basso: Tendenza globale (prediligi una visione complessiva).
+- Punteggio alto: Tendenza analitica (ti concentri sui dettagli).
+
+**Decisione: Impulsivo vs. Riflessivo**
+- Punteggio basso: Tendenza impulsiva (rispondi rapidamente senza riflettere troppo).
+- Punteggio alto: Tendenza riflessiva (prendi decisioni ponderate).
+
+**Preferenza Visiva: Visualizzatore vs. Verbalizzatore**
+- Punteggio basso: Predominanza visualizzatrice (impari meglio tramite immagini e schemi).
+- Punteggio alto: Predominanza verbalizzatrice (impari meglio tramite testi e linguaggio).
+
+**Autonomia: Poco autonomo vs. Molto autonomo**
+- Punteggio basso: Poco autonomo (preferisci indicazioni esterne per completare i compiti).
+- Punteggio alto: Molto autonomo (ti piace gestire autonomamente le attività).
+
+---
+
+#### **Dizionario delle Caratteristiche e Strategie**
+
+```python
+{
+    "Creatività": {
+        "Intuitivo": {
+            "Caratteristiche": "Trova soluzioni rapide e creative senza seguire necessariamente regole definite.",
+            "Strategie": [
+                "Usare brainstorming per generare idee.",
+                "Lavorare in ambienti flessibili che favoriscano la creatività.",
+                "Esplorare approcci alternativi per risolvere problemi complessi."
+            ]
+        },
+        "Sistematico": {
+            "Caratteristiche": "Preferisce approcci strutturati e metodici.",
+            "Strategie": [
+                "Creare liste di controllo.",
+                "Seguire piani ben definiti.",
+                "Utilizzare strumenti di gestione del tempo per ottimizzare il lavoro."
+            ]
+        }
+    },
+    "Elaborazione": {
+        "Analitico": {
+            "Caratteristiche": "Si concentra sui dettagli e procede passo dopo passo.",
+            "Strategie": [
+                "Dividere i problemi in parti più piccole.",
+                "Lavorare con schemi sequenziali.",
+                "Documentare ogni passaggio per avere una visione chiara del progresso."
+            ]
+        },
+        "Globale": {
+            "Caratteristiche": "Predilige una visione d'insieme e si focalizza sul contesto generale.",
+            "Strategie": [
+                "Creare mappe concettuali.",
+                "Riflettere sul contesto prima di agire.",
+                "Integrare idee da diverse fonti per costruire una comprensione globale."
+            ]
+        }
+    },
+    "Decisione": {
+        "Impulsivo": {
+            "Caratteristiche": "Tende a rispondere rapidamente e ad agire senza riflettere troppo.",
+            "Strategie": [
+                "Prendere tempo prima di agire.",
+                "Imparare tecniche di mindfulness.",
+                "Chiedere feedback prima di prendere decisioni importanti."
+            ]
+        },
+        "Riflessivo": {
+            "Caratteristiche": "Preferisce riflettere attentamente prima di prendere decisioni.",
+            "Strategie": [
+                "Analizzare pro e contro delle decisioni.",
+                "Lavorare in ambienti che consentano tempi lunghi di riflessione.",
+                "Creare un elenco di opzioni prima di scegliere."
+            ]
+        }
+    },
+    "Preferenza Visiva": {
+        "Visualizzatore": {
+            "Caratteristiche": "Impara meglio tramite immagini, grafici e rappresentazioni visive.",
+            "Strategie": [
+                "Usare mappe mentali e infografiche.",
+                "Integrare immagini nei materiali di studio.",
+                "Utilizzare software di visualizzazione per organizzare idee."
+            ]
+        },
+        "Verbalizzatore": {
+            "Caratteristiche": "Apprende meglio tramite lettura e linguaggio scritto.",
+            "Strategie": [
+                "Leggere testi con spiegazioni dettagliate.",
+                "Prendere appunti dettagliati durante lo studio.",
+                "Partecipare a discussioni o gruppi di studio."
+            ]
+        }
+    },
+    "Autonomia": {
+        "Poco_autonomo": {
+            "Caratteristiche": "Ha bisogno di indicazioni esterne per portare a termine i compiti.",
+            "Strategie": [
+                "Chiedere feedback frequenti.",
+                "Lavorare con supervisori o tutor.",
+                "Creare un piano dettagliato con supporto esterno."
+            ]
+        },
+        "Molto_autonomo": {
+            "Caratteristiche": "Si gestisce bene da solo e preferisce autonomia nelle attività.",
+            "Strategie": [
+                "Pianificare le attività in modo indipendente.",
+                "Fissare obiettivi personali chiari.",
+                "Valutare periodicamente i progressi per migliorare l'efficacia."
+            ]
+        }
+    }
+}
+```
+

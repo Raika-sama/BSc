@@ -19,7 +19,13 @@ router.use((req, res, next) => {
     next();
 });
 
+
 router.use(protect);
+
+router.use(protect);
+router.post('/transition', classController.handleYearTransition);
+router.get('/school/:schoolId/year/:year', classController.getByAcademicYear);
+
 // Rotte base per le classi
 router.get('/', classController.getAll.bind(classController));
 router.get('/:id', classController.getById.bind(classController));
