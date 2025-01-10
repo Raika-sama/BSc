@@ -1,0 +1,11 @@
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-10T23:11:31.353Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-10T23:11:31.545Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-10T23:11:31.752Z"}
+{"errorMessage":"getTokenFromRequest is not defined","errorName":"ReferenceError","level":"error","message":"Protect middleware error","timestamp":"2025-01-10T23:14:32.545Z"}
+{"error":{},"level":"error","message":"Unhandled Auth Route Error","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-10T23:14:32.551Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-10T23:14:53.899Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-10T23:14:54.087Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-10T23:14:54.281Z"}
+{"errorMessage":"Utente non trovato","level":"error","message":"🔥 Authentication Error","timestamp":"2025-01-10T23:16:37.660Z"}
+{"errorMessage":"Utente non trovato","level":"error","message":"🔥 Authentication Error","timestamp":"2025-01-10T23:16:37.849Z"}
+{"errorMessage":"Utente non trovato","level":"error","message":"🔥 Authentication Error","timestamp":"2025-01-10T23:16:38.048Z"}

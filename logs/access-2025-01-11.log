@@ -1,0 +1,149 @@
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-10T23:11:28.748Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-10T23:11:28.766Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-10T23:11:28.769Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-10T23:11:28.772Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-10T23:11:28.775Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-10T23:11:28.782Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-10T23:11:28.853Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth"],"timestamp":"2025-01-10T23:11:28.900Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-10T23:11:29.697Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-10T23:11:29.717Z"}
+{"level":"info","message":"Ambiente: test","timestamp":"2025-01-10T23:11:29.718Z"}
+{"body":{"email":"admin@test.com","password":"[REDACTED]"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550689947_jipptyfed","timestamp":"2025-01-10T23:11:29.948Z","url":"/api/v1/auth/login"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-10T23:11:29.956Z"}
+{"duration":"209ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736550689947_jipptyfed","responseSize":"472 Bytes","statusCode":200,"timestamp":"2025-01-10T23:11:30.156Z","url":"/api/v1/auth/login"}
+{"body":{},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736550690179_4dwfrt4p0","timestamp":"2025-01-10T23:11:30.179Z","url":"/api/v1/auth/verify"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-10T23:11:30.187Z"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:11:30.238Z","userId":"6781a9203f033e6bb1440eb6"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-10T23:11:30.240Z","userId":"6781a9203f033e6bb1440eb6"}
+{"duration":"63ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736550690179_4dwfrt4p0","responseSize":"158 Bytes","statusCode":200,"timestamp":"2025-01-10T23:11:30.242Z","url":"/api/v1/auth/verify"}
+{"body":{"address":"Test Address","name":"Integration Test School","province":"Test Province","region":"Test Region","schoolType":"middle_school"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550690264_j378453ic","timestamp":"2025-01-10T23:11:30.264Z","url":"/api/v1/schools"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:11:30.306Z","userId":"6781a9203f033e6bb1440eb6"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:11:30.342Z","userId":"6781a9203f033e6bb1440eb6"}
+{"createdBy":"6781a9203f033e6bb1440eb6","level":"info","message":"Scuola creata con successo","schoolId":"6781a9223f033e6bb1440ecd","schoolName":"Integration Test School","timestamp":"2025-01-10T23:11:30.398Z"}
+{"duration":"137ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736550690264_j378453ic","responseSize":"439 Bytes","statusCode":201,"timestamp":"2025-01-10T23:11:30.401Z","url":"/api/v1/schools"}
+{"body":{"academicYear":"2024/2025","endDate":"2025-06-30","sections":[{"maxStudents":25,"name":"A"},{"maxStudents":25,"name":"B"}],"startDate":"2024-09-01"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550690420_awb7tiw29","timestamp":"2025-01-10T23:11:30.420Z","url":"/api/v1/schools/6781a9223f033e6bb1440ecd/setup"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:11:30.461Z","userId":"6781a9203f033e6bb1440eb6"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:11:30.496Z","userId":"6781a9203f033e6bb1440eb6"}
+{"duration":"509ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736550690420_awb7tiw29","responseSize":"885 Bytes","statusCode":200,"timestamp":"2025-01-10T23:11:30.929Z","url":"/api/v1/schools/6781a9223f033e6bb1440ecd/setup"}
+{"body":{},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736550690943_je1wojm9d","timestamp":"2025-01-10T23:11:30.943Z","url":"/api/v1/classes/school/6781a9223f033e6bb1440ecd/year/2024%2F2025"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:11:30.989Z","userId":"6781a9203f033e6bb1440eb6"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:11:31.026Z","userId":"6781a9203f033e6bb1440eb6"}
+{"duration":"124ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736550690943_je1wojm9d","responseSize":"1.83 KB","statusCode":200,"timestamp":"2025-01-10T23:11:31.067Z","url":"/api/v1/classes/school/6781a9223f033e6bb1440ecd/year/2024%2F2025"}
+{"body":{"fromYear":"2024/2025","schoolId":"6781a9233f033e6bb1440f3d","sections":[{"maxStudents":25,"name":"A"}],"toYear":"2025/2026"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550691317_af1hyfdhi","timestamp":"2025-01-10T23:11:31.317Z","url":"/api/v1/classes/transition"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-10T23:11:31.353Z"}
+{"duration":"40ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736550691317_af1hyfdhi","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-10T23:11:31.357Z","url":"/api/v1/classes/transition"}
+{"body":{"name":"Test School"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550691508_ugvoe2yl3","timestamp":"2025-01-10T23:11:31.508Z","url":"/api/v1/schools"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-10T23:11:31.545Z"}
+{"duration":"41ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736550691508_ugvoe2yl3","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-10T23:11:31.549Z","url":"/api/v1/schools"}
+{"body":{"academicYear":"2024/2025"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550691713_pj5lgg5g2","timestamp":"2025-01-10T23:11:31.713Z","url":"/api/v1/schools/6781a9233f033e6bb1440f55/setup"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-10T23:11:31.752Z"}
+{"duration":"43ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736550691713_pj5lgg5g2","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-10T23:11:31.756Z","url":"/api/v1/schools/6781a9233f033e6bb1440f55/setup"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-10T23:11:31.953Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-10T23:14:31.398Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-10T23:14:31.406Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-10T23:14:31.408Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-10T23:14:31.411Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-10T23:14:31.413Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-10T23:14:31.415Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-10T23:14:31.466Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth"],"timestamp":"2025-01-10T23:14:31.488Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-10T23:14:32.073Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-10T23:14:32.089Z"}
+{"level":"info","message":"Ambiente: test","timestamp":"2025-01-10T23:14:32.090Z"}
+{"body":{"email":"admin@test.com","password":"[REDACTED]"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550872300_4oi21e6wg","timestamp":"2025-01-10T23:14:32.300Z","url":"/api/v1/auth/login"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-10T23:14:32.306Z"}
+{"duration":"205ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736550872300_4oi21e6wg","responseSize":"472 Bytes","statusCode":200,"timestamp":"2025-01-10T23:14:32.505Z","url":"/api/v1/auth/login"}
+{"body":{},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736550872527_fwitp4x64","timestamp":"2025-01-10T23:14:32.527Z","url":"/api/v1/auth/verify"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-10T23:14:32.534Z"}
+{"errorMessage":"getTokenFromRequest is not defined","errorName":"ReferenceError","level":"error","message":"Protect middleware error","timestamp":"2025-01-10T23:14:32.545Z"}
+{"error":{},"level":"error","message":"Unhandled Auth Route Error","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-10T23:14:32.551Z"}
+{"duration":"29ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1736550872527_fwitp4x64","responseSize":"91 Bytes","statusCode":500,"timestamp":"2025-01-10T23:14:32.556Z","url":"/api/v1/auth/verify"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-10T23:14:33.118Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-10T23:14:51.796Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-10T23:14:51.803Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-10T23:14:51.805Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-10T23:14:51.808Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-10T23:14:51.810Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-10T23:14:51.812Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-10T23:14:51.854Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth"],"timestamp":"2025-01-10T23:14:51.876Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-10T23:14:52.426Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-10T23:14:52.440Z"}
+{"level":"info","message":"Ambiente: test","timestamp":"2025-01-10T23:14:52.441Z"}
+{"body":{"email":"admin@test.com","password":"[REDACTED]"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550892642_8g394xcwu","timestamp":"2025-01-10T23:14:52.643Z","url":"/api/v1/auth/login"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-10T23:14:52.649Z"}
+{"duration":"185ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736550892642_8g394xcwu","responseSize":"472 Bytes","statusCode":200,"timestamp":"2025-01-10T23:14:52.827Z","url":"/api/v1/auth/login"}
+{"body":{},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736550892852_vzckdins8","timestamp":"2025-01-10T23:14:52.852Z","url":"/api/v1/auth/verify"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-10T23:14:52.860Z"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:14:52.892Z","userId":"6781a9ebbf77a21ba0cb272a"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-10T23:14:52.895Z","userId":"6781a9ebbf77a21ba0cb272a"}
+{"duration":"46ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736550892852_vzckdins8","responseSize":"158 Bytes","statusCode":200,"timestamp":"2025-01-10T23:14:52.898Z","url":"/api/v1/auth/verify"}
+{"body":{"address":"Test Address","name":"Integration Test School","province":"Test Province","region":"Test Region","schoolType":"middle_school"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550892925_05jrhgdbx","timestamp":"2025-01-10T23:14:52.925Z","url":"/api/v1/schools"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:14:52.953Z","userId":"6781a9ebbf77a21ba0cb272a"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:14:52.978Z","userId":"6781a9ebbf77a21ba0cb272a"}
+{"createdBy":"6781a9ebbf77a21ba0cb272a","level":"info","message":"Scuola creata con successo","schoolId":"6781a9ecbf77a21ba0cb2740","schoolName":"Integration Test School","timestamp":"2025-01-10T23:14:53.017Z"}
+{"duration":"95ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736550892925_05jrhgdbx","responseSize":"439 Bytes","statusCode":201,"timestamp":"2025-01-10T23:14:53.020Z","url":"/api/v1/schools"}
+{"body":{"academicYear":"2024/2025","endDate":"2025-06-30","sections":[{"maxStudents":25,"name":"A"},{"maxStudents":25,"name":"B"}],"startDate":"2024-09-01"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550893036_53nclkls0","timestamp":"2025-01-10T23:14:53.036Z","url":"/api/v1/schools/6781a9ecbf77a21ba0cb2740/setup"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:14:53.066Z","userId":"6781a9ebbf77a21ba0cb272a"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:14:53.094Z","userId":"6781a9ebbf77a21ba0cb272a"}
+{"duration":"489ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736550893036_53nclkls0","responseSize":"885 Bytes","statusCode":200,"timestamp":"2025-01-10T23:14:53.525Z","url":"/api/v1/schools/6781a9ecbf77a21ba0cb2740/setup"}
+{"body":{},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736550893538_wkr3iu8fp","timestamp":"2025-01-10T23:14:53.538Z","url":"/api/v1/classes/school/6781a9ecbf77a21ba0cb2740/year/2024%2F2025"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:14:53.569Z","userId":"6781a9ebbf77a21ba0cb272a"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-10T23:14:53.595Z","userId":"6781a9ebbf77a21ba0cb272a"}
+{"duration":"95ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736550893538_wkr3iu8fp","responseSize":"1.83 KB","statusCode":200,"timestamp":"2025-01-10T23:14:53.633Z","url":"/api/v1/classes/school/6781a9ecbf77a21ba0cb2740/year/2024%2F2025"}
+{"body":{"fromYear":"2024/2025","schoolId":"6781a9edbf77a21ba0cb27b1","sections":[{"maxStudents":25,"name":"A"}],"toYear":"2025/2026"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550893871_v7i2ofgfj","timestamp":"2025-01-10T23:14:53.871Z","url":"/api/v1/classes/transition"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-10T23:14:53.899Z"}
+{"duration":"31ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736550893871_v7i2ofgfj","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-10T23:14:53.902Z","url":"/api/v1/classes/transition"}
+{"body":{"name":"Test School"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550894056_dy4yb0syb","timestamp":"2025-01-10T23:14:54.057Z","url":"/api/v1/schools"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-10T23:14:54.087Z"}
+{"duration":"35ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736550894056_dy4yb0syb","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-10T23:14:54.092Z","url":"/api/v1/schools"}
+{"body":{"academicYear":"2024/2025"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550894251_k6g7vtjkz","timestamp":"2025-01-10T23:14:54.251Z","url":"/api/v1/schools/6781a9eebf77a21ba0cb27c9/setup"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-10T23:14:54.281Z"}
+{"duration":"34ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736550894251_k6g7vtjkz","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-10T23:14:54.285Z","url":"/api/v1/schools/6781a9eebf77a21ba0cb27c9/setup"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-10T23:14:54.455Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-10T23:16:35.505Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-10T23:16:35.514Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-10T23:16:35.516Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-10T23:16:35.523Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-10T23:16:35.526Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-10T23:16:35.527Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-10T23:16:35.562Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth"],"timestamp":"2025-01-10T23:16:35.585Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-10T23:16:36.198Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-10T23:16:36.219Z"}
+{"level":"info","message":"Ambiente: test","timestamp":"2025-01-10T23:16:36.221Z"}
+{"body":{"email":"admin@test.com","password":"[REDACTED]"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550996428_mb2i7u83b","timestamp":"2025-01-10T23:16:36.429Z","url":"/api/v1/auth/login"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-10T23:16:36.435Z"}
+{"duration":"190ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736550996428_mb2i7u83b","responseSize":"472 Bytes","statusCode":200,"timestamp":"2025-01-10T23:16:36.618Z","url":"/api/v1/auth/login"}
+{"body":{},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736550996641_vr632pcui","timestamp":"2025-01-10T23:16:36.641Z","url":"/api/v1/auth/verify"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-10T23:16:36.649Z"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-10T23:16:36.676Z","tokenExpiresIn":"1439.9887333333331 minutes","userId":"6781aa53ee949238d923aaa5"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-10T23:16:36.679Z","userId":"6781aa53ee949238d923aaa5"}
+{"duration":"41ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736550996641_vr632pcui","responseSize":"158 Bytes","statusCode":200,"timestamp":"2025-01-10T23:16:36.682Z","url":"/api/v1/auth/verify"}
+{"body":{"address":"Test Address","name":"Integration Test School","province":"Test Province","region":"Test Region","schoolType":"middle_school"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550996707_fjgie26pi","timestamp":"2025-01-10T23:16:36.707Z","url":"/api/v1/schools"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-10T23:16:36.735Z","tokenExpiresIn":"1439.98775 minutes","userId":"6781aa53ee949238d923aaa5"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-10T23:16:36.763Z","tokenExpiresIn":"1439.9872833333332 minutes","userId":"6781aa53ee949238d923aaa5"}
+{"createdBy":"6781aa53ee949238d923aaa5","level":"info","message":"Scuola creata con successo","schoolId":"6781aa54ee949238d923aabb","schoolName":"Integration Test School","timestamp":"2025-01-10T23:16:36.803Z"}
+{"duration":"99ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736550996707_fjgie26pi","responseSize":"439 Bytes","statusCode":201,"timestamp":"2025-01-10T23:16:36.806Z","url":"/api/v1/schools"}
+{"body":{"academicYear":"2024/2025","endDate":"2025-06-30","sections":[{"maxStudents":25,"name":"A"},{"maxStudents":25,"name":"B"}],"startDate":"2024-09-01"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550996825_c0eifciln","timestamp":"2025-01-10T23:16:36.825Z","url":"/api/v1/schools/6781aa54ee949238d923aabb/setup"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-10T23:16:36.853Z","tokenExpiresIn":"1439.9857833333333 minutes","userId":"6781aa53ee949238d923aaa5"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-10T23:16:36.878Z","tokenExpiresIn":"1439.9853666666668 minutes","userId":"6781aa53ee949238d923aaa5"}
+{"duration":"458ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"POST","requestId":"req_1736550996825_c0eifciln","responseSize":"885 Bytes","statusCode":200,"timestamp":"2025-01-10T23:16:37.283Z","url":"/api/v1/schools/6781aa54ee949238d923aabb/setup"}
+{"body":{},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"GET","query":{},"requestId":"req_1736550997297_aooce3mon","timestamp":"2025-01-10T23:16:37.297Z","url":"/api/v1/classes/school/6781aa54ee949238d923aabb/year/2024%2F2025"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-10T23:16:37.328Z","tokenExpiresIn":"1439.9778666666668 minutes","userId":"6781aa53ee949238d923aaa5"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-10T23:16:37.353Z","tokenExpiresIn":"1439.9774499999999 minutes","userId":"6781aa53ee949238d923aaa5"}
+{"duration":"94ms","ip":"::ffff:127.0.0.1","level":"http","message":"Risposta inviata","method":"GET","requestId":"req_1736550997297_aooce3mon","responseSize":"1.83 KB","statusCode":200,"timestamp":"2025-01-10T23:16:37.391Z","url":"/api/v1/classes/school/6781aa54ee949238d923aabb/year/2024%2F2025"}
+{"body":{"fromYear":"2024/2025","schoolId":"6781aa55ee949238d923ab2c","sections":[{"maxStudents":25,"name":"A"}],"toYear":"2025/2026"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550997631_g475fwbpt","timestamp":"2025-01-10T23:16:37.631Z","url":"/api/v1/classes/transition"}
+{"level":"warn","message":"❌ User not found in database","timestamp":"2025-01-10T23:16:37.658Z","userId":"6781aa53ee949238d923aaa5"}
+{"errorMessage":"Utente non trovato","level":"error","message":"🔥 Authentication Error","timestamp":"2025-01-10T23:16:37.660Z"}
+{"duration":"32ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736550997631_g475fwbpt","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-10T23:16:37.663Z","url":"/api/v1/classes/transition"}
+{"body":{"name":"Test School"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550997817_4ku77w3ft","timestamp":"2025-01-10T23:16:37.817Z","url":"/api/v1/schools"}
+{"level":"warn","message":"❌ User not found in database","timestamp":"2025-01-10T23:16:37.847Z","userId":"6781aa53ee949238d923aaa5"}
+{"errorMessage":"Utente non trovato","level":"error","message":"🔥 Authentication Error","timestamp":"2025-01-10T23:16:37.849Z"}
+{"duration":"36ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736550997817_4ku77w3ft","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-10T23:16:37.853Z","url":"/api/v1/schools"}
+{"body":{"academicYear":"2024/2025"},"ip":"::ffff:127.0.0.1","level":"http","message":"Richiesta ricevuta","method":"POST","query":{},"requestId":"req_1736550998019_kj13u4mht","timestamp":"2025-01-10T23:16:38.019Z","url":"/api/v1/schools/6781aa55ee949238d923ab44/setup"}
+{"level":"warn","message":"❌ User not found in database","timestamp":"2025-01-10T23:16:38.046Z","userId":"6781aa53ee949238d923aaa5"}
+{"errorMessage":"Utente non trovato","level":"error","message":"🔥 Authentication Error","timestamp":"2025-01-10T23:16:38.048Z"}
+{"duration":"32ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736550998019_kj13u4mht","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-10T23:16:38.051Z","url":"/api/v1/schools/6781aa55ee949238d923ab44/setup"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-10T23:16:38.235Z"}

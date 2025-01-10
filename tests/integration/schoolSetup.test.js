@@ -14,12 +14,7 @@ describe('School Setup Integration', () => {
         try {
             await mongoose.connect(process.env.MONGODB_URI);
     
-            // Pulisci il database
-            await Promise.all([
-                User.deleteMany({}),
-                School.deleteMany({}),
-                Class.deleteMany({})
-            ]);
+           
     
             // Crea l'utente admin con tutti i campi necessari
             const adminData = {
@@ -50,7 +45,9 @@ describe('School Setup Integration', () => {
             console.log('Login response:', loginResponse.body);
 
             authToken = loginResponse.body.token;
-    
+            if (!authToken) {
+                throw new Error('Token non ottenuto dal login');
+            }
             // Verifica il token immediatamente
             const verifyResponse = await request(app)
                 .get('/api/v1/auth/verify')
@@ -65,10 +62,14 @@ describe('School Setup Integration', () => {
             throw error;
         }
     });
+    
     // Modifica la funzione helper per l'autenticazione
     const makeAuthorizedRequest = (request) => {
-        console.log('Making authorized request with token:', authToken ? 'Token present' : 'No token');
-        if (!authToken) {
+        console.log('Token being used:', authToken);
+        console.log('Headers being sent:', {
+            'Authorization': `Bearer ${authToken}`
+        });
+            if (!authToken) {
             throw new Error('Auth token not available');
         }
         return request.set('Authorization', `Bearer ${authToken}`);

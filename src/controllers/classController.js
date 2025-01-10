@@ -226,17 +226,24 @@ class ClassController extends BaseController {
 
     async handleYearTransition(req, res) {
         try {
-            const { fromYear, toYear } = req.body;
-            const schoolId = req.params.schoolId;
-
+            const { schoolId, fromYear, toYear, sections } = req.body;
+    
+            // Verifica che l'utente sia autorizzato per questa scuola
+            if (req.user.role !== 'admin') {
+                throw createError(
+                    ErrorTypes.AUTH.FORBIDDEN,
+                    'Non autorizzato per questa operazione'
+                );
+            }
+    
             await this.repository.promoteStudents(fromYear, toYear);
             
             const newClasses = await this.repository.createInitialClasses(
                 schoolId,
                 toYear,
-                req.body.sections
+                sections
             );
-
+    
             this.sendResponse(res, { 
                 message: 'Transizione anno completata',
                 newClasses 

@@ -62,9 +62,12 @@ afterAll(async () => {
 afterEach(async () => {
     const collections = mongoose.connection.collections;
     for (const key in collections) {
-        await collections[key].deleteMany();
-    }
-});
+        
+            await collections[key].deleteMany();
+        
+    
+}});
+
 
 // Mock per evitare process.exit nei test
 jest.spyOn(process, 'exit').mockImplementation(() => {});

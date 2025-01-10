@@ -388,28 +388,28 @@ class ClassRepository extends BaseRepository {
         session.startTransaction();
     
         try {
-            const oldClasses = await this.find({ 
+            // Recupera le classi con la session e includi la scuola
+            const oldClasses = await this.model.find({ 
                 academicYear: fromYear,
                 status: 'active'
-            });
+            }).populate('schoolId').session(session);
     
             for (const oldClass of oldClasses) {
-                if (oldClass.year < (oldClass.schoolType === 'middle_school' ? 3 : 5)) {
-                    // Crea la nuova classe e salva il riferimento
-                    await this.create({
-                        schoolId: oldClass.schoolId,
+                const maxYear = oldClass.schoolId.schoolType === 'middle_school' ? 3 : 5;
+                
+                if (oldClass.year < maxYear) {
+                    // Usa direttamente il modello con session
+                    await this.model.create([{
+                        schoolId: oldClass.schoolId._id,
                         year: oldClass.year + 1,
                         section: oldClass.section,
                         academicYear: toYear,
                         status: 'active',
                         capacity: oldClass.capacity
-                    }, { session });
+                    }], { session });
     
-                    // Aggiorna lo stato della vecchia classe
-                    await this.model.updateMany(
-                        { 
-                            _id: oldClass._id
-                        },
+                    await this.model.updateOne(
+                        { _id: oldClass._id },
                         { 
                             $set: {
                                 status: 'archived',
@@ -428,7 +428,8 @@ class ClassRepository extends BaseRepository {
             logger.error('Error in promoteStudents:', error);
             throw createError(
                 ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella promozione studenti'
+                'Errore nella promozione studenti',
+                { originalError: error.message }  // Aggiungo dettagli errore
             );
         } finally {
             session.endSession();
