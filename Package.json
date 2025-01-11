@@ -57,7 +57,9 @@
         "testTimeout": 10000,
         "verbose": true,
         "testEnvironment": "node",
-        "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+        "setupFilesAfterEnv": [
+            "<rootDir>/tests/setup.js"
+        ],
         "detectOpenHandles": true,
         "testPathIgnorePatterns": [
             "/node_modules/"

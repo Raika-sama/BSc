@@ -4,6 +4,7 @@ import UserManagement from '../components/users/UserManagement';
 import SchoolManagement from '../components/school/SchoolManagement';
 import SchoolDetails from '../components/school/SchoolDetails';
 import ClassManagement from '../components/classes/ClassManagement';    // Importa la pagina delle classi
+import SchoolWizard from '../components/school/wizard/SchoolWizard';
 
 // Importa le icone da Material-UI
 import {
@@ -51,5 +52,10 @@ export const adminRoutes = [
         element: null, // TestManagement component quando lo creerai
         title: 'Gestione Test',
         icon: TestIcon
+    },
+    {
+        path: 'schools/create',
+        element: SchoolWizard,
+        title: 'Crea Scuola'
     }
 ];
