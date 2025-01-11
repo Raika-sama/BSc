@@ -124,3 +124,35 @@
 {"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:04:24.751Z"}
 {"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"678047e8a1907e39b3b2d522","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:04:25.090Z"}
 {"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:04:25.093Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:23:04.294Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:23:04.477Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:23:04.694Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804c4aed5aba1e7b1d4f07","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:23:06.894Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:23:06.898Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804c4bed5aba1e7b1d4f1b","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:23:07.218Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:23:07.222Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804cae0d7111564d0f593d","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:24:46.989Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:24:46.993Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804caf0d7111564d0f5951","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:24:47.334Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:24:47.337Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:26:51.185Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:26:51.394Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:26:51.600Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804d2dc1f394e0397c5bcf","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:26:53.583Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:26:53.587Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804d2dc1f394e0397c5be3","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:26:53.922Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:26:53.927Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:33:36.377Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:33:36.593Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:33:36.821Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804ec22e0ea6f258a01454","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:33:38.874Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:33:38.879Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804ec32e0ea6f258a01468","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:33:39.224Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:33:39.228Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:39:22.330Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:39:22.524Z"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:39:22.722Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"6780501c811a6ca1eb4318a5","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:39:24.835Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:39:24.838Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"6780501d811a6ca1eb4318b9","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:39:25.169Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:39:25.173Z"}

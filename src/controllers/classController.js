@@ -1,9 +1,11 @@
 // src/controllers/classController.js
+const mongoose = require('mongoose');
 
 const BaseController = require('./baseController');
 const { class: ClassRepository } = require('../repositories');
 const logger = require('../utils/errors/logger/logger');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+const { Class, School } = require('../models'); // Aggiunto School all'import
 
 
 class ClassController extends BaseController {
@@ -224,25 +226,173 @@ class ClassController extends BaseController {
            parseInt(endYear) === currentYear + 1;
     }
 
+    // Nel ClassController
     async handleYearTransition(req, res) {
-        try {
-            const { fromYear, toYear } = req.body;
-            const schoolId = req.params.schoolId;
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
-            await this.repository.promoteStudents(fromYear, toYear);
-            
-            const newClasses = await this.repository.createInitialClasses(
+        try {
+            logger.debug('handleYearTransition called with body:', req.body);
+            const { schoolId, fromYear, toYear, sections } = req.body;
+
+            // 1. Verifica input e scuola
+            if (!schoolId || !fromYear || !toYear || !sections) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Dati mancanti per la transizione'
+                );
+            }
+
+            const school = await School.findById(schoolId).session(session);
+            logger.debug('Found school:', school);
+
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+
+            // 2. Cerca le classi esistenti del vecchio anno
+            const existingClasses = await Class.find({
                 schoolId,
-                toYear,
-                req.body.sections
+                academicYear: fromYear,
+                status: 'active'
+            }).session(session);
+
+            logger.debug('Found existing classes:', {
+                count: existingClasses.length,
+                classes: existingClasses.map(c => ({
+                    year: c.year,
+                    section: c.section,
+                    status: c.status
+                }))
+            });
+
+            // 3. Archivia le vecchie classi
+            const archiveResult = await Class.updateMany(
+                {
+                    schoolId,
+                    academicYear: fromYear,
+                    status: 'active'
+                },
+                {
+                    $set: {
+                        status: 'archived',
+                        'students.$[].status': 'transferred'
+                    }
+                },
+                { session }
             );
 
-            this.sendResponse(res, { 
-                message: 'Transizione anno completata',
-                newClasses 
+            logger.debug('Archived old classes', { archiveResult });
+
+            // 4. Crea le nuove classi promosse
+            const promotedClassesData = existingClasses
+                .filter(oldClass => oldClass.year < (school.schoolType === 'middle_school' ? 3 : 5))
+                .map(oldClass => ({
+                    schoolId,
+                    year: oldClass.year + 1,
+                    section: oldClass.section,
+                    academicYear: toYear,
+                    status: 'active',
+                    capacity: oldClass.capacity,
+                    mainTeacher: oldClass.mainTeacher,
+                    teachers: oldClass.teachers,
+                    isActive: true,
+                    students: []
+                }));
+
+            // 5. Crea le nuove prime classi
+            const newFirstYearClasses = sections.map(section => ({
+                schoolId,
+                year: 1,
+                section: section.name,
+                academicYear: toYear,
+                status: 'active',
+                capacity: section.maxStudents,
+                mainTeacher: section.mainTeacherId,
+                teachers: [],
+                isActive: true,
+                students: []
+            }));
+
+            // 6. Crea tutte le nuove classi
+            const allNewClasses = [...promotedClassesData, ...newFirstYearClasses];
+            logger.debug('Creating new classes:', {
+                count: allNewClasses.length,
+                promoted: promotedClassesData.length,
+                newFirstYear: newFirstYearClasses.length
             });
+
+            const newClasses = await Class.create(allNewClasses, { session });
+
+            await session.commitTransaction();
+            logger.debug('Year transition completed successfully');
+
+            return this.sendResponse(res, {
+                message: 'Transizione anno completata',
+                newClasses
+            });
+
         } catch (error) {
-            this.sendError(res, error);
+            await session.abortTransaction();
+            logger.error('Error in handleYearTransition:', {
+                message: error.message,
+                stack: error.stack
+            });
+            return this.sendError(res, error);
+        } finally {
+            session.endSession();
+        }
+    }
+
+
+    // Nel ClassRepository
+    async createInitialClasses(schoolId, academicYear, sections) {
+        try {
+            const school = await School.findById(schoolId);
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+
+            const years = school.schoolType === 'middle_school' ? 3 : 5;
+            const classesToCreate = [];
+
+            for (const section of sections) {
+                if (!section.mainTeacherId) {
+                    throw createError(
+                        ErrorTypes.VALIDATION.BAD_REQUEST,
+                        'mainTeacher richiesto per ogni sezione'
+                    );
+                }
+
+                for (let year = 1; year <= years; year++) {
+                    classesToCreate.push({
+                        schoolId,
+                        year,
+                        section: section.name,
+                        academicYear,
+                        status: 'planned',
+                        capacity: section.maxStudents,
+                        mainTeacher: section.mainTeacherId,  // Usa il mainTeacherId dalla sezione
+                        isActive: true
+                    });
+                }
+            }
+
+            const createdClasses = await Class.insertMany(classesToCreate);
+            return createdClasses;
+        } catch (error) {
+            logger.error('Error in createInitialClasses:', error);
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nella creazione classi iniziali',
+                { originalError: error.message }
+            );
         }
     }
 

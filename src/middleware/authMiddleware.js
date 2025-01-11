@@ -13,75 +13,122 @@ const { user: UserRepository } = require('../repositories');
  */
 const protect = async (req, res, next) => {
     try {
-        logger.debug('Token ricevuto:', {
-            authHeader: req.headers.authorization,
-            token: req.headers.authorization?.split(' ')[1]?.substring(0, 20) + '...'
+        // 1. Log iniziale della richiesta
+        logger.debug('⭐ PROTECT MIDDLEWARE START', {
+            path: req.path,
+            method: req.method,
+            headers: req.headers,
+            cookies: req.cookies
         });
-        // 1. Verifica presenza del token
+
+        // 2. Verifica token
         let token;
         const authHeader = req.headers.authorization;
+        logger.debug('🔍 Examining Authorization Header', {
+            hasAuthHeader: !!authHeader,
+            headerValue: authHeader,
+            startsWith: authHeader?.startsWith('Bearer '),
+            hasCookieToken: !!req.cookies?.token
+        });
         
         if (authHeader && authHeader.startsWith('Bearer ')) {
             token = authHeader.split(' ')[1];
+            logger.debug('📝 Token extracted from header', { token: token?.substring(0, 20) + '...' });
         } else if (req.cookies?.token) {
             token = req.cookies.token;
+            logger.debug('📝 Token extracted from cookies', { token: token?.substring(0, 20) + '...' });
         }
 
         if (!token) {
+            logger.warn('❌ No token found in request');
             throw createError(
                 ErrorTypes.AUTH.NO_TOKEN,
                 'Token di autenticazione mancante'
             );
         }
 
-        // 2. Estrai e verifica il token
+        // 3. Decodifica e verifica token
+        logger.debug('🔑 Attempting to verify token');
         const decoded = jwt.verify(token, config.jwt.secret);
-
-        logger.debug('Token decodificato:', {
-            userId: decoded.id,
-            exp: new Date(decoded.exp * 1000)
+        logger.debug('✅ Token verified successfully', {
+            decoded: {
+                id: decoded.id,
+                exp: new Date(decoded.exp * 1000),
+                iat: new Date(decoded.iat * 1000),
+                timeUntilExpiration: ((decoded.exp * 1000) - Date.now()) / 1000 / 60 + ' minutes'
+            }
         });
 
-        // 3. Carica i dati completi dell'utente
+        // 4. Ricerca utente
+        logger.debug('👤 Looking up user', { userId: decoded.id });
         const user = await UserRepository.findById(decoded.id);
+        logger.debug('👤 User lookup result', {
+            found: !!user,
+            userData: user ? {
+                id: user._id,
+                email: user.email,
+                role: user.role,
+                isActive: user.isActive,
+                hasSchoolId: !!user.schoolId,
+                schoolId: user.schoolId?.toString()
+            } : 'null'
+        });
 
         if (!user) {
+            logger.warn('❌ User not found in database', { userId: decoded.id });
             throw createError(
                 ErrorTypes.AUTH.USER_NOT_FOUND,
                 'Utente non trovato'
             );
         }
 
-        // 4. Aggiungi i dati alla richiesta - MODIFICATO
-        req.user = {
-            id: user._id.toString(), // Assicurati che sia una stringa
+        // 5. Setup user in request
+        const userForRequest = {
+            id: user._id.toString(),
             _id: user._id,
-            schoolId: user.schoolId ? user.schoolId.toString() : null,
+            schoolId: user.schoolId?.toString() || null,
             role: user.role,
             tokenExp: decoded.exp
         };
 
-        logger.debug('Dati utente caricati nel middleware:', {
-            userId: req.user.id,
-            schoolId: req.user.schoolId,
-            role: req.user.role
+        logger.debug('📋 Setting user in request', {
+            userForRequest,
+            originalUser: {
+                id: user._id,
+                role: user.role,
+                schoolId: user.schoolId
+            }
         });
 
-        logger.info('Autenticazione completata con successo:', {
+        req.user = userForRequest;
+
+        // 6. Log finale successo
+        logger.info('✨ Authentication successful', {
             userId: user._id,
+            role: user.role,
             hasSchool: !!user.schoolId,
-            role: user.role
+            tokenExpiresIn: ((decoded.exp * 1000) - Date.now()) / 1000 / 60 + ' minutes'
         });
 
         next();
     } catch (error) {
-        logger.error('Errore di autenticazione:', {
-            error: error.message,
-            stack: error.stack
+        // 7. Gestione errori dettagliata
+        logger.error('🔥 Authentication Error', {
+            errorType: error.name,
+            errorMessage: error.message,
+            errorCode: error.code,
+            stack: error.stack,
+            tokenInfo: error.expiredAt ? {
+                expiredAt: error.expiredAt,
+                now: new Date()
+            } : undefined
         });
 
-        // 5. Gestione specifica degli errori
         if (error.name === 'JsonWebTokenError') {
+            logger.debug('🔑 JWT Validation Failed', { 
+                error: error.message,
+                type: 'invalid_token'
+            });
             return res.status(401).json({
                 status: 'error',
                 error: {
@@ -92,6 +139,10 @@ const protect = async (req, res, next) => {
         }
 
         if (error.name === 'TokenExpiredError') {
+            logger.debug('🔑 JWT Expired', { 
+                expiredAt: error.expiredAt,
+                type: 'token_expired'
+            });
             return res.status(401).json({
                 status: 'error',
                 error: {
@@ -101,18 +152,17 @@ const protect = async (req, res, next) => {
             });
         }
 
-        // Gestione errori generici
         const statusCode = error.statusCode || 401;
         res.status(statusCode).json({
             status: 'error',
             error: {
                 message: error.message,
-                code: error.code || 'AUTH_ERROR'
+                code: error.code || 'AUTH_ERROR',
+                type: error.name
             }
         });
     }
 };
-
 /**
  * Middleware per la restrizione degli accessi basata sui ruoli
  * @param {...String} roles - Ruoli autorizzati

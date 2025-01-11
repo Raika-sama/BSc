@@ -54,10 +54,12 @@
         "node": ">=18.0.0"
     },
     "jest": {
-        "testTimeout": 500000,
+        "testTimeout": 10000,
         "verbose": true,
         "testEnvironment": "node",
-        "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+        "setupFilesAfterEnv": [
+            "<rootDir>/tests/setup.js"
+        ],
         "detectOpenHandles": true,
         "testPathIgnorePatterns": [
             "/node_modules/"

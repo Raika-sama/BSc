@@ -1,5 +1,5 @@
-// src/components/school/SchoolManagement.js
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Container,
     Paper,
@@ -20,14 +20,13 @@ import AddIcon from '@mui/icons-material/Add';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { useNotification } from '../../context/NotificationContext';
 import SchoolList from './SchoolList';
-import SchoolForm from './SchoolForm';
 import { useSchool } from '../../context/SchoolContext';
+import { SchoolWizard } from './wizard/SchoolWizard';
 
 const ITEMS_PER_PAGE = 10;
 
 const SchoolManagement = () => {
-    const [isFormOpen, setIsFormOpen] = useState(false);
-    const [selectedSchool, setSelectedSchool] = useState(null);
+    const navigate = useNavigate();
     const [page, setPage] = useState(1);
     const [filters, setFilters] = useState({
         region: '',
@@ -43,8 +42,6 @@ const SchoolManagement = () => {
         error,
         totalSchools,
         fetchSchools, 
-        createSchool, 
-        updateSchool, 
         deleteSchool,
         getSchoolsByRegion,
         getSchoolsByType
@@ -62,39 +59,19 @@ const SchoolManagement = () => {
         }
     };
 
-    const handleSaveSchool = async (schoolData, isEdit = false) => {
-        try {
-            if (isEdit) {
-                await updateSchool(selectedSchool._id, schoolData);
-            } else {
-                await createSchool(schoolData);
-            }
-            setIsFormOpen(false);
-            setSelectedSchool(null);
-            loadSchools(); // Ricarica la lista dopo il salvataggio
-        } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || 
-                               'Errore nel salvataggio della scuola';
-            showNotification(errorMessage, 'error');
-            console.error('Error saving school:', error);
-        }
-    };
-
     const handleDeleteSchool = async (schoolId) => {
         try {
             await deleteSchool(schoolId);
-            loadSchools(); // Ricarica la lista dopo l'eliminazione
+            loadSchools();
         } catch (error) {
             const errorMessage = error.response?.data?.error?.message || 
                                'Errore nell\'eliminazione della scuola';
             showNotification(errorMessage, 'error');
-            console.error('Error deleting school:', error);
         }
     };
 
     const handleEditClick = (school) => {
-        setSelectedSchool(school);
-        setIsFormOpen(true);
+        navigate(`/admin/schools/${school._id}/edit`);
     };
 
     const handlePageChange = (event, newPage) => {
@@ -107,7 +84,7 @@ const SchoolManagement = () => {
             ...prev,
             [name]: value
         }));
-        setPage(1); // Reset alla prima pagina quando cambiano i filtri
+        setPage(1);
     };
 
     return (
@@ -126,10 +103,7 @@ const SchoolManagement = () => {
                         variant="contained"
                         color="primary"
                         startIcon={<AddIcon />}
-                        onClick={() => {
-                            setSelectedSchool(null);
-                            setIsFormOpen(true);
-                        }}
+                        onClick={() => navigate('/admin/schools/create')}
                     >
                         Nuova Scuola
                     </Button>
@@ -203,13 +177,6 @@ const SchoolManagement = () => {
                     />
                 </Box>
             )}
-
-                <SchoolForm
-                    open={isFormOpen}
-                    onClose={() => setIsFormOpen(false)}
-                    onSubmit={handleSaveSchool}
-                    school={null} // Passa null quando è una nuova scuola
-                />
         </Container>
     );
 };

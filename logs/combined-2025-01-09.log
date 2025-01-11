@@ -603,3 +603,146 @@
 {"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:04:24.751Z"}
 {"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"678047e8a1907e39b3b2d522","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:04:25.090Z"}
 {"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:04:25.093Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-09T22:23:01.753Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-09T22:23:01.768Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-09T22:23:01.770Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-09T22:23:01.773Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-09T22:23:01.775Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-09T22:23:01.777Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-09T22:23:01.835Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth"],"timestamp":"2025-01-09T22:23:01.870Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-09T22:23:02.471Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-09T22:23:02.503Z"}
+{"level":"info","message":"Ambiente: test","timestamp":"2025-01-09T22:23:02.504Z"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-09T22:23:03.062Z"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-09T22:23:03.276Z"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:23:03.313Z","userId":"67804c4610f897e8d0d63437"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-09T22:23:03.314Z","userId":"67804c4610f897e8d0d63437"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:23:03.377Z","userId":"67804c4610f897e8d0d63437"}
+{"createdBy":"67804c4610f897e8d0d63437","level":"info","message":"Scuola creata con successo","schoolId":"67804c4710f897e8d0d63443","schoolName":"Integration Test School","timestamp":"2025-01-09T22:23:03.422Z"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:23:03.473Z","userId":"67804c4610f897e8d0d63437"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:23:03.972Z","userId":"67804c4610f897e8d0d63437"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:23:04.294Z"}
+{"duration":"38ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736461384260_9riebrzch","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-09T22:23:04.298Z","url":"/api/v1/classes/transition"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:23:04.477Z"}
+{"duration":"35ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736461384445_ozgegjqiz","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-09T22:23:04.480Z","url":"/api/v1/schools"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:23:04.694Z"}
+{"duration":"38ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736461384659_9lqdb8fhc","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-09T22:23:04.697Z","url":"/api/v1/schools/67804c4810f897e8d0d634c7/setup"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-09T22:23:04.863Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804c4aed5aba1e7b1d4f07","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:23:06.894Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:23:06.898Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804c4bed5aba1e7b1d4f1b","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:23:07.218Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:23:07.222Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-09T22:24:43.480Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-09T22:24:43.491Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-09T22:24:43.497Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-09T22:24:43.499Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-09T22:24:43.501Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-09T22:24:43.503Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-09T22:24:43.539Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth"],"timestamp":"2025-01-09T22:24:43.560Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-09T22:24:44.037Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-09T22:24:44.054Z"}
+{"level":"info","message":"Ambiente: test","timestamp":"2025-01-09T22:24:44.059Z"}
+{"duration":"12ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736461484556_w9nzzr77o","responseSize":"109 Bytes","statusCode":404,"timestamp":"2025-01-09T22:24:44.568Z","url":"/auth/login"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-09T22:24:45.174Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804cae0d7111564d0f593d","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:24:46.989Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:24:46.993Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804caf0d7111564d0f5951","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:24:47.334Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:24:47.337Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-09T22:26:48.847Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-09T22:26:48.858Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-09T22:26:48.864Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-09T22:26:48.866Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-09T22:26:48.868Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-09T22:26:48.870Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-09T22:26:48.907Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth"],"timestamp":"2025-01-09T22:26:48.928Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-09T22:26:49.378Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-09T22:26:49.398Z"}
+{"level":"info","message":"Ambiente: test","timestamp":"2025-01-09T22:26:49.406Z"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-09T22:26:49.906Z"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-09T22:26:50.132Z"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:26:50.170Z","userId":"67804d2941847bf23b25a6ae"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-09T22:26:50.172Z","userId":"67804d2941847bf23b25a6ae"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:26:50.234Z","userId":"67804d2941847bf23b25a6ae"}
+{"createdBy":"67804d2941847bf23b25a6ae","level":"info","message":"Scuola creata con successo","schoolId":"67804d2a41847bf23b25a6be","schoolName":"Integration Test School","timestamp":"2025-01-09T22:26:50.286Z"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:26:50.348Z","userId":"67804d2941847bf23b25a6ae"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:26:50.807Z","userId":"67804d2941847bf23b25a6ae"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:26:51.185Z"}
+{"duration":"37ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736461611152_cf6govy6o","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-09T22:26:51.189Z","url":"/api/v1/classes/transition"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:26:51.394Z"}
+{"duration":"39ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736461611358_nc8a4zf6p","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-09T22:26:51.397Z","url":"/api/v1/schools"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:26:51.600Z"}
+{"duration":"39ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736461611565_h0tm8e1f6","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-09T22:26:51.604Z","url":"/api/v1/schools/67804d2b41847bf23b25a740/setup"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-09T22:26:51.774Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804d2dc1f394e0397c5bcf","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:26:53.583Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:26:53.587Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804d2dc1f394e0397c5be3","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:26:53.922Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:26:53.927Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-09T22:33:33.733Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-09T22:33:33.744Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-09T22:33:33.750Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-09T22:33:33.753Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-09T22:33:33.755Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-09T22:33:33.757Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-09T22:33:33.794Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth"],"timestamp":"2025-01-09T22:33:34.103Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-09T22:33:34.585Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-09T22:33:34.601Z"}
+{"level":"info","message":"Ambiente: test","timestamp":"2025-01-09T22:33:34.602Z"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-09T22:33:35.097Z"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-09T22:33:35.283Z"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:33:35.319Z","userId":"67804ebeed83ae56d76b7f05"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-09T22:33:35.321Z","userId":"67804ebeed83ae56d76b7f05"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:33:35.382Z","userId":"67804ebeed83ae56d76b7f05"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:33:35.411Z","userId":"67804ebeed83ae56d76b7f05"}
+{"createdBy":"67804ebeed83ae56d76b7f05","level":"info","message":"Scuola creata con successo","schoolId":"67804ebfed83ae56d76b7f16","schoolName":"Integration Test School","timestamp":"2025-01-09T22:33:35.448Z"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:33:35.503Z","userId":"67804ebeed83ae56d76b7f05"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:33:35.533Z","userId":"67804ebeed83ae56d76b7f05"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:33:35.982Z","userId":"67804ebeed83ae56d76b7f05"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:33:36.012Z","userId":"67804ebeed83ae56d76b7f05"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:33:36.377Z"}
+{"duration":"36ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736462016346_xfkbhasyt","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-09T22:33:36.382Z","url":"/api/v1/classes/transition"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:33:36.593Z"}
+{"duration":"40ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736462016558_mzrhps5ck","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-09T22:33:36.598Z","url":"/api/v1/schools"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:33:36.821Z"}
+{"duration":"41ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736462016783_083ek9kji","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-09T22:33:36.824Z","url":"/api/v1/schools/67804ec0ed83ae56d76b7f9a/setup"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-09T22:33:36.985Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804ec22e0ea6f258a01454","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:33:38.874Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:33:38.879Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"67804ec32e0ea6f258a01468","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:33:39.224Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:33:39.228Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-09T22:39:19.677Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-09T22:39:19.689Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-09T22:39:19.695Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-09T22:39:19.697Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-09T22:39:19.700Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-09T22:39:19.702Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-09T22:39:20.053Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth"],"timestamp":"2025-01-09T22:39:20.077Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-09T22:39:20.565Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-09T22:39:20.583Z"}
+{"level":"info","message":"Ambiente: test","timestamp":"2025-01-09T22:39:20.584Z"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-09T22:39:21.097Z"}
+{"ip":"::ffff:127.0.0.1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-09T22:39:21.300Z"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:39:21.337Z","userId":"67805018c1368fa854161eb5"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-09T22:39:21.339Z","userId":"67805018c1368fa854161eb5"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:39:21.401Z","userId":"67805018c1368fa854161eb5"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:39:21.431Z","userId":"67805018c1368fa854161eb5"}
+{"createdBy":"67805018c1368fa854161eb5","level":"info","message":"Scuola creata con successo","schoolId":"67805019c1368fa854161ec6","schoolName":"Integration Test School","timestamp":"2025-01-09T22:39:21.466Z"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:39:21.519Z","userId":"67805018c1368fa854161eb5"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:39:21.550Z","userId":"67805018c1368fa854161eb5"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:39:21.989Z","userId":"67805018c1368fa854161eb5"}
+{"hasSchool":false,"level":"info","message":"Autenticazione completata con successo:","role":"admin","timestamp":"2025-01-09T22:39:22.019Z","userId":"67805018c1368fa854161eb5"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:39:22.330Z"}
+{"duration":"35ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736462362299_ztrrs442k","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-09T22:39:22.334Z","url":"/api/v1/classes/transition"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:39:22.524Z"}
+{"duration":"40ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736462362488_vf8jesmal","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-09T22:39:22.528Z","url":"/api/v1/schools"}
+{"error":"Utente non trovato","level":"error","message":"Errore di autenticazione:","timestamp":"2025-01-09T22:39:22.722Z"}
+{"duration":"35ms","ip":"::ffff:127.0.0.1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1736462362691_t8gba5l9b","responseSize":"79 Bytes","statusCode":401,"timestamp":"2025-01-09T22:39:22.726Z","url":"/api/v1/schools/6780501ac1368fa854161f4a/setup"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-09T22:39:22.882Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"6780501c811a6ca1eb4318a5","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:39:24.835Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:39:24.838Z"}
+{"data":{"academicYear":"2025/2026","capacity":25,"schoolId":"6780501d811a6ca1eb4318b9","section":"A","status":"active","year":2},"level":"error","message":"Dati classe incompleti","timestamp":"2025-01-09T22:39:25.169Z"}
+{"code":"DB_001","level":"error","message":"Errore nella creazione della classe: Dati classe incompleti","metadata":{},"status":500,"timestamp":"2025-01-09T22:39:25.173Z"}
