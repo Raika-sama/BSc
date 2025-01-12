@@ -158,20 +158,35 @@ export const SchoolProvider = ({ children }) => {
     const createSchool = async (schoolData) => {
         const validationErrors = validateSchoolData(schoolData);
         if (validationErrors) {
+            console.log('Validation errors in SchoolContext:', validationErrors);
             throw { response: { data: { error: { errors: validationErrors } } } };
         }
-
+    
         setLoading(true);
         setError(null);
         try {
+            console.log('Making API request to create school:', schoolData);
+            
             const response = await axiosInstance.post('/schools', schoolData);
+            console.log('API response:', response);
             
             if (response.data.status === 'success') {
                 setSchools(prev => [...prev, response.data.data.school]);
                 showNotification('Scuola creata con successo', 'success');
                 return response.data.data.school;
+            } else {
+                console.log('Unexpected response format:', response);
+                throw new Error('Risposta API non valida');
             }
         } catch (error) {
+            console.error('Error in createSchool:', error);
+            console.error('Error details:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                message: error.message
+            });
+    
             const errorMessage = error.response?.data?.error?.message || 'Errore nella creazione della scuola';
             setError(errorMessage);
             showNotification(errorMessage, 'error');

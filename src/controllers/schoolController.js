@@ -49,30 +49,33 @@ class SchoolController extends BaseController {
      */
     async create(req, res) {
         try {
+            console.log('Received school creation request:', {
+                body: req.body,
+                user: req.user
+            });
+    
             const schoolData = {
                 ...req.body,
-                manager: req.user.id,
-                users: [{ 
-                    user: req.user.id, 
-                    role: 'admin' 
-                }]
+                manager: req.user.id
             };
     
-            logger.debug('Tentativo di creazione scuola', { data: schoolData });
+            console.log('Attempting to create school with data:', schoolData);
     
             const school = await this.repository.create(schoolData);
             
-            logger.info('Scuola creata con successo', { 
+            console.log('School created successfully:', {
                 schoolId: school._id,
-                schoolName: school.name,
-                createdBy: req.user.id
+                schoolName: school.name
             });
     
             return this.sendResponse(res, { school }, 201);
         } catch (error) {
-            logger.error('Errore nella creazione della scuola', { error });
+            console.error('School creation error:', {
+                error: error.message,
+                stack: error.stack,
+                code: error.code
+            });
     
-            // Gestione errore duplicato
             if (error.code === 11000) {
                 return this.sendError(res, {
                     statusCode: 400,
@@ -81,7 +84,6 @@ class SchoolController extends BaseController {
                 });
             }
     
-            // Errori di validazione
             if (error.name === 'ValidationError') {
                 return this.sendError(res, {
                     statusCode: 400,
@@ -94,11 +96,11 @@ class SchoolController extends BaseController {
                 });
             }
     
-            // Altri errori
             return this.sendError(res, {
                 statusCode: 500,
                 message: 'Errore nella creazione della scuola',
-                code: 'SCHOOL_003'
+                code: 'SCHOOL_003',
+                details: error.message
             });
         }
     }
