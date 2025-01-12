@@ -27,3 +27,8 @@
 {"error":{},"level":"error","message":"Errore nel recupero di School","timestamp":"2025-01-12T18:51:41.965Z"}
 {"body":{},"error":{"code":"DB_001","message":"Errore nel recupero di School"},"level":"error","message":"Errore richiesta","method":"GET","query":{"institutionType":"","limit":"10","page":"1","populate":"manager","region":"","schoolType":""},"requestId":"req_1736707901910_yvsw1u2jj","timestamp":"2025-01-12T18:51:41.966Z","url":"/api/v1/schools?page=1&limit=10&populate=manager&region=&schoolType=&institutionType="}
 {"level":"error","message":"Errore nel recupero di School","timestamp":"2025-01-12T18:51:41.967Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"name":1},"keyValue":{"name":"Scuola Media Test"}},"level":"error","message":"Errore nella creazione di School","timestamp":"2025-01-12T21:40:02.633Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"name":1},"keyValue":{"name":"Scuola Media Test"}},"level":"error","message":"Errore nella creazione di School","timestamp":"2025-01-12T21:46:16.928Z"}
+{"error":"Nessuna scuola associata all'utente","level":"error","message":"Class Route Error:","method":"GET","path":"/","role":"admin","timestamp":"2025-01-12T22:21:56.602Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":"Nessuna scuola associata all'utente","level":"error","message":"Class Route Error:","method":"GET","path":"/","role":"admin","timestamp":"2025-01-12T22:22:03.239Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":"Nessuna scuola associata all'utente","level":"error","message":"Class Route Error:","method":"GET","path":"/","role":"admin","timestamp":"2025-01-12T22:22:28.843Z","userId":"677bfe44f6789c907c9f3766"}

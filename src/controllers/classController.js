@@ -11,6 +11,8 @@ const { Class, School } = require('../models'); // Aggiunto School all'import
 class ClassController extends BaseController {
     constructor() {
         super(ClassRepository, 'class');
+        this.School = School; // Aggiungi questa riga
+
     }
 
  /**
@@ -348,54 +350,7 @@ class ClassController extends BaseController {
     }
 
 
-    // Nel ClassRepository
-    async createInitialClasses(schoolId, academicYear, sections) {
-        try {
-            const school = await School.findById(schoolId);
-            if (!school) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Scuola non trovata'
-                );
-            }
-
-            const years = school.schoolType === 'middle_school' ? 3 : 5;
-            const classesToCreate = [];
-
-            for (const section of sections) {
-                if (!section.mainTeacherId) {
-                    throw createError(
-                        ErrorTypes.VALIDATION.BAD_REQUEST,
-                        'mainTeacher richiesto per ogni sezione'
-                    );
-                }
-
-                for (let year = 1; year <= years; year++) {
-                    classesToCreate.push({
-                        schoolId,
-                        year,
-                        section: section.name,
-                        academicYear,
-                        status: 'planned',
-                        capacity: section.maxStudents,
-                        mainTeacher: section.mainTeacherId,  // Usa il mainTeacherId dalla sezione
-                        isActive: true
-                    });
-                }
-            }
-
-            const createdClasses = await Class.insertMany(classesToCreate);
-            return createdClasses;
-        } catch (error) {
-            logger.error('Error in createInitialClasses:', error);
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella creazione classi iniziali',
-                { originalError: error.message }
-            );
-        }
-    }
-
+    
     async getByAcademicYear(req, res) {
         try {
             const { schoolId, year } = req.params;
@@ -418,6 +373,82 @@ class ClassController extends BaseController {
         }
     }
 
+    // Aggiungi questo metodo alla classe ClassController
+
+/**
+ * Crea le classi iniziali per una nuova scuola
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ * @param {Function} next - Next middleware
+ */
+async createInitialClasses(req, res, next) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const { schoolId, academicYear, sections } = req.body;
+
+        // Validazione input
+        if (!schoolId || !academicYear || !sections) {
+            throw createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'Dati mancanti per la creazione delle classi iniziali'
+            );
+        }
+
+        logger.info('Inizializzazione classi per la scuola', {
+            schoolId,
+            academicYear,
+            sectionsCount: sections.length
+        });
+
+        // Verifica esistenza scuola
+        const school = await School.findById(schoolId).session(session);
+        if (!school) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            );
+        }
+
+        // Usa il repository per creare le classi
+        const classes = await this.repository.createInitialClasses(
+            schoolId,
+            academicYear,
+            sections
+        );
+
+        await session.commitTransaction();
+
+        logger.info('Classi iniziali create con successo', {
+            schoolId,
+            classesCreated: classes.length
+        });
+
+        this.sendResponse(res, {
+            status: 'success',
+            data: {
+                classes,
+                message: `Create ${classes.length} classi con successo`
+            }
+        });
+
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Errore nella creazione delle classi iniziali:', {
+            error: error.message,
+            stack: error.stack
+        });
+
+        next(createError(
+            ErrorTypes.DATABASE.QUERY_FAILED,
+            'Errore durante la creazione delle classi iniziali',
+            { originalError: error.message }
+        ));
+    } finally {
+        session.endSession();
+    }
+}
 
 }
 

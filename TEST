@@ -136,3 +136,35 @@ Operazioni Avanzate:
 
 Dovrebbero gestire correttamente i casi di dati non trovati
 Dovrebbero rispettare le autorizzazioni
+
+
+
+Per eseguire tutti i test:
+
+bash
+npm test
+
+Per eseguire solo i test di integrazione:
+
+bash
+npm test tests/integration
+
+Per eseguire solo i test dei repository:
+
+bash
+npm test tests/unit/repositories
+
+Per eseguire un file specifico:
+
+bash
+npm test tests/integration/schoolSetup.test.js
+
+Per eseguire i test in modalità watch (si riavviano automaticamente quando modifichi i file):
+
+bash
+npm test -- --watch
+
+Per vedere il coverage dei test:
+
+bash
+npm test -- --coverage

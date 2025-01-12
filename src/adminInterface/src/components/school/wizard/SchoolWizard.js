@@ -22,6 +22,7 @@ import Step3Sections from './steps/Step3Sections';
 import Step4Review from './steps/Step4Review';
 import { validateStep1, validateStep2, validateStep3, isStepValid } from './utils/validations';
 import { useAuth } from '../../../context/AuthContext';
+import { useClass } from '../../../context/ClassContext';
 
 
 const steps = [
@@ -35,7 +36,7 @@ const SchoolWizard = () => {
     const { createSchool } = useSchool();
     const { showNotification } = useNotification();
     const navigate = useNavigate();
-
+    const { createInitialClasses } = useClass();  // Aggiungi questo
     const [activeStep, setActiveStep] = useState(0);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -126,11 +127,11 @@ const SchoolWizard = () => {
     
             const numberOfYears = formData.schoolType === 'middle_school' ? 3 : 5;
             
-            // Assicuriamoci che le sezioni siano nel formato corretto
+            // Formattazione sezioni per la scuola
             const formattedSections = formData.sections.map(section => {
                 console.log('Formattazione sezione:', section);
                 return {
-                    name: section.name.toUpperCase(), // Forziamo lettere maiuscole
+                    name: section.name.toUpperCase(),
                     isActive: true,
                     academicYears: [{
                         year: formData.academicYear,
@@ -142,6 +143,7 @@ const SchoolWizard = () => {
     
             console.log('Sezioni formattate:', formattedSections);
     
+            // Preparazione dati scuola
             const schoolData = {
                 name: formData.name,
                 schoolType: formData.schoolType,
@@ -162,20 +164,42 @@ const SchoolWizard = () => {
     
             console.log('Dati completi della scuola da inviare:', schoolData);
     
-            const result = await createSchool(schoolData);
-            console.log('School creation response:', result);
+            // 1. Creazione scuola
+            const schoolResult = await createSchool(schoolData);
+            console.log('School creation response:', schoolResult);
     
-            showNotification('Scuola creata con successo!', 'success');
-            navigate('/admin/schools');
+            // 2. Preparazione dati per la creazione delle classi
+            const classesSetupData = {
+                schoolId: schoolResult._id,
+                academicYear: formData.academicYear,
+                mainTeacher: user._id,  // Aggiungiamo il mainTeacher
+                sections: formData.sections.map(section => ({
+                    name: section.name.toUpperCase(),
+                    maxStudents: parseInt(section.maxStudents, 10),
+                    mainTeacherId: user._id  // Aggiungiamo il mainTeacher anche qui
+
+                }))
+            };
+    
+            console.log('Dati per setup classi:', classesSetupData);
+    
+            // 3. Creazione classi
+           // Creazione classi usando il context
+           const classesResult = await createInitialClasses(classesSetupData);
+           console.log('Classes creation response:', classesResult);
+
+           showNotification('Scuola e classi create con successo!', 'success');
+           navigate('/admin/schools');
+    
         } catch (error) {
-            console.error('School creation error:', {
+            console.error('Setup error:', {
                 error,
                 sections: formData.sections,
                 validationErrors: error.response?.data?.error?.errors
             });
             
             const errorMessage = error.response?.data?.error?.message || 
-                               'Errore durante la creazione della scuola';
+                               'Errore durante la configurazione della scuola';
             showNotification(errorMessage, 'error');
             
             if (error.response?.data?.error?.errors) {

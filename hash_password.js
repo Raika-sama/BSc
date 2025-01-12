@@ -13,3 +13,5 @@ const generateHash = async () => {
 }
 
 generateHash();
+
+// per test_admin: $2a$10$BtD682olptvqjvJyqrSa9eLj6EssB3nMo5S.e8vNBOmwvbVAlqpZG

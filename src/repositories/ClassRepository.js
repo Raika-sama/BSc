@@ -348,7 +348,14 @@ class ClassRepository extends BaseRepository {
     async createInitialClasses(schoolId, academicYear, sections) {
         const session = await mongoose.startSession();
         session.startTransaction();
-    
+            
+        if (!schoolId || !academicYear || !sections || !Array.isArray(sections)) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Parametri mancanti o non validi'
+                );
+            }
+
         try {
             logger.debug('Starting createInitialClasses', {
                 schoolId,
@@ -386,6 +393,12 @@ class ClassRepository extends BaseRepository {
     
             for (let year = 1; year <= maxYear; year++) {
                 for (const section of sections) {
+                    logger.debug('Creating class with data:', {
+                        year,
+                        section,
+                        mainTeacherId: section.mainTeacherId
+                    });
+    
                     classesData.push({
                         schoolId,
                         year,
@@ -393,7 +406,7 @@ class ClassRepository extends BaseRepository {
                         academicYear,
                         status: 'planned',
                         capacity: section.maxStudents,
-                        mainTeacher: section.mainTeacherId || null,
+                        mainTeacher: section.mainTeacherId,
                         teachers: [],
                         isActive: true,
                         students: []

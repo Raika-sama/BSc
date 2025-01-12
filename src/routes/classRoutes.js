@@ -9,47 +9,54 @@ const { class: classController } = require('../controllers');
 const logger = require('../utils/errors/logger/logger');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
 
-// Applica il middleware protect a tutte le route
-router.use(protect);
+    // Applica il middleware protect a tutte le route
+    router.use(protect);
 
-// Route di lettura specifiche (devono venire PRIMA delle route generiche)
-router.get('/school/:schoolId/year/:year(*)', async (req, res, next) => {
-    try {
-        const { schoolId, year } = req.params;
-        const normalizedYear = year.includes('/') ? 
-            year : 
-            year.replace('-', '/');
+    // Route di lettura specifiche (devono venire PRIMA delle route generiche)
+    router.get('/school/:schoolId/year/:year(*)', async (req, res, next) => {
+        try {
+            const { schoolId, year } = req.params;
+            const normalizedYear = year.includes('/') ? 
+                year : 
+                year.replace('-', '/');
 
-        await classController.getByAcademicYear(
-            { ...req, params: { schoolId, year: normalizedYear } }, 
-            res, 
-            next
-        );
-    } catch (error) {
-        logger.error('Error in getByAcademicYear:', {
-            error: error.message,
-            schoolId: req.params.schoolId,
-            year: req.params.year
-        });
-        next(error);
-    }
-});
+            await classController.getByAcademicYear(
+                { ...req, params: { schoolId, year: normalizedYear } }, 
+                res, 
+                next
+            );
+        } catch (error) {
+            logger.error('Error in getByAcademicYear:', {
+                error: error.message,
+                schoolId: req.params.schoolId,
+                year: req.params.year
+            });
+            next(error);
+        }
+    });
 
-router.get('/school/:schoolId', 
-    classController.getBySchool.bind(classController)
-);
+    router.get('/school/:schoolId', 
+        classController.getBySchool.bind(classController)
+    );
 
-// Route amministrative (richiedono privilegi admin)
-router.post('/transition', 
-    restrictTo('admin'),
-    classController.handleYearTransition.bind(classController)
-);
+    // Route amministrative (richiedono privilegi admin)
+    router.post('/transition', 
+        restrictTo('admin'),
+        classController.handleYearTransition.bind(classController)
+    );
 
-// Route per la gestione degli studenti
-router.post('/:classId/students', 
-    restrictTo('admin', 'teacher'),
-    classController.addStudents.bind(classController)
-);
+    // Route per la gestione degli studenti
+    router.post('/:classId/students', 
+        restrictTo('admin', 'teacher'),
+        classController.addStudents.bind(classController)
+    );
+
+    // Aggiungi questa nuova route PRIMA delle route base CRUD
+    // Route per setup iniziale classi (dopo creazione scuola)
+    router.post('/initial-setup',
+        restrictTo('admin'),
+        classController.createInitialClasses.bind(classController)
+    );
 
 // Route base CRUD per le classi (devono venire DOPO le route specifiche)
 router.route('/')

@@ -1,5 +1,6 @@
 // src/adminInterface/src/context/ClassContext.js
 import React, { createContext, useContext, useReducer } from 'react';
+import { axiosInstance } from '../services/axiosConfig';
 
 const ClassContext = createContext();
 
@@ -71,59 +72,113 @@ const classReducer = (state, action) => {
 export const ClassProvider = ({ children }) => {
     const [state, dispatch] = useReducer(classReducer, initialState);
 
-    const fetchClasses = async () => {
+    const fetchClasses = async (schoolId) => {
         try {
             dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
-            const response = await fetch('/api/v1/classes');
-            const data = await response.json();
+            const response = await axiosInstance.get(`/classes/school/${schoolId}`);
             
-            if (response.ok) {
-                dispatch({ type: CLASS_ACTIONS.SET_CLASSES, payload: data.classes });
+            if (response.data.status === 'success') {
+                dispatch({ type: CLASS_ACTIONS.SET_CLASSES, payload: response.data.classes });
+                return response.data.classes;
             } else {
-                throw new Error(data.message || 'Errore nel caricamento delle classi');
+                throw new Error(response.data.message || 'Errore nel caricamento delle classi');
             }
         } catch (error) {
             dispatch({ 
                 type: CLASS_ACTIONS.SET_ERROR, 
-                payload: error.message 
+                payload: error.response?.data?.message || error.message 
             });
+            throw error;
+        }
+    };
+
+    const createInitialClasses = async (setupData) => {
+        try {
+            dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
+            const response = await axiosInstance.post('/classes/initial-setup', setupData);
+    
+            if (response.data.status === 'success') {
+                dispatch({ type: CLASS_ACTIONS.SET_CLASSES, payload: response.data.classes });
+                return response.data.classes;
+            } else {
+                throw new Error(response.data.message || 'Errore nella creazione delle classi');
+            }
+        } catch (error) {
+            dispatch({ 
+                type: CLASS_ACTIONS.SET_ERROR, 
+                payload: error.response?.data?.message || error.message 
+            });
+            throw error;
         }
     };
 
     const addClass = async (classData) => {
         try {
             dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
-            const response = await fetch('/api/v1/classes', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(classData)
-            });
-            const data = await response.json();
+            const response = await axiosInstance.post('/classes', classData);
 
-            if (response.ok) {
-                dispatch({ type: CLASS_ACTIONS.ADD_CLASS, payload: data.class });
-                return data.class;
+            if (response.data.status === 'success') {
+                dispatch({ type: CLASS_ACTIONS.ADD_CLASS, payload: response.data.class });
+                return response.data.class;
             } else {
-                throw new Error(data.message || 'Errore nella creazione della classe');
+                throw new Error(response.data.message || 'Errore nella creazione della classe');
             }
         } catch (error) {
             dispatch({ 
                 type: CLASS_ACTIONS.SET_ERROR, 
-                payload: error.message 
+                payload: error.response?.data?.message || error.message 
             });
             throw error;
         }
     };
 
-    // ... altri metodi per update e delete
+    const updateClass = async (id, classData) => {
+        try {
+            dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
+            const response = await axiosInstance.put(`/classes/${id}`, classData);
+
+            if (response.data.status === 'success') {
+                dispatch({ type: CLASS_ACTIONS.UPDATE_CLASS, payload: response.data.class });
+                return response.data.class;
+            } else {
+                throw new Error(response.data.message || 'Errore nell\'aggiornamento della classe');
+            }
+        } catch (error) {
+            dispatch({ 
+                type: CLASS_ACTIONS.SET_ERROR, 
+                payload: error.response?.data?.message || error.message 
+            });
+            throw error;
+        }
+    };
+
+    const deleteClass = async (id) => {
+        try {
+            dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
+            const response = await axiosInstance.delete(`/classes/${id}`);
+
+            if (response.data.status === 'success') {
+                dispatch({ type: CLASS_ACTIONS.DELETE_CLASS, payload: id });
+            } else {
+                throw new Error(response.data.message || 'Errore nell\'eliminazione della classe');
+            }
+        } catch (error) {
+            dispatch({ 
+                type: CLASS_ACTIONS.SET_ERROR, 
+                payload: error.response?.data?.message || error.message 
+            });
+            throw error;
+        }
+    };
 
     return (
         <ClassContext.Provider value={{
             ...state,
             fetchClasses,
             addClass,
+            createInitialClasses,
+            updateClass,
+            deleteClass,
             dispatch
         }}>
             {children}

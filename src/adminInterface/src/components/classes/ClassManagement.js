@@ -7,22 +7,46 @@ import {
     Button,
     IconButton,
     Tooltip,
-    Grid
+    Grid,
+    Alert,
+    Stack
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DataGrid } from '@mui/x-data-grid';
 import ClassForm from './ClassForm';
+import { useAuth } from '../../context/AuthContext';
+import { axiosInstance } from '../../services/axiosConfig';
 
 const ClassManagement = () => {
+    const { user } = useAuth();
     const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(false);
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedClass, setSelectedClass] = useState(null);
     const [error, setError] = useState(null);
 
-    // Gestione apertura/chiusura form
+    useEffect(() => {
+        const fetchClasses = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const response = await axiosInstance.get('/classes');
+                if (response.data.status === 'success') {
+                    setClasses(response.data.classes || []);
+                }
+            } catch (err) {
+                console.error('Error fetching classes:', err);
+                setError('Errore nel caricamento delle classi');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchClasses();
+    }, []);
+
     const handleOpenForm = () => {
         setSelectedClass(null);
         setOpenDialog(true);
@@ -33,91 +57,51 @@ const ClassManagement = () => {
         setSelectedClass(null);
     };
 
-    // Gestione edit
     const handleEdit = (classData) => {
         setSelectedClass(classData);
         setOpenDialog(true);
     };
 
-    // Gestione delete
     const handleDelete = async (classData) => {
         if (window.confirm('Sei sicuro di voler eliminare questa classe?')) {
             try {
-                const response = await fetch(`/api/v1/classes/${classData._id}`, {
-                    method: 'DELETE'
-                });
-                if (response.ok) {
+                const response = await axiosInstance.delete(`/classes/${classData._id}`);
+                if (response.data.status === 'success') {
                     setClasses(classes.filter(c => c._id !== classData._id));
-                } else {
-                    throw new Error('Errore durante l\'eliminazione della classe');
                 }
-            } catch (error) {
-                setError(error.message);
+            } catch (err) {
+                setError('Errore durante l\'eliminazione della classe');
             }
         }
     };
 
-    // Gestione submit form
     const handleSubmit = async (formData) => {
         try {
             setLoading(true);
             const url = selectedClass 
-                ? `/api/v1/classes/${selectedClass._id}`
-                : '/api/v1/classes';
+                ? `/classes/${selectedClass._id}`
+                : '/classes';
             
-            const method = selectedClass ? 'PUT' : 'POST';
+            const method = selectedClass ? 'put' : 'post';
             
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            });
+            const response = await axiosInstance[method](url, formData);
 
-            const data = await response.json();
-
-            if (response.ok) {
+            if (response.data.status === 'success') {
                 if (selectedClass) {
                     setClasses(classes.map(c => 
-                        c._id === selectedClass._id ? data.class : c
+                        c._id === selectedClass._id ? response.data.class : c
                     ));
                 } else {
-                    setClasses([...classes, data.class]);
+                    setClasses([...classes, response.data.class]);
                 }
                 handleCloseForm();
-            } else {
-                throw new Error(data.message || 'Errore durante il salvataggio della classe');
             }
-        } catch (error) {
-            setError(error.message);
+        } catch (err) {
+            setError('Errore durante il salvataggio della classe');
         } finally {
             setLoading(false);
         }
     };
-
-    // Fetch iniziale delle classi
-    useEffect(() => {
-        const fetchClasses = async () => {
-            try {
-                setLoading(true);
-                const response = await fetch('/api/v1/classes');
-                const data = await response.json();
-                
-                if (response.ok) {
-                    setClasses(data.classes);
-                } else {
-                    throw new Error(data.message || 'Errore nel caricamento delle classi');
-                }
-            } catch (error) {
-                setError(error.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchClasses();
-    }, []);
 
     const columns = [
         { 
@@ -181,6 +165,12 @@ const ClassManagement = () => {
 
     return (
         <Box>
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                </Alert>
+            )}
+
             <Paper sx={{ p: 3, mb: 3 }}>
                 <Grid container justifyContent="space-between" alignItems="center">
                     <Grid item>
@@ -208,6 +198,15 @@ const ClassManagement = () => {
                     rowsPerPageOptions={[5]}
                     loading={loading}
                     getRowId={(row) => row._id}
+                    components={{
+                        NoRowsOverlay: () => (
+                            <Stack height="100%" alignItems="center" justifyContent="center">
+                                <Typography>
+                                    {loading ? 'Caricamento...' : 'Nessuna classe trovata'}
+                                </Typography>
+                            </Stack>
+                        )
+                    }}
                 />
             </Paper>
 
