@@ -113,6 +113,17 @@ const schoolSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    users: [{
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        role: {
+            type: String,
+            enum: ['teacher', 'admin']
+        }
+    }],
+    
     isActive: {
         type: Boolean,
         default: true
@@ -129,6 +140,12 @@ schoolSchema.pre('save', function(next) {
         return;
     }
     
+      if (!this.users) {
+        this.users = [];
+    }
+    next();
+
+
     // Verifica coerenza tipo scuola e numero studenti
     if (this.schoolType === 'middle_school') {
         const maxStudentsLimit = 30;

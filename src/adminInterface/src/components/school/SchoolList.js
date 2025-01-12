@@ -128,8 +128,8 @@ const SchoolList = ({
                                         <Box display="flex" gap={0.5} flexWrap="wrap">
                                             {school.sections.map((section) => (
                                                 <Chip
-                                                    key={section}
-                                                    label={section}
+                                                    key={section.name}
+                                                    label={section.name}
                                                     size="small"
                                                     variant="outlined"
                                                 />

@@ -21,6 +21,8 @@ import Step2AcademicYear from './steps/Step2AcademicYear';
 import Step3Sections from './steps/Step3Sections';
 import Step4Review from './steps/Step4Review';
 import { validateStep1, validateStep2, validateStep3, isStepValid } from './utils/validations';
+import { useAuth } from '../../../context/AuthContext';
+
 
 const steps = [
     'Informazioni Base',
@@ -39,7 +41,8 @@ const SchoolWizard = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
     const [openCancelDialog, setOpenCancelDialog] = useState(false);
-    
+    const { user } = useAuth();
+    console.log('Current user data:', user);  // Aggiungi questo
     const [formData, setFormData] = useState({
         // Step 1: Basic Info
         name: '',
@@ -112,7 +115,10 @@ const SchoolWizard = () => {
                 showNotification('Verifica i dati inseriti prima di procedere', 'error');
                 return;
             }
-    
+            if (!user || !user._id) {
+                showNotification('Errore: utente non autenticato', 'error');
+                return;
+            }
             setIsSubmitting(true);
             
             // Log dei dati delle sezioni prima della trasformazione
@@ -150,7 +156,8 @@ const SchoolWizard = () => {
                     startDate: formData.startDate,
                     endDate: formData.endDate
                 }],
-                sections: formattedSections
+                sections: formattedSections,
+                manager: user._id
             };
     
             console.log('Dati completi della scuola da inviare:', schoolData);
