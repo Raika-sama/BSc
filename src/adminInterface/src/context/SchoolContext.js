@@ -108,18 +108,22 @@ export const SchoolProvider = ({ children }) => {
             const queryParams = new URLSearchParams({
                 page,
                 limit,
+                populate: 'manager', // Aggiungi questo parametro
                 ...filters
             });
-
+            console.log('URL chiamata:', `/schools?${queryParams}`); // Log dell'URL
             const response = await axiosInstance.get(`/schools?${queryParams}`);
-            
+            console.log('Risposta completa:', response.data); // Log della risposta
+
             if (response.data.status === 'success') {
+                console.log('Schools settate nel context:', response.data.data.schools); // Log delle scuole
+
                 setSchools(response.data.data.schools);
                 setTotalSchools(response.data.results);
             }
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || 'Errore nel caricamento delle scuole';
-            setError(errorMessage);
+            console.error('Errore in fetchSchools:', error); // Log dell'errore
+            const errorMessage = error.response?.data?.error?.message || 'Errore nel caricamento delle scuole';            setError(errorMessage);
             showNotification(errorMessage, 'error');
         } finally {
             setLoading(false);

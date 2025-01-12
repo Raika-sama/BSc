@@ -16,13 +16,19 @@ import {
     ListItemText,
     CircularProgress,
     Alert,
-    Tooltip
+    Tooltip,
+    Dialog,
+    DialogTitle,
+    DialogContent
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import PeopleIcon from '@mui/icons-material/People';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import CloseIcon from '@mui/icons-material/Close';
 import SchoolEditForm from './SchoolEditForm';
-import UsersList from './schoolComponents/UsersList';
+import UsersDialog from './schoolComponents/UserDialog';
 import { useSchool } from '../../context/SchoolContext';
 
 const SchoolDetails = () => {
@@ -36,8 +42,11 @@ const SchoolDetails = () => {
         updateSchool,
         updateSchoolUser
     } = useSchool();
+
+    // States
     const [isEditMode, setIsEditMode] = useState(false);
     const [isAddUserMode, setIsAddUserMode] = useState(false);
+    const [isUsersDialogOpen, setIsUsersDialogOpen] = useState(false);
 
     useEffect(() => {
         getSchoolById(id);
@@ -111,6 +120,7 @@ const SchoolDetails = () => {
 
     return (
         <Container maxWidth="lg">
+            {/* Header con bottoni */}
             <Box display="flex" alignItems="center" mb={3} gap={2}>
                 <IconButton onClick={() => navigate('/admin/schools')}>
                     <ArrowBackIcon />
@@ -118,6 +128,22 @@ const SchoolDetails = () => {
                 <Typography variant="h4" component="h1" flex={1}>
                     {selectedSchool.name}
                 </Typography>
+                <Button
+                    variant="outlined"
+                    startIcon={<PeopleIcon />}
+                    onClick={() => setIsUsersDialogOpen(true)}
+                    sx={{ mr: 1 }}
+                >
+                    Lista Utenti
+                </Button>
+                <Button
+                    variant="outlined"
+                    startIcon={<ManageAccountsIcon />}
+                    onClick={() => navigate(`/admin/schools/${id}/users-management`)}
+                    sx={{ mr: 1 }}
+                >
+                    Gestione Utenze
+                </Button>
                 <Button
                     variant="contained"
                     startIcon={<EditIcon />}
@@ -127,6 +153,7 @@ const SchoolDetails = () => {
                 </Button>
             </Box>
 
+            {/* Contenuto principale */}
             <Grid container spacing={3}>
                 {/* Informazioni Base */}
                 <Grid item xs={12} md={6}>
@@ -155,9 +182,9 @@ const SchoolDetails = () => {
                                     <ListItemText 
                                         primary="Sezioni"
                                         secondary={
-                                            <Typography component="span" variant="body2"> {/* Cambia qui */}
+                                            <Typography component="span" variant="body2">
                                                 <Box
-                                                    component="span"  // E qui
+                                                    component="span"
                                                     sx={{ display: 'inline-flex', gap: 0.5, flexWrap: 'wrap' }}
                                                 >
                                                     {selectedSchool.sections.map((section) => (
@@ -232,30 +259,30 @@ const SchoolDetails = () => {
                         </CardContent>
                     </Card>
                 </Grid>
-
-                {/* Lista Utenti */}
-                <Grid item xs={12}>
-                    <Card>
-                        <CardContent>
-                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                                <Typography variant="h6">
-                                    Utenti Associati
-                                </Typography>
-                                <Button
-                                    startIcon={<PersonAddIcon />}
-                                    onClick={() => setIsAddUserMode(true)}
-                                >
-                                    Aggiungi Utente
-                                </Button>
-                            </Box>
-                            <UsersList
-                                users={selectedSchool?.users || []} 
-                                onRemoveUser={handleRemoveUser}
-                            />
-                        </CardContent>
-                    </Card>
-                </Grid>
             </Grid>
+
+            {/* Dialog per la lista utenti */}
+            <Dialog 
+                open={isUsersDialogOpen}
+                onClose={() => setIsUsersDialogOpen(false)}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>
+                    <Box display="flex" alignItems="center" justifyContent="space-between">
+                        <Typography variant="h6">Utenti della Scuola</Typography>
+                        <IconButton onClick={() => setIsUsersDialogOpen(false)}>
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
+                </DialogTitle>
+                <DialogContent dividers>
+                    <UsersDialog 
+                        manager={selectedSchool?.manager}
+                        users={selectedSchool?.users || []}
+                    />
+                </DialogContent>
+            </Dialog>
 
             {/* Form Modifica */}
             <SchoolEditForm
@@ -264,7 +291,6 @@ const SchoolDetails = () => {
                 onSave={handleUpdateSchool}
                 school={selectedSchool}
             />
-
         </Container>
     );
 };

@@ -20,7 +20,6 @@ import {
     Box,
     CircularProgress
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PersonIcon from '@mui/icons-material/Person';
@@ -30,8 +29,9 @@ const SchoolList = ({
     schools, 
     loading, 
     onDelete,
-    totalSchools // Non serve più il TablePagination locale perché la paginazione è gestita dal parent
 }) => {
+    console.log('Schools received:', schools); // Aggiungi questo log
+
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [schoolToDelete, setSchoolToDelete] = useState(null);
     const navigate = useNavigate();
@@ -102,7 +102,10 @@ const SchoolList = ({
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            schools.map((school) => (
+                            schools.map((school) => {
+                                console.log('Dati della scuola:', school); // Aggiungi questo log qui
+                                return (
+
                                 <TableRow key={school._id}>
                                     <TableCell>
                                         <Typography variant="body1">
@@ -137,8 +140,9 @@ const SchoolList = ({
                                         </Box>
                                     </TableCell>
                                     <TableCell>
+                                    {console.log('Dati manager per scuola:', school.manager)} {/* Log dei dati del manager */}
                                         {school.manager ? (
-                                            <Tooltip title={`Manager: ${school.manager.firstName} ${school.manager.lastName}`}>
+                                            <Tooltip title={`Manager: ${school.manager.firstName} ${school.manager.lastName}  - ${school.manager.email}`}>
                                                 <Chip
                                                     icon={<PersonIcon />}
                                                     label={`${school.manager.firstName} ${school.manager.lastName}`}
@@ -183,7 +187,8 @@ const SchoolList = ({
                                         </Tooltip>
                                     </TableCell>
                                 </TableRow>
-                            ))
+                                );
+        })
                         )}
                     </TableBody>
                 </Table>

@@ -65,6 +65,23 @@ class SchoolRepository extends BaseRepository {
         }
     }
 
+    async findAll() {
+        try {
+            const schools = await this.model.find({})
+                .populate('manager', 'firstName lastName email role')
+                .lean();
+    
+            return schools;
+        } catch (error) {
+            logger.error('Errore nel recupero delle scuole', { error });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nel recupero delle scuole',
+                { originalError: error.message }
+            );
+        }
+    }
+    
     /**
      * Aggiunge un utente alla scuola
      * @param {String} schoolId - ID della scuola

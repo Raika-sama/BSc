@@ -155,7 +155,7 @@ class SchoolController extends BaseController {
 
     async getAll(req, res, next) {
         try {
-            const schools = await this.repository.find({}); // Usa find invece di findAll
+            const schools = await this.repository.findAll({}); // Usa find invece di findAll
             
             res.status(200).json({
                 status: 'success',
@@ -163,6 +163,7 @@ class SchoolController extends BaseController {
                 data: { schools }
             });
         } catch (error) {
+            logger.error('Errore nel recupero delle scuole', { error });
             next(error);
         }
     }
