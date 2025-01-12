@@ -1,4 +1,3 @@
-// src/components/school/SchoolDetails.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -6,20 +5,18 @@ import {
     Paper,
     Typography,
     Grid,
-    Divider,
     Box,
     Chip,
     Button,
     IconButton,
-    Tooltip,
     Card,
     CardContent,
     List,
     ListItem,
     ListItemText,
-    ListItemSecondary,
     CircularProgress,
-    Alert
+    Alert,
+    Tooltip
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -42,32 +39,17 @@ const SchoolDetails = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [isAddUserMode, setIsAddUserMode] = useState(false);
 
-    console.log('School Data:', {
-        selectedSchool,
-        users: selectedSchool?.users
-    });
-
     useEffect(() => {
         getSchoolById(id);
     }, [id]);
 
     const handleUpdateSchool = async (updatedData) => {
         try {
-            // Rimuovi eventuali campi undefined o null
-            const cleanedData = Object.entries(updatedData)
-                .reduce((acc, [key, value]) => {
-                    if (value != null) {
-                        acc[key] = value;
-                    }
-                    return acc;
-                }, {});
-
-            await updateSchool(id, cleanedData);
+            await updateSchool(id, updatedData);
             await getSchoolById(id);
-            setIsEditMode(false); // Chiudi il form dopo il successo
+            setIsEditMode(false);
         } catch (error) {
             console.error('Error updating school:', error);
-            // Qui potresti aggiungere una notifica di errore
         }
     };
 
@@ -127,10 +109,6 @@ const SchoolDetails = () => {
         );
     }
 
-
-
-
-    console.log('Selected School Users:', selectedSchool.users);
     return (
         <Container maxWidth="lg">
             <Box display="flex" alignItems="center" mb={3} gap={2}>
@@ -175,41 +153,32 @@ const SchoolDetails = () => {
                                 )}
                                 <ListItem>
                                     <ListItemText 
-                                        primary="Numero Anni"
-                                        secondary={selectedSchool.numberOfYears}
+                                        primary="Sezioni"
+                                        secondary={
+                                            <Typography component="span" variant="body2"> {/* Cambia qui */}
+                                                <Box
+                                                    component="span"  // E qui
+                                                    sx={{ display: 'inline-flex', gap: 0.5, flexWrap: 'wrap' }}
+                                                >
+                                                    {selectedSchool.sections.map((section) => (
+                                                        <Chip
+                                                            key={section._id || section.name}
+                                                            label={`${section.name} (${section.maxStudents || 'N/D'} studenti)`}
+                                                            size="small"
+                                                            variant="outlined"
+                                                        />
+                                                    ))}
+                                                </Box>
+                                            </Typography>
+                                        }
                                     />
                                 </ListItem>
                                 <ListItem>
-                                <ListItemText 
-                                    primary="Sezioni"
-                                    secondary={
-                                        <Typography
-                                            component="span"  // Cambiamo da p a span
-                                            variant="body2"
-                                        >
-                                            <Box
-                                                component="span"  // Anche questo da div a span
-                                                sx={{ display: 'inline-flex', gap: 0.5, flexWrap: 'wrap' }}
-                                            >
-                                                {/* Chips qui */}
-                                            </Box>
-                                        </Typography>
-                                    }
-                                />
+                                    <ListItemText 
+                                        primary="Indirizzo"
+                                        secondary={selectedSchool.address}
+                                    />
                                 </ListItem>
-                            </List>
-                        </CardContent>
-                    </Card>
-                </Grid>
-
-                {/* Informazioni Localizzazione */}
-                <Grid item xs={12} md={6}>
-                    <Card>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                                Localizzazione
-                            </Typography>
-                            <List>
                                 <ListItem>
                                     <ListItemText 
                                         primary="Regione"
@@ -222,13 +191,44 @@ const SchoolDetails = () => {
                                         secondary={selectedSchool.province}
                                     />
                                 </ListItem>
-                                <ListItem>
-                                    <ListItemText 
-                                        primary="Indirizzo"
-                                        secondary={selectedSchool.address}
-                                    />
-                                </ListItem>
                             </List>
+                        </CardContent>
+                    </Card>
+                </Grid>
+
+                {/* Anno Accademico Corrente */}
+                <Grid item xs={12} md={6}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6" gutterBottom>
+                                Anno Accademico
+                            </Typography>
+                            {selectedSchool.academicYears && selectedSchool.academicYears.length > 0 ? (
+                                <List>
+                                    <ListItem>
+                                        <ListItemText 
+                                            primary="Anno"
+                                            secondary={selectedSchool.academicYears[0].year}
+                                        />
+                                    </ListItem>
+                                    <ListItem>
+                                        <ListItemText 
+                                            primary="Stato"
+                                            secondary={
+                                                <Chip
+                                                    label={selectedSchool.academicYears[0].status}
+                                                    size="small"
+                                                    color={selectedSchool.academicYears[0].status === 'active' ? 'success' : 'default'}
+                                                />
+                                            }
+                                        />
+                                    </ListItem>
+                                </List>
+                            ) : (
+                                <Typography color="textSecondary">
+                                    Nessun anno accademico configurato
+                                </Typography>
+                            )}
                         </CardContent>
                     </Card>
                 </Grid>
@@ -265,7 +265,6 @@ const SchoolDetails = () => {
                 school={selectedSchool}
             />
 
-            {/* TODO: Implementare AddUserForm */}
         </Container>
     );
 };

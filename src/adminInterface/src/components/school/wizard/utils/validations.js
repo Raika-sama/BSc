@@ -77,6 +77,16 @@ export const validateStep3 = (formData) => {
     if (!formData.sections || formData.sections.length === 0) {
         errors.sections = 'È necessario configurare almeno una sezione';
     } else {
+        // Validazione formato nome sezione
+        const invalidSectionNames = formData.sections.filter(
+            section => !/^[A-Z]$/.test(section.name)
+        );
+        if (invalidSectionNames.length > 0) {
+            errors.sections = 'Le sezioni devono essere singole lettere maiuscole';
+            return errors;
+        }
+
+        // Validazione numero studenti
         const maxAllowed = formData.schoolType === 'middle_school' ? 30 : 35;
         const invalidSections = formData.sections.filter(
             section => section.maxStudents < 15 || section.maxStudents > maxAllowed

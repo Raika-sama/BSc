@@ -23,33 +23,9 @@ class SchoolRepository extends BaseRepository {
         try {
             console.log('Fetching school with users for ID:', id);
     
-            // Prima troviamo la scuola senza populate per vedere i dati grezzi
-            const rawSchool = await this.model.findById(id);
-            console.log('Raw school data:', {
-                id: rawSchool._id,
-                users: rawSchool.users,
-                manager: rawSchool.manager
-            });
-    
             const school = await this.model.findById(id)
-                .populate({
-                    path: 'users.user',
-                    select: 'firstName lastName email role',
-                    model: 'User'
-                })
-                .populate('manager')
-                .exec();
-    
-            console.log('Populated school data:', {
-                id: school._id,
-                users: school.users.map(u => ({
-                    _id: u._id,
-                    userId: u.user?._id,
-                    userEmail: u.user?.email,
-                    role: u.role
-                })),
-                manager: school.manager
-            });
+                .populate('manager', 'firstName lastName email role')
+                .lean();  // Usiamo lean() per migliori performance
     
             if (!school) {
                 throw createError(
@@ -57,6 +33,23 @@ class SchoolRepository extends BaseRepository {
                     'School non trovata'
                 );
             }
+    
+            // Aggiungiamo un controllo per users
+            if (!school.users) {
+                school.users = [];  // Inizializziamo come array vuoto se undefined
+            } else {
+                // Solo se ci sono users, facciamo il populate
+                await this.model.populate(school, {
+                    path: 'users.user',
+                    select: 'firstName lastName email role'
+                });
+            }
+    
+            console.log('Populated school data:', {
+                id: school._id,
+                usersCount: school.users.length,
+                manager: school.manager
+            });
     
             return school;
         } catch (error) {

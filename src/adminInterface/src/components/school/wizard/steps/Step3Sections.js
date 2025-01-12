@@ -23,18 +23,22 @@ const AVAILABLE_SECTIONS = Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map(letter =
     value: letter
 }));
 
-const Step3Sections = ({ formData, onChange, errors = {} }) => {
-    const handleAddSection = (event, newValue) => {
-        const sections = newValue.map(item => ({
-            name: item.value,
-            maxStudents: formData.defaultMaxStudentsPerClass || 25
-        }));
+    
+    const Step3Sections = ({ formData, onChange, errors = {} }) => {
+        const handleAddSection = (event, newValue) => {
+            // Manteniamo il formato semplice qui
+            const sections = newValue.map(item => ({
+                name: item.value,
+                maxStudents: formData.defaultMaxStudentsPerClass || 25
+            }));
+            
+            onChange({
+                ...formData,
+                sections: sections
+            });
+        };
+    
         
-        onChange({
-            ...formData,
-            sections: sections
-        });
-    };
 
     const handleUpdateSectionMaxStudents = (sectionName, newValue) => {
         const maxAllowed = formData.schoolType === 'middle_school' ? 30 : 35;
@@ -76,34 +80,34 @@ const Step3Sections = ({ formData, onChange, errors = {} }) => {
             </Grid>
 
             <Grid item xs={12}>
-                <Autocomplete
-                    multiple
-                    options={AVAILABLE_SECTIONS}
-                    value={selectedSections}
-                    onChange={handleAddSection}
-                    getOptionLabel={(option) => option.label}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Seleziona Sezioni"
-                            error={!!errors.sections}
-                            helperText={errors.sections}
-                        />
-                    )}
-                    renderTags={(tagValue, getTagProps) =>
-                        tagValue.map((option, index) => {
-                            const { key, ...otherProps } = getTagProps({ index });
-                            return (
-                                <Chip
-                                    key={key}
-                                    label={option.label}
-                                    {...otherProps}
-                                    size="small"
-                                />
-                            );
-                        })
-                    }
-                />
+            <Autocomplete
+                multiple
+                options={AVAILABLE_SECTIONS}
+                value={selectedSections}
+                onChange={handleAddSection}
+                getOptionLabel={(option) => option.label}
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        label="Seleziona Sezioni"
+                        error={!!errors.sections}
+                        helperText={errors.sections}
+                    />
+                )}
+                renderTags={(tagValue, getTagProps) =>
+                    tagValue.map((option, index) => {
+                        const { key, ...otherProps } = getTagProps({ index });
+                        return (
+                            <Chip
+                                key={key}
+                                label={option.label}
+                                {...otherProps}
+                                size="small"
+                            />
+                        );
+                    })
+                }
+            />
             </Grid>
 
             {formData.sections?.length > 0 && (
