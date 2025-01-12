@@ -39,7 +39,12 @@ export const SchoolProvider = ({ children }) => {
     
         // Validazione sezioni
         if (schoolData.sections) {
-            const invalidSections = schoolData.sections.filter(section => !/^[A-Z]$/.test(section));
+            console.log("Validazione sezioni:", schoolData.sections); // Debug
+            const invalidSections = schoolData.sections.filter(section => {
+                console.log("Validando sezione:", section); // Debug
+                return !/^[A-Z]$/.test(section.name);
+            });
+            
             if (invalidSections.length > 0) {
                 errors.sections = 'Le sezioni devono essere lettere maiuscole';
             }
