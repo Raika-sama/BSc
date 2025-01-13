@@ -162,22 +162,36 @@ class ClassRepository extends BaseRepository {
 
     async findBySchool(schoolId, academicYear) {
         try {
-            const filter = { schoolId, isActive: true };
+            logger.debug('Finding classes by school:', { schoolId, academicYear });
+    
+            const query = { 
+                schoolId,
+                isActive: true 
+            };
+    
+            // Se c'è un anno accademico specifico, aggiungiamolo alla query
             if (academicYear) {
-                filter.academicYear = academicYear;
+                query.academicYear = academicYear;
             }
-
-            return await this.find(filter, {
-                sort: { year: 1, section: 1 },
-                populate: [
-                    {
-                        path: 'mainTeacher',
-                        select: 'firstName lastName'
-                    }
-                ]
+    
+            const classes = await this.model
+                .find(query)
+                .populate('mainTeacher', 'firstName lastName')
+                .populate('teachers', 'firstName lastName')
+                .sort({ year: 1, section: 1 });
+    
+            logger.debug('Found classes:', { 
+                count: classes.length,
+                schoolId: schoolId
             });
+    
+            return classes;
+    
         } catch (error) {
-            logger.error('Errore nella ricerca delle classi della scuola', { error });
+            logger.error('Error in findBySchool:', { 
+                error: error.message,
+                schoolId: schoolId 
+            });
             throw createError(
                 ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nella ricerca delle classi della scuola',
@@ -527,6 +541,116 @@ class ClassRepository extends BaseRepository {
                 session.endSession();
             }
         }
+
+        async getMyClasses(userId) {
+            try {
+                logger.debug('Getting classes for user:', { userId });
+        
+                const pipeline = [
+                    {
+                        $facet: {
+                            // Classi dove l'utente è insegnante principale
+                            mainTeacherClasses: [
+                                {
+                                    $match: {
+                                        mainTeacher: new mongoose.Types.ObjectId(userId),
+                                        isActive: true
+                                    }
+                                },
+                                {
+                                    $lookup: {
+                                        from: 'schools',
+                                        localField: 'schoolId',
+                                        foreignField: '_id',
+                                        as: 'school'
+                                    }
+                                },
+                                {
+                                    $unwind: '$school'
+                                },
+                                {
+                                    $project: {
+                                        schoolId: '$schoolId',
+                                        schoolName: '$school.name',
+                                        classId: '$_id',
+                                        year: 1,
+                                        section: 1,
+                                        academicYear: 1,
+                                        students: 1
+                                    }
+                                },
+                                {
+                                    $sort: { 
+                                        schoolName: 1, 
+                                        year: 1, 
+                                        section: 1 
+                                    }
+                                }
+                            ],
+                            // Classi dove l'utente è co-insegnante
+                            coTeacherClasses: [
+                                {
+                                    $match: {
+                                        teachers: new mongoose.Types.ObjectId(userId),
+                                        mainTeacher: { 
+                                            $ne: new mongoose.Types.ObjectId(userId) 
+                                        },
+                                        isActive: true
+                                    }
+                                },
+                                {
+                                    $lookup: {
+                                        from: 'schools',
+                                        localField: 'schoolId',
+                                        foreignField: '_id',
+                                        as: 'school'
+                                    }
+                                },
+                                {
+                                    $unwind: '$school'
+                                },
+                                {
+                                    $project: {
+                                        schoolId: '$schoolId',
+                                        schoolName: '$school.name',
+                                        classId: '$_id',
+                                        year: 1,
+                                        section: 1,
+                                        academicYear: 1,
+                                        students: 1
+                                    }
+                                },
+                                {
+                                    $sort: { 
+                                        schoolName: 1, 
+                                        year: 1, 
+                                        section: 1 
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ];
+        
+                const [result] = await this.model.aggregate(pipeline);
+        
+                logger.debug('Found classes:', {
+                    mainTeacherClassesCount: result.mainTeacherClasses.length,
+                    coTeacherClassesCount: result.coTeacherClasses.length
+                });
+        
+                return result;
+        
+            } catch (error) {
+                logger.error('Error in getMyClasses:', { error });
+                throw createError(
+                    ErrorTypes.DATABASE.QUERY_FAILED,
+                    'Errore nel recupero delle classi',
+                    { originalError: error.message }
+                );
+            }
+        }
+
 }
 
 module.exports = ClassRepository;

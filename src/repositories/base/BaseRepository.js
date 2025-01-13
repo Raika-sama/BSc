@@ -65,7 +65,7 @@ class BaseRepository {
                 query = query.select(options.select);
             }
             
-            const doc = await query;
+            const doc = await query.exec();  // Aggiungi .exec()
             return doc;
         } catch (error) {
             logger.error(`Errore nella ricerca di ${this.model.modelName}`, { error });

@@ -6,20 +6,20 @@
 const BaseController = require('./baseController');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
-const { school: SchoolRepository } = require('../repositories');
-
+const { school: schoolRepository, class: classRepository } = require('../repositories');
 
 class SchoolController extends BaseController {
     constructor() {
-        super(SchoolRepository, 'school');
+        super(schoolRepository);
         // Binding dei metodi
         this.create = this.create.bind(this);
         this.sendError = this.sendError.bind(this);
         this.sendResponse = this.sendResponse.bind(this);
         this.getByRegion = this.getByRegion.bind(this);
         this.getByType = this.getByType.bind(this);
+        this.getMySchool = this.getMySchool.bind(this);
         this.setupInitialConfiguration = this.setupInitialConfiguration.bind(this);
-        this.classRepository = require('../repositories').class; // Aggiungi questa riga
+        this.classRepository = classRepository;
     }
 
     // Aggiungi questi metodi di utility
@@ -41,7 +41,63 @@ class SchoolController extends BaseController {
         });
     }
 
+/**
+ * Ottiene la scuola associata all'utente corrente
+ */
+async getMySchool(req, res) {
+    try {
+        logger.debug('Starting getMySchool method', {
+            user: req.user,
+            userId: req.user._id
+        });
 
+        // Prima trova le classi dove l'utente è mainTeacher
+        const userClass = await this.classRepository.findOne({
+            mainTeacher: req.user._id
+        });
+
+        logger.debug('Found class:', { userClass });
+
+        if (!userClass) {
+            return this.sendError(res, {
+                statusCode: 404,
+                message: 'Nessuna classe associata all\'utente',
+                code: 'CLASS_NOT_FOUND'
+            });
+        }
+
+        // Poi usa lo schoolId della classe per trovare la scuola
+        const school = await this.repository.findById(userClass.schoolId);
+
+        logger.debug('Found school:', { school });
+
+        if (!school) {
+            return this.sendError(res, {
+                statusCode: 404,
+                message: 'Scuola non trovata',
+                code: 'SCHOOL_NOT_FOUND'
+            });
+        }
+
+        this.sendResponse(res, {
+            school
+        });
+
+    } catch (error) {
+        logger.error('Error in getMySchool:', {
+            error: error.message,
+            stack: error.stack,
+            userId: req.user?._id
+        });
+
+        this.sendError(res, {
+            statusCode: 500,
+            message: 'Errore nel recupero della scuola',
+            code: 'SCHOOL_FETCH_ERROR',
+            error: error.message
+        });
+    }
+}
 
     /**
      * Crea una nuova scuola

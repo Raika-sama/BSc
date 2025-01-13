@@ -14,6 +14,31 @@ class SchoolRepository extends BaseRepository {
         super(School);
     }
 
+    async findOne(criteria, options = {}) {
+        try {
+            let query = this.model.findOne(criteria);
+
+            if (options.populate) {
+                query = query.populate(options.populate);
+            }
+
+            const result = await query.exec();
+            return result;
+        } catch (error) {
+            logger.error('Error in SchoolRepository.findOne:', {
+                error: error.message,
+                criteria,
+                options
+            });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nella ricerca della scuola',
+                { originalError: error.message }
+            );
+        }
+    }
+
+
     /**
      * Trova una scuola con tutti i suoi utenti
      * @param {String} id - ID della scuola
@@ -81,7 +106,7 @@ class SchoolRepository extends BaseRepository {
             );
         }
     }
-    
+
     /**
      * Aggiunge un utente alla scuola
      * @param {String} schoolId - ID della scuola

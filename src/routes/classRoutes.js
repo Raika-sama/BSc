@@ -13,6 +13,11 @@ const { protect, restrictTo } = require('../middleware/authMiddleware');
     router.use(protect);
 
     // Route di lettura specifiche (devono venire PRIMA delle route generiche)
+    router.get('/my-classes', 
+        classController.getMyClasses.bind(classController)
+    );
+
+    // Route di lettura specifiche (devono venire PRIMA delle route generiche)
     router.get('/school/:schoolId/year/:year(*)', async (req, res, next) => {
         try {
             const { schoolId, year } = req.params;

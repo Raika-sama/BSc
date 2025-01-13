@@ -72,10 +72,31 @@ class ClassController extends BaseController {
     async getBySchool(req, res) {
         try {
             const { schoolId } = req.params;
+            
+            logger.debug('Getting classes for school:', { schoolId });
+    
+            if (!schoolId) {
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'SchoolId non fornito',
+                    code: 'MISSING_SCHOOL_ID'
+                });
+            }
+    
             const classes = await this.repository.findBySchool(schoolId);
-            this.sendResponse(res, { classes });
+            
+            return this.sendResponse(res, { 
+                status: 'success',
+                classes: classes 
+            });
+    
         } catch (error) {
-            this.sendError(res, error);
+            logger.error('Error in getBySchool:', error);
+            return this.sendError(res, {
+                statusCode: 500,
+                message: error.message || 'Errore nel recupero delle classi',
+                code: error.code || 'CLASS_FETCH_ERROR'
+            });
         }
     }
 
@@ -447,6 +468,30 @@ async createInitialClasses(req, res, next) {
         ));
     } finally {
         session.endSession();
+    }
+}
+
+async getMyClasses(req, res, next) {
+    try {
+        logger.debug('getMyClasses called for user:', {
+            userId: req.user._id
+        });
+
+        const result = await this.repository.getMyClasses(req.user._id);
+
+        // Invia risposta con classi separate per ruolo
+        this.sendResponse(res, {
+            mainTeacherClasses: result.mainTeacherClasses,
+            coTeacherClasses: result.coTeacherClasses
+        });
+
+    } catch (error) {
+        logger.error('Error in getMyClasses controller:', {
+            error: error.message,
+            stack: error.stack,
+            userId: req.user?._id
+        });
+        next(error);
     }
 }
 

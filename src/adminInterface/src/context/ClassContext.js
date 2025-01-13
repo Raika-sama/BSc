@@ -12,7 +12,8 @@ export const CLASS_ACTIONS = {
     UPDATE_CLASS: 'UPDATE_CLASS',
     DELETE_CLASS: 'DELETE_CLASS',
     SET_ERROR: 'SET_ERROR',
-    CLEAR_ERROR: 'CLEAR_ERROR'
+    CLEAR_ERROR: 'CLEAR_ERROR',
+    SET_MY_CLASSES: 'SET_MY_CLASSES'
 };
 
 // Stato iniziale
@@ -64,6 +65,13 @@ const classReducer = (state, action) => {
                 ...state,
                 error: null
             };
+            case CLASS_ACTIONS.SET_MY_CLASSES:
+        return {
+            ...state,
+            mainTeacherClasses: action.payload.mainTeacherClasses,
+            coTeacherClasses: action.payload.coTeacherClasses,
+            loading: false
+        };
         default:
             return state;
     }
@@ -171,9 +179,30 @@ export const ClassProvider = ({ children }) => {
         }
     };
 
+    const getMyClasses = async () => {
+        try {
+            dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
+            const response = await axiosInstance.get('/classes/my-classes');
+            
+            if (response.data.status === 'success') {
+                dispatch({ 
+                    type: CLASS_ACTIONS.SET_MY_CLASSES, 
+                    payload: response.data.data 
+                });
+            }
+        } catch (error) {
+            dispatch({ 
+                type: CLASS_ACTIONS.SET_ERROR, 
+                payload: error.response?.data?.message || 'Errore nel recupero delle classi' 
+            });
+        }
+    };
+
+
     return (
         <ClassContext.Provider value={{
             ...state,
+            getMyClasses,
             fetchClasses,
             addClass,
             createInitialClasses,

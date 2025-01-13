@@ -13,6 +13,8 @@ const { protect, restrictTo } = require('../middleware/authMiddleware');
 router.use(protect);
 
 // Rotte accessibili a tutti gli utenti autenticati
+router.get('/my-school', schoolController.getMySchool.bind(schoolController)); // Nuovo endpoint
+
 router.get('/', schoolController.getAll.bind(schoolController));
 router.get('/:id', schoolController.getById.bind(schoolController));
 router.get('/region/:region', schoolController.getByRegion.bind(schoolController));
