@@ -126,39 +126,34 @@ class ClassRepository extends BaseRepository {
         }
     }
 
-    async findWithDetails(id) {
-        try {
-            const classData = await this.findById(id, {
-                populate: [
-                    {
-                        path: 'schoolId',
-                        select: 'name schoolType'
-                    },
-                    {
-                        path: 'mainTeacher',
-                        select: 'firstName lastName email'
-                    },
-                    {
-                        path: 'teachers',
-                        select: 'firstName lastName email'
-                    },
-                    {
-                        path: 'students',
-                        select: 'firstName lastName email'
-                    }
-                ]
-            });
+   // ClassRepository.js
+async findWithDetails(id) {
+    try {
+        const classData = await this.model.findById(id)
+            .populate({
+                path: 'schoolId',
+                select: 'name schoolType'
+            })
+            .populate({
+                path: 'mainTeacher',
+                select: 'firstName lastName email'
+            })
+            .populate({
+                path: 'teachers',
+                select: 'firstName lastName email'
+            })
+            .populate({
+                path: 'students.studentId',
+                select: 'firstName lastName email'
+            })
+            .lean();
 
-            return classData;
-        } catch (error) {
-            logger.error('Errore nel recupero dei dettagli della classe', { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nel recupero dei dettagli della classe',
-                { originalError: error.message }
-            );
-        }
+        return classData;
+    } catch (error) {
+        logger.error('Error fetching class details:', error);
+        throw error;
     }
+}
 
     async findBySchool(schoolId, academicYear) {
         try {

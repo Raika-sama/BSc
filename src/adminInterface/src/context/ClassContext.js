@@ -19,6 +19,8 @@ export const CLASS_ACTIONS = {
 // Stato iniziale
 const initialState = {
     classes: [],
+    mainTeacherClasses: [], // Aggiungere questa riga
+    coTeacherClasses: [],   // Aggiungere questa riga
     loading: false,
     error: null
 };
@@ -198,6 +200,31 @@ export const ClassProvider = ({ children }) => {
         }
     };
 
+    const getClassDetails = async (classId) => {
+        try {
+            console.log('🎯 ClassContext: Getting details for classId:', classId); // Log 7
+            dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
+            const response = await axiosInstance.get(`/classes/${classId}`);
+            console.log('📡 ClassContext: API Response:', response.data); // Log 8
+
+            if (response.data.status === 'success') {
+                return response.data.data.class; // Modifica qui per estrarre i dati corretti
+            } else {
+                console.warn('⚠️ ClassContext: API returned non-success status:', response.data); // Log 9
+                throw new Error(response.data.message || 'Errore nel recupero dei dettagli della classe');
+            }
+        } catch (error) {
+            console.error('❌ ClassContext: Error in getClassDetails:', error); // Log 10
+            dispatch({ 
+                type: CLASS_ACTIONS.SET_ERROR, 
+                payload: error.response?.data?.message || 'Errore nel recupero dei dettagli della classe' 
+            });
+            throw error;
+        } finally {
+            dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: false });
+        }
+    };
+
 
     return (
         <ClassContext.Provider value={{
@@ -208,6 +235,7 @@ export const ClassProvider = ({ children }) => {
             createInitialClasses,
             updateClass,
             deleteClass,
+            getClassDetails,  // Aggiungi questa
             dispatch
         }}>
             {children}

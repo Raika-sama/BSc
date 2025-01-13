@@ -495,6 +495,34 @@ async getMyClasses(req, res, next) {
     }
 }
 
+async getById(req, res, next) {
+    try {
+        const { id } = req.params;
+        logger.debug('Getting class details for:', { classId: id });
+
+        const classDetails = await this.repository.findWithDetails(id);
+        
+        if (!classDetails) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Classe non trovata'
+            );
+        }
+
+        this.sendResponse(res, { 
+            status: 'success',
+            class: classDetails 
+        });
+
+    } catch (error) {
+        logger.error('Error getting class details:', { 
+            error: error.message,
+            classId: req.params.id 
+        });
+        next(error);
+    }
+}
+
 }
 
 module.exports = new ClassController();

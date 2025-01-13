@@ -4,6 +4,8 @@ import UserManagement from '../components/users/UserManagement';
 import SchoolManagement from '../components/school/SchoolManagement';
 import SchoolDetails from '../components/school/SchoolDetails';
 import ClassManagement from '../components/classes/ClassManagement';    // Importa la pagina delle classi
+import ClassDetails from '../components/classes/ClassDetails';    // Nuovo componente
+import ClassTests from '../components/classes/ClassTests';        // Nuovo componente
 import SchoolWizard from '../components/school/wizard/SchoolWizard';
 import UsersManagement from '../components/school/UsersManagement'; // Aggiungi questo import
 
@@ -72,5 +74,19 @@ export const adminRoutes = [
         title: 'Gestione Utenze',
         icon: PersonIcon,
         showInMenu: false  // Non mostrare nel menu laterale
+    },
+    {
+        path: 'classes/:classId',
+        element: ClassDetails,
+        title: 'Dettagli Classe',
+        icon: ClassIcon,
+        showInMenu: false
+    },
+    {
+        path: 'classes/:classId/tests',
+        element: ClassTests,
+        title: 'Gestione Test Classe',
+        icon: TestIcon,
+        showInMenu: false
     }
 ];
