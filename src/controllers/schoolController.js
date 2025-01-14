@@ -2,11 +2,12 @@
  * @file schoolController.js
  * @description Controller per la gestione delle scuole
  */
-
+const mongoose = require('mongoose');
 const BaseController = require('./baseController');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const { school: schoolRepository, class: classRepository } = require('../repositories');
+const { Class } = require('../models');  // Aggiungi anche questo se non c'è
 
 class SchoolController extends BaseController {
     constructor() {
@@ -325,6 +326,22 @@ async getMySchool(req, res) {
             
             const school = await this.repository.setupAcademicYear(schoolId, yearData);
             this.sendResponse(res, { school });
+        } catch (error) {
+            this.sendError(res, error);
+        }
+    }
+
+    async delete(req, res) {
+        try {
+            const result = await this.repository.deleteWithClasses(req.params.id);
+            
+            this.sendResponse(res, {
+                message: 'Scuola e dati correlati eliminati con successo',
+                deletedData: {
+                    school: result.school.name,
+                    classesCount: result.deletedClassesCount
+                }
+            });
         } catch (error) {
             this.sendError(res, error);
         }

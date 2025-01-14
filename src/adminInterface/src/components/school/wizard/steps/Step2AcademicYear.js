@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
     Grid,
     Typography,
@@ -35,6 +35,15 @@ const getAcademicYearOptions = () => {
 };
 
 const Step2AcademicYear = ({ formData, onChange, errors = {} }) => {
+    
+    // Aggiungiamo useEffect per inizializzare il valore di default
+    useEffect(() => {
+        if (!formData.academicYear) {
+            const defaultYear = getCurrentAcademicYear();
+            handleChange(defaultYear);
+        }
+    }, []);  // Esegui solo al mount
+
     const handleChange = (value) => {
         const [startYear] = value.split('/');
         
@@ -45,6 +54,9 @@ const Step2AcademicYear = ({ formData, onChange, errors = {} }) => {
             endDate: `${Number(startYear) + 1}-06-30`
         });
     };
+
+    const currentValue = formData.academicYear || getCurrentAcademicYear();
+
 
     return (
         <Grid container spacing={3}>
@@ -59,7 +71,7 @@ const Step2AcademicYear = ({ formData, onChange, errors = {} }) => {
                     <InputLabel>Anno Accademico</InputLabel>
                     <Select
                         name="academicYear"
-                        value={formData.academicYear || getCurrentAcademicYear()}
+                        value={currentValue}
                         onChange={(e) => handleChange(e.target.value)}
                         label="Anno Accademico"
                     >

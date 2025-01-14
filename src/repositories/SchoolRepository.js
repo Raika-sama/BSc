@@ -1,4 +1,6 @@
 // src/repositories/SchoolRepository.js
+const mongoose = require('mongoose');
+const { Class } = require('../models');  // Aggiungi anche questo import
 
 const BaseRepository = require('./base/BaseRepository');
 const { School } = require('../models');
@@ -327,6 +329,49 @@ class SchoolRepository extends BaseRepository {
         }
       }
 
+      async deleteWithClasses(id) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+    
+        try {
+            logger.debug('Starting delete operation for school:', { schoolId: id });
+    
+            // 1. Verifica esistenza scuola
+            const school = await this.model.findById(id).session(session);
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+    
+            // 2. Elimina le classi
+            const deleteClassesResult = await Class.deleteMany(
+                { schoolId: id },
+                { session }
+            );
+    
+            logger.debug('Classes deleted:', { count: deleteClassesResult.deletedCount });
+    
+            // 3. Elimina la scuola
+            await this.model.findByIdAndDelete(id).session(session);
+    
+            // 4. Commit della transazione
+            await session.commitTransaction();
+    
+            return {
+                school,
+                deletedClassesCount: deleteClassesResult.deletedCount
+            };
+    
+        } catch (error) {
+            logger.error('Error in deleteWithClasses:', error);
+            await session.abortTransaction();
+            throw error;
+        } finally {
+            await session.endSession();
+        }
+    }
       
 }
 

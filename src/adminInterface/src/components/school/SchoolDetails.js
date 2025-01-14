@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     Container,
-    Paper,
     Typography,
     Grid,
     Box,
@@ -11,24 +10,26 @@ import {
     IconButton,
     Card,
     CardContent,
+    ListItemAvatar,  // Aggiunto
+    Avatar,          // Aggiunto
     List,
     ListItem,
     ListItemText,
     CircularProgress,
     Alert,
-    Tooltip,
     Dialog,
     DialogTitle,
     DialogContent
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import { Tabs, Tab } from '@mui/material';  // Aggiungi questo import
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import PeopleIcon from '@mui/icons-material/People';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import PersonIcon from '@mui/icons-material/Person';    // Aggiunto
+import StarIcon from '@mui/icons-material/Star';        // Aggiunto
 import CloseIcon from '@mui/icons-material/Close';
 import SchoolEditForm from './SchoolEditForm';
-import UsersDialog from './schoolComponents/UserDialog';
+import SchoolUsersManagement from './schoolComponents/SchoolUsersManagement';
 import { useSchool } from '../../context/SchoolContext';
 
 const SchoolDetails = () => {
@@ -45,8 +46,8 @@ const SchoolDetails = () => {
 
     // States
     const [isEditMode, setIsEditMode] = useState(false);
-    const [isAddUserMode, setIsAddUserMode] = useState(false);
     const [isUsersDialogOpen, setIsUsersDialogOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState('mainTeacher');  // Nuovo stato per i tabs
 
     useEffect(() => {
         getSchoolById(id);
@@ -62,12 +63,19 @@ const SchoolDetails = () => {
         }
     };
 
-    const handleRemoveUser = async (userId) => {
-        if (!userId) {
-            console.error('Missing userId');
-            return;
+    const handleAddUser = async (userData) => {
+        try {
+            await updateSchoolUser(id, userData.email, {
+                action: 'add',
+                role: userData.role
+            });
+            await getSchoolById(id);
+        } catch (error) {
+            console.error('Error adding user:', error);
         }
+    };
 
+    const handleRemoveUser = async (userId) => {
         try {
             await updateSchoolUser(id, userId, {
                 action: 'remove'
@@ -77,6 +85,17 @@ const SchoolDetails = () => {
             console.error('Error removing user:', error);
         }
     };
+
+    const handleChangeManager = async (newManagerId) => {
+        try {
+            await updateSchool(id, { manager: newManagerId });
+            await getSchoolById(id);
+        } catch (error) {
+            console.error('Error changing manager:', error);
+        }
+    };
+
+
 
     if (loading) {
         return (
@@ -128,14 +147,6 @@ const SchoolDetails = () => {
                 <Typography variant="h4" component="h1" flex={1}>
                     {selectedSchool.name}
                 </Typography>
-                <Button
-                    variant="outlined"
-                    startIcon={<PeopleIcon />}
-                    onClick={() => setIsUsersDialogOpen(true)}
-                    sx={{ mr: 1 }}
-                >
-                    Lista Utenti
-                </Button>
                 <Button
                     variant="outlined"
                     startIcon={<ManageAccountsIcon />}
@@ -260,7 +271,71 @@ const SchoolDetails = () => {
                     </Card>
                 </Grid>
             </Grid>
+            {/* Nuova sezione Utenti con Tabs */}
+            <Grid item xs={12}>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant="h6" gutterBottom>
+                                            Utenti della Scuola
+                                        </Typography>
+                                        <Tabs
+                                            value={activeTab}
+                                            onChange={(e, newValue) => setActiveTab(newValue)}
+                                            sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
+                                        >
+                                            <Tab 
+                                                label="Manager" 
+                                                value="mainTeacher"
+                                                sx={{ textTransform: 'none' }}
+                                            />
+                                            <Tab 
+                                                label="Insegnanti" 
+                                                value="teachers"
+                                                sx={{ textTransform: 'none' }}
+                                            />
+                                        </Tabs>
 
+                                        {activeTab === 'mainTeacher' && selectedSchool?.manager && (
+                                            <Box sx={{ p: 2, bgcolor: 'rgba(25, 118, 210, 0.08)', borderRadius: 1 }}>
+                                                <ListItem>
+                                                    <ListItemAvatar>
+                                                        <Avatar sx={{ bgcolor: 'primary.main' }}>
+                                                            <StarIcon />
+                                                        </Avatar>
+                                                    </ListItemAvatar>
+                                                    <ListItemText
+                                                        primary={`${selectedSchool.manager.firstName} ${selectedSchool.manager.lastName}`}
+                                                        secondary={selectedSchool.manager.email}
+                                                    />
+                                                </ListItem>
+                                            </Box>
+                                        )}
+
+                                        {activeTab === 'teachers' && (
+                                            <List>
+                                                {selectedSchool?.users?.filter(user => user.role === 'teacher').map((user) => (
+                                                    <ListItem key={user._id}>
+                                                        <ListItemAvatar>
+                                                            <Avatar>
+                                                                <PersonIcon />
+                                                            </Avatar>
+                                                        </ListItemAvatar>
+                                                        <ListItemText
+                                                            primary={`${user.firstName} ${user.lastName}`}
+                                                            secondary={user.email}
+                                                        />
+                                                    </ListItem>
+                                                ))}
+                                                {(!selectedSchool?.users || selectedSchool.users.filter(u => u.role === 'teacher').length === 0) && (
+                                                    <Typography color="textSecondary" sx={{ p: 2, textAlign: 'center' }}>
+                                                        Nessun insegnante associato
+                                                    </Typography>
+                                                )}
+                                            </List>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </Grid>
             {/* Dialog per la lista utenti */}
             <Dialog 
                 open={isUsersDialogOpen}
@@ -277,9 +352,12 @@ const SchoolDetails = () => {
                     </Box>
                 </DialogTitle>
                 <DialogContent dividers>
-                    <UsersDialog 
+                    <SchoolUsersManagement
                         manager={selectedSchool?.manager}
                         users={selectedSchool?.users || []}
+                        onAddUser={handleAddUser}
+                        onRemoveUser={handleRemoveUser}
+                        onChangeManager={handleChangeManager}
                     />
                 </DialogContent>
             </Dialog>

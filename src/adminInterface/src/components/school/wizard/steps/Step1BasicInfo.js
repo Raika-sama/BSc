@@ -9,12 +9,21 @@ import {
     MenuItem,
     FormHelperText
 } from '@mui/material';
+import { italianRegions, provincesData } from '../../../../utils/italianGeoData';  
 
 const Step1BasicInfo = ({ formData, onChange, errors = {} }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
+        const updates = { [name]: value };
+
+            // Reset provincia quando cambia regione
+            if (name === 'region') {
+                updates.province = '';
+            }
+
         onChange({
             ...formData,
+            ...updates,
             [name]: value,
             // Reset institutionType when switching to middle school
             ...(name === 'schoolType' && value === 'middle_school' 
@@ -81,30 +90,56 @@ const Step1BasicInfo = ({ formData, onChange, errors = {} }) => {
             </Grid>
 
             <Grid item xs={12} sm={4}>
-                <TextField
-                    fullWidth
-                    label="Regione"
-                    name="region"
-                    value={formData.region}
-                    onChange={handleChange}
+                <FormControl 
+                    fullWidth 
                     error={!!errors.region}
-                    helperText={errors.region}
                     required
-                />
+                >
+                    <InputLabel>Regione</InputLabel>
+                    <Select
+                        name="region"
+                        value={formData.region}
+                        onChange={handleChange}
+                        label="Regione"
+                    >
+                        {italianRegions.map((region) => (
+                            <MenuItem key={region} value={region}>
+                                {region}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                    {errors.region && (
+                        <FormHelperText>{errors.region}</FormHelperText>
+                    )}
+                </FormControl>
             </Grid>
 
             <Grid item xs={12} sm={4}>
-                <TextField
-                    fullWidth
-                    label="Provincia"
-                    name="province"
-                    value={formData.province}
-                    onChange={handleChange}
+                <FormControl 
+                    fullWidth 
                     error={!!errors.province}
-                    helperText={errors.province}
                     required
-                />
+                    disabled={!formData.region}
+                >
+                    <InputLabel>Provincia</InputLabel>
+                    <Select
+                        name="province"
+                        value={formData.province}
+                        onChange={handleChange}
+                        label="Provincia"
+                    >
+                        {formData.region && provincesData[formData.region]?.map((province) => (
+                            <MenuItem key={province} value={province}>
+                                {province}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                    {errors.province && (
+                        <FormHelperText>{errors.province}</FormHelperText>
+                    )}
+                </FormControl>
             </Grid>
+
 
             <Grid item xs={12} sm={4}>
                 <TextField
