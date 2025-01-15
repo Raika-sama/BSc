@@ -108,22 +108,39 @@ export const SchoolProvider = ({ children }) => {
             const queryParams = new URLSearchParams({
                 page,
                 limit,
-                populate: 'manager', // Aggiungi questo parametro
+                populate: 'manager', // Aggiungiamo questo per popolare i dati del manager
                 ...filters
             });
-            console.log('URL chiamata:', `/schools?${queryParams}`); // Log dell'URL
+            
+            console.log('Fetching schools with params:', queryParams.toString());
             const response = await axiosInstance.get(`/schools?${queryParams}`);
-            console.log('Risposta completa:', response.data); // Log della risposta
-
+            
             if (response.data.status === 'success') {
-                console.log('Schools settate nel context:', response.data.data.schools); // Log delle scuole
-
-                setSchools(response.data.data.schools);
+                console.log('Schools received:', response.data.data.schools);
+                // Assicuriamoci che i dati del manager siano strutturati correttamente
+                const formattedSchools = response.data.data.schools.map(school => ({
+                    ...school,
+                    manager: school.manager ? {
+                        _id: school.manager._id,
+                        firstName: school.manager.firstName,
+                        lastName: school.manager.lastName,
+                        email: school.manager.email
+                    } : null,
+                    // Formattiamo le sezioni se necessario
+                    sections: Array.isArray(school.sections) ? school.sections.map(section => ({
+                        name: section.name,
+                        maxStudents: section.maxStudents || 0
+                    })) : []
+                }));
+    
+                setSchools(formattedSchools);
                 setTotalSchools(response.data.results);
             }
         } catch (error) {
-            console.error('Errore in fetchSchools:', error); // Log dell'errore
-            const errorMessage = error.response?.data?.error?.message || 'Errore nel caricamento delle scuole';            setError(errorMessage);
+            console.error('Error fetching schools:', error);
+            const errorMessage = error.response?.data?.error?.message || 
+                               'Errore nel caricamento delle scuole';
+            setError(errorMessage);
             showNotification(errorMessage, 'error');
         } finally {
             setLoading(false);

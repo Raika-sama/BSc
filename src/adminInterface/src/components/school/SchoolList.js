@@ -142,7 +142,7 @@ const SchoolList = ({
                                     <TableCell>
                                     {console.log('Dati manager per scuola:', school.manager)} {/* Log dei dati del manager */}
                                         {school.manager ? (
-                                            <Tooltip title={`Manager: ${school.manager.firstName} ${school.manager.lastName}  - ${school.manager.email}`}>
+                                            <Tooltip title={'${school.manager.firstName} ${school.manager.lastName}  - ${school.manager.email}'}>
                                                 <Chip
                                                     icon={<PersonIcon />}
                                                     label={`${school.manager.firstName} ${school.manager.lastName}`}

@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { useClass } from '../../context/ClassContext';
+import { useAuth } from '../../context/AuthContext'; // Aggiungiamo questo import
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import QuizIcon from '@mui/icons-material/Quiz';
@@ -29,6 +30,8 @@ const ClassManagement = () => {
     const [selectedClass, setSelectedClass] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
     const navigate = useNavigate();
+    const { user } = useAuth(); // Aggiungiamo questo
+    const isAdmin = user?.role === 'admin'; // Aggiungiamo questo
 
     useEffect(() => {
         getMyClasses();
@@ -44,7 +47,7 @@ const ClassManagement = () => {
             await deleteClass(selectedClass.classId);
             setOpenDeleteDialog(false);
             setSelectedClass(null);
-            getMyClasses(); // Ricarica le classi dopo l'eliminazione
+            getMyClasses();
         } catch (err) {
             setDeleteError('Errore durante l_eliminazione della classe');
         }
@@ -142,7 +145,7 @@ const ClassManagement = () => {
     return (
         <Box p={3}>
             <Typography variant="h4" gutterBottom color="primary" sx={{ mb: 3 }}>
-                Gestione Classi
+                {isAdmin ? 'Gestione Classi (Admin)' : 'Gestione Classi'}
             </Typography>
 
             <Paper sx={{ 
@@ -151,44 +154,70 @@ const ClassManagement = () => {
                 borderRadius: 2,
                 boxShadow: 3
             }}>
-                <Tabs
-                    value={tabValue}
-                    onChange={(e, newValue) => setTabValue(newValue)}
-                    sx={{
-                        borderBottom: 1,
-                        borderColor: 'divider',
-                        bgcolor: 'background.paper',
-                        borderRadius: '8px 8px 0 0',
-                    }}
-                >
-                    <Tab 
-                        label={`Le mie classi (${mainTeacherClasses.length})`}
-                        sx={{ textTransform: 'none' }}
-                    />
-                    <Tab 
-                        label={`Classi co-insegnate (${coTeacherClasses.length})`}
-                        sx={{ textTransform: 'none' }}
-                    />
-                </Tabs>
+                {isAdmin ? (
+                    // Vista admin: tutte le classi in una singola tabella
+                    <Box sx={{ width: '100%', p: 2 }}>
+                        <DataGrid
+                            rows={mainTeacherClasses}
+                            columns={columns}
+                            getRowId={(row) => row.classId}
+                            pageSize={7}
+                            rowsPerPageOptions={[7]}
+                            autoHeight
+                            disableSelectionOnClick
+                            sx={{
+                                '& .MuiDataGrid-cell:focus': {
+                                    outline: 'none'
+                                },
+                                '& .MuiDataGrid-row:hover': {
+                                    bgcolor: 'action.hover'
+                                }
+                            }}
+                        />
+                    </Box>
+                ) : (
+                    // Vista teacher: manteniamo le tabs
+                    <>
+                        <Tabs
+                            value={tabValue}
+                            onChange={(e, newValue) => setTabValue(newValue)}
+                            sx={{
+                                borderBottom: 1,
+                                borderColor: 'divider',
+                                bgcolor: 'background.paper',
+                                borderRadius: '8px 8px 0 0',
+                            }}
+                        >
+                            <Tab 
+                                label={`Le mie classi (${mainTeacherClasses.length})`}
+                                sx={{ textTransform: 'none' }}
+                            />
+                            <Tab 
+                                label={`Classi co-insegnate (${coTeacherClasses.length})`}
+                                sx={{ textTransform: 'none' }}
+                            />
+                        </Tabs>
 
-                <Box sx={{ height: 500, width: '100%', p: 2 }}>
-                    <DataGrid
-                        rows={tabValue === 0 ? mainTeacherClasses : coTeacherClasses}
-                        columns={columns}
-                        getRowId={(row) => row.classId}
-                        pageSize={7}
-                        rowsPerPageOptions={[7]}
-                        disableSelectionOnClick
-                        sx={{
-                            '& .MuiDataGrid-cell:focus': {
-                                outline: 'none'
-                            },
-                            '& .MuiDataGrid-row:hover': {
-                                bgcolor: 'action.hover'
-                            }
-                        }}
-                    />
-                </Box>
+                        <Box sx={{ height: 500, width: '100%', p: 2 }}>
+                            <DataGrid
+                                rows={tabValue === 0 ? mainTeacherClasses : coTeacherClasses}
+                                columns={columns}
+                                getRowId={(row) => row.classId}
+                                pageSize={7}
+                                rowsPerPageOptions={[7]}
+                                disableSelectionOnClick
+                                sx={{
+                                    '& .MuiDataGrid-cell:focus': {
+                                        outline: 'none'
+                                    },
+                                    '& .MuiDataGrid-row:hover': {
+                                        bgcolor: 'action.hover'
+                                    }
+                                }}
+                            />
+                        </Box>
+                    </>
+                )}
             </Paper>
 
             {/* Dialog di conferma eliminazione */}
@@ -229,3 +258,10 @@ const ClassManagement = () => {
 };
 
 export default ClassManagement;
+
+//Aggiunto useAuth e controllo del ruolo admin
+//Mantenuta la struttura esistente ma con rendering condizionale basato sul ruolo
+//Per admin: singola vista con tutte le classi
+//Per teacher: mantenute le tabs esistenti
+//Aggiunta indicazione (Admin) nel titolo per gli admin
+//Mantenuta tutta la funzionalità esistente (eliminazione, visualizzazione dettagli, ecc.)

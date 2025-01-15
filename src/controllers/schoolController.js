@@ -212,8 +212,30 @@ async getMySchool(req, res) {
 
     async getAll(req, res, next) {
         try {
-            const schools = await this.repository.findAll({}); // Usa find invece di findAll
+            logger.debug('Getting all schools', { 
+                userRole: req.user.role,
+                userId: req.user.id 
+            });
+    
+            let schools;
             
+            // Se admin, vede tutte le scuole
+            if (req.user.role === 'admin') {
+                schools = await this.repository.findAll();
+                logger.debug('Admin user - returning all schools', { 
+                    count: schools.length 
+                });
+            } 
+            // Se teacher, vede solo le sue scuole
+            else {
+                schools = await this.repository.find({ 
+                    'users.user': req.user._id 
+                });
+                logger.debug('Teacher user - returning filtered schools', { 
+                    count: schools.length 
+                });
+            }
+    
             res.status(200).json({
                 status: 'success',
                 results: schools.length,

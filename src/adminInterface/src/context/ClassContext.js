@@ -184,15 +184,56 @@ export const ClassProvider = ({ children }) => {
     const getMyClasses = async () => {
         try {
             dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
-            const response = await axiosInstance.get('/classes/my-classes');
             
+            const user = JSON.parse(localStorage.getItem('user'));
+            console.log('Fetching classes as:', user?.role);
+                
+            const response = await axiosInstance.get('/classes');
+                
             if (response.data.status === 'success') {
-                dispatch({ 
-                    type: CLASS_ACTIONS.SET_MY_CLASSES, 
-                    payload: response.data.data 
+                // Funzione per formattare una classe
+                const formatClass = (classData) => ({
+                    classId: classData._id,  // Aggiungiamo classId per DataGrid
+                    year: classData.year,
+                    section: classData.section,
+                    academicYear: classData.academicYear,
+                    status: classData.status,
+                    schoolName: classData.schoolId?.name || 'N/A',
+                    schoolId: classData.schoolId?._id,
+                    mainTeacher: {
+                        id: classData.mainTeacher?._id,
+                        firstName: classData.mainTeacher?.firstName,
+                        lastName: classData.mainTeacher?.lastName
+                    },
+                    // Aggiungi altri campi necessari...
+                    isActive: classData.isActive,
+                    capacity: classData.capacity,
+                    students: classData.students
                 });
+    
+                if (user?.role === 'admin') {
+                    // Formattiamo tutte le classi per admin
+                    const formattedClasses = response.data.data.classes.map(formatClass);
+                    dispatch({ 
+                        type: CLASS_ACTIONS.SET_MY_CLASSES, 
+                        payload: {
+                            mainTeacherClasses: formattedClasses,
+                            coTeacherClasses: [] 
+                        }
+                    });
+                } else {
+                    // Per i teacher, formattiamo entrambi gli array
+                    dispatch({ 
+                        type: CLASS_ACTIONS.SET_MY_CLASSES, 
+                        payload: {
+                            mainTeacherClasses: response.data.data.mainTeacherClasses.map(formatClass),
+                            coTeacherClasses: response.data.data.coTeacherClasses.map(formatClass)
+                        }
+                    });
+                }
             }
         } catch (error) {
+            console.error('Error fetching classes:', error);
             dispatch({ 
                 type: CLASS_ACTIONS.SET_ERROR, 
                 payload: error.response?.data?.message || 'Errore nel recupero delle classi' 

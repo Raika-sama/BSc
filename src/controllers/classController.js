@@ -126,15 +126,17 @@ class ClassController extends BaseController {
      */
     async getAll(req, res, next) {
         try {
-            // 1. Verifica l'utente
-            if (!req.user) {
-                return next(createError(
-                    ErrorTypes.AUTH.UNAUTHORIZED,
-                    'Utente non autenticato'
-                ));
+            // Se è admin, recupera tutte le classi senza filtri
+            if (req.user.role === 'admin') {
+                logger.debug('Admin user requesting all classes');
+                const classes = await Class.find()
+                    .populate('schoolId', 'name')
+                    .populate('mainTeacher', 'firstName lastName');
+    
+                return this.sendResponse(res, { classes });
             }
-
-            // 2. Verifica che l'utente abbia una scuola associata
+    
+            // Per i teacher, manteniamo la logica esistente
             const userWithSchool = await this.repository.findUserWithSchool(req.user.id);
             if (!userWithSchool || !userWithSchool.schoolId) {
                 return next(createError(
@@ -142,13 +144,10 @@ class ClassController extends BaseController {
                     'Nessuna scuola associata all\'utente'
                 ));
             }
-
-            // 3. Recupera le classi
+    
             const classes = await this.repository.findBySchool(userWithSchool.schoolId);
-            
-            // 4. Invia risposta
             this.sendResponse(res, { classes });
-
+    
         } catch (error) {
             logger.error('Errore nel recupero delle classi:', error);
             next(createError(
