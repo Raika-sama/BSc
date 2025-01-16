@@ -1,62 +1,132 @@
 // src/routes/studentRoutes.js
 
-/**
- * @file studentRoutes.js
- * @description Router per la gestione degli studenti
- * @author Raika-sama
- * @date 2025-01-05
- */
-
 const express = require('express');
 const router = express.Router();
 const { student: studentController } = require('../controllers');
-const logger = require('../utils/errors/logger/logger');  // Aggiunto import del logger
-// const { protect, restrictTo } = require('../middleware/auth'); // TODO: Implementare
+const { protect, restrictTo } = require('../middleware/authMiddleware');
+const studentValidation = require('../middleware/studentValidation');
+const logger = require('../utils/errors/logger/logger');
 
-// Middleware di logging specifico per student routes
+// Middleware di logging
 router.use((req, res, next) => {
-    logger.info(`Student Route Called: ${req.method} ${req.originalUrl}`);
+    logger.debug('Student route called:', {
+        path: req.path,
+        method: req.method,
+        userId: req.user?.id,
+        role: req.user?.role
+    });
     next();
 });
 
-// IMPORTANTE: Rotte specifiche PRIMA delle rotte parametriche
-router.get('/search', studentController.searchByName.bind(studentController));
+// Protezione route
+router.use(protect);
 
+// Route di ricerca (con validazione)
+router.get('/search', 
+    studentValidation.validateSearch,
+    studentController.searchStudents
+);
 
-// Rotte pubbliche (saranno protette in seguito)
-router.get('/', studentController.getAll.bind(studentController));
-router.get('/:id', studentController.getById.bind(studentController));
+// Route per docenti
+router.get('/my-students', 
+    restrictTo('teacher', 'admin'),
+    studentController.getMyStudents
+);
 
-// Rotte specifiche per gli studenti
-router.get('/:studentId/tests', studentController.getStudentTests.bind(studentController));
-router.get('/:studentId/results', studentController.getTestResults.bind(studentController));
+// Route per classe specifica
+router.get('/class/:classId',
+    restrictTo('teacher', 'admin'),
+    studentController.getStudentsByClass
+);
 
-// Rotte protette (richiederanno autenticazione)
-// router.use(protect);
-router.post('/', studentController.create.bind(studentController));
-router.put('/:id', studentController.update.bind(studentController));
-router.delete('/:id', studentController.delete.bind(studentController));
+// Route base CRUD con validazioni
+router.route('/')
+    .get(
+        restrictTo('teacher', 'admin'),
+        studentController.getAll
+    )
+    .post(
+        restrictTo('admin'),
+        studentValidation.validateCreate,
+        studentController.create
+    );
 
-// Dopo le altre rotte ma prima del middleware di errore
-router.put('/:id/assign-class', studentController.assignToClass.bind(studentController));
+router.route('/:id')
+    .get(
+        restrictTo('teacher', 'admin'),
+        studentController.getById
+    )
+    .put(
+        restrictTo('admin'),
+        studentValidation.validateUpdate,
+        studentController.update
+    )
+    .delete(
+        restrictTo('admin'),
+        studentController.delete
+    );
 
-// Error handling specifico per student routes
+// Route per gestione classe con validazioni
+router.post('/:studentId/assign-class',
+    restrictTo('admin'),
+    studentValidation.validateClassAssignment,
+    studentController.assignToClass
+);
+
+router.post('/:studentId/remove-from-class',
+    restrictTo('admin'),
+    studentController.removeFromClass
+);
+
+// Gestione errori
 router.use((err, req, res, next) => {
-    logger.error('Student Route Error:', { 
-        message: err.message,
+    logger.error('Student route error:', {
+        error: err.message,
         stack: err.stack,
-        code: err.code
+        path: req.path,
+        method: req.method,
+        userId: req.user?.id
     });
-    
-    res.status(err.statusCode || 500).json({
-        success: false,
+
+    // Gestione errori di validazione
+    if (err.code === ErrorTypes.VALIDATION.BAD_REQUEST.code) {
+        return res.status(400).json({
+            status: 'error',
+            error: {
+                code: err.code,
+                message: err.message,
+                details: err.metadata?.details
+            }
+        });
+    }
+
+    // Altri errori
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({
+        status: 'error',
         error: {
-            message: err.message,
             code: err.code || 'STUDENT_ROUTE_ERROR',
-            status: err.statusCode || 500,
-            metadata: err.metadata || {}
+            message: err.message || 'Errore interno del server'
         }
     });
 });
 
 module.exports = router;
+
+
+// GET    /api/v1/students              - Lista studenti (teacher/admin)
+// POST   /api/v1/students              - Crea studente (admin)
+// GET    /api/v1/students/:id          - Dettaglio studente (teacher/admin)
+// PUT    /api/v1/students/:id          - Modifica studente (admin)
+// DELETE /api/v1/students/:id          - Elimina studente (admin)
+// GET    /api/v1/students/search       - Ricerca studenti (teacher/admin)
+// GET    /api/v1/students/my-students  - Studenti del docente (teacher/admin)
+// GET    /api/v1/students/class/:id    - Studenti per classe (teacher/admin)
+// POST   /api/v1/students/:id/assign-class     - Assegna a classe (admin)
+// POST   /api/v1/students/:id/remove-from-class - Rimuove da classe (admin)
+
+// Controllo Accessi:
+
+// Admin: accesso completo
+// Teacher: solo lettura e propri studenti
+// Altri: nessun accesso

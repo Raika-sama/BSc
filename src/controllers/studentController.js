@@ -1,186 +1,343 @@
+// src/controllers/studentController.js
+
 const BaseController = require('./baseController');
 const { student: StudentRepository } = require('../repositories');
 const logger = require('../utils/errors/logger/logger');
+const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 
 class StudentController extends BaseController {
     constructor() {
         super(StudentRepository, 'student');
-        // Binding dei metodi
-        this.getAll = this.getAll.bind(this);
-    }
-
-    async create(req, res, next) {
-        try {
-            const { withClassAssignment, ...studentData } = req.body;
-    
-            if (withClassAssignment && req.body.classId) {
-                // Creazione con assegnazione immediata
-                const student = await this.repository.createWithClassAssignment(
-                    studentData,
-                    {
-                        classId: req.body.classId,
-                        section: req.body.section,
-                        currentYear: req.body.currentYear,
-                        mainTeacher: req.body.mainTeacher,
-                        teachers: req.body.teachers
-                    }
-                );
-                return this.sendResponse(res, { student });
-            } else {
-                // Creazione semplice
-                const student = await this.repository.create({
-                    ...studentData,
-                    needsClassAssignment: true
-                });
-                return this.sendResponse(res, { student });
-            }
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    
-    async searchByName(req, res, next) {
-        try {
-            const { name, schoolId } = req.query;
-            
-            if (!name || !schoolId) {
-                return res.status(400).json({
-                    status: 'error',
-                    error: {
-                        message: 'Nome e ID scuola sono richiesti per la ricerca',
-                        code: 'INVALID_SEARCH_PARAMS'
-                    }
-                });
-            }
-
-            logger.debug('Searching students by name', { name, schoolId });
-            
-            const students = await this.repository.searchByName(name, schoolId);
-            
-            res.status(200).json({
-                status: 'success',
-                results: students.length,
-                data: { students }
-            });
-        } catch (error) {
-            logger.error('Error searching students by name:', { error });
-            next(error);
-        }
-    }
-    
-    
-    /**
-     * Override del metodo getAll per gestire i filtri
-     */
         
+        // Binding dei metodi
+        this.getStudentsByClass = this.getStudentsByClass.bind(this);
+        this.getMyStudents = this.getMyStudents.bind(this);
+        this.assignToClass = this.assignToClass.bind(this);
+        this.removeFromClass = this.removeFromClass.bind(this);
+        this.searchStudents = this.searchStudents.bind(this);
+    }
+
+    /**
+     * Recupera tutti gli studenti con filtri
+     * @override
+     */
     async getAll(req, res, next) {
         try {
-            logger.debug('Getting students with filters:', req.query);
-            let students;
+            logger.debug('Getting all students with filters:', { 
+                query: req.query,
+                user: req.user?.id
+            });
 
-            if (req.query.classId) {
-                // Se c'è un classId, usa findByClass
-                students = await this.repository.findByClass(req.query.classId);
-            } else {
-                // Altrimenti usa il metodo base find
-                students = await this.repository.find(req.query);
+            const filters = {};
+            
+            // Se l'utente è un teacher, mostra solo i suoi studenti
+            if (req.user.role === 'teacher') {
+                filters.$or = [
+                    { mainTeacher: req.user.id },
+                    { teachers: req.user.id }
+                ];
             }
 
-            res.status(200).json({
-                status: 'success',
-                results: students.length,
-                data: { students }
+            // Applica filtri aggiuntivi dalla query
+            if (req.query.schoolId) filters.schoolId = req.query.schoolId;
+            if (req.query.classId) filters.classId = req.query.classId;
+            if (req.query.status) filters.status = req.query.status;
+
+            const students = await this.repository.findWithDetails(filters, {
+                sort: { lastName: 1, firstName: 1 }
+            });
+
+            this.sendResponse(res, { 
+                students,
+                count: students.length
             });
         } catch (error) {
-            logger.error('Error getting students:', { error });
+            logger.error('Error in getAll students:', error);
             next(error);
         }
     }
 
     /**
- * Assegna uno studente a una nuova classe
- * Gestisce cambio sezione e anno in base al tipo di scuola
- */
+     * Crea un nuovo studente
+     * @override
+     */
+    async create(req, res, next) {
+        try {
+            logger.debug('Creating new student:', { 
+                body: req.body,
+                user: req.user?.id
+            });
+
+            // Verifica permessi
+            if (req.user.role !== 'admin') {
+                throw createError(
+                    ErrorTypes.AUTH.FORBIDDEN,
+                    'Non autorizzato a creare studenti'
+                );
+            }
+
+            const student = await this.repository.create(req.body);
+            
+            logger.info('Student created successfully:', {
+                studentId: student._id,
+                school: student.schoolId
+            });
+
+            this.sendResponse(res, { student }, 201);
+        } catch (error) {
+            logger.error('Error creating student:', error);
+            next(error);
+        }
+    }
+
+    /**
+     * Recupera studenti di una specifica classe
+     */
+    async getStudentsByClass(req, res, next) {
+        try {
+            const { classId } = req.params;
+            logger.debug('Getting students by class:', { 
+                classId,
+                user: req.user?.id
+            });
+
+            // Passa teacherId solo se l'utente è un teacher
+            const teacherId = req.user.role === 'teacher' ? req.user.id : null;
+            
+            const students = await this.repository.findByClass(classId, teacherId);
+            
+            this.sendResponse(res, { 
+                students,
+                count: students.length
+            });
+        } catch (error) {
+            logger.error('Error getting students by class:', error);
+            next(error);
+        }
+    }
+
+    /**
+     * Recupera studenti associati al docente loggato
+     */
+    async getMyStudents(req, res, next) {
+        try {
+            if (req.user.role !== 'teacher') {
+                throw createError(
+                    ErrorTypes.AUTH.FORBIDDEN,
+                    'Solo i docenti possono accedere a questa risorsa'
+                );
+            }
+
+            logger.debug('Getting teacher students:', { 
+                teacherId: req.user.id
+            });
+
+            const students = await this.repository.findByTeacher(req.user.id);
+            
+            this.sendResponse(res, { 
+                students,
+                count: students.length
+            });
+        } catch (error) {
+            logger.error('Error getting teacher students:', error);
+            next(error);
+        }
+    }
+
+    /**
+     * Assegna uno studente a una classe
+     */
     async assignToClass(req, res, next) {
         try {
-            const { id: studentId } = req.params;
-            const { classId, section, currentYear, reason } = req.body;
-    
-            // Prima otteniamo lo studente
-            const student = await this.repository.findById(studentId);
-            if (!student) {
-                return this.sendError(res, {
-                    statusCode: 404,
-                    message: 'Studente non trovato',
-                    code: 'STUDENT_NOT_FOUND'
-                });
-            }
-    
-            // Poi otteniamo la classe
-            const targetClass = await this.repository.findClass(classId);
-            if (!targetClass) {
-                return this.sendError(res, {
-                    statusCode: 404,
-                    message: 'Classe non trovata',
-                    code: 'CLASS_NOT_FOUND'
-                });
-            }
-    
-            // Prepariamo i dati per l'aggiornamento
-            const updateData = {
-                classId: targetClass._id,
-                section,
-                currentYear,
-                mainTeacher: targetClass.mainTeacher,
-                teachers: targetClass.teachers,
-                lastClassChangeDate: new Date(),
-                fromClass: student.classId,
-                fromSection: student.section,
-                fromYear: student.currentYear,
-                reason: reason || 'Assegnazione classe'
-            };
-    
-            // Assegniamo lo studente alla classe
-            const updatedStudent = await this.repository.assignToClass(studentId, updateData);
-    
-            this.sendResponse(res, { 
-                student: updatedStudent,
-                message: 'Studente assegnato con successo alla classe'
+            const { studentId } = req.params;
+            const { classId } = req.body;
+
+            logger.debug('Assigning student to class:', { 
+                studentId,
+                classId,
+                user: req.user?.id
             });
-    
+
+            // Verifica permessi
+            if (req.user.role !== 'admin') {
+                throw createError(
+                    ErrorTypes.AUTH.FORBIDDEN,
+                    'Non autorizzato ad assegnare studenti'
+                );
+            }
+
+            const student = await this.repository.assignToClass(studentId, classId);
+            
+            this.sendResponse(res, { 
+                student,
+                message: 'Studente assegnato con successo'
+            });
         } catch (error) {
-            logger.error('Errore nell\'assegnazione della classe:', error);
+            logger.error('Error assigning student to class:', error);
             next(error);
         }
     }
 
-
     /**
-     * Ottiene i test di uno studente
+     * Rimuove uno studente da una classe
      */
-    async getStudentTests(req, res) {
+    async removeFromClass(req, res, next) {
         try {
             const { studentId } = req.params;
-            const tests = await this.repository.getStudentTests(studentId);
-            this.sendResponse(res, { tests });
+            const { reason } = req.body;
+
+            logger.debug('Removing student from class:', { 
+                studentId,
+                reason,
+                user: req.user?.id
+            });
+
+            // Verifica permessi
+            if (req.user.role !== 'admin') {
+                throw createError(
+                    ErrorTypes.AUTH.FORBIDDEN,
+                    'Non autorizzato a rimuovere studenti'
+                );
+            }
+
+            const student = await this.repository.removeFromClass(studentId, reason);
+            
+            this.sendResponse(res, { 
+                student,
+                message: 'Studente rimosso dalla classe con successo'
+            });
         } catch (error) {
-            this.sendError(res, error);
+            logger.error('Error removing student from class:', error);
+            next(error);
         }
     }
 
     /**
-     * Ottiene i risultati dei test di uno studente
+     * Ricerca studenti per nome/cognome
      */
-    async getTestResults(req, res) {
+    async searchStudents(req, res, next) {
         try {
-            const { studentId } = req.params;
-            const results = await this.repository.getTestResults(studentId);
-            this.sendResponse(res, { results });
+            const { query, schoolId } = req.query;
+
+            if (!query) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Parametro di ricerca mancante'
+                );
+            }
+
+            logger.debug('Searching students:', { 
+                query,
+                schoolId,
+                user: req.user?.id
+            });
+
+            const students = await this.repository.searchByName(query, schoolId);
+            
+            this.sendResponse(res, { 
+                students,
+                count: students.length
+            });
         } catch (error) {
-            this.sendError(res, error);
+            logger.error('Error searching students:', error);
+            next(error);
+        }
+    }
+
+    /**
+     * Aggiorna uno studente
+     * @override
+     */
+    async update(req, res, next) {
+        try {
+            const { id } = req.params;
+            
+            logger.debug('Updating student:', { 
+                studentId: id,
+                updates: req.body,
+                user: req.user?.id
+            });
+
+            // Verifica permessi
+            if (req.user.role !== 'admin') {
+                throw createError(
+                    ErrorTypes.AUTH.FORBIDDEN,
+                    'Non autorizzato a modificare studenti'
+                );
+            }
+
+            const student = await this.repository.update(id, req.body);
+            
+            this.sendResponse(res, { student });
+        } catch (error) {
+            logger.error('Error updating student:', error);
+            next(error);
+        }
+    }
+
+    /**
+     * Elimina uno studente
+     * @override
+     */
+    async delete(req, res, next) {
+        try {
+            const { id } = req.params;
+            
+            logger.debug('Deleting student:', { 
+                studentId: id,
+                user: req.user?.id
+            });
+
+            // Verifica permessi
+            if (req.user.role !== 'admin') {
+                throw createError(
+                    ErrorTypes.AUTH.FORBIDDEN,
+                    'Non autorizzato a eliminare studenti'
+                );
+            }
+
+            await this.repository.delete(id);
+            
+            this.sendResponse(res, { 
+                message: 'Studente eliminato con successo'
+            });
+        } catch (error) {
+            logger.error('Error deleting student:', error);
+            next(error);
         }
     }
 }
 
 module.exports = new StudentController();
+
+
+
+
+// Operazioni CRUD Base con:
+
+// Gestione permessi (admin/teacher)
+// Validazioni input
+// Logging dettagliato
+// Gestione errori
+
+
+// Funzionalità Specifiche:
+
+// getStudentsByClass: studenti di una classe specifica
+// getMyStudents: studenti associati al docente
+// searchStudents: ricerca studenti per nome
+// assignToClass/removeFromClass: gestione assegnazioni
+
+
+// Sicurezza:
+
+// Controllo ruoli utente
+// Filtri dati basati sui permessi
+// Validazione input
+
+
+// Logging:
+
+// Tracciamento operazioni
+// Log errori dettagliati
+// Debug info

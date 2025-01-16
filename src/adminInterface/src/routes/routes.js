@@ -8,6 +8,8 @@ import ClassDetails from '../components/classes/ClassDetails';    // Nuovo compo
 import ClassTests from '../components/classes/ClassTests';        // Nuovo componente
 import SchoolWizard from '../components/school/wizard/SchoolWizard';
 import UsersManagement from '../components/school/UsersManagement'; // Aggiungi questo import
+import StudentList from '../components/students/StudentList'; // Aggiungi questo import
+
 
 // Importa le icone da Material-UI
 import {
@@ -88,5 +90,11 @@ export const adminRoutes = [
         title: 'Gestione Test Classe',
         icon: TestIcon,
         showInMenu: false
+    },
+    {
+        path: 'students',         // Aggiungi questa route
+        element: StudentList,
+        title: 'Gestione Studenti',
+        icon: PersonIcon
     }
 ];

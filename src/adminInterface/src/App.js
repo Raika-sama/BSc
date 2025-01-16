@@ -13,6 +13,8 @@ import PrivateRoute from './routes/PrivateRoute';
 import { adminRoutes } from './routes/routes';
 import { Class } from '@mui/icons-material';
 import { ClassProvider } from './context/ClassContext';
+import { StudentProvider } from './context/StudentContext'; // Aggiungi questo import
+
 
 setupAxiosInterceptors();
 
@@ -24,31 +26,33 @@ function App() {
                     <ClassProvider>
                         <SchoolProvider>
                             <UserProvider>
-                                <Routes>
-                                    <Route path="/login" element={<Login />} />
-                                    <Route path="/unauthorized" element={<Unauthorized />} />
-                                    <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
-                                    <Route
-                                        path="/admin/*"
-                                        element={
-                                            <PrivateRoute>
-                                                <MainLayout>
-                                                    <Routes>
-                                                        {adminRoutes.map((route) => (
-                                                            route.element && (
-                                                                <Route
-                                                                    key={route.path}
-                                                                    path={route.path}
-                                                                    element={<route.element />}
-                                                                />
-                                                            )
-                                                        ))}
-                                                    </Routes>
-                                                </MainLayout>
-                                            </PrivateRoute>
-                                        }
-                                    />
-                                </Routes>
+                                <StudentProvider>  {/* Aggiungi questo provider */}
+                                    <Routes>
+                                        <Route path="/login" element={<Login />} />
+                                        <Route path="/unauthorized" element={<Unauthorized />} />
+                                        <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+                                        <Route
+                                            path="/admin/*"
+                                            element={
+                                                <PrivateRoute>
+                                                    <MainLayout>
+                                                        <Routes>
+                                                            {adminRoutes.map((route) => (
+                                                                route.element && (
+                                                                    <Route
+                                                                        key={route.path}
+                                                                        path={route.path}
+                                                                        element={<route.element />}
+                                                                    />
+                                                                )
+                                                            ))}
+                                                        </Routes>
+                                                    </MainLayout>
+                                                </PrivateRoute>
+                                            }
+                                        />
+                                    </Routes>
+                                </StudentProvider>
                             </UserProvider>
                         </SchoolProvider>
                     </ClassProvider>    
@@ -59,3 +63,4 @@ function App() {
 }
 
 export default App;
+
