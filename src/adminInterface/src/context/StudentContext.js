@@ -6,9 +6,10 @@ import { useNotification } from './NotificationContext';
 const normalizeStudent = (student) => {
     if (!student) return null;
     
-    return {
+    // Assicurati che ci sia un id
+    const normalizedStudent = {
         ...student,
-        id: student._id || student.id,
+        id: student._id || student.id, // Aggiungi sempre un id
         schoolId: typeof student.schoolId === 'object' ? 
             student.schoolId : 
             { _id: student.schoolId, name: 'N/D' },
@@ -24,6 +25,11 @@ const normalizeStudent = (student) => {
         dateOfBirth: student.dateOfBirth || null,
         parentEmail: student.parentEmail || ''
     };
+
+    // Log per debug
+    console.log('Normalized student:', normalizedStudent);
+
+    return normalizedStudent;
 };
 
 const StudentContext = createContext();
@@ -60,9 +66,13 @@ const studentReducer = (state, action) => {
                 loading: action.payload
             };
         case STUDENT_ACTIONS.SET_STUDENTS:
+            const normalizedStudents = action.payload.students.map(student => ({
+                ...normalizeStudent(student),
+                id: student._id || student.id // Assicurati che ogni studente abbia un id
+            }));
             return {
                 ...state,
-                students: action.payload.students.map(normalizeStudent),
+                students: normalizedStudents,
                 totalStudents: action.payload.total,
                 loading: false
             };

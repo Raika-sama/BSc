@@ -177,7 +177,21 @@ const getCurrentAcademicYear = () => {
         setEditingStudent(null);
     };
 
-
+    const prepareRowsForDataGrid = (students) => {
+        return students.map(student => {
+            // Log per debug
+            console.log('Processing student:', student);
+            
+            return {
+                ...student,
+                id: student._id || student.id, // Assicurati che ci sia un id
+                schoolName: student.schoolId?.name || 'N/D',
+                className: student.classId ? 
+                    `${student.classId.year}${student.classId.section}` : 
+                    'Non assegnata'
+            };
+        });
+    };
 
 
     const columns = [
@@ -345,15 +359,8 @@ const getCurrentAcademicYear = () => {
     
             {/* DataGrid con gestione selezione per studenti non assegnati */}
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                <DataGrid
-                    rows={students.map(student => ({
-                        ...student,
-                        id: student._id,  // Usa sempre _id come id
-                        schoolName: student.schoolId?.name || 'N/D',  // Aggiungi campo piatto
-                        className: student.classId ? 
-                            `${student.classId.year}${student.classId.section}` : 
-                            'Non assegnata'  // Aggiungi campo piatto
-                    }))}
+            <DataGrid
+                    rows={prepareRowsForDataGrid(students || [])}
                     columns={columns}
                     pagination
                     pageSize={pageSize}
@@ -365,7 +372,8 @@ const getCurrentAcademicYear = () => {
                     loading={loading}
                     autoHeight
                     disableSelectionOnClick
-                    getRowId={(row) => row?._id || row?.id}                    checkboxSelection={viewMode === 'unassigned'}
+                    getRowId={(row) => row.id || row._id}
+                    checkboxSelection={viewMode === 'unassigned'}
                     onSelectionModelChange={viewMode === 'unassigned' ? handleSelectionChange : undefined}
                     sx={{
                         '& .MuiDataGrid-cell:focus': {
