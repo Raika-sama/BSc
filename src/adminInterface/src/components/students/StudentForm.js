@@ -89,31 +89,49 @@ const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Dati che sto per inviare:", formData);
-
+    
+        // Formatta i dati prima dell'invio
+        const formattedData = {
+            firstName: formData.firstName.trim(),
+            lastName: formData.lastName.trim(),
+            gender: formData.gender,
+            dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
+            email: formData.email.trim(),
+            parentEmail: formData.parentEmail.trim() || null,
+            fiscalCode: formData.fiscalCode.trim().toUpperCase() || null,
+            schoolId: formData.schoolId,
+            currentYear: parseInt(formData.currentYear),
+            status: 'pending',  // Aggiungi lo status di default
+            needsClassAssignment: true,  // Aggiungi questo flag
+            isActive: true  // Aggiungi questo flag
+        };
+    
+        console.log("Dati formattati da inviare:", formattedData);
+    
         const errors = validateForm();
         if (errors.length > 0) {
             setError(errors.join(', '));
             return;
         }
-
+    
         setLoading(true);
         setError(null);
-
+    
         try {
             if (student) {
-                await updateStudent(student.id, formData);
+                await updateStudent(student.id, formattedData);
             } else {
-                await createStudent(formData);
+                await createStudent(formattedData);
             }
             onClose();
         } catch (err) {
-            setError(err.message);
+            console.error('Error details:', err);
+            setError(err.response?.data?.message || err.message);
         } finally {
             setLoading(false);
         }
     };
-
+    
     return (
         <Dialog 
             open={open} 

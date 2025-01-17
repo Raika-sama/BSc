@@ -7,9 +7,9 @@ const normalizeStudent = (student) => {
     if (!student) return null;
     
     // Assicurati che ci sia un id
-    const normalizedStudent = {
+    return {
         ...student,
-        id: student._id || student.id, // Aggiungi sempre un id
+        id: student._id || student.id,
         schoolId: typeof student.schoolId === 'object' ? 
             student.schoolId : 
             { _id: student.schoolId, name: 'N/D' },
@@ -23,8 +23,12 @@ const normalizeStudent = (student) => {
         email: student.email || '',
         currentYear: student.currentYear || 1,
         dateOfBirth: student.dateOfBirth || null,
-        parentEmail: student.parentEmail || ''
+        parentEmail: student.parentEmail || '',
+        status: student.status || 'pending',
+        needsClassAssignment: student.needsClassAssignment ?? true,
+        isActive: student.isActive ?? true
     };
+
 
     // Log per debug
     console.log('Normalized student:', normalizedStudent);
@@ -206,31 +210,57 @@ export const StudentProvider = ({ children }) => {
     };
 
     // Crea nuovo studente
-    const createStudent = async (studentData) => {
-        try {
-            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
-            
-            const response = await axiosInstance.post('/students', studentData);
+    // Modifica la funzione createStudent per validare e formattare i dati prima dell'invio
+const createStudent = async (studentData) => {
+    try {
+        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+        
+        // Formatta i dati prima dell'invio
+        const formattedData = {
+            firstName: studentData.firstName?.trim(),
+            lastName: studentData.lastName?.trim(),
+            gender: studentData.gender,
+            dateOfBirth: studentData.dateOfBirth ? new Date(studentData.dateOfBirth).toISOString() : null,
+            email: studentData.email?.trim(),
+            schoolId: studentData.schoolId,
+            currentYear: parseInt(studentData.currentYear),
+            parentEmail: studentData.parentEmail?.trim() || null,
+            fiscalCode: studentData.fiscalCode?.trim().toUpperCase() || null,
+            status: 'pending',
+            needsClassAssignment: true,
+            isActive: true
+        };
 
-            if (response.data.status === 'success') {
-                dispatch({
-                    type: STUDENT_ACTIONS.ADD_STUDENT,
-                    payload: response.data.data.student
-                });
-                showNotification('Studente creato con successo', 'success');
-                return response.data.data.student;
-            }
-        } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || 
-                               'Errore nella creazione dello studente';
+        // Log per debug
+        console.log('Formatted data being sent:', formattedData);
+        
+        const response = await axiosInstance.post('/students', formattedData);
+        console.log('Server response:', response.data);
+
+        if (response.data.status === 'success') {
+            const newStudent = normalizeStudent(response.data.data.student);
             dispatch({
-                type: STUDENT_ACTIONS.SET_ERROR,
-                payload: errorMessage
+                type: STUDENT_ACTIONS.ADD_STUDENT,
+                payload: newStudent
             });
-            showNotification(errorMessage, 'error');
-            throw error;
+            showNotification('Studente creato con successo', 'success');
+            return newStudent;
+        } else {
+            throw new Error(response.data.message || 'Errore nella creazione dello studente');
         }
-    };
+    } catch (error) {
+        console.error('Error creating student:', error);
+        const errorMessage = error.response?.data?.error?.message || 
+                           error.message || 
+                           'Errore nella creazione dello studente';
+        dispatch({
+            type: STUDENT_ACTIONS.SET_ERROR,
+            payload: errorMessage
+        });
+        showNotification(errorMessage, 'error');
+        throw error;
+    }
+};
 
     // Aggiorna studente esistente
     const updateStudent = async (studentId, updateData) => {

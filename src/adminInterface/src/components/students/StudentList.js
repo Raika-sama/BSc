@@ -1,131 +1,213 @@
-// src/components/students/StudentList.js
-
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
-    Paper,
-    Typography,
-    IconButton,
     Button,
+    Grid,
+    IconButton,
+    Tooltip,
+    Chip,
     Dialog,
     DialogTitle,
     DialogContent,
     DialogActions,
-    Tooltip,
     TextField,
-    Alert,
-    Tabs,
-    Tab,
-    
-    FormControl,    // Aggiungi questo
-    InputLabel,     // Aggiungi questo
-    Select,         // Aggiungi questo
-    MenuItem        // Aggiungi questo
+    Typography,
+    Paper
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import { useStudent } from '../../context/StudentContext';
 import { useNotification } from '../../context/NotificationContext';
 import StudentForm from './StudentForm';
-import { useClass } from '../../context/ClassContext';
-import { useSchool } from '../../context/SchoolContext';
-
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 const StudentList = () => {
-    const { 
-        students, 
-        loading, 
-        error, 
+    const {
+        students,
+        loading,
+        error,
         totalStudents,
         fetchStudents,
-        deleteStudent,
-        fetchUnassignedStudents,
+        deleteStudent
     } = useStudent();
 
     const { showNotification } = useNotification();
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [formOpen, setFormOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [pageSize, setPageSize] = useState(10);
     const [page, setPage] = useState(0);
-    const [formOpen, setFormOpen] = useState(false);
-    const [editingStudent, setEditingStudent] = useState(null);
-    const [viewMode, setViewMode] = useState('all'); // 'all' | 'unassigned'
-    const { classes, fetchClasses } = useClass(); // assumo che tu abbia un ClassContext
-    const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-    const [selectedStudents, setSelectedStudents] = useState([]);
-    const [selectedClass, setSelectedClass] = useState('');
-    const { currentSchool } = useSchool();
+    const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+    const [selectedStudentDetails, setSelectedStudentDetails] = useState(null);
 
     useEffect(() => {
-        const loadData = async () => {
-            try {
-                if (viewMode === 'all') {
-                    await fetchStudents();
-                } else if (viewMode === 'unassigned' && currentSchool?.id) {
-                    await fetchUnassignedStudents(currentSchool.id);
-                }
-            } catch (error) {
-                console.error('Error loading students:', error);
-                showNotification('Errore nel caricamento degli studenti', 'error');
-            }
+        loadStudents();
+    }, []);
+
+    const loadStudents = async () => {
+        try {
+            await fetchStudents({
+                page: page + 1,
+                limit: pageSize,
+                search: searchTerm.trim() || undefined
+            });
+        } catch (error) {
+            console.error('Error loading students:', error);
+            showNotification('Errore nel caricamento degli studenti', 'error');
+        }
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/D';
+        return new Date(dateString).toLocaleDateString('it-IT', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const getStatusColor = (status) => {
+        const statusColors = {
+            pending: 'warning',
+            active: 'success',
+            inactive: 'error',
+            transferred: 'info',
+            graduated: 'secondary'
         };
-    
-        loadData();
-    }, [viewMode, currentSchool]);
+        return statusColors[status] || 'default';
+    };
 
- // Handler per il cambio di tab
- const handleViewModeChange = (event, newValue) => {
-    setViewMode(newValue);
-    setSelectedStudents([]); // Reset selezione quando cambia vista
-};
+    const getStatusLabel = (status) => {
+        const statusLabels = {
+            pending: 'In Attesa',
+            active: 'Attivo',
+            inactive: 'Inattivo',
+            transferred: 'Trasferito',
+            graduated: 'Diplomato'
+        };
+        return statusLabels[status] || status;
+    };
 
-// Handler per la selezione multipla
-const handleSelectionChange = (newSelection) => {
-    setSelectedStudents(newSelection);
-};
+    const handleViewDetails = (student) => {
+        setSelectedStudentDetails(student);
+        setDetailsDialogOpen(true);
+    };
 
-// Handler per aprire il dialog di assegnazione
-const handleBatchAssign = () => {
-    fetchClasses(); // Carica le classi disponibili
-    setAssignDialogOpen(true);
-};
-
-// Handler per l'assegnazione effettiva
-const handleAssignConfirm = async () => {
-    try {
-        if (!selectedClass) {
-            showNotification('Seleziona una classe', 'error');
-            return;
+    const columns = [
+        {
+            field: 'firstName',
+            headerName: 'Nome Completo',
+            width: 200,
+            renderCell: (params) => {
+                return params.row ? `${params.row.firstName || ''} ${params.row.lastName || ''}`.trim() : 'N/D';
+            }
+        },
+        {
+            field: 'gender',
+            headerName: 'Genere',
+            width: 100,
+            renderCell: (params) => {
+                return params.row?.gender === 'M' ? 'Maschio' : 
+                       params.row?.gender === 'F' ? 'Femmina' : 'N/D';
+            }
+        },
+        {
+            field: 'dateOfBirth',
+            headerName: 'Data Nascita',
+            width: 150,
+            renderCell: (params) => {
+                if (!params.row?.dateOfBirth) return 'N/D';
+                try {
+                    return new Date(params.row.dateOfBirth).toLocaleDateString('it-IT');
+                } catch {
+                    return 'N/D';
+                }
+            }
+        },
+        {
+            field: 'email',
+            headerName: 'Email',
+            width: 200,
+            renderCell: (params) => params.row?.email || 'N/D'
+        },
+        {
+            field: 'school',
+            headerName: 'Scuola',
+            width: 200,
+            renderCell: (params) => params.row?.schoolId?.name || 'N/D'
+        },
+        {
+            field: 'class',
+            headerName: 'Classe',
+            width: 120,
+            renderCell: (params) => {
+                const classId = params.row?.classId;
+                if (!classId) return 'Non Assegnata';
+                return `${classId.year || ''}${classId.section || ''}`;
+            }
+        },
+        {
+            field: 'currentYear',
+            headerName: 'Anno',
+            width: 100,
+            renderCell: (params) => params.row?.currentYear || 'N/D'
+        },
+        {
+            field: 'status',
+            headerName: 'Stato',
+            width: 150,
+            renderCell: (params) => {
+                if (!params.row?.status) return null;
+                return (
+                    <Chip
+                        label={params.row.status === 'active' ? 'Attivo' : 
+                               params.row.status === 'pending' ? 'In Attesa' : 
+                               params.row.status === 'inactive' ? 'Inattivo' : params.row.status}
+                        color={params.row.status === 'active' ? 'success' :
+                               params.row.status === 'pending' ? 'warning' :
+                               params.row.status === 'inactive' ? 'error' : 'default'}
+                        size="small"
+                    />
+                );
+            }
+        },
+        {
+            field: 'actions',
+            headerName: 'Azioni',
+            width: 160,
+            renderCell: (params) => (
+                params.row ? (
+                    <Box>
+                         <Tooltip title="Visualizza">
+                            <IconButton 
+                                onClick={() => handleViewDetails(params.row)} 
+                                size="small"
+                                color="primary"
+                            >
+                                <VisibilityIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Modifica">
+                            <IconButton onClick={() => handleEdit(params.row)} size="small">
+                                <EditIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Elimina">
+                            <IconButton onClick={() => handleDeleteClick(params.row)} size="small" color="error">
+                                <DeleteIcon />
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
+                ) : null
+            )
         }
-
-        await batchAssignStudents(
-            selectedStudents, 
-            selectedClass,
-            getCurrentAcademicYear() // funzione helper da implementare
-        );
-
-        setAssignDialogOpen(false);
-        setSelectedStudents([]);
-        setSelectedClass('');
-        
-        // Ricarica la lista degli studenti non assegnati
-        if (viewMode === 'unassigned') {
-            fetchUnassignedStudents(schoolId);
-        }
-    } catch (error) {
-        console.error('Error assigning students:', error);
-    }
-};
-
-// Helper per ottenere l'anno accademico corrente
-const getCurrentAcademicYear = () => {
-    const currentYear = new Date().getFullYear();
-    return `${currentYear}/${currentYear + 1}`;
-};
+    ];
 
     const handleDeleteClick = (student) => {
         setSelectedStudent(student);
@@ -137,201 +219,61 @@ const getCurrentAcademicYear = () => {
             await deleteStudent(selectedStudent.id);
             setDeleteDialogOpen(false);
             setSelectedStudent(null);
+            loadStudents();
+            showNotification('Studente eliminato con successo', 'success');
         } catch (error) {
             console.error('Error deleting student:', error);
             showNotification('Errore durante l\'eliminazione dello studente', 'error');
         }
     };
 
+    const handleEdit = (student) => {
+        setSelectedStudent(student);
+        setFormOpen(true);
+    };
+
     const handleSearch = () => {
-        if (searchTerm.trim()) {
-            fetchStudents({ search: searchTerm });
-        } else {
-            fetchStudents();
-        }
+        loadStudents();
     };
 
     const handlePageChange = (newPage) => {
         setPage(newPage);
-        fetchStudents({ page: newPage + 1, limit: pageSize });
+        fetchStudents({
+            page: newPage + 1,
+            limit: pageSize,
+            search: searchTerm.trim() || undefined
+        });
     };
-
+    
     const handlePageSizeChange = (newPageSize) => {
         setPageSize(newPageSize);
         setPage(0);
-        fetchStudents({ page: 1, limit: newPageSize });
-    };
-
-    const handleCreateClick = () => {
-        setEditingStudent(null);
-        setFormOpen(true);
-    };
-    
-    const handleEditClick = (student) => {
-        setEditingStudent(student);
-        setFormOpen(true);
-    };
-    
-    const handleFormClose = () => {
-        setFormOpen(false);
-        setEditingStudent(null);
-    };
-
-    const prepareRowsForDataGrid = (students) => {
-        return students.map(student => {
-            // Log per debug
-            console.log('Processing student:', student);
-            
-            return {
-                ...student,
-                id: student._id || student.id, // Assicurati che ci sia un id
-                schoolName: student.schoolId?.name || 'N/D',
-                className: student.classId ? 
-                    `${student.classId.year}${student.classId.section}` : 
-                    'Non assegnata'
-            };
+        fetchStudents({
+            page: 1,
+            limit: newPageSize,
+            search: searchTerm.trim() || undefined
         });
     };
 
+    
 
-    const columns = [
-        { 
-            field: 'fiscalCode', 
-            headerName: 'Codice Fiscale', 
-            width: 150,
-             valueGetter: (params) => params.row?.fiscalCode || ''
-        },
-        { 
-            field: 'lastName', 
-            headerName: 'Cognome', 
-            width: 150,
-            renderCell: (params) => {
-                console.log("Params in lastName:", params);
-                return params.row?.lastName?.toUpperCase() || '';
-            }
-        },
-        { 
-            field: 'firstName', 
-            headerName: 'Nome', 
-            width: 150 
-        },
-        { 
-            field: 'gender', 
-            headerName: 'Genere', 
-            width: 100,
-            align: 'center',
-            headerAlign: 'center'
-        },
-        { 
-            field: 'dateOfBirth', 
-            headerName: 'Data Nascita', 
-            width: 150,
-            valueFormatter: (params) => {
-                if (!params.value) return '';
-                return new Date(params.value).toLocaleDateString();
-            }
-        },
-        { 
-            field: 'email', 
-            headerName: 'Email', 
-            width: 200,
-            valueGetter: (params) => params?.value || ''
-        },
-        {
-            field: 'schoolName',
-            headerName: 'Scuola',
-            width: 200,
-            valueGetter: (params) => {
-                const schoolId = params.row?.schoolId;
-                return typeof schoolId === 'object' ? schoolId?.name || 'N/D' : 'N/D';
-            }
-        },
-        {
-            field: 'className',
-            headerName: 'Classe',
-            width: 150,
-            valueGetter: (params) => {
-                const classId = params.row?.classId;
-                if (!classId) return 'Non assegnata';
-                return classId.year && classId.section ? 
-                       `${classId.year}${classId.section}` : 
-                       'Non assegnata';
-            }
-        },
-        {
-            field: 'currentYear',
-            headerName: 'Anno',
-            width: 100,
-            align: 'center',
-            headerAlign: 'center',
-            valueGetter: (params) => params?.value || ''
-
-        },
-        {
-            field: 'actions',
-            headerName: 'Azioni',
-            width: 120,
-            sortable: false,
-            renderCell: (params) => (
-                <Box>
-                    <Tooltip title="Modifica">
-                        <IconButton 
-                            onClick={() => handleEditClick(params.row)} 
-                            size="small"
-                        >
-                            <EditIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Elimina">
-                        <IconButton
-                            onClick={() => handleDeleteClick(params.row)}
-                            size="small"
-                            color="error"
-                        >
-                            <DeleteIcon />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-            )
-        }
-    ];
 
     return (
         <Box p={3}>
-            {/* Header con Tabs */}
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h4" component="h1">
-                        Gestione Studenti
-                    </Typography>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={<AddIcon />}
-                        onClick={handleCreateClick}
-                    >
-                        Nuovo Studente
-                    </Button>
-                </Box>
-                <Tabs
-                    value={viewMode}
-                    onChange={(e, newValue) => setViewMode(newValue)}
-                    sx={{ mt: 2 }}
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                <Typography variant="h4" component="h1">
+                    Gestione Studenti
+                </Typography>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<AddIcon />}
+                    onClick={() => setFormOpen(true)}
                 >
-                    <Tab 
-                        label="Tutti gli Studenti" 
-                        value="all"
-                        sx={{ textTransform: 'none' }}
-                    />
-                    <Tab 
-                        label="Da Assegnare" 
-                        value="unassigned"
-                        sx={{ textTransform: 'none' }}
-                    />
-                </Tabs>
+                    Nuovo Studente
+                </Button>
             </Box>
-    
-            {/* Barra di ricerca */}
+
             <Box display="flex" gap={2} mb={3}>
                 <TextField
                     fullWidth
@@ -350,101 +292,33 @@ const getCurrentAcademicYear = () => {
                     Cerca
                 </Button>
             </Box>
-    
-            {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
-                </Alert>
-            )}
-    
-            {/* DataGrid con gestione selezione per studenti non assegnati */}
+
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-            <DataGrid
-                    rows={prepareRowsForDataGrid(students || [])}
+                <DataGrid
+                    rows={students || []}
                     columns={columns}
                     pagination
-                    pageSize={pageSize}
-                    rowsPerPageOptions={[5, 10, 20, 50]}
+                    paginationMode="server"
                     rowCount={totalStudents}
                     page={page}
+                    pageSize={pageSize}
+                    rowsPerPageOptions={[5, 10, 20, 50]}
                     onPageChange={handlePageChange}
                     onPageSizeChange={handlePageSizeChange}
                     loading={loading}
                     autoHeight
                     disableSelectionOnClick
-                    getRowId={(row) => row.id || row._id}
-                    checkboxSelection={viewMode === 'unassigned'}
-                    onSelectionModelChange={viewMode === 'unassigned' ? handleSelectionChange : undefined}
-                    sx={{
-                        '& .MuiDataGrid-cell:focus': {
-                            outline: 'none'
-                        }
+                    getRowId={(row) => row._id || row.id}
+                    components={{
+                        NoRowsOverlay: () => (
+                            <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+                                <Typography>Nessuno studente trovato</Typography>
+                            </Box>
+                        )
                     }}
                 />
             </Paper>
-    
-            {/* Azioni Batch per studenti non assegnati */}
-            {viewMode === 'unassigned' && selectedStudents.length > 0 && (
-                <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
-                    <Typography variant="subtitle1" gutterBottom>
-                        {selectedStudents.length} studenti selezionati
-                    </Typography>
-                    <Button
-                        variant="contained"
-                        onClick={handleBatchAssign}
-                        sx={{ mr: 1 }}
-                    >
-                        Assegna a Classe
-                    </Button>
-                </Box>
-            )}
-    
 
-      {/* Dialog per assegnazione batch */}
-      <Dialog
-            open={assignDialogOpen}
-            onClose={() => setAssignDialogOpen(false)}
-            maxWidth="sm"
-            fullWidth
-        >
-            <DialogTitle>Assegna studenti alla classe</DialogTitle>
-            <DialogContent>
-                <Box sx={{ my: 2 }}>
-                    <Typography gutterBottom>
-                        Seleziona la classe per {selectedStudents.length} studenti:
-                    </Typography>
-                    <FormControl fullWidth sx={{ mt: 2 }}>
-                        <InputLabel>Classe</InputLabel>
-                        <Select
-                            value={selectedClass}
-                            onChange={(e) => setSelectedClass(e.target.value)}
-                            label="Classe"
-                        >
-                            {classes.map(classItem => (
-                                <MenuItem 
-                                    key={classItem.id} 
-                                    value={classItem.id}
-                                >
-                                    {`${classItem.year}${classItem.section} - ${classItem.academicYear}`}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Box>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={() => setAssignDialogOpen(false)}>
-                    Annulla
-                </Button>
-                <Button 
-                    onClick={handleAssignConfirm}
-                    variant="contained"
-                    color="primary"
-                >
-                    Assegna
-                </Button>
-            </DialogActions>
-        </Dialog>
             {/* Dialog Conferma Eliminazione */}
             <Dialog
                 open={deleteDialogOpen}
@@ -476,13 +350,123 @@ const getCurrentAcademicYear = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-    
+            {/* Dialog Dettagli Studente */}
+            <Dialog
+                open={detailsDialogOpen}
+                onClose={() => setDetailsDialogOpen(false)}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>
+                    Dettagli Studente
+                </DialogTitle>
+                <DialogContent>
+                    {selectedStudentDetails && (
+                        <Box sx={{ pt: 2 }}>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Nome Completo
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {`${selectedStudentDetails.firstName} ${selectedStudentDetails.lastName}`}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Codice Fiscale
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {selectedStudentDetails.fiscalCode || 'Non specificato'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Data di Nascita
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {formatDate(selectedStudentDetails.dateOfBirth)}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Genere
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {selectedStudentDetails.gender === 'M' ? 'Maschio' : 'Femmina'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Email
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {selectedStudentDetails.email}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Email Genitore
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {selectedStudentDetails.parentEmail || 'Non specificata'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Scuola
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {selectedStudentDetails.schoolId?.name || 'N/D'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Classe
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {selectedStudentDetails.classId ? 
+                                            `${selectedStudentDetails.classId.year}${selectedStudentDetails.classId.section}` : 
+                                            'Non assegnata'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Anno Corrente
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {`${selectedStudentDetails.currentYear}° anno`}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Stato
+                                    </Typography>
+                                    <Chip
+                                        label={getStatusLabel(selectedStudentDetails.status)}
+                                        color={getStatusColor(selectedStudentDetails.status)}
+                                        size="small"
+                                    />
+                                </Grid>
+                            </Grid>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDetailsDialogOpen(false)}>
+                        Chiudi
+                    </Button>
+                </DialogActions>
+            </Dialog>
             {/* Form Creazione/Modifica */}
             <StudentForm
                 open={formOpen}
-                onClose={handleFormClose}
-                student={editingStudent}
-                schoolId={null}
+                onClose={() => {
+                    setFormOpen(false);
+                    setSelectedStudent(null);
+                    loadStudents();
+                }}
+                student={selectedStudent}
             />
         </Box>
     );
