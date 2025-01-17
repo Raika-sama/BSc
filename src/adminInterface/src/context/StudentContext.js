@@ -1,8 +1,30 @@
-// src/context/StudentContext.js
-
 import React, { createContext, useContext, useReducer } from 'react';
 import { axiosInstance } from '../services/axiosConfig';
 import { useNotification } from './NotificationContext';
+
+// Helper function per normalizzare i dati degli studenti
+const normalizeStudent = (student) => {
+    if (!student) return null;
+    
+    return {
+        ...student,
+        id: student._id || student.id,
+        schoolId: typeof student.schoolId === 'object' ? 
+            student.schoolId : 
+            { _id: student.schoolId, name: 'N/D' },
+        classId: typeof student.classId === 'object' ?
+            student.classId :
+            (student.classId ? { _id: student.classId } : null),
+        lastName: student.lastName || '',
+        firstName: student.firstName || '',
+        fiscalCode: student.fiscalCode || '',
+        gender: student.gender || '',
+        email: student.email || '',
+        currentYear: student.currentYear || 1,
+        dateOfBirth: student.dateOfBirth || null,
+        parentEmail: student.parentEmail || ''
+    };
+};
 
 const StudentContext = createContext();
 
@@ -40,7 +62,7 @@ const studentReducer = (state, action) => {
         case STUDENT_ACTIONS.SET_STUDENTS:
             return {
                 ...state,
-                students: action.payload.students,
+                students: action.payload.students.map(normalizeStudent),
                 totalStudents: action.payload.total,
                 loading: false
             };
@@ -58,22 +80,24 @@ const studentReducer = (state, action) => {
         case STUDENT_ACTIONS.SET_SELECTED_STUDENT:
             return {
                 ...state,
-                selectedStudent: action.payload
+                selectedStudent: normalizeStudent(action.payload)
             };
         case STUDENT_ACTIONS.ADD_STUDENT:
             return {
                 ...state,
-                students: [...state.students, action.payload],
+                students: [...state.students, normalizeStudent(action.payload)],
                 totalStudents: state.totalStudents + 1
             };
         case STUDENT_ACTIONS.UPDATE_STUDENT:
             return {
                 ...state,
                 students: state.students.map(student =>
-                    student.id === action.payload.id ? action.payload : student
+                    student.id === action.payload.id ? 
+                        normalizeStudent(action.payload) : 
+                        student
                 ),
                 selectedStudent: state.selectedStudent?.id === action.payload.id ?
-                    action.payload : state.selectedStudent
+                    normalizeStudent(action.payload) : state.selectedStudent
             };
         case STUDENT_ACTIONS.DELETE_STUDENT:
             return {
@@ -83,12 +107,10 @@ const studentReducer = (state, action) => {
                 selectedStudent: state.selectedStudent?.id === action.payload ?
                     null : state.selectedStudent
             };
-        default:
-            return state;
         case STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS:
             return {
                 ...state,
-                students: action.payload,
+                students: (action.payload || []).map(normalizeStudent),
                 loading: false
             };
         case STUDENT_ACTIONS.BATCH_ASSIGN_STUDENTS:
@@ -96,12 +118,18 @@ const studentReducer = (state, action) => {
                 ...state,
                 students: state.students.map(student => 
                     action.payload.studentIds.includes(student.id) 
-                        ? { ...student, classId: action.payload.classId }
+                        ? normalizeStudent({ 
+                            ...student, 
+                            classId: action.payload.classId,
+                            needsClassAssignment: false
+                          })
                         : student
                 ),
                 loading: false
             };
-            }
+        default:
+            return state;
+    }
 };
 
 export const StudentProvider = ({ children }) => {
@@ -116,22 +144,22 @@ export const StudentProvider = ({ children }) => {
             const queryParams = new URLSearchParams(filters);
             const response = await axiosInstance.get(`/students?${queryParams}`);
 
-                // Aggiungiamo console.log per debug
-                console.log('API Response:', response.data);
-                console.log('Students data:', response.data.data.students);
+            console.log('API Response:', response.data);
 
             if (response.data.status === 'success') {
+                const students = response.data.data?.students || [];
+                const total = response.data.data?.count || students.length;
+
                 dispatch({
                     type: STUDENT_ACTIONS.SET_STUDENTS,
                     payload: {
-                        students: response.data.data.students,
-                        total: response.data.data.count
+                        students,
+                        total
                     }
                 });
             }
         } catch (error) {
             console.error('Error in fetchStudents:', error);
-
             const errorMessage = error.response?.data?.error?.message || 
                                'Errore nel caricamento degli studenti';
             dispatch({
@@ -274,6 +302,7 @@ export const StudentProvider = ({ children }) => {
         }
     };
 
+    // Recupera studenti non assegnati
     const fetchUnassignedStudents = async (schoolId) => {
         try {
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
@@ -281,9 +310,10 @@ export const StudentProvider = ({ children }) => {
             const response = await axiosInstance.get(`/students/unassigned/${schoolId}`);
             
             if (response.data.status === 'success') {
+                const students = response.data.data?.students || [];
                 dispatch({
                     type: STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS,
-                    payload: response.data.data.students
+                    payload: students
                 });
             }
         } catch (error) {
@@ -297,6 +327,7 @@ export const StudentProvider = ({ children }) => {
         }
     };
     
+    // Assegnazione batch di studenti
     const batchAssignStudents = async (studentIds, classId, academicYear) => {
         try {
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
@@ -337,6 +368,10 @@ export const StudentProvider = ({ children }) => {
     return (
         <StudentContext.Provider value={{
             ...state,
+            students: state.students || [],
+            totalStudents: state.totalStudents || 0,
+            loading: state.loading || false,
+            error: state.error || null,
             fetchStudents,
             getStudentById,
             createStudent,
@@ -344,8 +379,8 @@ export const StudentProvider = ({ children }) => {
             deleteStudent,
             searchStudents,
             clearError,
-            fetchUnassignedStudents,  // Aggiungi questa
-            batchAssignStudents      // Aggiungi questa
+            fetchUnassignedStudents,
+            batchAssignStudents
         }}>
             {children}
         </StudentContext.Provider>

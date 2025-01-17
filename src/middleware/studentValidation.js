@@ -30,7 +30,6 @@ const studentValidation = {
             if (!lastName?.trim()) errors.push('Cognome richiesto');
             if (!['M', 'F'].includes(gender)) errors.push('Genere non valido');
             if (!dateOfBirth) errors.push('Data di nascita richiesta');
-            if (!fiscalCode?.trim()) errors.push('Codice fiscale richiesto');
             if (!email?.trim()) errors.push('Email richiesta');
             if (!schoolId) errors.push('Scuola richiesta');
             if (!currentYear) errors.push('Anno corrente richiesto');
@@ -41,7 +40,7 @@ const studentValidation = {
             }
 
             // Validazione codice fiscale
-            if (fiscalCode && !/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(fiscalCode)) {
+            if (fiscalCode?.trim() && !/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(fiscalCode)) {
                 errors.push('Formato codice fiscale non valido');
             }
 

@@ -113,11 +113,18 @@ router.use((err, req, res, next) => {
 
     // Altri errori
     const statusCode = err.statusCode || 500;
+
+    // Controlla se err ha la proprietà code
+    if (!err.code) {
+        // Se err.code non esiste, usa l'errore generico
+        err = createError(ErrorTypes.SYSTEM.GENERIC_ERROR, 'Errore sconosciuto');
+    }
+
     res.status(statusCode).json({
         status: 'error',
         error: {
-            code: err.code || 'STUDENT_ROUTE_ERROR',
-            message: err.message || 'Errore interno del server'
+            code: err.code, 
+            message: err.message 
         }
     });
 });

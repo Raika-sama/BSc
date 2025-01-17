@@ -61,15 +61,20 @@ const StudentList = () => {
     const { currentSchool } = useSchool();
 
     useEffect(() => {
-        if (viewMode === 'all') {
-            fetchStudents();
-        } else if (viewMode === 'unassigned') {
-            if (currentSchool?.id) {
-                fetchUnassignedStudents(currentSchool.id);
-            } else {
-                showNotification('Nessuna scuola selezionata', 'error');
+        const loadData = async () => {
+            try {
+                if (viewMode === 'all') {
+                    await fetchStudents();
+                } else if (viewMode === 'unassigned' && currentSchool?.id) {
+                    await fetchUnassignedStudents(currentSchool.id);
+                }
+            } catch (error) {
+                console.error('Error loading students:', error);
+                showNotification('Errore nel caricamento degli studenti', 'error');
             }
-        }
+        };
+    
+        loadData();
     }, [viewMode, currentSchool]);
 
  // Handler per il cambio di tab
@@ -179,18 +184,16 @@ const getCurrentAcademicYear = () => {
         { 
             field: 'fiscalCode', 
             headerName: 'Codice Fiscale', 
-            width: 150 
+            width: 150,
+             valueGetter: (params) => params.row?.fiscalCode || ''
         },
         { 
             field: 'lastName', 
             headerName: 'Cognome', 
             width: 150,
-            valueGetter: (params) => {
-                if (!params.row) {
-                    console.warn('Row data is missing:', params);
-                    return '';
-                }
-                return params.row.lastName?.toUpperCase() || '';
+            renderCell: (params) => {
+                console.log("Params in lastName:", params);
+                return params.row?.lastName?.toUpperCase() || '';
             }
         },
         { 
@@ -217,22 +220,28 @@ const getCurrentAcademicYear = () => {
         { 
             field: 'email', 
             headerName: 'Email', 
-            width: 200 
+            width: 200,
+            valueGetter: (params) => params?.value || ''
         },
         {
-            field: 'school',
+            field: 'schoolName',
             headerName: 'Scuola',
             width: 200,
-            valueGetter: (params) => params.row.schoolId?.name || 'N/D'
+            valueGetter: (params) => {
+                const schoolId = params.row?.schoolId;
+                return typeof schoolId === 'object' ? schoolId?.name || 'N/D' : 'N/D';
+            }
         },
         {
-            field: 'class',
+            field: 'className',
             headerName: 'Classe',
             width: 150,
             valueGetter: (params) => {
-                const classInfo = params.row.classId;
-                if (!classInfo) return 'Non assegnata';
-                return `${classInfo.year}${classInfo.section}`;
+                const classId = params.row?.classId;
+                if (!classId) return 'Non assegnata';
+                return classId.year && classId.section ? 
+                       `${classId.year}${classId.section}` : 
+                       'Non assegnata';
             }
         },
         {
@@ -240,7 +249,9 @@ const getCurrentAcademicYear = () => {
             headerName: 'Anno',
             width: 100,
             align: 'center',
-            headerAlign: 'center'
+            headerAlign: 'center',
+            valueGetter: (params) => params?.value || ''
+
         },
         {
             field: 'actions',
@@ -335,7 +346,14 @@ const getCurrentAcademicYear = () => {
             {/* DataGrid con gestione selezione per studenti non assegnati */}
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
                 <DataGrid
-                    rows={students || []}
+                    rows={students.map(student => ({
+                        ...student,
+                        id: student._id,  // Usa sempre _id come id
+                        schoolName: student.schoolId?.name || 'N/D',  // Aggiungi campo piatto
+                        className: student.classId ? 
+                            `${student.classId.year}${student.classId.section}` : 
+                            'Non assegnata'  // Aggiungi campo piatto
+                    }))}
                     columns={columns}
                     pagination
                     pageSize={pageSize}
@@ -347,8 +365,7 @@ const getCurrentAcademicYear = () => {
                     loading={loading}
                     autoHeight
                     disableSelectionOnClick
-                    getRowId={(row) => row.id}
-                    checkboxSelection={viewMode === 'unassigned'}
+                    getRowId={(row) => row?._id || row?.id}                    checkboxSelection={viewMode === 'unassigned'}
                     onSelectionModelChange={viewMode === 'unassigned' ? handleSelectionChange : undefined}
                     sx={{
                         '& .MuiDataGrid-cell:focus': {
