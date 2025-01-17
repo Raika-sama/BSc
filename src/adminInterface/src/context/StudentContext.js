@@ -5,17 +5,12 @@ import { useNotification } from './NotificationContext';
 // Helper function per normalizzare i dati degli studenti
 const normalizeStudent = (student) => {
     if (!student) return null;
-    
-    // Assicurati che ci sia un id
-    return {
+
+    const normalized = {
         ...student,
         id: student._id || student.id,
-        schoolId: typeof student.schoolId === 'object' ? 
-            student.schoolId : 
-            { _id: student.schoolId, name: 'N/D' },
-        classId: typeof student.classId === 'object' ?
-            student.classId :
-            (student.classId ? { _id: student.classId } : null),
+        schoolId: normalizeSchoolId(student.schoolId),
+        classId: normalizeClassId(student.classId),
         lastName: student.lastName || '',
         firstName: student.firstName || '',
         fiscalCode: student.fiscalCode || '',
@@ -26,14 +21,37 @@ const normalizeStudent = (student) => {
         parentEmail: student.parentEmail || '',
         status: student.status || 'pending',
         needsClassAssignment: student.needsClassAssignment ?? true,
-        isActive: student.isActive ?? true
+        isActive: student.isActive ?? true,
+        // Aggiungiamo i campi che arrivano dal backend
+        mainTeacher: normalizeTeacher(student.mainTeacher),
+        teachers: Array.isArray(student.teachers) ? 
+            student.teachers.map(normalizeTeacher) : 
+            []
     };
 
+    console.log('Normalized student:', normalized);
+    return normalized;
+};
 
-    // Log per debug
-    console.log('Normalized student:', normalizedStudent);
 
-    return normalizedStudent;
+
+// Helper functions per normalizzare i sotto-oggetti
+const normalizeSchoolId = (schoolId) => {
+    if (!schoolId) return { _id: null, name: 'N/D' };
+    if (typeof schoolId === 'object') return schoolId;
+    return { _id: schoolId, name: 'N/D' };
+};
+
+const normalizeClassId = (classId) => {
+    if (!classId) return null;
+    if (typeof classId === 'object') return classId;
+    return { _id: classId };
+};
+
+const normalizeTeacher = (teacher) => {
+    if (!teacher) return null;
+    if (typeof teacher === 'object') return teacher;
+    return { _id: teacher };
 };
 
 const StudentContext = createContext();
@@ -69,17 +87,18 @@ const studentReducer = (state, action) => {
                 ...state,
                 loading: action.payload
             };
-        case STUDENT_ACTIONS.SET_STUDENTS:
-            const normalizedStudents = action.payload.students.map(student => ({
-                ...normalizeStudent(student),
-                id: student._id || student.id // Assicurati che ogni studente abbia un id
-            }));
-            return {
-                ...state,
-                students: normalizedStudents,
-                totalStudents: action.payload.total,
-                loading: false
-            };
+
+            case STUDENT_ACTIONS.SET_STUDENTS:
+                const normalizedStudents = (action.payload.students || [])
+                    .map(student => normalizeStudent(student))
+                    .filter(student => student !== null); // Filtriamo eventuali null
+                return {
+                    ...state,
+                    students: normalizedStudents,
+                    totalStudents: action.payload.total || normalizedStudents.length,
+                    loading: false
+                };
+
         case STUDENT_ACTIONS.SET_ERROR:
             return {
                 ...state,
@@ -96,23 +115,30 @@ const studentReducer = (state, action) => {
                 ...state,
                 selectedStudent: normalizeStudent(action.payload)
             };
-        case STUDENT_ACTIONS.ADD_STUDENT:
-            return {
-                ...state,
-                students: [...state.students, normalizeStudent(action.payload)],
-                totalStudents: state.totalStudents + 1
-            };
+
+            case STUDENT_ACTIONS.ADD_STUDENT:
+                const normalizedNewStudent = normalizeStudent(action.payload);
+                if (!normalizedNewStudent) return state;
+                return {
+                    ...state,
+                    students: [...state.students, normalizedNewStudent],
+                    totalStudents: state.totalStudents + 1
+                };
+
         case STUDENT_ACTIONS.UPDATE_STUDENT:
+            const normalizedUpdatedStudent = normalizeStudent(action.payload);
+            if (!normalizedUpdatedStudent) return state;
             return {
                 ...state,
                 students: state.students.map(student =>
-                    student.id === action.payload.id ? 
-                        normalizeStudent(action.payload) : 
+                    student.id === normalizedUpdatedStudent.id ? 
+                        normalizedUpdatedStudent : 
                         student
                 ),
-                selectedStudent: state.selectedStudent?.id === action.payload.id ?
-                    normalizeStudent(action.payload) : state.selectedStudent
+                selectedStudent: state.selectedStudent?.id === normalizedUpdatedStudent.id ?
+                    normalizedUpdatedStudent : state.selectedStudent
             };
+
         case STUDENT_ACTIONS.DELETE_STUDENT:
             return {
                 ...state,
@@ -121,12 +147,17 @@ const studentReducer = (state, action) => {
                 selectedStudent: state.selectedStudent?.id === action.payload ?
                     null : state.selectedStudent
             };
+
         case STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS:
+            const unassignedStudents = (action.payload || [])
+                .map(student => normalizeStudent(student))
+                .filter(student => student !== null);
             return {
                 ...state,
-                students: (action.payload || []).map(normalizeStudent),
+                students: unassignedStudents,
                 loading: false
             };
+
         case STUDENT_ACTIONS.BATCH_ASSIGN_STUDENTS:
             return {
                 ...state,
@@ -211,56 +242,92 @@ export const StudentProvider = ({ children }) => {
 
     // Crea nuovo studente
     // Modifica la funzione createStudent per validare e formattare i dati prima dell'invio
-const createStudent = async (studentData) => {
-    try {
-        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
-        
-        // Formatta i dati prima dell'invio
-        const formattedData = {
-            firstName: studentData.firstName?.trim(),
-            lastName: studentData.lastName?.trim(),
-            gender: studentData.gender,
-            dateOfBirth: studentData.dateOfBirth ? new Date(studentData.dateOfBirth).toISOString() : null,
-            email: studentData.email?.trim(),
-            schoolId: studentData.schoolId,
-            currentYear: parseInt(studentData.currentYear),
-            parentEmail: studentData.parentEmail?.trim() || null,
-            fiscalCode: studentData.fiscalCode?.trim().toUpperCase() || null,
-            status: 'pending',
-            needsClassAssignment: true,
-            isActive: true
-        };
-
-        // Log per debug
-        console.log('Formatted data being sent:', formattedData);
-        
-        const response = await axiosInstance.post('/students', formattedData);
-        console.log('Server response:', response.data);
-
-        if (response.data.status === 'success') {
-            const newStudent = normalizeStudent(response.data.data.student);
+    const createStudent = async (studentData) => {
+        try {
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+            
+            // Validazione e formattazione dei dati secondo studentValidation.js
+            const formattedData = {
+                // Campi obbligatori
+                firstName: studentData.firstName?.trim(),
+                lastName: studentData.lastName?.trim(),
+                gender: studentData.gender,
+                dateOfBirth: studentData.dateOfBirth ? new Date(studentData.dateOfBirth).toISOString() : null,
+                email: studentData.email?.trim().toLowerCase(),
+                schoolId: studentData.schoolId,
+                currentYear: parseInt(studentData.currentYear),
+                
+                // Campi opzionali
+                parentEmail: studentData.parentEmail?.trim().toLowerCase() || null,
+                fiscalCode: studentData.fiscalCode?.trim().toUpperCase() || null,
+                
+                // Campi di sistema
+                status: 'pending',
+                needsClassAssignment: true,
+                isActive: true
+            };
+    
+            // Validazione locale prima dell'invio
+            const errors = [];
+            if (!formattedData.firstName) errors.push('Nome richiesto');
+            if (!formattedData.lastName) errors.push('Cognome richiesto');
+            if (!['M', 'F'].includes(formattedData.gender)) errors.push('Genere non valido');
+            if (!formattedData.dateOfBirth) errors.push('Data di nascita richiesta');
+            if (!formattedData.email) errors.push('Email richiesta');
+            if (!formattedData.schoolId) errors.push('Scuola richiesta');
+            if (!formattedData.currentYear) errors.push('Anno corrente richiesto');
+    
+            // Validazione email
+            if (formattedData.email && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formattedData.email)) {
+                errors.push('Formato email non valido');
+            }
+    
+            // Validazione codice fiscale se presente
+            if (formattedData.fiscalCode && 
+                !/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(formattedData.fiscalCode)) {
+                errors.push('Formato codice fiscale non valido');
+            }
+    
+            // Se ci sono errori, li lanciamo prima della chiamata API
+            if (errors.length > 0) {
+                throw new Error('Errori di validazione: ' + errors.join(', '));
+            }
+    
+            console.log('Creating student with data:', formattedData);
+            
+            const response = await axiosInstance.post('/students', formattedData);
+            
+            console.log('Server response:', response.data);
+    
+            if (response.data.status === 'success') {
+                const newStudent = normalizeStudent(response.data.data.student);
+                
+                dispatch({
+                    type: STUDENT_ACTIONS.ADD_STUDENT,
+                    payload: newStudent
+                });
+                
+                showNotification('Studente creato con successo', 'success');
+                return newStudent;
+            } else {
+                throw new Error(response.data.message || 'Errore nella creazione dello studente');
+            }
+        } catch (error) {
+            console.error('Error creating student:', error);
+            
+            const errorMessage = error.response?.data?.error?.message || 
+                               error.message || 
+                               'Errore nella creazione dello studente';
+            
             dispatch({
-                type: STUDENT_ACTIONS.ADD_STUDENT,
-                payload: newStudent
+                type: STUDENT_ACTIONS.SET_ERROR,
+                payload: errorMessage
             });
-            showNotification('Studente creato con successo', 'success');
-            return newStudent;
-        } else {
-            throw new Error(response.data.message || 'Errore nella creazione dello studente');
+            
+            showNotification(errorMessage, 'error');
+            throw error; // Rilanciamo l'errore per gestirlo nel componente
         }
-    } catch (error) {
-        console.error('Error creating student:', error);
-        const errorMessage = error.response?.data?.error?.message || 
-                           error.message || 
-                           'Errore nella creazione dello studente';
-        dispatch({
-            type: STUDENT_ACTIONS.SET_ERROR,
-            payload: errorMessage
-        });
-        showNotification(errorMessage, 'error');
-        throw error;
-    }
-};
+    };
 
     // Aggiorna studente esistente
     const updateStudent = async (studentId, updateData) => {
@@ -344,28 +411,51 @@ const createStudent = async (studentData) => {
 
     // Recupera studenti non assegnati
     const fetchUnassignedStudents = async (schoolId) => {
-        try {
-            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+    try {
+        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+        
+        console.log('Fetching unassigned students for school:', schoolId);
+        
+        const response = await axiosInstance.get(`/students/unassigned/${schoolId}`);
+        
+        console.log('Unassigned students response:', response.data);
+
+        if (response.data.status === 'success') {
+            const students = response.data.data?.students || [];
             
-            const response = await axiosInstance.get(`/students/unassigned/${schoolId}`);
-            
-            if (response.data.status === 'success') {
-                const students = response.data.data?.students || [];
-                dispatch({
-                    type: STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS,
-                    payload: students
-                });
-            }
-        } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || 
-                               'Errore nel caricamento degli studenti non assegnati';
+            // Dispatch per aggiornare lo stato
             dispatch({
-                type: STUDENT_ACTIONS.SET_ERROR,
-                payload: errorMessage
+                type: STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS,
+                payload: students
             });
-            showNotification(errorMessage, 'error');
+
+            // Normalizza i dati prima di restituirli
+            const normalizedStudents = students.map(student => normalizeStudent(student))
+                                             .filter(student => student !== null);
+            
+            return normalizedStudents; // Ritorna i dati normalizzati
+        } else {
+            throw new Error(response.data.message || 'Errore nel recupero degli studenti non assegnati');
         }
-    };
+    } catch (error) {
+        console.error('Error fetching unassigned students:', error);
+        const errorMessage = error.response?.data?.error?.message || 
+                           error.message || 
+                           'Errore nel caricamento degli studenti non assegnati';
+        
+        dispatch({
+            type: STUDENT_ACTIONS.SET_ERROR,
+            payload: errorMessage
+        });
+        
+        showNotification(errorMessage, 'error');
+        
+        // Ritorna un array vuoto in caso di errore
+        return [];
+    } finally {
+        // Non settiamo loading a false qui perché viene gestito dal reducer
+    }
+};
     
     // Assegnazione batch di studenti
     const batchAssignStudents = async (studentIds, classId, academicYear) => {

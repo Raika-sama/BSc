@@ -2,14 +2,12 @@
 
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
+const mongoose = require('mongoose');
 
 /**
  * Validazioni per le operazioni sugli studenti
  */
 const studentValidation = {
-    /**
-     * Valida i dati per la creazione di uno studente
-     */
     validateCreate: (req, res, next) => {
         try {
             const {
@@ -19,13 +17,20 @@ const studentValidation = {
                 dateOfBirth,
                 fiscalCode,
                 email,
+                parentEmail,
                 schoolId,
-                currentYear
+                currentYear,
+                mainTeacher,
+                teachers,
+                status,
+                needsClassAssignment,
+                isActive,
+                specialNeeds
             } = req.body;
 
             const errors = [];
 
-            // Validazione campi obbligatori
+            // Validazione campi obbligatori base
             if (!firstName?.trim()) errors.push('Nome richiesto');
             if (!lastName?.trim()) errors.push('Cognome richiesto');
             if (!['M', 'F'].includes(gender)) errors.push('Genere non valido');
@@ -34,12 +39,17 @@ const studentValidation = {
             if (!schoolId) errors.push('Scuola richiesta');
             if (!currentYear) errors.push('Anno corrente richiesto');
 
-            // Validazione formato email
+            // Validazione formato email principale
             if (email && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
                 errors.push('Formato email non valido');
             }
 
-            // Validazione codice fiscale
+            // Validazione email genitore se presente
+            if (parentEmail?.trim() && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(parentEmail)) {
+                errors.push('Formato email genitore non valido');
+            }
+
+            // Validazione codice fiscale se presente
             if (fiscalCode?.trim() && !/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(fiscalCode)) {
                 errors.push('Formato codice fiscale non valido');
             }
@@ -51,6 +61,39 @@ const studentValidation = {
                 errors.push('Data di nascita non valida');
             }
 
+            // Validazione mainTeacher se presente
+            if (mainTeacher && !mongoose.Types.ObjectId.isValid(mainTeacher)) {
+                errors.push('ID docente principale non valido');
+            }
+
+            // Validazione array teachers se presente
+            if (teachers) {
+                if (!Array.isArray(teachers)) {
+                    errors.push('Il campo teachers deve essere un array');
+                } else {
+                    const invalidTeachers = teachers.filter(id => !mongoose.Types.ObjectId.isValid(id));
+                    if (invalidTeachers.length > 0) {
+                        errors.push('ID docenti non validi');
+                    }
+                }
+            }
+
+            // Validazione status se presente
+            if (status && !['pending', 'active', 'inactive', 'transferred', 'graduated'].includes(status)) {
+                errors.push('Stato non valido');
+            }
+
+            // Validazione campi booleani
+            if (needsClassAssignment !== undefined && typeof needsClassAssignment !== 'boolean') {
+                errors.push('Il campo needsClassAssignment deve essere un booleano');
+            }
+            if (isActive !== undefined && typeof isActive !== 'boolean') {
+                errors.push('Il campo isActive deve essere un booleano');
+            }
+            if (specialNeeds !== undefined && typeof specialNeeds !== 'boolean') {
+                errors.push('Il campo specialNeeds deve essere un booleano');
+            }
+
             if (errors.length > 0) {
                 throw createError(
                     ErrorTypes.VALIDATION.BAD_REQUEST,
@@ -58,6 +101,12 @@ const studentValidation = {
                     { details: errors }
                 );
             }
+
+            // Log dei dati validati
+            logger.debug('Validated student data:', {
+                ...req.body,
+                email: '***' // Nascondi email per privacy nei log
+            });
 
             next();
         } catch (error) {
@@ -72,31 +121,70 @@ const studentValidation = {
         try {
             const {
                 email,
+                parentEmail,
                 fiscalCode,
                 currentYear,
-                gender
+                gender,
+                mainTeacher,
+                teachers,
+                status,
+                needsClassAssignment,
+                isActive,
+                specialNeeds
             } = req.body;
 
             const errors = [];
 
-            // Validazione formato email se presente
+            // Validazioni come in validateCreate ma solo per i campi presenti
             if (email && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
                 errors.push('Formato email non valido');
             }
 
-            // Validazione codice fiscale se presente
+            if (parentEmail?.trim() && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(parentEmail)) {
+                errors.push('Formato email genitore non valido');
+            }
+
             if (fiscalCode && !/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(fiscalCode)) {
                 errors.push('Formato codice fiscale non valido');
             }
 
-            // Validazione genere se presente
             if (gender && !['M', 'F'].includes(gender)) {
                 errors.push('Genere non valido');
             }
 
-            // Validazione anno corrente se presente
             if (currentYear && (currentYear < 1 || currentYear > 5)) {
                 errors.push('Anno corrente non valido');
+            }
+
+            if (mainTeacher && !mongoose.Types.ObjectId.isValid(mainTeacher)) {
+                errors.push('ID docente principale non valido');
+            }
+
+            if (teachers !== undefined) {
+                if (!Array.isArray(teachers)) {
+                    errors.push('Il campo teachers deve essere un array');
+                } else {
+                    const invalidTeachers = teachers.filter(id => !mongoose.Types.ObjectId.isValid(id));
+                    if (invalidTeachers.length > 0) {
+                        errors.push('ID docenti non validi');
+                    }
+                }
+            }
+
+            if (status && !['pending', 'active', 'inactive', 'transferred', 'graduated'].includes(status)) {
+                errors.push('Stato non valido');
+            }
+
+            if (needsClassAssignment !== undefined && typeof needsClassAssignment !== 'boolean') {
+                errors.push('Il campo needsClassAssignment deve essere un booleano');
+            }
+
+            if (isActive !== undefined && typeof isActive !== 'boolean') {
+                errors.push('Il campo isActive deve essere un booleano');
+            }
+
+            if (specialNeeds !== undefined && typeof specialNeeds !== 'boolean') {
+                errors.push('Il campo specialNeeds deve essere un booleano');
             }
 
             if (errors.length > 0) {
