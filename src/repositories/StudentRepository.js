@@ -60,29 +60,38 @@ class StudentRepository extends BaseRepository {
         }
     }
 
-    async getUnassignedStudents(req, res, next) {
+     /**
+     * Trova studenti non assegnati ad una classe per una specifica scuola
+     * @param {string} schoolId - ID della scuola
+     * @param {Object} options - Opzioni di ricerca (es: filtri per nome)
+     * @returns {Promise<Array>} Lista degli studenti non assegnati
+     */
+     async findUnassignedStudents(schoolId, options = {}) {
         try {
-            const { schoolId } = req.params;
-            const { search } = req.query;
-    
-            logger.debug('Getting unassigned students:', { 
-                schoolId, 
-                search,
-                user: req.user?.id
-            });
-    
-            const students = await this.repository.findUnassignedStudents(
+            const query = {
                 schoolId,
-                { name: search }
-            );
+                needsClassAssignment: true,
+                isActive: true
+            };
     
-            this.sendResponse(res, { 
-                students,
-                count: students.length
+            // Se c'è un termine di ricerca per nome
+            if (options.name) {
+                query.$or = [
+                    { firstName: { $regex: options.name, $options: 'i' } },
+                    { lastName: { $regex: options.name, $options: 'i' } }
+                ];
+            }
+    
+            return await this.findWithDetails(query, {
+                sort: { createdAt: -1 }
             });
         } catch (error) {
-            logger.error('Error getting unassigned students:', error);
-            next(error);
+            logger.error('Error in findUnassignedStudents:', {
+                error,
+                schoolId,
+                options
+            });
+            throw error;
         }
     }
     

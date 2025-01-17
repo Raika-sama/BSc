@@ -9,6 +9,7 @@ import ClassTests from '../components/classes/ClassTests';        // Nuovo compo
 import SchoolWizard from '../components/school/wizard/SchoolWizard';
 import UsersManagement from '../components/school/UsersManagement'; // Aggiungi questo import
 import StudentList from '../components/students/StudentList'; // Aggiungi questo import
+import ClassPopulate from '../components/classes/ClassPopulate';    // Aggiungi questo import
 
 
 // Importa le icone da Material-UI
@@ -89,6 +90,13 @@ export const adminRoutes = [
         element: ClassTests,
         title: 'Gestione Test Classe',
         icon: TestIcon,
+        showInMenu: false
+    },
+    {
+        path: 'classes/:classId/populate',    // Aggiungi questa rotta
+        element: ClassPopulate,
+        title: 'Popola Classe',
+        icon: ClassIcon,
         showInMenu: false
     },
     {

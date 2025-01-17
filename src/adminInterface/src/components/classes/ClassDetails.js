@@ -16,6 +16,7 @@ import QuizIcon from '@mui/icons-material/Quiz';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import GroupAddIcon from '@mui/icons-material/GroupAdd'; // Aggiungi questo import
 
 const ClassDetails = () => {
    const { classId } = useParams();
@@ -73,6 +74,14 @@ const ClassDetails = () => {
                    >
                        Indietro
                    </Button>
+                   <Button
+                        variant="contained"
+                        startIcon={<GroupAddIcon />}
+                        onClick={() => navigate(`/admin/classes/${classId}/populate`)}
+                        sx={{ mr: 2 }}
+                    >
+                        Popola Classe
+                    </Button>
                    <Button
                        variant="contained"
                        startIcon={<QuizIcon />}
