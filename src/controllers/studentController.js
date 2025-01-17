@@ -306,6 +306,65 @@ class StudentController extends BaseController {
             next(error);
         }
     }
+
+    async getUnassignedStudents(req, res, next) {
+        try {
+            const { schoolId } = req.params;
+            const { search } = req.query;
+    
+            logger.debug('Getting unassigned students:', { 
+                schoolId, 
+                search,
+                user: req.user?.id
+            });
+    
+            const students = await this.repository.findUnassignedStudents(
+                schoolId,
+                { name: search }
+            );
+    
+            this.sendResponse(res, { 
+                students,
+                count: students.length
+            });
+        } catch (error) {
+            logger.error('Error getting unassigned students:', error);
+            next(error);
+        }
+    }
+    
+    async batchAssignToClass(req, res, next) {
+        try {
+            const { studentIds, classId, academicYear } = req.body;
+    
+            if (!studentIds?.length || !classId || !academicYear) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Dati mancanti per l\'assegnazione'
+                );
+            }
+    
+            logger.debug('Batch assigning students to class:', {
+                studentIds,
+                classId,
+                academicYear,
+                user: req.user?.id
+            });
+    
+            const result = await this.repository.batchAssignToClass(
+                studentIds,
+                { classId, academicYear }
+            );
+    
+            this.sendResponse(res, {
+                message: 'Studenti assegnati con successo',
+                modifiedCount: result.modifiedCount
+            });
+        } catch (error) {
+            logger.error('Error in batch assigning students:', error);
+            next(error);
+        }
+    }
 }
 
 module.exports = new StudentController();

@@ -70,12 +70,12 @@ const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
         const errors = [];
         if (!formData.firstName) errors.push('Nome richiesto');
         if (!formData.lastName) errors.push('Cognome richiesto');
-        if (!formData.fiscalCode) errors.push('Codice fiscale richiesto');
         if (!formData.gender) errors.push('Genere richiesto');
         if (!formData.dateOfBirth) errors.push('Data di nascita richiesta');
         if (!formData.email) errors.push('Email richiesta');
         if (!formData.schoolId) errors.push('Scuola richiesta');
         
+            // Validazione codice fiscale solo se presente
         if (formData.fiscalCode && !/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(formData.fiscalCode)) {
             errors.push('Formato codice fiscale non valido');
         }
@@ -89,7 +89,8 @@ const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+        console.log("Dati che sto per inviare:", formData);
+
         const errors = validateForm();
         if (errors.length > 0) {
             setError(errors.join(', '));
@@ -160,8 +161,8 @@ const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
                                 name="fiscalCode"
                                 value={formData.fiscalCode}
                                 onChange={handleChange}
-                                required
                                 inputProps={{ style: { textTransform: 'uppercase' } }}
+                                helperText="Opzionale"
                             />
                         </Grid>
                         
@@ -245,7 +246,7 @@ const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
                                     disabled={!!schoolId}
                                 >
                                     {schools.map(school => (
-                                        <MenuItem key={school.id} value={school.id}>
+                                        <MenuItem key={school._id} value={school._id}>
                                             {school.name}
                                         </MenuItem>
                                     ))}

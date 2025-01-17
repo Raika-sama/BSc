@@ -13,7 +13,14 @@ import {
     DialogActions,
     Tooltip,
     TextField,
-    Alert
+    Alert,
+    Tabs,
+    Tab,
+    
+    FormControl,    // Aggiungi questo
+    InputLabel,     // Aggiungi questo
+    Select,         // Aggiungi questo
+    MenuItem        // Aggiungi questo
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -23,6 +30,9 @@ import SearchIcon from '@mui/icons-material/Search';
 import { useStudent } from '../../context/StudentContext';
 import { useNotification } from '../../context/NotificationContext';
 import StudentForm from './StudentForm';
+import { useClass } from '../../context/ClassContext';
+import { useSchool } from '../../context/SchoolContext';
+
 
 const StudentList = () => {
     const { 
@@ -31,7 +41,8 @@ const StudentList = () => {
         error, 
         totalStudents,
         fetchStudents,
-        deleteStudent 
+        deleteStudent,
+        fetchUnassignedStudents,
     } = useStudent();
 
     const { showNotification } = useNotification();
@@ -42,11 +53,74 @@ const StudentList = () => {
     const [page, setPage] = useState(0);
     const [formOpen, setFormOpen] = useState(false);
     const [editingStudent, setEditingStudent] = useState(null);
-
+    const [viewMode, setViewMode] = useState('all'); // 'all' | 'unassigned'
+    const { classes, fetchClasses } = useClass(); // assumo che tu abbia un ClassContext
+    const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+    const [selectedStudents, setSelectedStudents] = useState([]);
+    const [selectedClass, setSelectedClass] = useState('');
+    const { currentSchool } = useSchool();
 
     useEffect(() => {
-        fetchStudents();
-    }, []);
+        if (viewMode === 'all') {
+            fetchStudents();
+        } else if (viewMode === 'unassigned') {
+            if (currentSchool?.id) {
+                fetchUnassignedStudents(currentSchool.id);
+            } else {
+                showNotification('Nessuna scuola selezionata', 'error');
+            }
+        }
+    }, [viewMode, currentSchool]);
+
+ // Handler per il cambio di tab
+ const handleViewModeChange = (event, newValue) => {
+    setViewMode(newValue);
+    setSelectedStudents([]); // Reset selezione quando cambia vista
+};
+
+// Handler per la selezione multipla
+const handleSelectionChange = (newSelection) => {
+    setSelectedStudents(newSelection);
+};
+
+// Handler per aprire il dialog di assegnazione
+const handleBatchAssign = () => {
+    fetchClasses(); // Carica le classi disponibili
+    setAssignDialogOpen(true);
+};
+
+// Handler per l'assegnazione effettiva
+const handleAssignConfirm = async () => {
+    try {
+        if (!selectedClass) {
+            showNotification('Seleziona una classe', 'error');
+            return;
+        }
+
+        await batchAssignStudents(
+            selectedStudents, 
+            selectedClass,
+            getCurrentAcademicYear() // funzione helper da implementare
+        );
+
+        setAssignDialogOpen(false);
+        setSelectedStudents([]);
+        setSelectedClass('');
+        
+        // Ricarica la lista degli studenti non assegnati
+        if (viewMode === 'unassigned') {
+            fetchUnassignedStudents(schoolId);
+        }
+    } catch (error) {
+        console.error('Error assigning students:', error);
+    }
+};
+
+// Helper per ottenere l'anno accademico corrente
+const getCurrentAcademicYear = () => {
+    const currentYear = new Date().getFullYear();
+    return `${currentYear}/${currentYear + 1}`;
+};
 
     const handleDeleteClick = (student) => {
         setSelectedStudent(student);
@@ -98,6 +172,9 @@ const StudentList = () => {
         setEditingStudent(null);
     };
 
+
+
+
     const columns = [
         { 
             field: 'fiscalCode', 
@@ -108,7 +185,13 @@ const StudentList = () => {
             field: 'lastName', 
             headerName: 'Cognome', 
             width: 150,
-            valueGetter: (params) => params.row.lastName?.toUpperCase()
+            valueGetter: (params) => {
+                if (!params.row) {
+                    console.warn('Row data is missing:', params);
+                    return '';
+                }
+                return params.row.lastName?.toUpperCase() || '';
+            }
         },
         { 
             field: 'firstName', 
@@ -190,20 +273,39 @@ const StudentList = () => {
 
     return (
         <Box p={3}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Typography variant="h4" component="h1">
-                    Gestione Studenti
-                </Typography>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<AddIcon />}
-                    onClick={handleCreateClick}
+            {/* Header con Tabs */}
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="h4" component="h1">
+                        Gestione Studenti
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<AddIcon />}
+                        onClick={handleCreateClick}
+                    >
+                        Nuovo Studente
+                    </Button>
+                </Box>
+                <Tabs
+                    value={viewMode}
+                    onChange={(e, newValue) => setViewMode(newValue)}
+                    sx={{ mt: 2 }}
                 >
-                    Nuovo Studente
-                </Button>
+                    <Tab 
+                        label="Tutti gli Studenti" 
+                        value="all"
+                        sx={{ textTransform: 'none' }}
+                    />
+                    <Tab 
+                        label="Da Assegnare" 
+                        value="unassigned"
+                        sx={{ textTransform: 'none' }}
+                    />
+                </Tabs>
             </Box>
-
+    
             {/* Barra di ricerca */}
             <Box display="flex" gap={2} mb={3}>
                 <TextField
@@ -223,16 +325,17 @@ const StudentList = () => {
                     Cerca
                 </Button>
             </Box>
-
+    
             {error && (
                 <Alert severity="error" sx={{ mb: 2 }}>
                     {error}
                 </Alert>
             )}
-
+    
+            {/* DataGrid con gestione selezione per studenti non assegnati */}
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
                 <DataGrid
-                    rows={students}
+                    rows={students || []}
                     columns={columns}
                     pagination
                     pageSize={pageSize}
@@ -245,6 +348,8 @@ const StudentList = () => {
                     autoHeight
                     disableSelectionOnClick
                     getRowId={(row) => row.id}
+                    checkboxSelection={viewMode === 'unassigned'}
+                    onSelectionModelChange={viewMode === 'unassigned' ? handleSelectionChange : undefined}
                     sx={{
                         '& .MuiDataGrid-cell:focus': {
                             outline: 'none'
@@ -252,7 +357,69 @@ const StudentList = () => {
                     }}
                 />
             </Paper>
+    
+            {/* Azioni Batch per studenti non assegnati */}
+            {viewMode === 'unassigned' && selectedStudents.length > 0 && (
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                        {selectedStudents.length} studenti selezionati
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        onClick={handleBatchAssign}
+                        sx={{ mr: 1 }}
+                    >
+                        Assegna a Classe
+                    </Button>
+                </Box>
+            )}
+    
 
+      {/* Dialog per assegnazione batch */}
+      <Dialog
+            open={assignDialogOpen}
+            onClose={() => setAssignDialogOpen(false)}
+            maxWidth="sm"
+            fullWidth
+        >
+            <DialogTitle>Assegna studenti alla classe</DialogTitle>
+            <DialogContent>
+                <Box sx={{ my: 2 }}>
+                    <Typography gutterBottom>
+                        Seleziona la classe per {selectedStudents.length} studenti:
+                    </Typography>
+                    <FormControl fullWidth sx={{ mt: 2 }}>
+                        <InputLabel>Classe</InputLabel>
+                        <Select
+                            value={selectedClass}
+                            onChange={(e) => setSelectedClass(e.target.value)}
+                            label="Classe"
+                        >
+                            {classes.map(classItem => (
+                                <MenuItem 
+                                    key={classItem.id} 
+                                    value={classItem.id}
+                                >
+                                    {`${classItem.year}${classItem.section} - ${classItem.academicYear}`}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Box>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={() => setAssignDialogOpen(false)}>
+                    Annulla
+                </Button>
+                <Button 
+                    onClick={handleAssignConfirm}
+                    variant="contained"
+                    color="primary"
+                >
+                    Assegna
+                </Button>
+            </DialogActions>
+        </Dialog>
             {/* Dialog Conferma Eliminazione */}
             <Dialog
                 open={deleteDialogOpen}
@@ -271,12 +438,10 @@ const StudentList = () => {
                     </Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button 
-                        onClick={() => setDeleteDialogOpen(false)}
-                    >
+                    <Button onClick={() => setDeleteDialogOpen(false)}>
                         Annulla
                     </Button>
-                    <Button 
+                    <Button
                         onClick={handleDeleteConfirm}
                         color="error"
                         variant="contained"
@@ -286,13 +451,13 @@ const StudentList = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
+    
             {/* Form Creazione/Modifica */}
-            <StudentForm 
+            <StudentForm
                 open={formOpen}
                 onClose={handleFormClose}
                 student={editingStudent}
-                schoolId={null} // se necessario, passa lo schoolId per filtrare
+                schoolId={null}
             />
         </Box>
     );

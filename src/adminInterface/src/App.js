@@ -23,9 +23,10 @@ function App() {
         <Router>
             <AuthProvider>
                 <NotificationProvider>
-                    <ClassProvider>
-                        <SchoolProvider>
+                       
                             <UserProvider>
+                            <ClassProvider>
+                                <SchoolProvider>
                                 <StudentProvider>  {/* Aggiungi questo provider */}
                                     <Routes>
                                         <Route path="/login" element={<Login />} />
@@ -53,9 +54,10 @@ function App() {
                                         />
                                     </Routes>
                                 </StudentProvider>
+                                </SchoolProvider>
+                                </ClassProvider> 
                             </UserProvider>
-                        </SchoolProvider>
-                    </ClassProvider>    
+                        
                 </NotificationProvider>
             </AuthProvider>
         </Router>

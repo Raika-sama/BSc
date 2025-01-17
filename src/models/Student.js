@@ -96,17 +96,18 @@ const studentSchema = new mongoose.Schema({
     },
     fiscalCode: {
         type: String,
-        required: [true, 'Il codice fiscale è obbligatorio'],
+        required: false,
         unique: true,
+        sparse: true,
         uppercase: true,
         trim: true,
         validate: {
             validator: function(v) {
-                return /^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(v);
+                return !v || /^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(v);
             },
             message: props => `${props.value} non è un codice fiscale valido`
         },
-        description: 'Codice fiscale dello studente'
+        description: 'Codice fiscale dello studente (opzionale)'
     },
 
     // Contatti
@@ -153,7 +154,7 @@ const studentSchema = new mongoose.Schema({
         type: String,
         validate: {
             validator: function(v) {
-                return /^[A-Z]$/.test(v);
+                return !v || /^[A-Z]$/.test(v);
             },
             message: props => `${props.value} non è una sezione valida`
         },
@@ -191,8 +192,8 @@ const studentSchema = new mongoose.Schema({
     // Gestione stato e note
     status: {
         type: String,
-        enum: ['active', 'inactive', 'transferred', 'graduated'],
-        default: 'active',
+        enum: ['pending', 'active', 'inactive', 'transferred', 'graduated'],
+        default: 'pending',
         required: true,
         description: 'Stato corrente dello studente nel sistema'
     },
@@ -204,7 +205,7 @@ const studentSchema = new mongoose.Schema({
     },
     needsClassAssignment: {
         type: Boolean,
-        default: false,
+        default: true,
         description: 'Flag per indicare se lo studente necessita di assegnazione a una classe'
     },
 
@@ -227,30 +228,19 @@ const studentSchema = new mongoose.Schema({
         description: 'Flag per indicare eventuali necessità speciali'
     }
 }, {
-    timestamps: true, // Aggiunge automaticamente createdAt e updatedAt
-    collection: 'students' // Nome esplicito della collezione
+    timestamps: true,
+    collection: 'students'
 });
 
 // Indici per ottimizzare le query più comuni
 studentSchema.index({ schoolId: 1, currentYear: 1 });
 studentSchema.index({ classId: 1 });
 studentSchema.index({ email: 1 }, { unique: true });
-studentSchema.index({ fiscalCode: 1 }, { unique: true });
+studentSchema.index({ fiscalCode: 1 }, { unique: true, sparse: true });
 studentSchema.index({ lastName: 1, firstName: 1 });
 studentSchema.index({ 'teachers': 1 });
 studentSchema.index({ status: 1, needsClassAssignment: 1 });
-
-// Middleware pre-delete per gestire la cancellazione cascade
-studentSchema.pre('deleteMany', async function(next) {
-    try {
-        const filter = this.getFilter();
-        // TODO: Implementare pulizia dati correlati quando verranno aggiunti
-        // (es: risultati dei test, documenti allegati, etc.)
-        next();
-    } catch (error) {
-        next(error);
-    }
-});
+studentSchema.index({ createdAt: -1 }); // Per ordinare gli studenti non assegnati per data di creazione
 
 // Virtual per il nome completo
 studentSchema.virtual('fullName').get(function() {
@@ -277,6 +267,18 @@ studentSchema.methods.canBeAssignedToClass = async function(classId) {
     
     return currentStudentsCount < targetClass.capacity;
 };
+
+// Middleware pre-delete per gestire la cancellazione cascade
+studentSchema.pre('deleteMany', async function(next) {
+    try {
+        const filter = this.getFilter();
+        // TODO: Implementare pulizia dati correlati quando verranno aggiunti
+        // (es: risultati dei test, documenti allegati, etc.)
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
 
 // Configurazione per JSON output
 studentSchema.set('toJSON', {

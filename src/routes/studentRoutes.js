@@ -1,11 +1,10 @@
-// src/routes/studentRoutes.js
-
 const express = require('express');
 const router = express.Router();
 const { student: studentController } = require('../controllers');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
 const studentValidation = require('../middleware/studentValidation');
 const logger = require('../utils/errors/logger/logger');
+const { ErrorTypes, createError } = require('../utils/errors/errorTypes');  // Aggiusta il percorso in base alla tua struttura
 
 // Middleware di logging
 router.use((req, res, next) => {
@@ -38,6 +37,18 @@ router.get('/class/:classId',
     restrictTo('teacher', 'admin'),
     studentController.getStudentsByClass
 );
+
+// Nuove route per gestione studenti non assegnati
+    router.get('/unassigned/:schoolId',
+        restrictTo('admin'),
+        studentController.getUnassignedStudents
+        );
+
+    router.post('/batch-assign',
+        restrictTo('admin'),
+    studentValidation.validateBatchAssignment,
+    studentController.batchAssignToClass
+    );
 
 // Route base CRUD con validazioni
 router.route('/')
@@ -113,20 +124,24 @@ router.use((err, req, res, next) => {
 
 module.exports = router;
 
+/* 
+Riepilogo Routes:
 
-// GET    /api/v1/students              - Lista studenti (teacher/admin)
-// POST   /api/v1/students              - Crea studente (admin)
-// GET    /api/v1/students/:id          - Dettaglio studente (teacher/admin)
-// PUT    /api/v1/students/:id          - Modifica studente (admin)
-// DELETE /api/v1/students/:id          - Elimina studente (admin)
-// GET    /api/v1/students/search       - Ricerca studenti (teacher/admin)
-// GET    /api/v1/students/my-students  - Studenti del docente (teacher/admin)
-// GET    /api/v1/students/class/:id    - Studenti per classe (teacher/admin)
-// POST   /api/v1/students/:id/assign-class     - Assegna a classe (admin)
-// POST   /api/v1/students/:id/remove-from-class - Rimuove da classe (admin)
+GET    /api/v1/students                    - Lista studenti (teacher/admin)
+POST   /api/v1/students                    - Crea studente (admin)
+GET    /api/v1/students/:id                - Dettaglio studente (teacher/admin)
+PUT    /api/v1/students/:id                - Modifica studente (admin)
+DELETE /api/v1/students/:id                - Elimina studente (admin)
+GET    /api/v1/students/search             - Ricerca studenti (teacher/admin)
+GET    /api/v1/students/my-students        - Studenti del docente (teacher/admin)
+GET    /api/v1/students/class/:id          - Studenti per classe (teacher/admin)
+POST   /api/v1/students/:id/assign-class   - Assegna a classe (admin)
+POST   /api/v1/students/:id/remove-from-class - Rimuove da classe (admin)
+GET    /api/v1/students/unassigned/:schoolId - Lista studenti non assegnati (admin) [NUOVO]
+POST   /api/v1/students/batch-assign       - Assegnazione multipla a classe (admin) [NUOVO]
 
-// Controllo Accessi:
-
-// Admin: accesso completo
-// Teacher: solo lettura e propri studenti
-// Altri: nessun accesso
+Controllo Accessi:
+- Admin: accesso completo
+- Teacher: solo lettura e propri studenti
+- Altri: nessun accesso
+*/

@@ -15,7 +15,9 @@ const STUDENT_ACTIONS = {
     SET_SELECTED_STUDENT: 'SET_SELECTED_STUDENT',
     ADD_STUDENT: 'ADD_STUDENT',
     UPDATE_STUDENT: 'UPDATE_STUDENT',
-    DELETE_STUDENT: 'DELETE_STUDENT'
+    DELETE_STUDENT: 'DELETE_STUDENT',
+    SET_UNASSIGNED_STUDENTS: 'SET_UNASSIGNED_STUDENTS',
+    BATCH_ASSIGN_STUDENTS: 'BATCH_ASSIGN_STUDENTS'
 };
 
 // Stato iniziale
@@ -83,7 +85,23 @@ const studentReducer = (state, action) => {
             };
         default:
             return state;
-    }
+        case STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS:
+            return {
+                ...state,
+                students: action.payload,
+                loading: false
+            };
+        case STUDENT_ACTIONS.BATCH_ASSIGN_STUDENTS:
+            return {
+                ...state,
+                students: state.students.map(student => 
+                    action.payload.studentIds.includes(student.id) 
+                        ? { ...student, classId: action.payload.classId }
+                        : student
+                ),
+                loading: false
+            };
+            }
 };
 
 export const StudentProvider = ({ children }) => {
@@ -98,6 +116,10 @@ export const StudentProvider = ({ children }) => {
             const queryParams = new URLSearchParams(filters);
             const response = await axiosInstance.get(`/students?${queryParams}`);
 
+                // Aggiungiamo console.log per debug
+                console.log('API Response:', response.data);
+                console.log('Students data:', response.data.data.students);
+
             if (response.data.status === 'success') {
                 dispatch({
                     type: STUDENT_ACTIONS.SET_STUDENTS,
@@ -108,6 +130,8 @@ export const StudentProvider = ({ children }) => {
                 });
             }
         } catch (error) {
+            console.error('Error in fetchStudents:', error);
+
             const errorMessage = error.response?.data?.error?.message || 
                                'Errore nel caricamento degli studenti';
             dispatch({
@@ -250,6 +274,61 @@ export const StudentProvider = ({ children }) => {
         }
     };
 
+    const fetchUnassignedStudents = async (schoolId) => {
+        try {
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+            
+            const response = await axiosInstance.get(`/students/unassigned/${schoolId}`);
+            
+            if (response.data.status === 'success') {
+                dispatch({
+                    type: STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS,
+                    payload: response.data.data.students
+                });
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.error?.message || 
+                               'Errore nel caricamento degli studenti non assegnati';
+            dispatch({
+                type: STUDENT_ACTIONS.SET_ERROR,
+                payload: errorMessage
+            });
+            showNotification(errorMessage, 'error');
+        }
+    };
+    
+    const batchAssignStudents = async (studentIds, classId, academicYear) => {
+        try {
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+            
+            const response = await axiosInstance.post('/students/batch-assign', {
+                studentIds,
+                classId,
+                academicYear
+            });
+    
+            if (response.data.status === 'success') {
+                dispatch({
+                    type: STUDENT_ACTIONS.BATCH_ASSIGN_STUDENTS,
+                    payload: {
+                        studentIds,
+                        classId
+                    }
+                });
+                showNotification('Studenti assegnati con successo', 'success');
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.error?.message || 
+                               'Errore nell\'assegnazione degli studenti';
+            dispatch({
+                type: STUDENT_ACTIONS.SET_ERROR,
+                payload: errorMessage
+            });
+            showNotification(errorMessage, 'error');
+            throw error;
+        }
+    };
+
     // Reset errori
     const clearError = () => {
         dispatch({ type: STUDENT_ACTIONS.CLEAR_ERROR });
@@ -264,7 +343,9 @@ export const StudentProvider = ({ children }) => {
             updateStudent,
             deleteStudent,
             searchStudents,
-            clearError
+            clearError,
+            fetchUnassignedStudents,  // Aggiungi questa
+            batchAssignStudents      // Aggiungi questa
         }}>
             {children}
         </StudentContext.Provider>

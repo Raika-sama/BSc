@@ -159,7 +159,42 @@ const studentValidation = {
         } catch (error) {
             next(error);
         }
+    },
+
+    validateBatchAssignment: (req, res, next) => {
+        try {
+            const { studentIds, classId, academicYear } = req.body;
+    
+            const errors = [];
+    
+            if (!Array.isArray(studentIds) || studentIds.length === 0) {
+                errors.push('Lista studenti richiesta');
+            }
+    
+            if (!classId?.trim()) {
+                errors.push('ID classe richiesto');
+            }
+    
+            if (!academicYear?.trim()) {
+                errors.push('Anno accademico richiesto');
+            } else if (!/^\d{4}\/\d{4}$/.test(academicYear)) {
+                errors.push('Formato anno accademico non valido (YYYY/YYYY)');
+            }
+    
+            if (errors.length > 0) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Errori di validazione',
+                    { details: errors }
+                );
+            }
+    
+            next();
+        } catch (error) {
+            next(error);
+        }
     }
+    
 };
 
 module.exports = studentValidation;
