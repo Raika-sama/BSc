@@ -100,13 +100,29 @@ router.use((err, req, res, next) => {
     });
 
     // Gestione errori di validazione
-    if (err.code === ErrorTypes.VALIDATION.BAD_REQUEST.code) {
+    if (err.code) {
+        // Gestione errori con codice
+        if (err.code === ErrorTypes.VALIDATION.BAD_REQUEST.code) {
+            console.log("Struttura errore:", JSON.stringify(err, null, 2));
+
+            return res.status(400).json({
+                status: 'error',
+                error: {
+                    code: err.code,
+                    message: err.message,
+                    details: err.metadata?.details
+                }
+            });
+        }
+    } else if (err.message) {
+        // Gestione errori senza codice ma con messaggio
+        console.log("Struttura errore:", JSON.stringify(err, null, 2));
+
         return res.status(400).json({
             status: 'error',
             error: {
-                code: err.code,
                 message: err.message,
-                details: err.metadata?.details
+                details: err.metadata || {}
             }
         });
     }

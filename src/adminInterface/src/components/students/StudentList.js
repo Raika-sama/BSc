@@ -178,6 +178,24 @@ const StudentList = () => {
             }
         },
         {
+            field: 'mainTeacher',
+            headerName: 'Docente Principale',
+            width: 180,
+            renderCell: (params) => params.row?.mainTeacher?.name || 'Non assegnato'
+        },
+        {
+            field: 'specialNeeds',
+            headerName: 'Necessità Speciali',
+            width: 150,
+            renderCell: (params) => (
+                <Chip
+                    label={params.row?.specialNeeds ? 'Sì' : 'No'}
+                    color={params.row?.specialNeeds ? 'warning' : 'default'}
+                    size="small"
+                />
+            )
+        },
+        {
             field: 'actions',
             headerName: 'Azioni',
             width: 160,
@@ -448,6 +466,24 @@ const StudentList = () => {
                                         size="small"
                                     />
                                 </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Docente Principale
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {selectedStudentDetails.mainTeacher?.name || 'Non assegnato'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Necessità Speciali
+                                    </Typography>
+                                    <Chip
+                                        label={selectedStudentDetails.specialNeeds ? 'Sì' : 'No'}
+                                        color={selectedStudentDetails.specialNeeds ? 'warning' : 'default'}
+                                        size="small"
+                                    />
+                            </Grid>
                             </Grid>
                         </Box>
                     )}

@@ -15,14 +15,18 @@ import {
     MenuItem,
     CircularProgress,
     Alert,
-    Box
+    Box,
+    FormControlLabel,
+    Switch
 } from '@mui/material';
 import { useStudent } from '../../context/StudentContext';
 import { useSchool } from '../../context/SchoolContext';
+import { useUser } from '../../context/UserContext';
 
-const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
+const StudentForm = ({ open, onClose, student, onSubmit }) => {
     const { createStudent, updateStudent } = useStudent();
-    const { schools, fetchSchools } = useSchool();
+    const { schools, fetchSchools, selectedSchool } = useSchool();
+    const { users, getUsers } = useUser();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -33,14 +37,28 @@ const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
         gender: '',
         dateOfBirth: '',
         email: '',
-        schoolId: schoolId || '',
+        schoolId: selectedSchool?._id || '',  // Qui usiamo selectedSchool
         currentYear: 1,
-        parentEmail: ''
+        parentEmail: '',
+        mainTeacher: '',
+        teachers: [],
+        specialNeeds: false,
+        status: 'pending',
+        needsClassAssignment: true,
+        isActive: true
     });
+
+    // Add form open tracking
+    useEffect(() => {
+        console.log('Form opened, initial values:', formData);
+    }, [open]);
 
     useEffect(() => {
         if (schools.length === 0) {
             fetchSchools();
+        }
+        if (users.length === 0) {
+            getUsers();
         }
         
         if (student) {
@@ -53,17 +71,41 @@ const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
                 email: student.email || '',
                 schoolId: student.schoolId?._id || student.schoolId || '',
                 currentYear: student.currentYear || 1,
-                parentEmail: student.parentEmail || ''
+                parentEmail: student.parentEmail || '',
+                mainTeacher: student.mainTeacher?._id || '',
+                teachers: student.teachers?.map(t => t._id) || [],
+                specialNeeds: student.specialNeeds || false,
+                status: student.status || 'pending',
+                needsClassAssignment: student.needsClassAssignment ?? true,
+                isActive: student.isActive ?? true
             });
         }
-    }, [student, schools.length, fetchSchools]);
+    }, [student, schools.length, users.length, fetchSchools, getUsers]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        
+        // Gestione speciale per specialNeeds (Switch)
+        if (name === 'specialNeeds') {
+            setFormData(prev => ({
+                ...prev,
+                specialNeeds: e.target.checked
+            }));
+        }
+        // Gestione speciale per teachers (Select multiple)
+        else if (name === 'teachers') {
+            setFormData(prev => ({
+                ...prev,
+                teachers: Array.isArray(value) ? value : []
+            }));
+        }
+        // Gestione per tutti gli altri campi
+        else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
     };
 
     const validateForm = () => {
@@ -75,7 +117,7 @@ const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
         if (!formData.email) errors.push('Email richiesta');
         if (!formData.schoolId) errors.push('Scuola richiesta');
         
-            // Validazione codice fiscale solo se presente
+        // Validazione codice fiscale solo se presente
         if (formData.fiscalCode && !/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(formData.fiscalCode)) {
             errors.push('Formato codice fiscale non valido');
         }
@@ -84,13 +126,16 @@ const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
             errors.push('Formato email non valido');
         }
 
+        if (formData.parentEmail && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.parentEmail)) {
+            errors.push('Formato email genitore non valido');
+        }
+
         return errors;
     };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
-        // Formatta i dati prima dell'invio
+        console.log('Submit clicked, current formData:', formData);
+
         const formattedData = {
             firstName: formData.firstName.trim(),
             lastName: formData.lastName.trim(),
@@ -101,9 +146,12 @@ const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
             fiscalCode: formData.fiscalCode.trim().toUpperCase() || null,
             schoolId: formData.schoolId,
             currentYear: parseInt(formData.currentYear),
-            status: 'pending',  // Aggiungi lo status di default
-            needsClassAssignment: true,  // Aggiungi questo flag
-            isActive: true  // Aggiungi questo flag
+            mainTeacher: formData.mainTeacher || null,
+            teachers: Array.isArray(formData.teachers) ? formData.teachers : [],
+            specialNeeds: formData.specialNeeds,
+            status: 'pending',
+            needsClassAssignment: true,
+            isActive: true
         };
     
         console.log("Dati formattati da inviare:", formattedData);
@@ -131,11 +179,31 @@ const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
             setLoading(false);
         }
     };
-    
+    const handleClose = () => {
+        setFormData({
+            firstName: '',
+            lastName: '',
+            fiscalCode: '',
+            gender: '',
+            dateOfBirth: '',
+            email: '',
+            schoolId: selectedSchool?._id || '',  // Qui usiamo selectedSchool
+            currentYear: 1,
+            parentEmail: '',
+            mainTeacher: '',
+            teachers: [],
+            specialNeeds: false,
+            status: 'pending',
+            needsClassAssignment: true,
+            isActive: true
+        });
+        setError(null);
+        onClose();
+    };
     return (
         <Dialog 
             open={open} 
-            onClose={onClose}
+            onClose={handleClose}  // Qui
             maxWidth="md"
             fullWidth
         >
@@ -253,6 +321,70 @@ const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
                             </FormControl>
                         </Grid>
 
+                        <Grid item xs={12} sm={6}>
+                            <FormControl fullWidth>
+                                <InputLabel>Docente Principale</InputLabel>
+                                <Select
+                                    name="mainTeacher"
+                                    value={formData.mainTeacher}
+                                    onChange={handleChange}
+                                    label="Docente Principale"
+                                >
+                                    <MenuItem value="">Nessuno</MenuItem>
+                                    {users.map(user => (
+                                        <MenuItem key={user._id} value={user._id}>
+                                            {`${user.firstName} ${user.lastName}`}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6}>
+                            <FormControl fullWidth>
+                                <InputLabel>Docenti</InputLabel>
+                                <Select
+                                    multiple
+                                    name="teachers"
+                                    value={Array.isArray(formData.teachers) ? formData.teachers : []}
+                                    onChange={handleChange}
+                                    label="Docenti"
+                                    renderValue={(selected) => (
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                            {selected.map((value) => {
+                                                const user = users.find(u => u._id === value);
+                                                return user ? `${user.firstName} ${user.lastName}` : '';
+                                            })}
+                                        </Box>
+                                    )}
+                                >
+                                    {users.map(user => (
+                                        <MenuItem key={user._id} value={user._id}>
+                                            {`${user.firstName} ${user.lastName}`}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6}>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={formData.specialNeeds}
+                                        onChange={(e) => handleChange({
+                                            target: {
+                                                name: 'specialNeeds',
+                                                value: e.target.checked
+                                            }
+                                        })}
+                                        name="specialNeeds"
+                                    />
+                                }
+                                label="Necessità Speciali"
+                            />
+                        </Grid>
+
                         <Grid item xs={12}>
                             <FormControl fullWidth required>
                                 <InputLabel>Scuola</InputLabel>
@@ -261,8 +393,8 @@ const StudentForm = ({ open, onClose, student = null, schoolId = null }) => {
                                     value={formData.schoolId}
                                     onChange={handleChange}
                                     label="Scuola"
-                                    disabled={!!schoolId}
-                                >
+                                    disabled={!!selectedSchool?._id}  // Usa selectedSchool._id invece di schoolId
+                                    >
                                     {schools.map(school => (
                                         <MenuItem key={school._id} value={school._id}>
                                             {school.name}

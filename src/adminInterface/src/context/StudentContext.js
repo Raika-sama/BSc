@@ -22,14 +22,13 @@ const normalizeStudent = (student) => {
         status: student.status || 'pending',
         needsClassAssignment: student.needsClassAssignment ?? true,
         isActive: student.isActive ?? true,
-        // Aggiungiamo i campi che arrivano dal backend
+        specialNeeds: student.specialNeeds ?? false,
         mainTeacher: normalizeTeacher(student.mainTeacher),
         teachers: Array.isArray(student.teachers) ? 
             student.teachers.map(normalizeTeacher) : 
             []
     };
 
-    console.log('Normalized student:', normalized);
     return normalized;
 };
 
@@ -242,92 +241,85 @@ export const StudentProvider = ({ children }) => {
 
     // Crea nuovo studente
     // Modifica la funzione createStudent per validare e formattare i dati prima dell'invio
-    const createStudent = async (studentData) => {
-        try {
-            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
-            
-            // Validazione e formattazione dei dati secondo studentValidation.js
-            const formattedData = {
-                // Campi obbligatori
-                firstName: studentData.firstName?.trim(),
-                lastName: studentData.lastName?.trim(),
-                gender: studentData.gender,
-                dateOfBirth: studentData.dateOfBirth ? new Date(studentData.dateOfBirth).toISOString() : null,
-                email: studentData.email?.trim().toLowerCase(),
-                schoolId: studentData.schoolId,
-                currentYear: parseInt(studentData.currentYear),
-                
-                // Campi opzionali
-                parentEmail: studentData.parentEmail?.trim().toLowerCase() || null,
-                fiscalCode: studentData.fiscalCode?.trim().toUpperCase() || null,
-                
-                // Campi di sistema
-                status: 'pending',
-                needsClassAssignment: true,
-                isActive: true
-            };
-    
-            // Validazione locale prima dell'invio
-            const errors = [];
-            if (!formattedData.firstName) errors.push('Nome richiesto');
-            if (!formattedData.lastName) errors.push('Cognome richiesto');
-            if (!['M', 'F'].includes(formattedData.gender)) errors.push('Genere non valido');
-            if (!formattedData.dateOfBirth) errors.push('Data di nascita richiesta');
-            if (!formattedData.email) errors.push('Email richiesta');
-            if (!formattedData.schoolId) errors.push('Scuola richiesta');
-            if (!formattedData.currentYear) errors.push('Anno corrente richiesto');
-    
-            // Validazione email
-            if (formattedData.email && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formattedData.email)) {
-                errors.push('Formato email non valido');
-            }
-    
-            // Validazione codice fiscale se presente
-            if (formattedData.fiscalCode && 
-                !/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(formattedData.fiscalCode)) {
-                errors.push('Formato codice fiscale non valido');
-            }
-    
-            // Se ci sono errori, li lanciamo prima della chiamata API
-            if (errors.length > 0) {
-                throw new Error('Errori di validazione: ' + errors.join(', '));
-            }
-    
-            console.log('Creating student with data:', formattedData);
-            
-            const response = await axiosInstance.post('/students', formattedData);
-            
-            console.log('Server response:', response.data);
-    
-            if (response.data.status === 'success') {
-                const newStudent = normalizeStudent(response.data.data.student);
-                
-                dispatch({
-                    type: STUDENT_ACTIONS.ADD_STUDENT,
-                    payload: newStudent
-                });
-                
-                showNotification('Studente creato con successo', 'success');
-                return newStudent;
-            } else {
-                throw new Error(response.data.message || 'Errore nella creazione dello studente');
-            }
-        } catch (error) {
-            console.error('Error creating student:', error);
-            
-            const errorMessage = error.response?.data?.error?.message || 
-                               error.message || 
-                               'Errore nella creazione dello studente';
-            
-            dispatch({
-                type: STUDENT_ACTIONS.SET_ERROR,
-                payload: errorMessage
-            });
-            
-            showNotification(errorMessage, 'error');
-            throw error; // Rilanciamo l'errore per gestirlo nel componente
-        }
+    const normalizeStudent = (student) => {
+    if (!student) return null;
+
+    const normalized = {
+        ...student,
+        id: student._id || student.id,
+        schoolId: normalizeSchoolId(student.schoolId),
+        classId: normalizeClassId(student.classId),
+        lastName: student.lastName || '',
+        firstName: student.firstName || '',
+        fiscalCode: student.fiscalCode || '',
+        gender: student.gender || '',
+        email: student.email || '',
+        currentYear: student.currentYear || 1,
+        dateOfBirth: student.dateOfBirth || null,
+        parentEmail: student.parentEmail || '',
+        status: student.status || 'pending',
+        needsClassAssignment: student.needsClassAssignment ?? true,
+        isActive: student.isActive ?? true,
+        specialNeeds: student.specialNeeds ?? false,
+        mainTeacher: normalizeTeacher(student.mainTeacher),
+        teachers: Array.isArray(student.teachers) ? 
+            student.teachers.map(normalizeTeacher) : 
+            []
     };
+
+    return normalized;
+};
+
+const createStudent = async (studentData) => {
+    try {
+        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+        console.log('Creating student with data:', studentData);
+
+        // Formattazione dati secondo il modello
+        const formattedData = {
+            firstName: studentData.firstName?.trim(),
+            lastName: studentData.lastName?.trim(),
+            gender: studentData.gender,
+            dateOfBirth: studentData.dateOfBirth ? new Date(studentData.dateOfBirth).toISOString() : null,
+            email: studentData.email?.trim().toLowerCase(),
+            schoolId: studentData.schoolId,
+            currentYear: parseInt(studentData.currentYear),
+            parentEmail: studentData.parentEmail?.trim().toLowerCase() || null,
+            fiscalCode: studentData.fiscalCode?.trim().toUpperCase() || null,
+            mainTeacher: studentData.mainTeacher || null,
+            teachers: studentData.teachers || [],
+            specialNeeds: studentData.specialNeeds || false,
+            status: 'pending',
+            needsClassAssignment: true,
+            isActive: true
+        };
+
+        console.log('Creating student with data:', formattedData);
+        
+        const response = await axiosInstance.post('/students', formattedData);
+        
+        if (response.data.status === 'success') {
+            const newStudent = normalizeStudent(response.data.data.student);
+            dispatch({
+                type: STUDENT_ACTIONS.ADD_STUDENT,
+                payload: newStudent
+            });
+            showNotification('Studente creato con successo', 'success');
+            return newStudent;
+        }
+    } catch (error) {
+        console.error('Error creating student:', error);
+        const errorMessage = error.response?.data?.error?.message || 
+                           error.message || 
+                           'Errore nella creazione dello studente';
+        dispatch({
+            type: STUDENT_ACTIONS.SET_ERROR,
+            payload: errorMessage
+        });
+        showNotification(errorMessage, 'error');
+        throw error;
+    }
+};
 
     // Aggiorna studente esistente
     const updateStudent = async (studentId, updateData) => {

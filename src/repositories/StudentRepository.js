@@ -242,14 +242,13 @@ class StudentRepository extends BaseRepository {
             const exists = await this.model.findOne({
                 $or: [
                     { email: studentData.email },
-                    { fiscalCode: studentData.fiscalCode }
                 ]
             });
 
             if (exists) {
                 throw createError(
                     ErrorTypes.VALIDATION.ALREADY_EXISTS,
-                    'Email o codice fiscale già registrati'
+                    'Email già registrata'
                 );
             }
 

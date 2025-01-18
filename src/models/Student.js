@@ -97,8 +97,7 @@ const studentSchema = new mongoose.Schema({
     fiscalCode: {
         type: String,
         required: false,
-        unique: true,
-        sparse: true,
+       
         uppercase: true,
         trim: true,
         validate: {
@@ -236,7 +235,6 @@ const studentSchema = new mongoose.Schema({
 studentSchema.index({ schoolId: 1, currentYear: 1 });
 studentSchema.index({ classId: 1 });
 studentSchema.index({ email: 1 }, { unique: true });
-studentSchema.index({ fiscalCode: 1 }, { unique: true, sparse: true });
 studentSchema.index({ lastName: 1, firstName: 1 });
 studentSchema.index({ 'teachers': 1 });
 studentSchema.index({ status: 1, needsClassAssignment: 1 });
