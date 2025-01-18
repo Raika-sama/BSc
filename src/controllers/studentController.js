@@ -251,7 +251,10 @@ class StudentController extends BaseController {
     async update(req, res, next) {
         try {
             const { id } = req.params;
-            
+            console.log('Updating student with data:', { 
+                id,
+                updates: req.body 
+            });
             logger.debug('Updating student:', { 
                 studentId: id,
                 updates: req.body,

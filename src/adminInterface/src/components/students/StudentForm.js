@@ -85,21 +85,24 @@ const StudentForm = ({ open, onClose, student, onSubmit }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         
-        // Gestione speciale per specialNeeds (Switch)
         if (name === 'specialNeeds') {
             setFormData(prev => ({
                 ...prev,
                 specialNeeds: e.target.checked
             }));
         }
-        // Gestione speciale per teachers (Select multiple)
         else if (name === 'teachers') {
             setFormData(prev => ({
                 ...prev,
                 teachers: Array.isArray(value) ? value : []
             }));
         }
-        // Gestione per tutti gli altri campi
+        else if (name === 'mainTeacher') {  // Aggiungi questo case
+            setFormData(prev => ({
+                ...prev,
+                mainTeacher: value || null  // Gestisce il caso "Nessuno"
+            }));
+        }
         else {
             setFormData(prev => ({
                 ...prev,
@@ -326,8 +329,8 @@ const StudentForm = ({ open, onClose, student, onSubmit }) => {
                                 <InputLabel>Docente Principale</InputLabel>
                                 <Select
                                     name="mainTeacher"
-                                    value={formData.mainTeacher}
-                                    onChange={handleChange}
+                                    value={formData.mainTeacher || ''}  // Corretto
+                                    onChange={handleChange} // Corretto
                                     label="Docente Principale"
                                 >
                                     <MenuItem value="">Nessuno</MenuItem>
@@ -358,6 +361,14 @@ const StudentForm = ({ open, onClose, student, onSubmit }) => {
                                         </Box>
                                     )}
                                 >
+                                    <MenuItem value="clear" onClick={() => handleChange({
+                                        target: {
+                                            name: 'teachers',
+                                            value: []
+                                        }
+                                    })}>
+                                        Nessuno
+                                    </MenuItem>
                                     {users.map(user => (
                                         <MenuItem key={user._id} value={user._id}>
                                             {`${user.firstName} ${user.lastName}`}
@@ -406,8 +417,8 @@ const StudentForm = ({ open, onClose, student, onSubmit }) => {
                     </Grid>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={onClose}>
-                        Annulla
+                    <Button onClick={handleClose}> 
+                    Annulla
                     </Button>
                     <Button 
                         type="submit" 

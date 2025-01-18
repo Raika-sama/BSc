@@ -324,6 +324,7 @@ const createStudent = async (studentData) => {
     // Aggiorna studente esistente
     const updateStudent = async (studentId, updateData) => {
         try {
+            console.log('Updating student:', { studentId, updateData });  // Aggiungi questo
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
             
             const response = await axiosInstance.put(`/students/${studentId}`, updateData);
