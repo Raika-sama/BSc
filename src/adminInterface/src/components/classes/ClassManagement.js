@@ -14,14 +14,76 @@ import {
     DialogActions,
     Button,
     Alert,
+    Chip,
+    TextField,
+    MenuItem,
 } from '@mui/material';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { useClass } from '../../context/ClassContext';
-import { useAuth } from '../../context/AuthContext'; // Aggiungiamo questo import
+import { useAuth } from '../../context/AuthContext';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import QuizIcon from '@mui/icons-material/Quiz';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import { useNavigate } from 'react-router-dom';
+
+// Componente FilterToolbar separato
+const FilterToolbar = ({ 
+    schoolFilter, 
+    setSchoolFilter, 
+    yearFilter, 
+    setYearFilter, 
+    sectionFilter, 
+    setSectionFilter,
+    handleApplyFilters,
+    handleResetFilters 
+}) => {
+    return (
+        <Box sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
+            <TextField
+                label="Scuola"
+                size="small"
+                value={schoolFilter}
+                onChange={(e) => setSchoolFilter(e.target.value)}
+            />
+            <TextField
+                label="Anno"
+                size="small"
+                select
+                value={yearFilter}
+                onChange={(e) => setYearFilter(e.target.value)}
+                sx={{ minWidth: 100 }}
+            >
+                <MenuItem value="">Tutti</MenuItem>
+                {[1, 2, 3].map((year) => (
+                    <MenuItem key={year} value={year}>
+                        {year}°
+                    </MenuItem>
+                ))}
+            </TextField>
+            <TextField
+                label="Sezione"
+                size="small"
+                value={sectionFilter}
+                onChange={(e) => setSectionFilter(e.target.value.toUpperCase())}
+                sx={{ width: 100 }}
+            />
+            <Button 
+                variant="contained" 
+                onClick={handleApplyFilters}
+                startIcon={<FilterListIcon />}
+            >
+                Applica Filtri
+            </Button>
+            <Button
+                variant="outlined"
+                onClick={handleResetFilters}
+            >
+                Reset
+            </Button>
+        </Box>
+    );
+};
 
 const ClassManagement = () => {
     const [tabValue, setTabValue] = useState(0);
@@ -30,13 +92,66 @@ const ClassManagement = () => {
     const [selectedClass, setSelectedClass] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
     const navigate = useNavigate();
-    const { user } = useAuth(); // Aggiungiamo questo
-    const isAdmin = user?.role === 'admin'; // Aggiungiamo questo
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
+
+    // Stati per i filtri
+    const [schoolFilter, setSchoolFilter] = useState('');
+    const [yearFilter, setYearFilter] = useState('');
+    const [sectionFilter, setSectionFilter] = useState('');
+    const [filterModel, setFilterModel] = useState({
+        items: []
+    });
 
     useEffect(() => {
         getMyClasses();
     }, []);
 
+    // Funzioni di gestione filtri
+    const handleApplyFilters = () => {
+        const newFilters = [];
+        if (schoolFilter) {
+            newFilters.push({
+                field: 'schoolName',
+                operator: 'contains',
+                value: schoolFilter
+            });
+        }
+        if (yearFilter) {
+            newFilters.push({
+                field: 'year',
+                operator: 'equals',
+                value: yearFilter
+            });
+        }
+        if (sectionFilter) {
+            newFilters.push({
+                field: 'section',
+                operator: 'equals',
+                value: sectionFilter
+            });
+        }
+        setFilterModel({ items: newFilters });
+    };
+
+    const handleResetFilters = () => {
+        setSchoolFilter('');
+        setYearFilter('');
+        setSectionFilter('');
+        setFilterModel({ items: [] });
+    };
+
+    // Funzione per filtrare le classi
+    const filterClasses = (classes) => {
+        return classes.filter(classItem => {
+            if (schoolFilter && !classItem.schoolName.toLowerCase().includes(schoolFilter.toLowerCase())) return false;
+            if (yearFilter && classItem.year !== parseInt(yearFilter)) return false;
+            if (sectionFilter && classItem.section !== sectionFilter.toUpperCase()) return false;
+            return true;
+        });
+    };
+
+    // Handle functions
     const handleDeleteClick = (classData) => {
         setSelectedClass(classData);
         setOpenDeleteDialog(true);
@@ -49,7 +164,7 @@ const ClassManagement = () => {
             setSelectedClass(null);
             getMyClasses();
         } catch (err) {
-            setDeleteError('Errore durante l_eliminazione della classe');
+            setDeleteError('Errore durante l\'eliminazione della classe');
         }
     };
 
@@ -60,6 +175,11 @@ const ClassManagement = () => {
     const handleTestManagement = (classData) => {
         navigate(`/admin/classes/${classData.classId}/tests`);
     };
+
+    // Preparazione delle classi filtrate
+    const filteredMainTeacherClasses = filterClasses(mainTeacherClasses);
+    const filteredCoTeacherClasses = filterClasses(coTeacherClasses);
+    const filteredClasses = isAdmin ? filterClasses(mainTeacherClasses) : [];
 
     const columns = [
         { 
@@ -88,6 +208,35 @@ const ClassManagement = () => {
             width: 150,
             align: 'center',
             headerAlign: 'center'
+        },
+        {
+            field: 'studentCount',
+            headerName: 'Studenti',
+            width: 130,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => {
+                const count = params.row.students?.length || 0;
+                return (
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        {count === 0 ? (
+                            <Chip
+                                label="Pending"
+                                color="warning"
+                                size="small"
+                                sx={{ minWidth: '80px' }}
+                            />
+                        ) : (
+                            <Chip
+                                label={`${count} studenti`}
+                                color={count >= params.row.capacity ? 'error' : 'success'}
+                                size="small"
+                                sx={{ minWidth: '80px' }}
+                            />
+                        )}
+                    </Box>
+                );
+            }
         },
         {
             field: 'actions',
@@ -154,11 +303,21 @@ const ClassManagement = () => {
                 borderRadius: 2,
                 boxShadow: 3
             }}>
+                <FilterToolbar 
+                    schoolFilter={schoolFilter}
+                    setSchoolFilter={setSchoolFilter}
+                    yearFilter={yearFilter}
+                    setYearFilter={setYearFilter}
+                    sectionFilter={sectionFilter}
+                    setSectionFilter={setSectionFilter}
+                    handleApplyFilters={handleApplyFilters}
+                    handleResetFilters={handleResetFilters}
+                />
+
                 {isAdmin ? (
-                    // Vista admin: tutte le classi in una singola tabella
                     <Box sx={{ width: '100%', p: 2 }}>
                         <DataGrid
-                            rows={mainTeacherClasses}
+                            rows={filteredClasses}
                             columns={columns}
                             getRowId={(row) => row.classId}
                             pageSize={7}
@@ -176,7 +335,6 @@ const ClassManagement = () => {
                         />
                     </Box>
                 ) : (
-                    // Vista teacher: manteniamo le tabs
                     <>
                         <Tabs
                             value={tabValue}
@@ -189,18 +347,18 @@ const ClassManagement = () => {
                             }}
                         >
                             <Tab 
-                                label={`Le mie classi (${mainTeacherClasses.length})`}
+                                label={`Le mie classi (${filteredMainTeacherClasses.length})`}
                                 sx={{ textTransform: 'none' }}
                             />
                             <Tab 
-                                label={`Classi co-insegnate (${coTeacherClasses.length})`}
+                                label={`Classi co-insegnate (${filteredCoTeacherClasses.length})`}
                                 sx={{ textTransform: 'none' }}
                             />
                         </Tabs>
 
                         <Box sx={{ height: 500, width: '100%', p: 2 }}>
                             <DataGrid
-                                rows={tabValue === 0 ? mainTeacherClasses : coTeacherClasses}
+                                rows={tabValue === 0 ? filteredMainTeacherClasses : filteredCoTeacherClasses}
                                 columns={columns}
                                 getRowId={(row) => row.classId}
                                 pageSize={7}
@@ -220,7 +378,6 @@ const ClassManagement = () => {
                 )}
             </Paper>
 
-            {/* Dialog di conferma eliminazione */}
             <Dialog
                 open={openDeleteDialog}
                 onClose={() => setOpenDeleteDialog(false)}
@@ -258,10 +415,3 @@ const ClassManagement = () => {
 };
 
 export default ClassManagement;
-
-//Aggiunto useAuth e controllo del ruolo admin
-//Mantenuta la struttura esistente ma con rendering condizionale basato sul ruolo
-//Per admin: singola vista con tutte le classi
-//Per teacher: mantenute le tabs esistenti
-//Aggiunta indicazione (Admin) nel titolo per gli admin
-//Mantenuta tutta la funzionalità esistente (eliminazione, visualizzazione dettagli, ecc.)
