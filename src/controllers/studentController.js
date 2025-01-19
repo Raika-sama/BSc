@@ -341,6 +341,7 @@ class StudentController extends BaseController {
         try {
             const { studentIds, classId, academicYear } = req.body;
     
+            // 1. Validazione input
             if (!studentIds?.length || !classId || !academicYear) {
                 throw createError(
                     ErrorTypes.VALIDATION.BAD_REQUEST,
@@ -348,25 +349,61 @@ class StudentController extends BaseController {
                 );
             }
     
-            logger.debug('Batch assigning students to class:', {
-                studentIds,
+            logger.debug('Starting batch assignment:', {
+                studentCount: studentIds.length,
                 classId,
                 academicYear,
                 user: req.user?.id
             });
     
+            // 2. Verifica permessi
+            if (req.user.role !== 'admin') {
+                throw createError(
+                    ErrorTypes.AUTH.FORBIDDEN,
+                    'Non autorizzato ad assegnare studenti'
+                );
+            }
+    
+            // 3. Chiama il repository per l'assegnazione
             const result = await this.repository.batchAssignToClass(
                 studentIds,
                 { classId, academicYear }
             );
     
-            this.sendResponse(res, {
-                message: 'Studenti assegnati con successo',
-                modifiedCount: result.modifiedCount
+            // 4. Log del successo
+            logger.info('Batch assignment completed:', {
+                modifiedCount: result.modifiedCount,
+                className: result.className,
+                user: req.user?.id
             });
+    
+            // 5. Invia risposta
+            this.sendResponse(res, {
+                status: 'success',
+                message: `${result.modifiedCount} studenti assegnati alla classe ${result.className}`,
+                data: {
+                    modifiedCount: result.modifiedCount,
+                    className: result.className
+                }
+            });
+    
         } catch (error) {
-            logger.error('Error in batch assigning students:', error);
-            next(error);
+            logger.error('Error in batch assigning students:', {
+                error,
+                user: req.user?.id
+            });
+    
+            // Se l'errore è già formattato (dal repository), lo passa direttamente
+            if (error.code) {
+                next(error);
+            } else {
+                // Altrimenti crea un nuovo errore formattato
+                next(createError(
+                    ErrorTypes.SYSTEM.OPERATION_FAILED,
+                    'Errore nell\'assegnazione degli studenti',
+                    { originalError: error.message }
+                ));
+            }
         }
     }
 }

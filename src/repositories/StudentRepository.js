@@ -95,36 +95,78 @@ class StudentRepository extends BaseRepository {
         }
     }
     
-    async batchAssignToClass(req, res, next) {
-        try {
-            const { studentIds, classId, academicYear } = req.body;
+    async batchAssignToClass(studentIds, { classId, academicYear }) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
     
-            if (!studentIds?.length || !classId || !academicYear) {
+        try {
+            // 1. Verifica esistenza e dettagli della classe
+            const classDoc = await Class.findById(classId)
+                .populate('mainTeacher')
+                .populate('teachers')
+                .session(session);
+    
+            if (!classDoc) {
                 throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
-                    'Dati mancanti per l\'assegnazione'
+                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    'Classe non trovata'
                 );
             }
     
-            logger.debug('Batch assigning students to class:', {
-                studentIds,
-                classId,
-                academicYear,
-                user: req.user?.id
-            });
+            // 2. Verifica capacità della classe
+            const currentStudentsCount = classDoc.students?.length || 0;
+            if (currentStudentsCount + studentIds.length > classDoc.capacity) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    `Capacità classe superata. Capacità: ${classDoc.capacity}, Attuali: ${currentStudentsCount}, Da aggiungere: ${studentIds.length}`
+                );
+            }
     
-            const result = await this.repository.batchAssignToClass(
-                studentIds,
-                { classId, academicYear }
+            // 3. Aggiorna gli studenti
+            const updateResult = await this.model.updateMany(
+                {
+                    _id: { $in: studentIds },
+                    schoolId: classDoc.schoolId, // Verifica stessa scuola
+                    needsClassAssignment: true // Solo studenti non assegnati
+                },
+                {
+                    $set: {
+                        classId: classId,
+                        status: 'active',
+                        needsClassAssignment: false,
+                        currentYear: classDoc.year,
+                        mainTeacher: classDoc.mainTeacher._id,
+                        teachers: classDoc.teachers.map(t => t._id),
+                        lastClassChangeDate: new Date(),
+                        section: classDoc.section
+                    }
+                },
+                { session }
             );
     
-            this.sendResponse(res, {
-                message: 'Studenti assegnati con successo',
-                modifiedCount: result.modifiedCount
-            });
+            // 4. Aggiorna la classe
+            classDoc.students = [...new Set([...classDoc.students, ...studentIds])];
+            await classDoc.save({ session });
+    
+            await session.commitTransaction();
+    
+            return {
+                success: true,
+                modifiedCount: updateResult.modifiedCount,
+                className: `${classDoc.year}${classDoc.section}`
+            };
+    
         } catch (error) {
-            logger.error('Error in batch assigning students:', error);
-            next(error);
+            await session.abortTransaction();
+            logger.error('Error in batchAssignToClass:', {
+                error,
+                studentIds,
+                classId,
+                academicYear
+            });
+            throw error;
+        } finally {
+            session.endSession();
         }
     }
 

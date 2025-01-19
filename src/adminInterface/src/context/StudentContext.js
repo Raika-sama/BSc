@@ -246,6 +246,7 @@ export const StudentProvider = ({ children }) => {
     const normalized = {
         ...student,
         id: student._id || student.id,
+        _id: student._id || student.id, // Manteniamo anche _id per compatibilità
         schoolId: normalizeSchoolId(student.schoolId),
         classId: normalizeClassId(student.classId),
         lastName: student.lastName || '',
@@ -452,6 +453,12 @@ const createStudent = async (studentData) => {
         try {
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
             
+            console.log('Attempting batch assignment:', {
+                studentIds,
+                classId,
+                academicYear
+            });
+    
             const response = await axiosInstance.post('/students/batch-assign', {
                 studentIds,
                 classId,
@@ -463,10 +470,18 @@ const createStudent = async (studentData) => {
                     type: STUDENT_ACTIONS.BATCH_ASSIGN_STUDENTS,
                     payload: {
                         studentIds,
-                        classId
+                        classId,
+                        modifiedCount: response.data.data.modifiedCount,
+                        className: response.data.data.className
                     }
                 });
-                showNotification('Studenti assegnati con successo', 'success');
+    
+                showNotification(
+                    `${response.data.data.modifiedCount} studenti assegnati alla classe ${response.data.data.className}`, 
+                    'success'
+                );
+                
+                return response.data.data;
             }
         } catch (error) {
             const errorMessage = error.response?.data?.error?.message || 
@@ -477,6 +492,8 @@ const createStudent = async (studentData) => {
             });
             showNotification(errorMessage, 'error');
             throw error;
+        } finally {
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: false });
         }
     };
 
