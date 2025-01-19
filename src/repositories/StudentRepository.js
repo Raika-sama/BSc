@@ -122,6 +122,23 @@ class StudentRepository extends BaseRepository {
                 );
             }
     
+            logger.debug('Debug batchAssignToClass:', {
+                modelName: this.model.modelName,
+                updateQuery: {
+                    _id: { $in: studentIds },
+                    schoolId: classDoc.schoolId,
+                    needsClassAssignment: true
+                },
+                updateData: {
+                    classId: classId,
+                    status: 'active',
+                    needsClassAssignment: false,
+                    currentYear: classDoc.year,
+                    mainTeacher: classDoc.mainTeacher._id,
+                    teachers: classDoc.teachers.map(t => t._id),
+                    section: classDoc.section
+                }
+            });
             // 3. Aggiorna gli studenti
             const updateResult = await this.model.updateMany(
                 {
@@ -145,24 +162,38 @@ class StudentRepository extends BaseRepository {
             );
     
             // 4. Aggiorna la classe
-            classDoc.students = [...new Set([...classDoc.students, ...studentIds])];
+            const newStudentRecords = studentIds.map(studentId => ({
+                studentId: studentId,
+                joinedAt: new Date(),
+                status: 'active'
+            }));
+
+            classDoc.students = [
+                ...classDoc.students,
+                ...newStudentRecords
+            ];
             await classDoc.save({ session });
-    
+                // Commit della transazione
             await session.commitTransaction();
-    
+
+            // Aggiungi questo return
             return {
                 success: true,
                 modifiedCount: updateResult.modifiedCount,
                 className: `${classDoc.year}${classDoc.section}`
             };
-    
         } catch (error) {
             await session.abortTransaction();
             logger.error('Error in batchAssignToClass:', {
-                error,
+                errorMessage: error.message,
+                errorStack: error.stack,
                 studentIds,
                 classId,
-                academicYear
+                academicYear,
+                modelInfo: {
+                    name: this.model?.modelName,
+                    exists: !!this.model
+                }
             });
             throw error;
         } finally {

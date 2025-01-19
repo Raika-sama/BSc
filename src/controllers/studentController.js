@@ -1,13 +1,13 @@
 // src/controllers/studentController.js
 
 const BaseController = require('./baseController');
-const { student: StudentRepository } = require('../repositories');
 const logger = require('../utils/errors/logger/logger');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 
 class StudentController extends BaseController {
     constructor() {
-        super(StudentRepository, 'student');
+        const { student: studentRepository } = require('../repositories');
+        super(studentRepository, 'student');
         
         // Binding dei metodi
         this.getStudentsByClass = this.getStudentsByClass.bind(this);
@@ -16,6 +16,8 @@ class StudentController extends BaseController {
         this.removeFromClass = this.removeFromClass.bind(this);
         this.searchStudents = this.searchStudents.bind(this);
         this.getUnassignedStudents = this.getUnassignedStudents.bind(this); // Aggiungi questa riga
+        this.batchAssignToClass = this.batchAssignToClass.bind(this); // Aggiungi questo!
+
     }
 
     /**

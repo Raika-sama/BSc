@@ -453,12 +453,12 @@ const createStudent = async (studentData) => {
         try {
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
             
-            console.log('Attempting batch assignment:', {
-                studentIds,
-                classId,
-                academicYear
+            
+            console.log('Payload being sent to backend:', {
+                studentIds: studentIds,
+                classId: classId,
+                academicYear: academicYear
             });
-    
             const response = await axiosInstance.post('/students/batch-assign', {
                 studentIds,
                 classId,

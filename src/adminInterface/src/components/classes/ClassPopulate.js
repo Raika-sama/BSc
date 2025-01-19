@@ -18,7 +18,6 @@ const ClassPopulate = () => {
     const navigate = useNavigate();
     const { getClassDetails } = useClass();
     const { fetchUnassignedStudents, batchAssignStudents } = useStudent();
-
     const [classData, setClassData] = useState(null);
     const [unassignedStudents, setUnassignedStudents] = useState([]);
     const [selectedStudents, setSelectedStudents] = useState([]);
@@ -42,8 +41,8 @@ const ClassPopulate = () => {
                 if (details) {
                     setClassData(details);
                     
-                    const schoolId = details.schoolId._id || details.schoolId;
-                    console.log('Extracted schoolId:', schoolId);
+                    const schoolId = details.schoolId?._id || details.schoolId;
+                    console.log('School ID extracted:', schoolId);
                     
                     if (schoolId) {
                         const students = await fetchUnassignedStudents(schoolId);
@@ -83,23 +82,27 @@ const ClassPopulate = () => {
 
     const handleAssignStudents = async () => {
         try {
-            // Debug dei dati prima dell'invio
-            console.log('Debug dati prima dell\'invio:', {
+            // Log dei dati prima dell'invio
+            console.log('Attempting batch assignment with:', {
                 selectedStudents,
-                selectedStudentsType: typeof selectedStudents,
-                isArray: Array.isArray(selectedStudents),
                 classId,
-                academicYear: classData.academicYear,
-                classData
+                academicYear: classData.academicYear
             });
+    
+            if (!classId) {
+                throw new Error('ID classe mancante');
+            }
+    
+            if (!classData?.academicYear) {
+                throw new Error('Anno accademico mancante');
+            }
+    
+            if (!selectedStudents || selectedStudents.length === 0) {
+                throw new Error('Nessuno studente selezionato');
+            }
     
             setAssigning(true);
             setError(null);
-    
-            const totalStudents = (classData.students?.length || 0) + selectedStudents.length;
-            if (totalStudents > classData.capacity) {
-                throw new Error(`Capacità massima classe superata (${classData.capacity} studenti)`);
-            }
     
             // Chiamata API
             await batchAssignStudents(
@@ -112,12 +115,6 @@ const ClassPopulate = () => {
     
         } catch (err) {
             console.error('Error assigning students:', err);
-            // Log dettagliato della risposta di errore
-            if (err.response) {
-                console.log('Error response data:', err.response.data);
-                console.log('Error response status:', err.response.status);
-                console.log('Error response headers:', err.response.headers);
-            }
             setError(err.message || 'Errore nell\'assegnazione degli studenti');
         } finally {
             setAssigning(false);
