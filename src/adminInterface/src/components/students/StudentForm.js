@@ -38,7 +38,6 @@ const StudentForm = ({ open, onClose, student, onSubmit }) => {
         dateOfBirth: '',
         email: '',
         schoolId: selectedSchool?._id || '',  // Qui usiamo selectedSchool
-        currentYear: 1,
         parentEmail: '',
         mainTeacher: '',
         teachers: [],
@@ -70,7 +69,6 @@ const StudentForm = ({ open, onClose, student, onSubmit }) => {
                 dateOfBirth: student.dateOfBirth ? student.dateOfBirth.split('T')[0] : '',
                 email: student.email || '',
                 schoolId: student.schoolId?._id || student.schoolId || '',
-                currentYear: student.currentYear || 1,
                 parentEmail: student.parentEmail || '',
                 mainTeacher: student.mainTeacher?._id || '',
                 teachers: student.teachers?.map(t => t._id) || [],
@@ -148,7 +146,6 @@ const StudentForm = ({ open, onClose, student, onSubmit }) => {
             parentEmail: formData.parentEmail.trim() || null,
             fiscalCode: formData.fiscalCode.trim().toUpperCase() || null,
             schoolId: formData.schoolId,
-            currentYear: parseInt(formData.currentYear),
             mainTeacher: formData.mainTeacher || null,
             teachers: Array.isArray(formData.teachers) ? formData.teachers : [],
             specialNeeds: formData.specialNeeds,
@@ -191,7 +188,6 @@ const StudentForm = ({ open, onClose, student, onSubmit }) => {
             dateOfBirth: '',
             email: '',
             schoolId: selectedSchool?._id || '',  // Qui usiamo selectedSchool
-            currentYear: 1,
             parentEmail: '',
             mainTeacher: '',
             teachers: [],
@@ -306,23 +302,7 @@ const StudentForm = ({ open, onClose, student, onSubmit }) => {
                             />
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth required>
-                                <InputLabel>Anno</InputLabel>
-                                <Select
-                                    name="currentYear"
-                                    value={formData.currentYear}
-                                    onChange={handleChange}
-                                    label="Anno"
-                                >
-                                    {[1, 2, 3, 4, 5].map(year => (
-                                        <MenuItem key={year} value={year}>
-                                            {year}° Anno
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
+                        
 
                         <Grid item xs={12} sm={6}>
                             <FormControl fullWidth>

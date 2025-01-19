@@ -159,22 +159,7 @@ const studentSchema = new mongoose.Schema({
         },
         description: 'Sezione corrente'
     },
-    currentYear: {
-        type: Number,
-        required: true,
-        validate: {
-            validator: async function(v) {
-                const School = mongoose.model('School');
-                const school = await School.findById(this.schoolId);
-                if (!school) return false;
-                return school.schoolType === 'middle_school' ? 
-                    v >= 1 && v <= 3 : 
-                    v >= 1 && v <= 5;
-            },
-            message: props => `${props.value} non è un anno valido per il tipo di scuola`
-        },
-        description: 'Anno scolastico corrente'
-    },
+   
 
     // Riferimenti ai docenti
     mainTeacher: {

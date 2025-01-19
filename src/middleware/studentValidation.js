@@ -19,7 +19,6 @@ const studentValidation = {
                 email,
                 parentEmail,
                 schoolId,
-                currentYear,
                 mainTeacher,
                 teachers,
                 status,
@@ -37,7 +36,6 @@ const studentValidation = {
             if (!dateOfBirth) errors.push('Data di nascita richiesta');
             if (!email?.trim()) errors.push('Email richiesta');
             if (!schoolId) errors.push('Scuola richiesta');
-            if (!currentYear) errors.push('Anno corrente richiesto');
 
             // Validazione formato email principale
             if (email && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
@@ -123,7 +121,6 @@ const studentValidation = {
                 email,
                 parentEmail,
                 fiscalCode,
-                currentYear,
                 gender,
                 mainTeacher,
                 teachers,
@@ -152,9 +149,7 @@ const studentValidation = {
                 errors.push('Genere non valido');
             }
 
-            if (currentYear && (currentYear < 1 || currentYear > 5)) {
-                errors.push('Anno corrente non valido');
-            }
+            
 
             if (mainTeacher && !mongoose.Types.ObjectId.isValid(mainTeacher)) {
                 errors.push('ID docente principale non valido');

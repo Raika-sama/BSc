@@ -153,12 +153,6 @@ const StudentList = () => {
             }
         },
         {
-            field: 'currentYear',
-            headerName: 'Anno',
-            width: 100,
-            renderCell: (params) => params.row?.currentYear || 'N/D'
-        },
-        {
             field: 'status',
             headerName: 'Stato',
             width: 150,
@@ -446,14 +440,6 @@ const StudentList = () => {
                                         {selectedStudentDetails.classId ? 
                                             `${selectedStudentDetails.classId.year}${selectedStudentDetails.classId.section}` : 
                                             'Non assegnata'}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12} md={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        Anno Corrente
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        {`${selectedStudentDetails.currentYear}° anno`}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={12} md={6}>
