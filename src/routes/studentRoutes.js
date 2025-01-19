@@ -7,7 +7,7 @@ const { protect, restrictTo } = require('../middleware/authMiddleware');
 const studentValidation = require('../middleware/studentValidation');
 const logger = require('../utils/errors/logger/logger');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');  // Aggiusta il percorso in base alla tua struttura
-const { uploadExcel, handleMulterError } = require('./upload/uploadMiddleware');
+const { uploadExcel, handleMulterError } = require('../middleware/upload/uploadMiddleware');
 
 // Middleware di logging
 router.use((req, res, next) => {
@@ -35,15 +35,13 @@ router.get('/my-students',
     studentController.getMyStudents
 );
 
-// Route per classe specifica
-router.get('/class/:classId',
-    restrictTo('teacher', 'admin'),
-    studentController.getStudentsByClass
-);
 
 router.get('/template', 
     restrictTo('admin'),
-    studentBulkImportController.generateTemplate.bind(studentBulkImportController)
+    (req, res, next) => {
+        // Bypass del middleware base del controller
+        studentBulkImportController.generateTemplate(req, res, next);
+    }
 );
 
 // Qui aggiungeremo multer più tardi
@@ -52,6 +50,13 @@ router.post('/bulk-import',
     uploadExcel,    // Aggiungi il middleware di upload
     handleMulterError,  // Gestione errori upload
     studentBulkImportController.bulkImport.bind(studentBulkImportController)
+);
+
+
+// Route per classe specifica
+router.get('/class/:classId',
+    restrictTo('teacher', 'admin'),
+    studentController.getStudentsByClass
 );
 
 

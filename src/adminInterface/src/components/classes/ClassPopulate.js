@@ -19,7 +19,6 @@ const ClassPopulate = () => {
     const { getClassDetails } = useClass();
     const { fetchUnassignedStudents } = useStudent();
 
-    // Stati separati per una gestione più chiara
     const [classData, setClassData] = useState(null);
     const [unassignedStudents, setUnassignedStudents] = useState([]);
     const [selectedStudents, setSelectedStudents] = useState([]);
@@ -35,21 +34,31 @@ const ClassPopulate = () => {
                 setError(null);
     
                 const details = await getClassDetails(classId);
-                console.log('Class details received:', details); // Debug
+                console.log('Class details received:', details);
     
                 if (!isMounted) return;
                 
                 if (details) {
                     setClassData(details);
                     
-                    // Estrai l'ID della scuola correttamente
                     const schoolId = details.schoolId._id || details.schoolId;
-                    console.log('Extracted schoolId:', schoolId); // Debug
+                    console.log('Extracted schoolId:', schoolId);
                     
                     if (schoolId) {
                         const students = await fetchUnassignedStudents(schoolId);
+                        console.log('Fetched unassigned students:', students);
+                        
                         if (isMounted) {
-                            setUnassignedStudents(students || []);
+                            const formattedStudents = (students || []).map(student => ({
+                                ...student,
+                                id: student._id || student.id,
+                                firstName: student.firstName || '',
+                                lastName: student.lastName || '',
+                                fiscalCode: student.fiscalCode || '',
+                                email: student.email || '',
+                                currentYear: student.currentYear || ''
+                            }));
+                            setUnassignedStudents(formattedStudents);
                         }
                     }
                 }
@@ -72,32 +81,31 @@ const ClassPopulate = () => {
         return () => {
             isMounted = false;
         };
+    // Rimuovi getClassDetails e fetchUnassignedStudents dalle dipendenze
     }, [classId]);
-    
+
     const columns = [
-        {
-            field: 'fullName',
-            headerName: 'Nome Completo',
-            width: 200,
-            valueGetter: (params) => 
-                `${params.row.firstName || ''} ${params.row.lastName || ''}`.trim()
-        },
-        {
-            field: 'fiscalCode',
-            headerName: 'Codice Fiscale',
-            width: 150
-        },
-        {
-            field: 'email',
-            headerName: 'Email',
-            width: 200
-        },
-        {
-            field: 'currentYear',
-            headerName: 'Anno',
-            width: 100
-        }
-    ];
+    {
+        field: 'firstName',
+        headerName: 'Nome',
+        width: 150,
+    },
+    {
+        field: 'lastName',
+        headerName: 'Cognome',
+        width: 150,
+    },
+    {
+        field: 'email',
+        headerName: 'Email',
+        width: 200,
+    },
+    {
+        field: 'gender',
+        headerName: 'Genere',
+        width: 100,
+    }
+];
 
     if (loading) {
         return (
@@ -169,6 +177,7 @@ const ClassPopulate = () => {
                     getRowId={(row) => row._id || row.id}
                     onSelectionModelChange={(newSelection) => {
                         setSelectedStudents(newSelection);
+                        console.log('Selected students:', newSelection);
                     }}
                     selectionModel={selectedStudents}
                 />

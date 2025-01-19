@@ -2,7 +2,7 @@
 
 const BaseController = require('./baseController');
 const studentBulkImportRepository = require('../repositories/StudentBulkImportRepository');
-const { bulkImportValidation } = require('../middleware/bulkImportValidation');
+const bulkImportValidation = require('../middleware/bulkImportValidation');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const XLSX = require('xlsx');
@@ -113,6 +113,7 @@ class StudentBulkImportController extends BaseController {
      */
     generateTemplate(req, res) {
         try {
+            logger.debug('Generating Excel template');
             // Crea il workbook
             const wb = XLSX.utils.book_new();
             

@@ -15,6 +15,7 @@ class StudentController extends BaseController {
         this.assignToClass = this.assignToClass.bind(this);
         this.removeFromClass = this.removeFromClass.bind(this);
         this.searchStudents = this.searchStudents.bind(this);
+        this.getUnassignedStudents = this.getUnassignedStudents.bind(this); // Aggiungi questa riga
     }
 
     /**
