@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { student: studentController } = require('../controllers');
+const studentBulkImportController = require('../controllers/studentBulkImportController');
+
 const { protect, restrictTo } = require('../middleware/authMiddleware');
 const studentValidation = require('../middleware/studentValidation');
 const logger = require('../utils/errors/logger/logger');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');  // Aggiusta il percorso in base alla tua struttura
+const { uploadExcel, handleMulterError } = require('./upload/uploadMiddleware');
 
 // Middleware di logging
 router.use((req, res, next) => {
@@ -38,7 +41,22 @@ router.get('/class/:classId',
     studentController.getStudentsByClass
 );
 
-// Nuove route per gestione studenti non assegnati
+router.get('/template', 
+    restrictTo('admin'),
+    studentBulkImportController.generateTemplate.bind(studentBulkImportController)
+);
+
+// Qui aggiungeremo multer più tardi
+router.post('/bulk-import', 
+    restrictTo('admin'),
+    uploadExcel,    // Aggiungi il middleware di upload
+    handleMulterError,  // Gestione errori upload
+    studentBulkImportController.bulkImport.bind(studentBulkImportController)
+);
+
+
+
+// Nuove route CRUD per gestione studenti non assegnati
     router.get('/unassigned/:schoolId',
         restrictTo('admin'),
         studentController.getUnassignedStudents
@@ -49,6 +67,9 @@ router.get('/class/:classId',
     studentValidation.validateBatchAssignment,
     studentController.batchAssignToClass
     );
+
+
+
 
 // Route base CRUD con validazioni
 router.route('/')

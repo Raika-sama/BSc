@@ -23,6 +23,9 @@ import { useStudent } from '../../context/StudentContext';
 import { useNotification } from '../../context/NotificationContext';
 import StudentForm from './StudentForm';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import StudentBulkImportForm from './StudentBulkImportForm';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+
 
 const StudentList = () => {
     const {
@@ -43,6 +46,8 @@ const StudentList = () => {
     const [page, setPage] = useState(0);
     const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
     const [selectedStudentDetails, setSelectedStudentDetails] = useState(null);
+    const [importFormOpen, setImportFormOpen] = useState(false);
+
 
     useEffect(() => {
         loadStudents();
@@ -276,14 +281,23 @@ const StudentList = () => {
                 <Typography variant="h4" component="h1">
                     Gestione Studenti
                 </Typography>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<AddIcon />}
-                    onClick={() => setFormOpen(true)}
-                >
-                    Nuovo Studente
-                </Button>
+                <Box display="flex" gap={2}>
+                    <Button
+                        variant="outlined"
+                        startIcon={<CloudUploadIcon />}
+                        onClick={() => setImportFormOpen(true)}
+                    >
+                        Import Massivo
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<AddIcon />}
+                        onClick={() => setFormOpen(true)}
+                    >
+                        Nuovo Studente
+                    </Button>
+                </Box>
             </Box>
 
             <Box display="flex" gap={2} mb={3}>
@@ -489,6 +503,14 @@ const StudentList = () => {
                     loadStudents();
                 }}
                 student={selectedStudent}
+            />
+            {/* Import studenti excel */}
+            <StudentBulkImportForm 
+                open={importFormOpen}
+                onClose={() => {
+                    setImportFormOpen(false);
+                    loadStudents(); // ricarica la lista dopo l'import
+                }}
             />
         </Box>
     );
