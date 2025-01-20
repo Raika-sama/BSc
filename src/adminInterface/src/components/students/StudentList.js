@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // Aggiungi questa riga
 import {
     Box,
     Button,
@@ -28,6 +29,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 
 const StudentList = () => {
+    const navigate = useNavigate(); // Aggiungi questa riga
     const {
         students,
         loading,
@@ -197,10 +199,19 @@ const StudentList = () => {
         {
             field: 'actions',
             headerName: 'Azioni',
-            width: 160,
+            width: 200,
             renderCell: (params) => (
                 params.row ? (
                     <Box>
+                        <Tooltip title="Test">
+                            <IconButton 
+                                onClick={() => navigate(`/admin/students/${params.row._id || params.row.id}/tests`)}
+                                size="small"
+                                color="secondary"
+                            >
+                                📝
+                            </IconButton>
+                        </Tooltip>
                          <Tooltip title="Visualizza">
                             <IconButton 
                                 onClick={() => handleViewDetails(params.row)} 

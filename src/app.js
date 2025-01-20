@@ -21,16 +21,25 @@ app.use(express.urlencoded({ extended: true }));
 // Logging
 app.use(requestLogger);
 
-app.use((req, res, next) => {
-    console.log('Headers at app level:', {
-        auth: req.headers.authorization,
-        path: req.path
+// Debug middleware in development
+if (config.env === 'development') {
+    app.use((req, res, next) => {
+        logger.debug('Incoming request:', {
+            method: req.method,
+            path: req.path,
+            headers: {
+                authorization: req.headers.authorization ? 'Present' : 'Not present',
+                contentType: req.headers['content-type']
+            },
+            body: req.body
+        });
+        next();
     });
-    next();
-});
+}
 
 // Routes - Usa un unico punto di ingresso per tutte le route
 app.use('/api/v1', routes);
+
 
 // Gestione errori
 app.use(errorLogger);

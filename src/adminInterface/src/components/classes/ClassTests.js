@@ -44,7 +44,7 @@ const ClassTests = () => {
                 <Button
                     variant="outlined"
                     startIcon={<ArrowBackIcon />}
-                    onClick={() => navigate(`/classes/${classId}`)}
+                    onClick={() => navigate(`/admin/classes/${classId}`)}
                 >
                     Torna ai dettagli
                 </Button>

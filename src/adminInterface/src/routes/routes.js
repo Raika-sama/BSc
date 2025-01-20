@@ -10,6 +10,7 @@ import SchoolWizard from '../components/school/wizard/SchoolWizard';
 import UsersManagement from '../components/school/UsersManagement'; // Aggiungi questo import
 import StudentList from '../components/students/StudentList'; // Aggiungi questo import
 import ClassPopulate from '../components/classes/ClassPopulate';    // Aggiungi questo import
+import StudentTestManagement from '../components/students/StudentTestManagement'; // Aggiungi questo import
 
 
 // Importa le icone da Material-UI
@@ -65,13 +66,6 @@ export const adminRoutes = [
         title: 'Crea Scuola'
     },
     {
-        path: 'schools/:id',
-        element: SchoolDetails,
-        title: 'Dettagli Scuola',
-        icon: SchoolIcon,
-        showInMenu: false
-    },
-    {
         path: 'schools/:id/users-management',  // Aggiungi questa rotta
         element: UsersManagement,
         title: 'Gestione Utenze',
@@ -104,5 +98,12 @@ export const adminRoutes = [
         element: StudentList,
         title: 'Gestione Studenti',
         icon: PersonIcon
+    },
+    {
+        path: 'students/:studentId/tests',    // Aggiungi questa route
+        element: StudentTestManagement,
+        title: 'Test dello Studente',
+        icon: TestIcon,
+        showInMenu: false
     }
 ];

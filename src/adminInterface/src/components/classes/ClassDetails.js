@@ -21,6 +21,10 @@ import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import GroupAddIcon from '@mui/icons-material/GroupAdd'; // Aggiungi questo import
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import SchoolIcon from '@mui/icons-material/School';
+import { IconButton, Collapse } from '@mui/material';
 
 const ClassDetails = () => {
    const { classId } = useParams();
@@ -29,6 +33,7 @@ const ClassDetails = () => {
    const [classData, setClassData] = useState(null);
    const [localError, setLocalError] = useState(null);
    const [localLoading, setLocalLoading] = useState(true);
+   const [expandedInfo, setExpandedInfo] = useState(false);
 
    useEffect(() => {
     const fetchData = async () => {
@@ -109,10 +114,10 @@ console.log("Students data:", classData.students);
 
     return (
         <Box p={3}>
-            {/* Header compatto con info principali */}
+            {/* Header con toggle */}
             <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
+                {/* Header compatto sempre visibile */}
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                    {/* Colonna sinistra: Titolo e info principali */}
                     <Box display="flex" alignItems="center" gap={4}>
                         <Box>
                             <Typography variant="h5" color="primary" gutterBottom={false}>
@@ -123,38 +128,28 @@ console.log("Students data:", classData.students);
                             </Typography>
                         </Box>
                         <Box display="flex" gap={3}>
-                            <Box>
-                                <Chip
-                                    icon={<AccessTimeIcon />}
-                                    label={classData.status.toUpperCase()}
-                                    color={classData.isActive ? "success" : "default"}
-                                    size="small"
-                                />
-                            </Box>
-                            <Box display="flex" alignItems="center" gap={1}>
-                                <GroupIcon color="action" fontSize="small" />
-                                <Typography variant="body2">
-                                    {classData.students.length}/{classData.capacity} studenti
-                                </Typography>
-                            </Box>
-                            {classData.mainTeacher && (
-                                <Box display="flex" alignItems="center" gap={1}>
-                                    <PersonIcon color="action" fontSize="small" />
-                                    <Typography variant="body2">
-                                        {`${classData.mainTeacher.firstName} ${classData.mainTeacher.lastName}`}
-                                    </Typography>
-                                </Box>
-                            )}
+                            <Chip
+                                icon={<AccessTimeIcon />}
+                                label={classData.status.toUpperCase()}
+                                color={classData.isActive ? "success" : "default"}
+                                size="small"
+                            />
+                            <Chip
+                                icon={<SchoolIcon />}
+                                label={classData.schoolId.name}
+                                color="primary"
+                                size="small"
+                            />
                         </Box>
                     </Box>
 
-                    {/* Colonna destra: Pulsanti */}
-                    <Box>
+                    <Box display="flex" alignItems="center">
+                        {/* Pulsanti azione */}
                         <Button
                             variant="outlined"
                             startIcon={<ArrowBackIcon />}
                             onClick={() => navigate('/admin/classes')}
-                            sx={{ mr: 2 }}
+                            sx={{ mr: 1 }}
                             size="small"
                         >
                             Indietro
@@ -163,7 +158,7 @@ console.log("Students data:", classData.students);
                             variant="contained"
                             startIcon={<GroupAddIcon />}
                             onClick={() => navigate(`/admin/classes/${classId}/populate`)}
-                            sx={{ mr: 2 }}
+                            sx={{ mr: 1 }}
                             size="small"
                         >
                             Popola
@@ -172,12 +167,74 @@ console.log("Students data:", classData.students);
                             variant="contained"
                             startIcon={<QuizIcon />}
                             onClick={() => navigate(`/admin/classes/${classId}/tests`)}
+                            sx={{ mr: 2 }}
                             size="small"
                         >
                             Test
                         </Button>
+                        <IconButton 
+                            onClick={() => setExpandedInfo(!expandedInfo)}
+                            size="small"
+                        >
+                            {expandedInfo ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                        </IconButton>
                     </Box>
                 </Box>
+
+                {/* Informazioni dettagliate espandibili */}
+                <Collapse in={expandedInfo}>
+                    <Divider sx={{ my: 2 }} />
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} md={4}>
+                            <Box>
+                                <Typography variant="subtitle1" color="primary" gutterBottom>
+                                    Dettagli Classe
+                                </Typography>
+                                <InfoField label="ID Classe" value={classData._id} />
+                                <InfoField label="ID Scuola" value={classData.schoolId._id} />
+                                <InfoField label="Scuola" value={classData.schoolId.name} />
+                                <InfoField label="Capacità" value={`${classData.students.length}/${classData.capacity}`} />
+                            </Box>
+                        </Grid>
+
+                        <Grid item xs={12} md={4}>
+                            <Typography variant="subtitle1" color="primary" gutterBottom>
+                                Docente Principale
+                            </Typography>
+                            {classData.mainTeacher && (
+                                <Box>
+                                    <InfoField label="Nome" value={`${classData.mainTeacher.firstName} ${classData.mainTeacher.lastName}`} />
+                                    <InfoField label="Email" value={classData.mainTeacher.email} />
+                                    <InfoField label="ID" value={classData.mainTeacher._id} />
+                                </Box>
+                            )}
+                        </Grid>
+
+                        <Grid item xs={12} md={4}>
+                            <Typography variant="subtitle1" color="primary" gutterBottom>
+                                Altri Docenti
+                            </Typography>
+                            {classData.teachers && classData.teachers.length > 0 ? (
+                                classData.teachers.map((teacher, index) => (
+                                    <Box key={teacher._id} sx={{ mb: 1 }}>
+                                        <Typography variant="body2">{`${teacher.firstName} ${teacher.lastName}`}</Typography>
+                                        <Typography variant="caption" color="text.secondary">{teacher.email}</Typography>
+                                    </Box>
+                                ))
+                            ) : (
+                                <Typography variant="body2" color="text.secondary">
+                                    Nessun docente aggiuntivo
+                                </Typography>
+                            )}
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Typography variant="caption" color="text.secondary">
+                                Ultima modifica: {new Date(classData.updatedAt).toLocaleString()}
+                            </Typography>
+                        </Grid>
+                    </Grid>
+                </Collapse>
             </Paper>
 
             {/* Tabella Studenti con più spazio */}

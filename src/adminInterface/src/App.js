@@ -14,6 +14,7 @@ import { adminRoutes } from './routes/routes';
 import { Class } from '@mui/icons-material';
 import { ClassProvider } from './context/ClassContext';
 import { StudentProvider } from './context/StudentContext'; // Aggiungi questo import
+import PublicCSI from './components/engines/CSI/publicCSI';
 
 
 setupAxiosInterceptors();
@@ -32,6 +33,7 @@ function App() {
                                         <Route path="/login" element={<Login />} />
                                         <Route path="/unauthorized" element={<Unauthorized />} />
                                         <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+                                        <Route path="/test/csi/:token" element={<PublicCSI />} />
                                         <Route
                                             path="/admin/*"
                                             element={

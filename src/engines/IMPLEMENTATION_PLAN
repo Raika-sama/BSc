@@ -1,0 +1,102 @@
+ l'architettura che propongo è basata sul pattern "Plugin" dove ogni test è come un modulo indipendente che si aggancia al core system. Ecco come funzionerà:
+
+Core Engine (engines/core/)
+
+TestEngine.js: Classe base astratta che definisce l'interfaccia comune per tutti i test
+TestScorer.js: Sistema base di scoring che può essere esteso per ogni tipo di test
+Gestisce funzionalità comuni come inizializzazione test, validazione, timing, ecc.
+
+
+Test Specifici (engines/types/CSI/)
+
+Ogni test estende le classi base del core
+Ha i suoi modelli specifici per domande e risultati
+Implementa la propria logica di scoring e analytics
+Definisce le proprie API e routes
+
+
+Flusso di esecuzione
+
+CopyFrontend -> API Request -> Test Router -> Test Controller -> Test Service -> Test Engine Instance
+                                                                       -> Test Scorer
+                                                                       -> Database
+
+Vantaggi
+
+Facilmente estendibile (basta aggiungere nuovi tipi di test)
+Manutenibile (ogni test è isolato)
+Riusabile (logica comune nel core)
+Testabile (ogni componente è indipendente)
+
+Ho analizzato tutti i file relativi ai test nel tuo backend. Hai già una struttura molto solida con:
+
+Models (Test.js):
+
+
+Schema per Test e Result ben strutturati
+Indici ottimizzati
+Validazioni di base
+
+
+Repository (TestRepository.js):
+
+
+Estende BaseRepository
+Gestione errori robusta
+Funzionalità per:
+
+Creazione test
+Salvataggio risultati
+Statistiche
+Cooldown tra tentativi
+
+
+
+
+Controller e Routes:
+
+
+API RESTful
+Middleware di autenticazione
+Gestione errori centralizzata
+
+Considerando questa struttura esistente, proporrei di:
+
+Mantenere l'architettura base attuale ma estenderla per supportare diversi tipi di test:
+
+Copysrc/
+├── models/
+│   └── Test.js                # Schema base esistente
+├── repositories/
+│   └── TestRepository.js      # Repository base esistente
+├── engines/                   # Nuova cartella per i motori
+│   ├── core/
+│   │   ├── BaseEngine.js     # Logica comune
+│   │   └── BaseScorer.js     # Scoring base
+│   └── types/
+│       └── CSI/
+│           ├── engine.js     # Estende BaseEngine
+│           ├── scorer.js     # Estende BaseScorer
+│           └── constants.js  # Configurazioni CSI
+
+Modificare leggermente il modello Test per supportare tipi diversi:
+
+javascriptCopy{
+    tipo: {
+        type: String,
+        enum: ['CSI', 'ALTRO_TEST'],
+        required: true
+    },
+    config: {
+        type: Map,  // Configurazione specifica per tipo
+        of: mongoose.Schema.Types.Mixed
+    }
+}
+
+Estendere TestRepository con metodi specifici per CSI
+
+Vuoi che iniziamo implementando uno di questi componenti? E in particolare, quale preferisci tra:
+
+Modifiche al modello Test per supportare CSI
+Implementazione BaseEngine nel core
+Implementazione engine specifico CSI

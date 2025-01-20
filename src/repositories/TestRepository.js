@@ -11,6 +11,172 @@ class TestRepository extends BaseRepository {
         this.Result = Result;
     }
 
+     /**
+     * Trova un test tramite token
+     */
+     async findByToken(token) {
+        try {
+            return await this.model.findOne({
+                token,
+                expiresAt: { $gt: new Date() }
+            }).populate('studentId');
+        } catch (error) {
+            logger.error('Error finding test by token:', {
+                error,
+                token: token.substring(0, 10) + '...' // log parziale per sicurezza
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Verifica se un token è valido e utilizzabile
+     */
+    async isTokenValid(token) {
+        try {
+            const test = await this.findByToken(token);
+            return {
+                isValid: !!test && !test.used,
+                test
+            };
+        } catch (error) {
+            logger.error('Error checking token validity:', { error });
+            return { isValid: false, test: null };
+        }
+    }
+
+    /**
+     * Marca un token come utilizzato
+     */
+    async markTokenAsUsed(token) {
+        try {
+            const result = await this.model.updateOne(
+                { token },
+                { 
+                    $set: { 
+                        used: true,
+                        lastUsed: new Date()
+                    }
+                }
+            );
+            return result.modifiedCount > 0;
+        } catch (error) {
+            logger.error('Error marking token as used:', { error });
+            throw error;
+        }
+    }
+    
+ /**
+     * Salva un nuovo token di test
+     * @param {Object} tokenData - Dati del token
+     * @returns {Promise<Object>} Test creato
+     */
+ async saveTestToken(tokenData) {
+    try {
+        const { token, studentId, testType, expiresAt } = tokenData;
+
+        // Verifica se esiste già un token valido per questo studente e tipo di test
+        const existingToken = await this.model.findOne({
+            studentId,
+            tipo: testType,
+            expiresAt: { $gt: new Date() },
+            used: false
+        });
+
+        if (existingToken) {
+            logger.warn('Token già esistente per questo studente', {
+                studentId,
+                testType
+            });
+            return existingToken;
+        }
+
+        // Crea nuovo test con token
+        const test = await this.model.create({
+            token,
+            studentId,
+            tipo: testType,
+            stato: 'pending',
+            expiresAt,
+            used: false,
+            created: new Date(),
+            configurazione: {
+                tempoLimite: 30, // 30 minuti
+                tentativiMax: 1,
+                cooldownPeriod: 168, // 1 settimana
+                randomizzaDomande: true,
+                mostraRisultatiImmediati: false
+            }
+        });
+
+        logger.info('Test token saved successfully', {
+            testId: test._id,
+            studentId
+        });
+
+        return test;
+    } catch (error) {
+        logger.error('Error saving test token', {
+            error,
+            tokenData
+        });
+        throw createError(
+            ErrorTypes.DATABASE.SAVE_ERROR,
+            'Errore nel salvare il token del test',
+            { originalError: error.message }
+        );
+    }
+}
+
+/**
+ * Verifica validità di un token
+ * @param {string} token - Token da verificare
+ * @returns {Promise<Object>} Test associato al token
+ */
+async verifyToken(token) {
+    try {
+        const test = await this.model.findOne({
+            token,
+            expiresAt: { $gt: new Date() },
+            used: false
+        }).populate('studentId');
+
+        if (!test) {
+            throw createError(
+                ErrorTypes.VALIDATION.INVALID_TOKEN,
+                'Token non valido o scaduto'
+            );
+        }
+
+        return test;
+    } catch (error) {
+        logger.error('Error verifying token', { error, token });
+        throw error;
+    }
+}
+
+/**
+ * Marca un token come utilizzato
+ * @param {string} token - Token da marcare
+ */
+async markTokenAsUsed(token) {
+    try {
+        await this.model.updateOne(
+            { token },
+            { 
+                $set: { 
+                    used: true,
+                    stato: 'active'
+                } 
+            }
+        );
+    } catch (error) {
+        logger.error('Error marking token as used', { error, token });
+        throw error;
+    }
+}
+
+
     async createTest(testData) {
         try {
             if (!testData.domande || testData.domande.length === 0) {
