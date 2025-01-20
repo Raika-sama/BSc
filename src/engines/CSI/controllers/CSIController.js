@@ -167,13 +167,13 @@ generateTestLink = async (req, res) => {
     try {
         console.log('Generating test link - Request body:', req.body);
         
-        const { studentId, testType } = req.body;
+        const { studentId, testType, targetGrade } = req.body;
 
         // 1. Validazione input
-        if (!studentId || !testType) {
+        if (!studentId || !testType || !targetGrade) {
             throw createError(
                 ErrorTypes.VALIDATION.INVALID_INPUT,
-                'studentId e testType sono richiesti'
+                'studentId, testType e targetGrade sono richiesti'
             );
         }
 
@@ -190,6 +190,7 @@ generateTestLink = async (req, res) => {
         const tokenData = {
             studentId,
             testType,
+            targetGrade,
             timestamp: Date.now(),
             expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 ore
         };
@@ -205,6 +206,8 @@ generateTestLink = async (req, res) => {
             token,
             studentId,
             testType,
+            targetGrade,
+            stato: 'draft',  // Utilizza un valore valido
             expiresAt: new Date(tokenData.expiresAt)
         });
 
@@ -212,6 +215,7 @@ generateTestLink = async (req, res) => {
         logger.info('Test link generated successfully', { 
             studentId,
             testType,
+            targetGrade,
             token: token.substring(0, 10) + '...' // Log solo parte del token per sicurezza
         });
 

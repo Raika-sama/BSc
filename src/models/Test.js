@@ -33,7 +33,7 @@ const questionSchema = new mongoose.Schema({
 const testSchema = new mongoose.Schema({
     nome: {
         type: String,
-        required: true,
+ //       required: true,
         trim: true
     },
     tipo: {
@@ -149,6 +149,16 @@ const resultSchema = new mongoose.Schema({
     dataCompletamento: Date
 }, {
     timestamps: true
+});
+
+// Middleware pre-save per validazione
+resultSchema.pre('save', function(next) {
+    if (!this.token || !this.expiresAt || !this.studentId) {
+        const err = new Error('Token, expiresAt e studentId sono richiesti');
+        next(err);
+    } else {
+        next();
+    }
 });
 
 // Indici per ottimizzazione
