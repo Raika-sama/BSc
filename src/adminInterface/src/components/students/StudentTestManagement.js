@@ -34,15 +34,12 @@ const StudentTestManagement = () => {
     
             console.log('Iniziando la creazione del test:', {
                 studentId,
-                testType,
-                targetGrade
+                testType
             });
     
             const response = await axiosInstance.post('/tests/csi/generate-link', {
                 studentId: studentId,  // Esplicito
                 testType,
-                targetGrade,  // Aggiungi targetGrade
-                stato: 'published'  // Aggiungi stato
             });
     
             console.log('Risposta dal server:', response.data);

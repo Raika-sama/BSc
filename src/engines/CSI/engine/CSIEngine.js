@@ -12,21 +12,20 @@ class CSIEngine extends BaseEngine {
         this.testType = 'CSI';
     }
 
+   
     /**
      * Crea un nuovo test CSI
      * @override
      */
     async createTest(params) {
         try {
-            const { studentId, classId, schoolType } = params;
+            const { studentId, classId } = params;
 
-            // Carica template domande in base al tipo di scuola
-            const questions = await this._loadQuestions(schoolType);
+            // Carica template domande
+            const questions = await this._loadQuestions();
             
             const test = await this.testModel.create({
                 tipo: this.testType,
-                stato: 'published',
-                targetGrade: schoolType,
                 domande: questions,
                 configurazione: {
                     tempoLimite: 30, // 30 minuti
@@ -196,26 +195,25 @@ class CSIEngine extends BaseEngine {
      * Carica le domande appropriate per il tipo di scuola
      * @private
      */
-    async _loadQuestions(schoolType) {
+    async _loadQuestions() {
         try {
             // In una implementazione reale, queste domande verrebbero caricate da un database o file
-            const questions = schoolType === 'middle_school' ? 
-                this._getMiddleSchoolQuestions() : 
-                this._getHighSchoolQuestions();
+            const questions = this._getQuestions();
 
             if (questions.length === 0) {
                 throw createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Nessuna domanda trovata per il tipo di scuola specificato'
+                    'Nessuna domanda trovata'
                 );
             }
 
             return questions;
         } catch (error) {
-            logger.error('Error loading questions', { error, schoolType });
+            logger.error('Error loading questions', { error });
             throw error;
         }
     }
+
 
     /**
      * Utility per calcolare la media
@@ -244,10 +242,10 @@ class CSIEngine extends BaseEngine {
     }
 
     /**
-     * Restituisce le domande per scuola media
+     * Restituisce le domande
      * @private
      */
-    _getMiddleSchoolQuestions() {
+    _getQuestions() {
         // Implementazione di esempio - in produzione caricare da DB/file
         return [
             {
@@ -257,17 +255,6 @@ class CSIEngine extends BaseEngine {
                 polarity: "-",
                 peso: 1
             },
-            // ... altre domande
-        ];
-    }
-
-    /**
-     * Restituisce le domande per scuola superiore
-     * @private
-     */
-    _getHighSchoolQuestions() {
-        // Implementazione di esempio - in produzione caricare da DB/file
-        return [
             {
                 testo: "Per analizzare un testo letterario, lo divido in sezioni e studio ogni parte separatamente",
                 categoria: "Analitico/Globale",
@@ -278,44 +265,42 @@ class CSIEngine extends BaseEngine {
             // ... altre domande
         ];
     }
-    // Aggiungi questo metodo alla classe CSIEngine
+    /**
+     * Salva il token del test per uno studente
+     */
+    async saveTestToken(params) {
+        try {
+            const { token, studentId, testType, expiresAt } = params;
+            
+            logger.debug('Saving test token', { studentId, testType });
 
-/**
- * Salva il token del test per uno studente
- */
-async saveTestToken(params) {
-    try {
-        const { token, studentId, testType, expiresAt } = params;
-        
-        logger.debug('Saving test token', { studentId, testType });
+            // Crea un nuovo test con il token
+            const test = await this.testModel.create({
+                token,
+                tipo: testType,
+                stato: 'pending',
+                studentId,
+                expiresAt,
+                created: new Date()
+            });
 
-        // Crea un nuovo test con il token
-        const test = await this.testModel.create({
-            token,
-            tipo: testType,
-            stato: 'pending',
-            studentId,
-            expiresAt,
-            created: new Date()
-        });
+            logger.info('Test token saved successfully', { 
+                testId: test._id,
+                studentId 
+            });
 
-        logger.info('Test token saved successfully', { 
-            testId: test._id,
-            studentId 
-        });
-
-        return test;
-    } catch (error) {
-        logger.error('Error saving test token', { 
-            error,
-            studentId: params.studentId 
-        });
-        throw createError(
-            ErrorTypes.DATABASE.SAVE_ERROR,
-            'Errore nel salvare il token del test'
-        );
+            return test;
+        } catch (error) {
+            logger.error('Error saving test token', { 
+                error,
+                studentId: params.studentId 
+            });
+            throw createError(
+                ErrorTypes.DATABASE.SAVE_ERROR,
+                'Errore nel salvare il token del test'
+            );
+        }
     }
-}
 }
 
 module.exports = CSIEngine;

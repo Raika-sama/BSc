@@ -75,7 +75,6 @@ class TestRepository extends BaseRepository {
         logger.info('Starting test token creation:', {
             studentId: tokenData.studentId,
             testType: tokenData.testType,
-            targetGrade: tokenData.targetGrade,
             timestamp: new Date().toISOString()
         });
 
@@ -84,7 +83,6 @@ class TestRepository extends BaseRepository {
                 ...tokenData,
                 used: false,
                 created: new Date(),
-                stato: 'draft', // Assicurati di usare un valore valido
                 configurazione: {
                     tempoLimite: 30,
                     tentativiMax: 1,

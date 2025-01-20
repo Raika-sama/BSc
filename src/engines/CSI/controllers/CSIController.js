@@ -160,24 +160,24 @@ completeTest = async (req, res) => {
 };
 
 
-/**
- * Genera un link univoco per il test
- */
-generateTestLink = async (req, res) => {
+ /**
+     * Genera un link univoco per il test
+     */
+ generateTestLink = async (req, res) => {
     try {
         console.log('Generating test link - Request body:', req.body);
         
-        const { studentId, testType, targetGrade } = req.body;
+        const { studentId, testType } = req.body;
 
-        // 1. Validazione input
-        if (!studentId || !testType || !targetGrade) {
+        // Validazione input
+        if (!studentId || !testType) {
             throw createError(
                 ErrorTypes.VALIDATION.INVALID_INPUT,
-                'studentId, testType e targetGrade sono richiesti'
+                'studentId e testType sono richiesti'
             );
         }
 
-        // 2. Verifica che lo studente esista usando il repository
+        // Verifica che lo studente esista usando il repository
         const student = await studentRepository.findById(studentId);
         if (!student) {
             throw createError(
@@ -186,36 +186,32 @@ generateTestLink = async (req, res) => {
             );
         }
 
-        // 3. Genera token sicuro con dati incorporati
+        // Genera token sicuro con dati incorporati
         const tokenData = {
             studentId,
             testType,
-            targetGrade,
             timestamp: Date.now(),
             expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 ore
         };
 
-        // 4. Cripta il token
+        // Cripta il token
         const token = crypto
             .createHmac('sha256', process.env.SECRET_KEY || 'your-secret-key')
             .update(JSON.stringify(tokenData))
             .digest('hex');
 
-        // 5. Salva il token usando il metodo esistente nel engine
+        // Salva il token usando il metodo esistente nel engine
         await this.engine.saveTestToken({
             token,
             studentId,
             testType,
-            targetGrade,
-            stato: 'draft',  // Utilizza un valore valido
             expiresAt: new Date(tokenData.expiresAt)
         });
 
-        // 6. Log del successo
+        // Log del successo
         logger.info('Test link generated successfully', { 
             studentId,
             testType,
-            targetGrade,
             token: token.substring(0, 10) + '...' // Log solo parte del token per sicurezza
         });
 

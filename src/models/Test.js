@@ -46,16 +46,6 @@ const testSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
-    targetGrade: {
-        type: String,
-        enum: ['middle_school', 'high_school', 'all'],
-        required: true
-    },
-    stato: {
-        type: String,
-        enum: ['draft', 'published', 'archived'],
-        default: 'draft'
-    },
     domande: [questionSchema],
     configurazione: {
         tempoLimite: Number,        // in minuti
