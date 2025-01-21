@@ -114,6 +114,18 @@ const ErrorTypes = {
             status: 500
         }
     },
+    PROCESSING: {
+        CALCULATION_FAILED: {
+            code: 'PROC_001',
+            message: 'Errore nel calcolo dei risultati',
+            status: 500
+        },
+        INVALID_DATA: {
+            code: 'PROC_002',
+            message: 'Dati non validi per il calcolo',
+            status: 400
+        }
+    },
 
     // Errori di Sistema (SYS_) - 500
     SYSTEM: {

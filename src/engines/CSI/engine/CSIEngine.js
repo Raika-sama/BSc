@@ -146,20 +146,27 @@ class CSIEngine extends BaseEngine {
     /**
      * Completa il test
      */
-    async completeTest(testId) {
+    async completeTest(testId, token) {
         try {
+            logger.debug('Attempting to complete test:', { testId, token });
+    
+            // Prima verifica il token
+            const tokenResult = await this.verifyToken(token);
+            
+            // Trova il risultato del test
             const result = await this.Result.findOne({
+                _id: tokenResult._id,
                 test: testId,
                 completato: false
             }).populate('test');
-
+    
             if (!result) {
                 throw createError(
                     ErrorTypes.VALIDATION.NOT_FOUND,
                     'Test non trovato o già completato'
                 );
             }
-
+    
             // Verifica completezza
             if (result.risposte.length !== result.test.domande.length) {
                 throw createError(
@@ -167,29 +174,58 @@ class CSIEngine extends BaseEngine {
                     'Test incompleto'
                 );
             }
-
-            // Calcola punteggi
-            const scores = await this.scorer.calculateScores(result.risposte);
-            const profile = this.scorer.generateProfile(scores);
-            
-            // Aggiorna result
-            result.punteggi = scores;
+    
+            // Aggiorna il risultato
             result.completato = true;
             result.dataCompletamento = new Date();
+            result.used = true;
+    
+            // Per ora, punteggi base
+            result.punteggi = new Map([
+                ['analitico', 0],
+                ['sistematico', 0],
+                ['verbale', 0],
+                ['impulsivo', 0],
+                ['dipendente', 0]
+            ]);
+    
             result.analytics = {
                 tempoTotale: this._calculateTotalTime(result.risposte),
-                profile: profile
+                profile: {
+                    completedAt: new Date(),
+                    answersCount: result.risposte.length,
+                    status: 'completed'
+                }
             };
-
+    
             await result.save();
+            
+            // Marca il token come usato
+            await this.markTokenAsUsed(token);
+    
+            logger.debug('Test completed successfully:', {
+                resultId: result._id,
+                testId: result.test._id,
+                answersCount: result.risposte.length
+            });
+    
             return result;
+    
         } catch (error) {
             logger.error('Error completing CSI test:', {
                 error: error.message,
-                testId
+                testId,
+                token: token?.substring(0, 10) + '...'
             });
             throw error;
         }
+    }
+    
+    // Implementazione della funzione helper per calcolare il tempo totale
+    _calculateTotalTime(risposte) {
+        return risposte.reduce((total, risposta) => {
+            return total + (risposta.tempoRisposta || 0);
+        }, 0);
     }
 
     /**

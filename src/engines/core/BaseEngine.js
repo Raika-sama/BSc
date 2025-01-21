@@ -114,7 +114,7 @@ class BaseEngine {
     /**
      * Completa il test e calcola i risultati
      */
-    async completeTest(testId) {
+    async completeTest(testId, token) {
         throw new Error('completeTest must be implemented by subclass');
     }
 

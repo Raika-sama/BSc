@@ -58,40 +58,56 @@ const PublicCSITest = () => {
       }
     }, [token]);
 
+
     const handleAnswer = async (event) => {
         const value = event.target.value;
         setIsSubmitting(true);
         
         try {
-          console.log('Submitting answer:', { questionIndex: currentQuestion, value }); // Debug log
+            console.log('Submitting answer:', { 
+                questionIndex: currentQuestion, 
+                value,
+                isLastQuestion: currentQuestion === questions.length - 1
+            });
     
-          // Invia la risposta al backend
-          const response = await axiosInstance.post(`/tests/csi/public/${token}/answer`, {
-            questionIndex: currentQuestion,
-            value: parseInt(value),
-            timeSpent: 0 // Implementare il timing se necessario
-          });
+            // Invia la risposta al backend
+            const response = await axiosInstance.post(`/tests/csi/public/${token}/answer`, {
+                questionIndex: currentQuestion,
+                value: parseInt(value),
+                timeSpent: 0
+            });
     
-          console.log('Answer submission response:', response.data); // Debug log
+            // Aggiorna lo stato locale delle risposte
+            setAnswers(prev => ({
+                ...prev,
+                [currentQuestion]: value
+            }));
     
-          setAnswers(prev => ({
-            ...prev,
-            [currentQuestion]: value
-          }));
-    
-          if (currentQuestion < questions.length - 1) {
-            setCurrentQuestion(prev => prev + 1);
-          } else {
-            // Completa il test
-            const completeResponse = await axiosInstance.post(`/tests/csi/public/${token}/complete`);
-            console.log('Test completion response:', completeResponse.data); // Debug log
-            setCurrentStep('results');
-          }
+            // Se è l'ultima domanda
+            if (currentQuestion === questions.length - 1) {
+                try {
+                    // Aspetta un momento per assicurarsi che l'ultima risposta sia salvata
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Completa il test
+                    const completeResponse = await axiosInstance.post(`/tests/csi/public/${token}/complete`);
+                    console.log('Test completion response:', completeResponse.data);
+                    
+                    // Passa ai risultati
+                    setCurrentStep('results');
+                } catch (completeError) {
+                    console.error('Error completing test:', completeError);
+                    setError('Errore durante il completamento del test. Per favore, riprova.');
+                }
+            } else {
+                // Passa alla prossima domanda
+                setCurrentQuestion(prev => prev + 1);
+            }
         } catch (err) {
-          console.error('Answer submission error:', err); // Debug log
-          setError(err.response?.data?.message || 'Errore durante il salvataggio della risposta');
+            console.error('Answer submission error:', err.response?.data || err);
+            setError(err.response?.data?.message || 'Errore durante il salvataggio della risposta');
         } finally {
-          setIsSubmitting(false);
+            setIsSubmitting(false);
         }
       };
 
@@ -149,7 +165,7 @@ const PublicCSITest = () => {
             Domanda {currentQuestion + 1} di {questions.length}
           </Typography>
           <Typography variant="body1" sx={{ mb: 3 }}>
-            {question.text}
+            {question.testo}
           </Typography>
           <RadioGroup
             value={answers[currentQuestion] || ''}

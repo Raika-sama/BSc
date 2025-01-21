@@ -77,7 +77,7 @@ class CSIController {
             }
 
             // Marca il token come utilizzato
-            await this.engine.markTokenAsUsed(token);
+            // await this.engine.markTokenAsUsed(token);
 
             // Inizializza il test
             const testData = await this.engine.initializeTest({
@@ -164,14 +164,17 @@ class CSIController {
      */
     completeTest = async (req, res) => {
         const { token } = req.params;
-
+    
         try {
             // Verifica token e recupera test
             const result = await this.engine.verifyToken(token);
             
-            // Completa il test
-            const completedResult = await this.engine.completeTest(result.test._id);
-
+            // Passa sia testId che token
+            const completedResult = await this.engine.completeTest(result.test._id, token);
+     
+            // Non serve più chiamare markTokenAsUsed qui perché lo faremo dentro completeTest
+            // await this.engine.markTokenAsUsed(token);
+    
             res.json({
                 status: 'success',
                 data: {
@@ -184,7 +187,7 @@ class CSIController {
                 error: error.message,
                 token: token ? token.substring(0, 10) + '...' : 'undefined'
             });
-
+    
             res.status(400).json({
                 status: 'error',
                 error: {
