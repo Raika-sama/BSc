@@ -66,6 +66,10 @@ if (CSIController.generateTestLink) {
     protectedRouter.post('/generate-link', CSIController.generateTestLink);
 }
 
+if (CSIController.getStudentResults) {
+    protectedRouter.get('/results/student/:studentId', CSIController.getStudentResults);
+}
+
 const errorHandler = (err, req, res, next) => {
     logger.error('CSI route error:', {
         error: err.message,

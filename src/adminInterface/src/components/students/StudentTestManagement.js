@@ -1,5 +1,5 @@
 // src/components/students/StudentTestManagement.js
-import React, { useState } from 'react'; // Aggiunto useState
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Typography,
@@ -8,41 +8,64 @@ import {
     Breadcrumbs,
     Link,
     Grid,
-    Divider
+    Divider,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemButton,
+    Chip
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useNotification } from '../../context/NotificationContext'; // Aggiunto useNotification
-import TestLinkDialog from './TestLinkDialog'; // Aggiunto TestLinkDialog
+import { useNotification } from '../../context/NotificationContext';
+import TestLinkDialog from './TestLinkDialog';
+import TestDetailsView from './TestDetailsView';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import QuizIcon from '@mui/icons-material/Quiz';
-import { axiosInstance } from '../../services/axiosConfig'; // Aggiungi questo import
-
+import { axiosInstance } from '../../services/axiosConfig';
 const StudentTestManagement = () => {
     const { studentId } = useParams();
     const navigate = useNavigate();
     const [testLink, setTestLink] = useState('');
     const { showNotification } = useNotification();
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [selectedTest, setSelectedTest] = useState(null);
+    const [completedTests, setCompletedTests] = useState([]);
+
+    // Carica i test completati
+    useEffect(() => {
+        const fetchCompletedTests = async () => {
+            try {
+                // Usa l'endpoint corretto del modulo CSI
+                const response = await axiosInstance.get(`/tests/csi/results/student/${studentId}`);
+                if (response.data && response.data.data) {
+                    setCompletedTests(response.data.data);
+                }
+            } catch (error) {
+                console.error('Errore nel caricamento dei test:', error);
+                showNotification(
+                    'Errore nel caricamento dei test completati: ' + 
+                    (error.response?.data?.message || error.message),
+                    'error'
+                );
+            }
+        };
+    
+        if (studentId) {
+            fetchCompletedTests();
+        }
+    }, [studentId, showNotification]);
 
     const handleCreateTest = async (testType) => {
         try {
-            // Verifica che studentId sia presente
             if (!studentId) {
                 showNotification('ID studente mancante', 'error');
                 return;
             }
     
-            console.log('Iniziando la creazione del test:', {
-                studentId,
-                testType
-            });
-    
             const response = await axiosInstance.post('/tests/csi/generate-link', {
-                studentId: studentId,  // Esplicito
+                studentId: studentId,
                 testType,
             });
-    
-            console.log('Risposta dal server:', response.data);
     
             if (response.data && response.data.data?.token) {
                 const testUrl = `${window.location.origin}/test/csi/${response.data.data.token}`;
@@ -53,13 +76,7 @@ const StudentTestManagement = () => {
                 throw new Error('Token non ricevuto dal server');
             }
         } catch (error) {
-            console.error('Dettagli completi dell\'errore:', {
-                message: error.message,
-                code: error.code,
-                response: error.response?.data,
-                status: error.response?.status
-            });
-    
+            console.error('Errore nella generazione del link:', error);
             showNotification(
                 `Errore nella generazione del link del test: ${
                     error.response?.data?.message || error.message
@@ -69,27 +86,40 @@ const StudentTestManagement = () => {
         }
     };
 
-    return (
-        <Box p={3}>
-            {/* Breadcrumb Navigation */}
-            <Breadcrumbs sx={{ mb: 3 }}>
-                <Link 
-                    component="button"
-                    variant="body1"
-                    onClick={() => navigate('/students')}
-                    sx={{ cursor: 'pointer' }}
-                >
-                    Studenti
-                </Link>
-                <Typography color="text.primary">Gestione Test</Typography>
-            </Breadcrumbs>
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleString('it-IT', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
 
-            {/* Header */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Typography variant="h4" color="primary">
-                    Gestione Test Studente
-                </Typography>
+    return (
+        <Box p={2}>
+            {/* Header compatto */}
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Box>
+                    <Breadcrumbs sx={{ mb: 1 }}>
+                        <Link 
+                            component="button"
+                            variant="body2"
+                            onClick={() => navigate('/students')}
+                            sx={{ cursor: 'pointer' }}
+                        >
+                            Studenti
+                        </Link>
+                        <Typography variant="body2" color="text.primary">
+                            Gestione Test
+                        </Typography>
+                    </Breadcrumbs>
+                    <Typography variant="h5" color="primary">
+                        Gestione Test Studente
+                    </Typography>
+                </Box>
                 <Button
+                    size="small"
                     variant="outlined"
                     startIcon={<ArrowBackIcon />}
                     onClick={() => navigate('/students')}
@@ -98,53 +128,91 @@ const StudentTestManagement = () => {
                 </Button>
             </Box>
 
-            {/* Test disponibili */}
-            <Paper sx={{ p: 3, mb: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                    Test Disponibili
-                </Typography>
-                <Divider sx={{ mb: 2 }}/>
-                <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
-                        <Paper elevation={2} sx={{ p: 2 }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <Box>
-                                    <Typography variant="h6">
-                                        Test CSI
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Test Stili Cognitivi di Apprendimento
-                                    </Typography>
-                                </Box>
-                                <Button
-                                    variant="contained"
-                                    startIcon={<QuizIcon />}
-                                    onClick={() => handleCreateTest('CSI')}
-                                >
-                                    Somministra
-                                </Button>
-                            </Box>
-                        </Paper>
+            {/* Pulsanti test disponibili */}
+            <Paper sx={{ p: 2, mb: 2 }}>
+                <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} md={4}>
+                        <Typography variant="subtitle1">
+                            Test Disponibili
+                        </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={8}>
+                        <Box display="flex" gap={2}>
+                            <Button
+                                size="small"
+                                variant="contained"
+                                startIcon={<QuizIcon />}
+                                onClick={() => handleCreateTest('CSI')}
+                            >
+                                Somministra CSI
+                            </Button>
+                        </Box>
                     </Grid>
                 </Grid>
             </Paper>
+
+            {/* Layout principale */}
+            <Grid container spacing={2}>
+                {/* Lista test completati */}
+                <Grid item xs={12} md={4}>
+                    <Paper sx={{ height: 'calc(100vh - 250px)', overflow: 'auto' }}>
+                        <List sx={{ p: 0 }}>
+                            <ListItem sx={{ backgroundColor: 'grey.100' }}>
+                                <ListItemText 
+                                    primary={<Typography variant="subtitle2">Test Completati</Typography>}
+                                />
+                            </ListItem>
+                            <Divider />
+                            {completedTests.length > 0 ? (
+                                completedTests.map((test) => (
+                                    <ListItemButton
+                                        key={test._id}
+                                        selected={selectedTest?._id === test._id}
+                                        onClick={() => setSelectedTest(test)}
+                                    >
+                                        <ListItemText
+                                            primary={
+                                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                    <Typography variant="body2">Test {test.tipo}</Typography>
+                                                    <Chip 
+                                                        label="Completato"
+                                                        size="small"
+                                                        color="success"
+                                                        sx={{ height: 20 }}
+                                                    />
+                                                </Box>
+                                            }
+                                            secondary={formatDate(test.dataCompletamento)}
+                                        />
+                                    </ListItemButton>
+                                ))
+                            ) : (
+                                <ListItem>
+                                    <ListItemText 
+                                        secondary="Nessun test completato"
+                                        sx={{ textAlign: 'center' }}
+                                    />
+                                </ListItem>
+                            )}
+                        </List>
+                    </Paper>
+                </Grid>
+
+                {/* Area dettagli test */}
+                <Grid item xs={12} md={8}>
+                    <TestDetailsView 
+                        test={selectedTest}
+                        formatDate={formatDate}
+                    />
+                </Grid>
+            </Grid>
+
             <TestLinkDialog 
                 open={dialogOpen}
                 onClose={() => setDialogOpen(false)}
                 testLink={testLink}
             />
-            {/* Storico test */}
-            <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                    Storico Test
-                </Typography>
-                <Divider sx={{ mb: 2 }}/>
-                <Typography variant="body1" color="text.secondary" align="center">
-                    Nessun test completato
-                </Typography>
-            </Paper>
         </Box>
-        
     );
 };
 

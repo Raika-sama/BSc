@@ -199,6 +199,47 @@ class CSIController {
     };
 
     /**
+ * Recupera tutti i test completati di uno studente
+ */
+getStudentResults = async (req, res) => {
+    const { studentId } = req.params;
+
+    try {
+        logger.debug('Fetching student test results:', { studentId });
+
+        const results = await Result.find({
+            studentId,
+            completato: true
+        })
+        .populate('test', 'tipo')
+        .sort({ dataCompletamento: -1 });
+
+        logger.debug('Found student results:', {
+            count: results.length,
+            studentId
+        });
+
+        res.json({
+            status: 'success',
+            data: results
+        });
+    } catch (error) {
+        logger.error('Error fetching student results:', {
+            error: error.message,
+            studentId
+        });
+
+        res.status(500).json({
+            status: 'error',
+            error: {
+                message: 'Errore nel recupero dei risultati',
+                code: error.code || 'FETCH_RESULTS_ERROR'
+            }
+        });
+    }
+};
+
+    /**
      * Genera un link univoco per il test
      */
     generateTestLink = async (req, res) => {
