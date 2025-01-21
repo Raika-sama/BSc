@@ -68,10 +68,12 @@ const testSchema = new mongoose.Schema({
     timestamps: true
 });
 
+
 const resultSchema = new mongoose.Schema({
-    utente: {
+    // Rimuoviamo utente e usiamo studentId come campo principale
+    studentId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Student',
         required: true
     },
     test: {
@@ -96,21 +98,33 @@ const resultSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.Mixed,
             required: true
         },
-        tempoRisposta: Number      // tempo in secondi per rispondere
+        tempoRisposta: Number
     }],
     punteggi: {
         type: Map,
         of: mongoose.Schema.Types.Mixed,
-        required: true
+        required: function() { return this.completato; }  // Required solo se completato
     },
     analytics: {
-        tempoTotale: Number,       // tempo totale del test in secondi
-        domandePerse: Number,      // domande non risposte
-        pattern: [Number],         // pattern di risposta per analisi
-        metadata: {                // dati specifici per tipo di test
+        tempoTotale: Number,
+        domandePerse: Number,
+        pattern: [Number],
+        metadata: {
             type: Map,
             of: mongoose.Schema.Types.Mixed
         }
+    },
+    token: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    expiresAt: {
+        type: Date
+    },
+    used: {
+        type: Boolean,
+        default: false
     },
     completato: {
         type: Boolean,
@@ -120,22 +134,6 @@ const resultSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    token: {
-        type: String,
-        unique: true,
-        sparse: true // permette null/undefined
-    },
-    expiresAt: {
-        type: Date
-    },
-    used: {
-        type: Boolean,
-        default: false
-    },
-    studentId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Student'
-    },
     dataCompletamento: Date
 }, {
     timestamps: true
@@ -143,12 +141,19 @@ const resultSchema = new mongoose.Schema({
 
 // Middleware pre-save per validazione
 resultSchema.pre('save', function(next) {
-    if (!this.token || !this.expiresAt || !this.studentId) {
-        const err = new Error('Token, expiresAt e studentId sono richiesti');
+    // Verifica token e expiresAt solo se uno dei due è presente
+    if ((this.token && !this.expiresAt) || (!this.token && this.expiresAt)) {
+        const err = new Error('Token e expiresAt devono essere presenti insieme');
         next(err);
-    } else {
-        next();
     }
+    
+    // Verifica sempre studentId
+    if (!this.studentId) {
+        const err = new Error('StudentId è richiesto');
+        next(err);
+    }
+    
+    next();
 });
 
 // Indici per ottimizzazione

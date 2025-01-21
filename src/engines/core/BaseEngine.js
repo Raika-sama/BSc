@@ -1,65 +1,111 @@
 // src/engines/core/BaseEngine.js
 
-const { Test, Result } = require('../../models/Test');
 const logger = require('../../utils/errors/logger/logger');
 const { ErrorTypes, createError } = require('../../utils/errors/errorTypes');
 
 class BaseEngine {
-    constructor() {
+    constructor(Test, Result) {
+        // Verifica che la classe non venga istanziata direttamente
         if (this.constructor === BaseEngine) {
             throw new Error('BaseEngine is abstract and cannot be instantiated directly');
         }
         
-        this.testModel = Test;
-        this.resultModel = Result;
+        if (!Test || !Result) {
+            throw new Error('Test and Result models are required');
+        }
+        
+        this.Test = Test;
+        this.Result = Result;
+        this.testType = null; // Deve essere settato dalle sottoclassi
     }
 
     /**
-     * Inizializza un nuovo test per uno studente
-     * @param {Object} params - Parametri di inizializzazione
-     * @param {string} params.studentId - ID dello studente
-     * @param {string} params.classId - ID della classe
-     * @param {Object} params.config - Configurazione specifica del test
+     * Verifica la validità di un token test
      */
-    async initializeTest(params) {
+    async verifyToken(token) {
         try {
-            // Validazione base
-            if (!params.studentId) {
+            if (!token) {
                 throw createError(
-                    ErrorTypes.VALIDATION.INVALID_INPUT,
-                    'Student ID is required'
+                    ErrorTypes.VALIDATION.INVALID_TOKEN,
+                    'Token is required'
                 );
             }
 
-            // Verifica cooldown period
-            const canTakeTest = await this.verifyTestAvailability(params.studentId);
-            if (!canTakeTest.available) {
+            logger.debug('Verifying token in BaseEngine:', { token });
+
+            const result = await this.Result.findOne({
+                token,
+                expiresAt: { $gt: new Date() },
+                used: false
+            })
+            .populate('studentId')
+            .populate('test');  // Aggiunto populate del test
+
+            if (!result) {
                 throw createError(
-                    ErrorTypes.VALIDATION.INVALID_INPUT,
-                    canTakeTest.message
+                    ErrorTypes.VALIDATION.INVALID_TOKEN,
+                    'Token non valido o scaduto'
                 );
             }
 
-            // Creazione test specifico - deve essere implementato dalle sottoclassi
-            const test = await this.createTest(params);
-            
-            logger.info('Test initialized', {
-                testId: test._id,
-                studentId: params.studentId,
-                type: test.tipo
+            logger.debug('Token verification result:', {
+                resultId: result._id,
+                testId: result.test?._id,
+                testType: result.test?.tipo,
+                studentId: result.studentId?._id
             });
 
-            return test;
+            return result;
         } catch (error) {
-            logger.error('Error initializing test', { error, params });
+            logger.error('Error verifying token in BaseEngine:', {
+                error: error.message,
+                stack: error.stack,
+                token: token ? token.substring(0, 10) + '...' : 'undefined'
+            });
             throw error;
         }
     }
 
     /**
+     * Marca un token come utilizzato
+     */
+    async markTokenAsUsed(token) {
+        try {
+            const result = await this.Result.findOneAndUpdate(
+                { token },
+                { 
+                    used: true,
+                    lastUsed: new Date()
+                },
+                { new: true }
+            );
+
+            if (!result) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_TOKEN,
+                    'Token non trovato'
+                );
+            }
+
+            return result;
+        } catch (error) {
+            logger.error('Error marking token as used:', {
+                error: error.message,
+                token
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Inizializza un nuovo test
+     */
+    async initializeTest(params) {
+        throw new Error('initializeTest must be implemented by subclass');
+    }
+
+    /**
      * Processa una risposta durante il test
-     * @param {string} testId - ID del test
-     * @param {Object} answer - Risposta dello studente
      */
     async processAnswer(testId, answer) {
         throw new Error('processAnswer must be implemented by subclass');
@@ -67,37 +113,19 @@ class BaseEngine {
 
     /**
      * Completa il test e calcola i risultati
-     * @param {string} testId - ID del test
      */
     async completeTest(testId) {
         throw new Error('completeTest must be implemented by subclass');
     }
 
     /**
-     * Calcola i punteggi del test
-     * @param {Array} answers - Array di risposte
-     */
-    async calculateScores(answers) {
-        throw new Error('calculateScores must be implemented by subclass');
-    }
-
-    /**
-     * Genera il report dei risultati
-     * @param {string} testId - ID del test
-     */
-    async generateReport(testId) {
-        throw new Error('generateReport must be implemented by subclass');
-    }
-
-    /**
-     * Verifica se uno studente può fare il test (cooldown, tentativi massimi, etc.)
-     * @param {string} studentId - ID dello studente
+     * Verifica se uno studente può fare il test
      */
     async verifyTestAvailability(studentId) {
         try {
-            const lastResult = await this.resultModel
+            const lastResult = await this.Result
                 .findOne({ 
-                    utente: studentId,
+                    studentId,
                     completato: true 
                 })
                 .sort({ dataCompletamento: -1 });
@@ -107,8 +135,8 @@ class BaseEngine {
             }
 
             // Verifica cooldown period
-            const test = await this.testModel.findById(lastResult.test);
-            const cooldownHours = test.configurazione.cooldownPeriod || 24;
+            const test = await this.Test.findById(lastResult.test);
+            const cooldownHours = test?.configurazione?.cooldownPeriod || 24;
             
             const hoursSinceLastTest = 
                 (Date.now() - lastResult.dataCompletamento.getTime()) / (1000 * 60 * 60);
@@ -120,75 +148,21 @@ class BaseEngine {
                 };
             }
 
-            // Verifica numero massimo tentativi
-            const attemptCount = await this.resultModel.countDocuments({
-                utente: studentId,
-                test: lastResult.test,
-                completato: true
-            });
-
-            if (test.configurazione.tentativiMax && 
-                attemptCount >= test.configurazione.tentativiMax) {
-                return {
-                    available: false,
-                    message: 'Hai raggiunto il numero massimo di tentativi per questo test'
-                };
-            }
-
             return { available: true };
         } catch (error) {
-            logger.error('Error checking test availability', { error, studentId });
+            logger.error('Error checking test availability:', {
+                error: error.message,
+                studentId
+            });
             throw error;
         }
     }
 
     /**
-     * Genera analytics sul test
-     * @param {string} testId - ID del test
+     * Genera il report dei risultati
      */
-    async generateAnalytics(testId) {
-        try {
-            const results = await this.resultModel
-                .find({ 
-                    test: testId,
-                    completato: true 
-                })
-                .populate('utente', 'firstName lastName email')
-                .sort({ dataCompletamento: -1 });
-
-            if (results.length === 0) {
-                return {
-                    totalAttempts: 0,
-                    averageCompletionTime: 0,
-                    questionStats: []
-                };
-            }
-
-            // Calcolo statistiche base
-            const completionTimes = results.map(r => r.analytics.tempoTotale);
-            const avgTime = completionTimes.reduce((a, b) => a + b, 0) / results.length;
-
-            // Statistiche per domanda - da implementare nelle sottoclassi
-            const questionStats = await this.calculateQuestionStats(results);
-
-            return {
-                totalAttempts: results.length,
-                averageCompletionTime: avgTime,
-                questionStats,
-                lastAttempt: results[0].dataCompletamento
-            };
-        } catch (error) {
-            logger.error('Error generating analytics', { error, testId });
-            throw error;
-        }
-    }
-
-    /**
-     * Calcola statistiche per ogni domanda
-     * @param {Array} results - Array di risultati
-     */
-    async calculateQuestionStats(results) {
-        throw new Error('calculateQuestionStats must be implemented by subclass');
+    async generateReport(testId) {
+        throw new Error('generateReport must be implemented by subclass');
     }
 }
 

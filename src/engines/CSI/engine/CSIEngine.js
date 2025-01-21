@@ -6,90 +6,118 @@ const { createError, ErrorTypes } = require('../../../utils/errors/errorTypes');
 const logger = require('../../../utils/errors/logger/logger');
 
 class CSIEngine extends BaseEngine {
-    constructor(testRepository, testModel, resultModel) {
-        super(testRepository, testModel, resultModel); // Passa le dipendenze al BaseEngine
+    constructor(Test, Result) {
+        super(Test, Result);
         this.scorer = new CSIScorer();
         this.testType = 'CSI';
-        this.testRepository = testRepository; // Assicurati che testRepository sia disponibile
-    }
-
-   // Questo metodo dovrebbe essere aggiunto o corretto
-   async verifyToken(token) {
-        try {
-            // Delega la verifica al repository
-            const test = await this.testRepository.verifyToken(token);
-            return test;
-        } catch (error) {
-            logger.error('Engine: Error verifying token:', { 
-                error: error.message,
-                stack: error.stack
-            });
-            throw error; // Propaga l'errore al controller
-        }
     }
 
     /**
-     * Crea un nuovo test CSI
-     * @override
+     * Override del metodo verifyToken per aggiungere logica specifica CSI
      */
-    async createTest(params) {
+    async verifyToken(token) {
         try {
-            const { studentId, classId } = params;
-
-            // Carica template domande
-            const questions = await this._loadQuestions();
+            // Usa il metodo della classe base
+            const result = await super.verifyToken(token);
             
-            const test = await this.testModel.create({
-                tipo: this.testType,
-                domande: questions,
-                configurazione: {
-                    tempoLimite: 30, // 30 minuti
-                    tentativiMax: 1,
-                    cooldownPeriod: 168, // 1 settimana
-                    randomizzaDomande: true,
-                    mostraRisultatiImmediati: false
-                }
-            });
+            // Verifica aggiuntiva specifica per CSI
+            if (result.test && result.test.tipo !== this.testType) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_TOKEN,
+                    'Token non valido per test CSI'
+                );
+            }
 
-            // Crea result iniziale
-            await this.resultModel.create({
-                utente: studentId,
-                test: test._id,
-                classe: classId,
-                dataInizio: new Date(),
-                completato: false
-            });
-
-            return test;
+            return result;
         } catch (error) {
-            logger.error('Error creating CSI test', { error, params });
+            logger.error('Error verifying CSI token:', {
+                error: error.message,
+                stack: error.stack,
+                token: token ? token.substring(0, 10) + '...' : 'undefined'
+            });
             throw error;
         }
     }
 
     /**
-     * Processa una singola risposta
-     * @override
+     * Inizializza un nuovo test CSI
+     */
+    async initializeTest(params) {
+        try {
+            const { studentId, testId } = params;
+    
+            logger.debug('Initializing CSI test:', { studentId, testId });
+    
+            // Verifica disponibilità
+            const availability = await this.verifyTestAvailability(studentId);
+            if (!availability.available) {
+                throw createError(
+                    ErrorTypes.VALIDATION.TEST_NOT_AVAILABLE,
+                    availability.message
+                );
+            }
+    
+            // Carica o crea test
+            let test;
+            if (testId) {
+                test = await this.Test.findById(testId);
+            } else {
+                const questions = await this._loadQuestions();
+                
+                test = await this.Test.create({
+                    tipo: this.testType,
+                    domande: questions,
+                    configurazione: {
+                        tempoLimite: 30,
+                        tentativiMax: 1,
+                        cooldownPeriod: 168,
+                        randomizzaDomande: true,
+                        mostraRisultatiImmediati: false
+                    }
+                });
+            }
+    
+            // Crea result usando solo studentId
+            const result = await this.Result.create({
+                studentId,
+                test: test._id,
+                dataInizio: new Date(),
+                completato: false,
+                risposte: []
+            });
+    
+            return { test, result };
+        } catch (error) {
+            logger.error('Error initializing CSI test:', {
+                error: error.message,
+                params
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Processa una risposta
      */
     async processAnswer(testId, answer) {
         try {
-            const result = await this.resultModel.findOne({
+            const result = await this.Result.findOne({
                 test: testId,
                 completato: false
             });
 
             if (!result) {
                 throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    ErrorTypes.VALIDATION.NOT_FOUND,
                     'Test non trovato o già completato'
                 );
             }
 
-            // Valida risposta
+            // Validazione risposta
             if (answer.value < 1 || answer.value > 5) {
                 throw createError(
                     ErrorTypes.VALIDATION.INVALID_INPUT,
-                    'Valore risposta non valido per scala Likert 1-5'
+                    'Valore risposta non valido'
                 );
             }
 
@@ -103,413 +131,297 @@ class CSIEngine extends BaseEngine {
             await result.save();
             return result;
         } catch (error) {
-            logger.error('Error processing answer', { error, testId, answer });
+            logger.error('Error processing CSI answer:', {
+                error: error.message,
+                testId,
+                answer
+            });
             throw error;
         }
     }
 
     /**
-     * Completa il test e calcola risultati
-     * @override
+     * Completa il test
      */
     async completeTest(testId) {
         try {
-            const result = await this.resultModel.findOne({
+            const result = await this.Result.findOne({
                 test: testId,
                 completato: false
             }).populate('test');
 
             if (!result) {
                 throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    ErrorTypes.VALIDATION.NOT_FOUND,
                     'Test non trovato o già completato'
                 );
             }
 
-            // Verifica completezza test
+            // Verifica completezza
             if (result.risposte.length !== result.test.domande.length) {
                 throw createError(
-                    ErrorTypes.VALIDATION.INVALID_INPUT,
-                    'Test incompleto - non tutte le domande hanno risposta'
+                    ErrorTypes.VALIDATION.INCOMPLETE_TEST,
+                    'Test incompleto'
                 );
             }
 
             // Calcola punteggi
             const scores = await this.scorer.calculateScores(result.risposte);
-            
-            // Genera profilo
             const profile = this.scorer.generateProfile(scores);
             
-            // Analizza pattern di risposta
-            const responseAnalysis = this.scorer.analyzeResponsePattern(result.risposte);
-
             // Aggiorna result
             result.punteggi = scores;
-            result.analytics = {
-                tempoTotale: this._calculateTotalTime(result.risposte),
-                domandePerse: 0,
-                pattern: responseAnalysis,
-                metadata: {
-                    profile: profile
-                }
-            };
             result.completato = true;
             result.dataCompletamento = new Date();
+            result.analytics = {
+                tempoTotale: this._calculateTotalTime(result.risposte),
+                profile: profile
+            };
 
             await result.save();
             return result;
         } catch (error) {
-            logger.error('Error completing test', { error, testId });
+            logger.error('Error completing CSI test:', {
+                error: error.message,
+                testId
+            });
             throw error;
         }
     }
 
     /**
-     * Genera report dettagliato
-     * @override
+     * Carica le domande del test
      */
-    async generateReport(testId) {
-        try {
-            const result = await this.resultModel.findById(testId)
-                .populate('test')
-                .populate('utente', 'firstName lastName email');
+    // In CSIEngine.js
 
-            if (!result) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Risultato test non trovato'
-                );
-            }
-
-            const profile = result.analytics.metadata.profile;
-            
-            return {
-                student: {
-                    name: `${result.utente.firstName} ${result.utente.lastName}`,
-                    email: result.utente.email
-                },
-                scores: result.punteggi,
-                profile: {
-                    dimensions: profile.dimensions,
-                    dominantStyle: profile.dominantStyle,
-                    recommendations: profile.recommendations
-                },
-                analytics: {
-                    completionTime: result.analytics.tempoTotale,
-                    answerPattern: result.analytics.pattern,
-                    date: result.dataCompletamento
-                }
-            };
-        } catch (error) {
-            logger.error('Error generating report', { error, testId });
-            throw error;
-        }
-    }
-
-    /**
-     * Carica le domande appropriate per il tipo di scuola
-     * @private
-     */
     async _loadQuestions() {
         try {
-            // In una implementazione reale, queste domande verrebbero caricate da un database o file
-            const questions = this._getQuestions();
-
-            if (questions.length === 0) {
+            return [
+                {
+                    id: 1,
+                    testo: "Prima di iniziare una ricerca, leggo diverse fonti per farmi un'idea generale dell'argomento",
+                    tipo: "likert",
+                    categoria: "Elaborazione",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 2,
+                    testo: "Preferisco avere regole chiare e precise prima di iniziare un lavoro",
+                    tipo: "likert",
+                    categoria: "Creatività",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 3,
+                    testo: "Capisco velocemente i concetti senza bisogno di molte spiegazioni",
+                    tipo: "likert",
+                    categoria: "Creatività",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 4,
+                    testo: "Mi piace pianificare tutto nei minimi dettagli prima di agire",
+                    tipo: "likert",
+                    categoria: "Creatività",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 5,
+                    testo: "Mi capita spesso di avere intuizioni improvvise che mi aiutano a risolvere problemi",
+                    tipo: "likert",
+                    categoria: "Creatività",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 6,
+                    testo: "Preferisco seguire un approccio strutturato per affrontare un compito complesso",
+                    tipo: "likert",
+                    categoria: "Creatività",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 7,
+                    testo: "Mi concentro sui dettagli prima di considerare il quadro generale",
+                    tipo: "likert",
+                    categoria: "Elaborazione",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 8,
+                    testo: "Riesco a sintetizzare rapidamente le informazioni in una visione complessiva",
+                    tipo: "likert",
+                    categoria: "Elaborazione",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 9,
+                    testo: "Mi piace scomporre un problema in parti più piccole per risolverlo",
+                    tipo: "likert",
+                    categoria: "Elaborazione",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 10,
+                    testo: "Preferisco affrontare i problemi considerando tutti gli aspetti contemporaneamente",
+                    tipo: "likert",
+                    categoria: "Elaborazione",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 11,
+                    testo: "Mi sento più a mio agio seguendo un metodo sequenziale per risolvere problemi",
+                    tipo: "likert",
+                    categoria: "Elaborazione",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 12,
+                    testo: "Capisco meglio un argomento se prima mi viene presentata una visione generale",
+                    tipo: "likert",
+                    categoria: "Elaborazione",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 13,
+                    testo: "Rispondo immediatamente alle domande senza pensarci troppo",
+                    tipo: "likert",
+                    categoria: "Decisione",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 14,
+                    testo: "Preferisco riflettere attentamente prima di dare una risposta",
+                    tipo: "likert",
+                    categoria: "Decisione",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 15,
+                    testo: "Mi capita di agire rapidamente senza considerare tutte le conseguenze",
+                    tipo: "likert",
+                    categoria: "Decisione",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 16,
+                    testo: "Valuto attentamente tutte le opzioni prima di prendere una decisione",
+                    tipo: "likert",
+                    categoria: "Decisione",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 17,
+                    testo: "Mi piace risolvere problemi velocemente anche se non ho tutte le informazioni",
+                    tipo: "likert",
+                    categoria: "Decisione",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 18,
+                    testo: "Prima di completare un compito, mi assicuro di aver analizzato tutti i dettagli",
+                    tipo: "likert",
+                    categoria: "Decisione",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 19,
+                    testo: "Ricordo meglio le informazioni se sono presentate in forma di immagini o grafici",
+                    tipo: "likert",
+                    categoria: "Preferenza Visiva",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 20,
+                    testo: "Preferisco leggere spiegazioni dettagliate piuttosto che osservare schemi",
+                    tipo: "likert",
+                    categoria: "Preferenza Visiva",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 21,
+                    testo: "Capisco meglio un argomento guardando un video piuttosto che leggendo un testo",
+                    tipo: "likert",
+                    categoria: "Preferenza Visiva",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 22,
+                    testo: "Mi aiuta prendere appunti dettagliati durante le lezioni",
+                    tipo: "likert",
+                    categoria: "Preferenza Visiva",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 23,
+                    testo: "Preferisco usare mappe mentali per organizzare le mie idee",
+                    tipo: "likert",
+                    categoria: "Preferenza Visiva",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 24,
+                    testo: "Mi trovo a mio agio leggendo testi lunghi con molte spiegazioni",
+                    tipo: "likert",
+                    categoria: "Preferenza Visiva",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 25,
+                    testo: "Preferisco che qualcuno mi guidi passo passo in un nuovo compito",
+                    tipo: "likert",
+                    categoria: "Autonomia",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 26,
+                    testo: "Mi piace gestire autonomamente i miei tempi e le mie attività",
+                    tipo: "likert",
+                    categoria: "Autonomia",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 27,
+                    testo: "Trovo difficile organizzarmi senza indicazioni esterne",
+                    tipo: "likert",
+                    categoria: "Autonomia",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 28,
+                    testo: "Mi sento motivato quando ho il controllo totale su quello che faccio",
+                    tipo: "likert",
+                    categoria: "Autonomia",
+                    metadata: { polarity: "+" }
+                },
+                {
+                    id: 29,
+                    testo: "Ho bisogno di supervisione frequente per portare a termine un lavoro",
+                    tipo: "likert",
+                    categoria: "Autonomia",
+                    metadata: { polarity: "-" }
+                },
+                {
+                    id: 30,
+                    testo: "Riesco a completare un progetto da solo senza bisogno di supporto",
+                    tipo: "likert",
+                    categoria: "Autonomia",
+                    metadata: { polarity: "+" }
+                }
+            ];
+            } catch (error) {
+                logger.error('Error loading CSI questions:', error);
                 throw createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Nessuna domanda trovata'
+                    'Errore nel caricamento delle domande'
                 );
             }
-
-            return questions;
-        } catch (error) {
-            logger.error('Error loading questions', { error });
-            throw error;
         }
-    }
-
 
     /**
-     * Utility per calcolare la media
-     * @private
-     */
-    _calculateAverage(numbers) {
-        return numbers.reduce((a, b) => a + b, 0) / numbers.length;
-    }
-
-    /**
-     * Calcola distribuzione risposte
-     * @private
-     */
-    _calculateDistribution(values) {
-        const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-        values.forEach(v => distribution[v]++);
-        return distribution;
-    }
-
-    /**
-     * Calcola tempo totale del test
-     * @private
+     * Calcola il tempo totale del test
      */
     _calculateTotalTime(answers) {
         return answers.reduce((total, answer) => total + (answer.tempoRisposta || 0), 0);
-    }
-
-    /**
-     * Restituisce le domande
-     * @private
-     */
-    _getQuestions() {
-        return [
-            {
-                id: 1,
-                text: "Prima di iniziare una ricerca, leggo diverse fonti per farmi un'idea generale dell'argomento",
-                category: "Elaborazione",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 2,
-                text: "Preferisco avere regole chiare e precise prima di iniziare un lavoro",
-                category: "Creatività",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 3,
-                text: "Capisco velocemente i concetti senza bisogno di molte spiegazioni",
-                category: "Creatività",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 4,
-                text: "Mi piace pianificare tutto nei minimi dettagli prima di agire",
-                category: "Creatività",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 5,
-                text: "Mi capita spesso di avere intuizioni improvvise che mi aiutano a risolvere problemi",
-                category: "Creatività",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 6,
-                text: "Preferisco seguire un approccio strutturato per affrontare un compito complesso",
-                category: "Creatività",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 7,
-                text: "Mi concentro sui dettagli prima di considerare il quadro generale",
-                category: "Elaborazione",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 8,
-                text: "Riesco a sintetizzare rapidamente le informazioni in una visione complessiva",
-                category: "Elaborazione",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 9,
-                text: "Mi piace scomporre un problema in parti più piccole per risolverlo",
-                category: "Elaborazione",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 10,
-                text: "Preferisco affrontare i problemi considerando tutti gli aspetti contemporaneamente",
-                category: "Elaborazione",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 11,
-                text: "Mi sento più a mio agio seguendo un metodo sequenziale per risolvere problemi",
-                category: "Elaborazione",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 12,
-                text: "Capisco meglio un argomento se prima mi viene presentata una visione generale",
-                category: "Elaborazione",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 13,
-                text: "Rispondo immediatamente alle domande senza pensarci troppo",
-                category: "Decisione",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 14,
-                text: "Preferisco riflettere attentamente prima di dare una risposta",
-                category: "Decisione",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 15,
-                text: "Mi capita di agire rapidamente senza considerare tutte le conseguenze",
-                category: "Decisione",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 16,
-                text: "Valuto attentamente tutte le opzioni prima di prendere una decisione",
-                category: "Decisione",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 17,
-                text: "Mi piace risolvere problemi velocemente anche se non ho tutte le informazioni",
-                category: "Decisione",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 18,
-                text: "Prima di completare un compito, mi assicuro di aver analizzato tutti i dettagli",
-                category: "Decisione",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 19,
-                text: "Ricordo meglio le informazioni se sono presentate in forma di immagini o grafici",
-                category: "Preferenza Visiva",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 20,
-                text: "Preferisco leggere spiegazioni dettagliate piuttosto che osservare schemi",
-                category: "Preferenza Visiva",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 21,
-                text: "Capisco meglio un argomento guardando un video piuttosto che leggendo un testo",
-                category: "Preferenza Visiva",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 22,
-                text: "Mi aiuta prendere appunti dettagliati durante le lezioni",
-                category: "Preferenza Visiva",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 23,
-                text: "Preferisco usare mappe mentali per organizzare le mie idee",
-                category: "Preferenza Visiva",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 24,
-                text: "Mi trovo a mio agio leggendo testi lunghi con molte spiegazioni",
-                category: "Preferenza Visiva",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 25,
-                text: "Preferisco che qualcuno mi guidi passo passo in un nuovo compito",
-                category: "Autonomia",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 26,
-                text: "Mi piace gestire autonomamente i miei tempi e le mie attività",
-                category: "Autonomia",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 27,
-                text: "Trovo difficile organizzarmi senza indicazioni esterne",
-                category: "Autonomia",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 28,
-                text: "Mi sento motivato quando ho il controllo totale su quello che faccio",
-                category: "Autonomia",
-                type: "likert",
-                polarity: "+"
-            },
-            {
-                id: 29,
-                text: "Ho bisogno di supervisione frequente per portare a termine un lavoro",
-                category: "Autonomia",
-                type: "likert",
-                polarity: "-"
-            },
-            {
-                id: 30,
-                text: "Riesco a completare un progetto da solo senza bisogno di supporto",
-                category: "Autonomia",
-                type: "likert",
-                polarity: "+"
-            }
-        ];
-    }
-
-    /**
-     * Salva il token del test per uno studente
-     */
-    async saveTestToken(params) {
-        try {
-            const { token, studentId, testType, expiresAt } = params;
-            
-            logger.debug('Saving test token', { studentId, testType });
-
-            // Crea un nuovo test con il token
-            const test = await this.testModel.create({
-                token,
-                tipo: testType,
-                stato: 'pending',
-                studentId,
-                expiresAt,
-                created: new Date()
-            });
-
-            logger.info('Test token saved successfully', { 
-                testId: test._id,
-                studentId 
-            });
-
-            return test;
-        } catch (error) {
-            logger.error('Error saving test token', { 
-                error,
-                studentId: params.studentId 
-            });
-            throw createError(
-                ErrorTypes.DATABASE.SAVE_ERROR,
-                'Errore nel salvare il token del test'
-            );
-        }
     }
 }
 

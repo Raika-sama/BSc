@@ -7,12 +7,13 @@ const { requestLogger, errorLogger } = require('./middleware/loggerMiddleware');
 const errorHandler = require('./middleware/errorHandler');
 const config = require('./config/config');
 const logger = require('./utils/errors/logger/logger');
-const routes = require('./routes');  // Importa il router principale
+const routes = require('./routes');
+const { publicRoutes: csiPublicRoutes, protectedRoutes: csiProtectedRoutes } = require('./engines/CSI/routes/csi.routes');
 
 // Inizializza express
 const app = express();
 
-// Middleware di base
+// Middleware di base - DEVONO VENIRE PRIMA DELLE ROUTES
 app.use(helmet());
 app.use(cors(config.cors));
 app.use(express.json());
@@ -37,9 +38,14 @@ if (config.env === 'development') {
     });
 }
 
-// Routes - Usa un unico punto di ingresso per tutte le route
-app.use('/api/v1', routes);
+// Routes pubbliche CSI (devono venire prima delle routes protette)
+app.use('/api/v1/tests/csi/public', csiPublicRoutes);
 
+// Routes protette CSI
+app.use('/api/v1/tests/csi', csiProtectedRoutes);
+
+// Altre routes
+app.use('/api/v1', routes);
 
 // Gestione errori
 app.use(errorLogger);
@@ -62,10 +68,7 @@ app.use((req, res) => {
 // Avvio server
 const startServer = async () => {
     try {
-        // Connessione al database
         await connectDB();
-        
-        // Avvio server
         app.listen(config.server.port, () => {
             logger.info(`Server in esecuzione su ${config.server.host}:${config.server.port}`);
             logger.info(`Ambiente: ${config.env}`);

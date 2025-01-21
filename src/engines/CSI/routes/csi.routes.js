@@ -66,6 +66,26 @@ if (CSIController.generateTestLink) {
     protectedRouter.post('/generate-link', CSIController.generateTestLink);
 }
 
+const errorHandler = (err, req, res, next) => {
+    logger.error('CSI route error:', {
+        error: err.message,
+        stack: err.stack,
+        path: req.path,
+        method: req.method
+    });
+
+    res.status(err.statusCode || 500).json({
+        status: 'error',
+        error: {
+            message: err.message,
+            code: err.code || 'INTERNAL_SERVER_ERROR'
+        }
+    });
+};
+
+publicRouter.use(errorHandler);
+protectedRouter.use(errorHandler);
+
 module.exports = {
     publicRoutes: publicRouter,
     protectedRoutes: protectedRouter

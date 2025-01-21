@@ -1,521 +1,258 @@
 // src/engines/CSI/controllers/CSIController.js
 
-const BaseController = require('../../../controllers/baseController');
 const CSIEngine = require('../engine/CSIEngine');
+const { Test, Result } = require('../../../models/Test');
 const { createError, ErrorTypes } = require('../../../utils/errors/errorTypes');
 const logger = require('../../../utils/errors/logger/logger');
 const crypto = require('crypto');
-const { student: studentRepository } = require('../../../repositories');
 
 class CSIController {
-    constructor(testRepository, testModel, resultModel) {
-        this.engine = new CSIEngine(testRepository, testModel, resultModel);
+    constructor() {
+        // Inizializza l'engine con i modelli corretti
+        this.engine = new CSIEngine(Test, Result);
     }
 
-
-    // src/engines/CSI/controllers/CSIController.js
-
-/**
- * Verifica validità del token test
- */
-verifyTestToken = async (req, res) => {
-    try {
+    /**
+     * Verifica validità del token test
+     */
+    verifyTestToken = async (req, res) => {
         const { token } = req.params;
-        logger.debug('Verifying test token:', { token });
-
-        // Verifica token tramite engine
-        const test = await this.engine.verifyToken(token);
         
-        // Se il token è valido, restituisci info di base sul test (no dati sensibili)
-        res.json({
-            status: 'success',
-            data: {
-                valid: true,
-                testType: test.tipo,
-                expiresAt: test.expiresAt
-            }
-        });
-    } catch (error) {
-        logger.error('Error verifying test token:', { error, token: req.params.token });
-        // Non esporre dettagli errore al client
-        res.status(400).json({
-            status: 'error',
-            error: {
-                message: 'Token non valido o scaduto'
-            }
-        });
-    }
-};
+        try {
+            logger.debug('Verifying test token:', { 
+                token: token ? token.substring(0, 10) + '...' : 'undefined'
+            });
 
-/**
- * Inizia il test con token
- */
-startTestWithToken = async (req, res) => {
-    try {
-        const { token } = req.params;
-        logger.debug('Starting test with token:', { token });
+            const test = await this.engine.verifyToken(token);
+            
+            res.json({
+                status: 'success',
+                data: {
+                    valid: true,
+                    testType: test.test.tipo,
+                    expiresAt: test.expiresAt
+                }
+            });
+        } catch (error) {
+            logger.error('Error verifying test token:', {
+                error: error.message,
+                token: token ? token.substring(0, 10) + '...' : 'undefined'
+            });
 
-        // 1. Verifica e recupera info test
-        const test = await this.engine.verifyToken(token);
-        
-        // 2. Verifica che il test non sia già stato usato
-        if (test.used) {
-            throw createError(
-                ErrorTypes.VALIDATION.INVALID_TOKEN,
-                'Questo test è già stato completato'
-            );
+            res.status(400).json({
+                status: 'error',
+                error: {
+                    message: 'Token non valido o scaduto',
+                    code: error.code || 'INVALID_TOKEN'
+                }
+            });
         }
+    };
 
-        // 3. Marca il token come utilizzato
-        await this.engine.markTokenAsUsed(token);
-
-        // 4. Inizializza il test e restituisci le domande
-        const initializedTest = await this.engine.initializeTest({
-            testId: test._id,
-            studentId: test.studentId,
-            tipo: test.tipo
-        });
-
-        // 5. Log dell'evento
-        logger.info('Test started successfully with token', {
-            testId: test._id,
-            studentId: test.studentId,
-            token: token.substring(0, 10) + '...' // log solo parte del token
-        });
-
-        // 6. Restituisci i dati del test (solo quelli necessari per lo studente)
-        res.json({
-            status: 'success',
-            data: {
-                testId: initializedTest._id,
-                questions: initializedTest.domande,
-                timeLimit: initializedTest.configurazione.tempoLimite,
-                instructions: initializedTest.configurazione.istruzioni
-            }
-        });
-
-    } catch (error) {
-        logger.error('Error starting test with token:', {
-            error,
-            token: req.params.token
-        });
+    /**
+     * Inizia il test con token
+     */
+    startTestWithToken = async (req, res) => {
+        const { token } = req.params;
         
-        this._handleError(res, error);
-    }
-};
+        try {
+            logger.debug('Starting test with token:', { 
+                token: token ? token.substring(0, 10) + '...' : 'undefined'
+            });
 
-/**
- * Modifica submitAnswer per supportare token
- */
-submitAnswer = async (req, res) => {
-    try {
+            // Verifica e recupera info test
+            const result = await this.engine.verifyToken(token);
+            
+            if (result.used) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_TOKEN,
+                    'Questo test è già stato completato'
+                );
+            }
+
+            // Marca il token come utilizzato
+            await this.engine.markTokenAsUsed(token);
+
+            // Inizializza il test
+            const testData = await this.engine.initializeTest({
+                studentId: result.studentId,
+                testId: result.test._id
+            });
+
+            res.json({
+                status: 'success',
+                data: {
+                    testId: testData.test._id,
+                    questions: testData.test.domande,
+                    timeLimit: testData.test.configurazione.tempoLimite,
+                    instructions: testData.test.configurazione.istruzioni
+                }
+            });
+        } catch (error) {
+            logger.error('Error starting test:', {
+                error: error.message,
+                token: token ? token.substring(0, 10) + '...' : 'undefined'
+            });
+
+            const statusCode = error.statusCode || 500;
+            res.status(statusCode).json({
+                status: 'error',
+                error: {
+                    message: error.message,
+                    code: error.code || 'START_TEST_ERROR'
+                }
+            });
+        }
+    };
+
+    /**
+     * Gestisce le risposte del test
+     */
+    submitAnswer = async (req, res) => {
         const { token } = req.params;
         const { questionIndex, value, timeSpent } = req.body;
 
-        // 1. Verifica token e recupera test
-        const test = await this.engine.verifyToken(token);
-
-        // 2. Processa la risposta
-        const result = await this.engine.processAnswer(test._id, {
-            questionIndex,
-            value,
-            timeSpent
-        });
-
-        res.json({
-            status: 'success',
-            data: { result }
-        });
-    } catch (error) {
-        logger.error('Error submitting answer:', { error });
-        this._handleError(res, error);
-    }
-};
-
-/**
- * Modifica completeTest per supportare token
- */
-completeTest = async (req, res) => {
-    try {
-        const { token } = req.params;
-
-        // 1. Verifica token e recupera test
-        const test = await this.engine.verifyToken(token);
-
-        // 2. Completa il test
-        const result = await this.engine.completeTest(test._id);
-
-        res.json({
-            status: 'success',
-            data: {
-                testCompleted: true,
-                message: 'Test completato con successo',
-                testId: result._id
-            }
-        });
-    } catch (error) {
-        logger.error('Error completing test:', { error });
-        this._handleError(res, error);
-    }
-};
-
-
- /**
-     * Genera un link univoco per il test
-     */
- generateTestLink = async (req, res) => {
-    try {
-        console.log('Generating test link - Request body:', req.body);
-        
-        const { studentId, testType } = req.body;
-
-        // Validazione input
-        if (!studentId || !testType) {
-            throw createError(
-                ErrorTypes.VALIDATION.INVALID_INPUT,
-                'studentId e testType sono richiesti'
-            );
-        }
-
-        // Verifica che lo studente esista usando il repository
-        const student = await studentRepository.findById(studentId);
-        if (!student) {
-            throw createError(
-                ErrorTypes.VALIDATION.NOT_FOUND,
-                'Studente non trovato'
-            );
-        }
-
-        // Genera token sicuro con dati incorporati
-        const tokenData = {
-            studentId,
-            testType,
-            timestamp: Date.now(),
-            expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 ore
-        };
-
-        // Cripta il token
-        const token = crypto
-            .createHmac('sha256', process.env.SECRET_KEY || 'your-secret-key')
-            .update(JSON.stringify(tokenData))
-            .digest('hex');
-
-        // Salva il token usando il metodo esistente nel engine
-        await this.engine.saveTestToken({
-            token,
-            studentId,
-            testType,
-            expiresAt: new Date(tokenData.expiresAt)
-        });
-
-        // Log del successo
-        logger.info('Test link generated successfully', { 
-            studentId,
-            testType,
-            token: token.substring(0, 10) + '...' // Log solo parte del token per sicurezza
-        });
-
-        res.json({
-            status: 'success',
-            data: { 
-                token,
-                url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/test/${testType.toLowerCase()}/${token}`
-            }
-        });
-    } catch (error) {
-        logger.error('Error generating test link', { 
-            error,
-            studentId: req.body.studentId,
-            testType: req.body.testType
-        });
-        this._handleError(res, error);
-    }
-};
-
-
-    /**
-     * Inizializza un nuovo test CSI
-     */
-    async initTest(req, res) {
         try {
-            const { studentId, classId } = req.body;
+            // Verifica token e recupera test
+            const result = await this.engine.verifyToken(token);
             
-            if (!studentId || !classId) {
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_INPUT,
-                    'studentId e classId sono richiesti'
-                );
-            }
-
-            // Determina il tipo di scuola dalla classe
-            const classDoc = await req.app.locals.db.Class.findById(classId)
-                .populate('schoolId');
-            
-            if (!classDoc) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Classe non trovata'
-                );
-            }
-
-            const test = await this.engine.createTest({
-                studentId,
-                classId,
-                schoolType: classDoc.schoolId.schoolType
-            });
-
-            logger.info('CSI test initialized', { 
-                testId: test._id, 
-                studentId, 
-                classId 
-            });
-
-            res.status(201).json({
-                status: 'success',
-                data: { test }
-            });
-        } catch (error) {
-            logger.error('Error initializing CSI test', { error });
-            this._handleError(res, error);
-        }
-    }
-
-    /**
-     * Invia una risposta per una domanda
-     */
-    async submitAnswer(req, res) {
-        try {
-            const { testId } = req.params;
-            const { questionIndex, value, timeSpent } = req.body;
-
-            if (!questionIndex || !value) {
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_INPUT,
-                    'questionIndex e value sono richiesti'
-                );
-            }
-
-            const result = await this.engine.processAnswer(testId, {
+            // Processa la risposta
+            const updatedResult = await this.engine.processAnswer(result.test._id, {
                 questionIndex,
-                value,
+                value: parseInt(value),
                 timeSpent
             });
 
             res.json({
                 status: 'success',
-                data: { result }
+                data: {
+                    answered: updatedResult.risposte.length,
+                    total: result.test.domande.length
+                }
             });
         } catch (error) {
-            logger.error('Error submitting answer', { error });
-            this._handleError(res, error);
-        }
-    }
-
-    /**
-     * Completa il test e calcola i risultati
-     */
-    async completeTest(req, res) {
-        try {
-            const { testId } = req.params;
-            const result = await this.engine.completeTest(testId);
-
-            res.json({
-                status: 'success',
-                data: { result }
+            logger.error('Error submitting answer:', {
+                error: error.message,
+                token: token ? token.substring(0, 10) + '...' : 'undefined'
             });
-        } catch (error) {
-            logger.error('Error completing test', { error });
-            this._handleError(res, error);
-        }
-    }
 
-    /**
-     * Ottiene il risultato dettagliato con profilo
-     */
-    async getResult(req, res) {
-        try {
-            const { testId } = req.params;
-            const report = await this.engine.generateReport(testId);
-
-            res.json({
-                status: 'success',
-                data: { report }
+            res.status(400).json({
+                status: 'error',
+                error: {
+                    message: error.message,
+                    code: error.code || 'SUBMIT_ANSWER_ERROR'
+                }
             });
-        } catch (error) {
-            logger.error('Error getting result', { error });
-            this._handleError(res, error);
         }
-    }
+    };
 
     /**
-     * Ottiene statistiche per una classe
+     * Completa il test
      */
-    async getClassStats(req, res) {
+    completeTest = async (req, res) => {
+        const { token } = req.params;
+
         try {
-            const { classId } = req.params;
-            const results = await this.engine.resultModel
-                .find({ 
-                    classe: classId,
-                    completato: true 
-                })
-                .populate('utente', 'firstName lastName');
-
-            const stats = this._generateClassStats(results);
-
-            res.json({
-                status: 'success',
-                data: { stats }
-            });
-        } catch (error) {
-            logger.error('Error getting class stats', { error });
-            this._handleError(res, error);
-        }
-    }
-
-    /**
-     * Ottiene statistiche per una scuola
-     */
-    async getSchoolStats(req, res) {
-        try {
-            const { schoolId } = req.params;
+            // Verifica token e recupera test
+            const result = await this.engine.verifyToken(token);
             
-            // Verifica permessi admin
-            if (req.user.role !== 'admin') {
-                throw createError(
-                    ErrorTypes.AUTH.UNAUTHORIZED,
-                    'Solo gli admin possono vedere le statistiche della scuola'
-                );
-            }
-
-            const classes = await req.app.locals.db.Class.find({ schoolId });
-            const classIds = classes.map(c => c._id);
-
-            const results = await this.engine.resultModel
-                .find({ 
-                    classe: { $in: classIds },
-                    completato: true 
-                })
-                .populate('classe');
-
-            const stats = this._generateSchoolStats(results);
+            // Completa il test
+            const completedResult = await this.engine.completeTest(result.test._id);
 
             res.json({
                 status: 'success',
-                data: { stats }
+                data: {
+                    testCompleted: true,
+                    resultId: completedResult._id
+                }
             });
         } catch (error) {
-            logger.error('Error getting school stats', { error });
-            this._handleError(res, error);
-        }
-    }
-
-    /**
-     * Verifica se uno studente può fare il test
-     */
-    async validateTestAvailability(req, res) {
-        try {
-            const { studentId } = req.params;
-            const availability = await this.engine.verifyTestAvailability(studentId);
-
-            res.json({
-                status: 'success',
-                data: { availability }
+            logger.error('Error completing test:', {
+                error: error.message,
+                token: token ? token.substring(0, 10) + '...' : 'undefined'
             });
-        } catch (error) {
-            logger.error('Error validating test availability', { error });
-            this._handleError(res, error);
+
+            res.status(400).json({
+                status: 'error',
+                error: {
+                    message: error.message,
+                    code: error.code || 'COMPLETE_TEST_ERROR'
+                }
+            });
         }
-    }
+    };
 
     /**
-     * Genera report PDF dettagliato
+     * Genera un link univoco per il test
      */
-    async generatePDFReport(req, res) {
+    generateTestLink = async (req, res) => {
         try {
-            const { testId } = req.params;
-            const result = await this.engine.resultModel
-                .findById(testId)
-                .populate('utente')
-                .populate('classe');
-
-            if (!result) {
+            const { studentId, testType } = req.body;
+    
+            logger.debug('Generating test link:', { studentId, testType });
+    
+            if (!studentId || !testType) {
                 throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Risultato non trovato'
+                    ErrorTypes.VALIDATION.INVALID_INPUT,
+                    'studentId e testType sono richiesti'
                 );
             }
-
-            const pdfBuffer = await this._generatePDF(result);
-
-            res.set({
-                'Content-Type': 'application/pdf',
-                'Content-Disposition': `attachment; filename=CSI_Report_${testId}.pdf`
+    
+            // Genera token sicuro
+            const token = crypto
+                .createHash('sha256')
+                .update(`${studentId}-${Date.now()}-${crypto.randomBytes(16).toString('hex')}`)
+                .digest('hex');
+    
+            // Crea il test prima del result
+            const test = await Test.create({
+                tipo: testType,
+                configurazione: {
+                    tempoLimite: 30,
+                    tentativiMax: 1
+                }
             });
-
-            res.send(pdfBuffer);
+    
+            // Crea il result usando solo studentId
+            const result = await Result.create({
+                studentId,
+                test: test._id,
+                token,
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+                used: false,
+                completato: false,
+                risposte: []
+            });
+    
+            logger.info('Test link generated successfully:', {
+                testId: test._id,
+                resultId: result._id,
+                token: token.substring(0, 10) + '...'
+            });
+    
+            res.json({
+                status: 'success',
+                data: {
+                    token,
+                    url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/test/csi/${token}`
+                }
+            });
         } catch (error) {
-            logger.error('Error generating PDF report', { error });
-            this._handleError(res, error);
+            logger.error('Error generating test link:', {
+                error: error.message,
+                studentId: req.body.studentId
+            });
+    
+            res.status(400).json({
+                status: 'error',
+                error: {
+                    message: error.message,
+                    code: error.code || 'GENERATE_LINK_ERROR'
+                }
+            });
         }
-    }
-
-    /**
-     * Genera statistiche per una classe
-     * @private
-     */
-    _generateClassStats(results) {
-        const stats = {
-            totalStudents: results.length,
-            averageCompletionTime: 0,
-            styleDistribution: {
-                analytic: 0,
-                systematic: 0,
-                verbal: 0,
-                impulsive: 0,
-                dependent: 0
-            },
-            studentProfiles: []
-        };
-
-        results.forEach(result => {
-            // Calcola tempo medio completamento
-            stats.averageCompletionTime += result.analytics.tempoTotale;
-
-            // Calcola distribuzione stili
-            Object.entries(result.punteggi).forEach(([style, score]) => {
-                stats.styleDistribution[style] += score;
-            });
-
-            // Aggiungi profilo studente
-            stats.studentProfiles.push({
-                studentName: `${result.utente.firstName} ${result.utente.lastName}`,
-                dominantStyle: result.analytics.metadata.profile.dominantStyle,
-                scores: result.punteggi
-            });
-        });
-
-        // Normalizza medie
-        stats.averageCompletionTime /= results.length;
-        Object.keys(stats.styleDistribution).forEach(style => {
-            stats.styleDistribution[style] /= results.length;
-        });
-
-        return stats;
-    }
-
-    /**
-     * Gestisce gli errori in modo consistente
-     * @private
-     */
-    _handleError(res, error) {
-        const statusCode = error.status || 500;
-        res.status(statusCode).json({
-            status: 'error',
-            message: error.message,
-            code: error.code
-        });
-    }
+    };
 }
 
-const controller = new CSIController();
-module.exports = controller;
+// Esporta una singola istanza del controller
+module.exports = new CSIController();

@@ -76,3 +76,173 @@
 {"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-21T16:37:55.510Z"}
 {"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-21T16:37:55.516Z"}
 {"level":"info","message":"Ambiente: development","timestamp":"2025-01-21T16:37:55.517Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-21T16:54:00.801Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-21T16:54:00.805Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-21T16:54:00.806Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-21T16:54:00.807Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-21T16:54:00.807Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-21T16:54:00.808Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-21T16:54:00.821Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-01-21T16:54:01.062Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-21T16:54:01.518Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-21T16:54:01.524Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-21T16:54:01.524Z"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-21T16:54:22.452Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:22.506Z","tokenExpiresIn":"122.52489999999999 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-21T16:54:22.508Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:28.025Z","tokenExpiresIn":"122.43291666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:28.035Z","tokenExpiresIn":"122.43275 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:28.044Z","tokenExpiresIn":"122.43260000000001 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:28.056Z","tokenExpiresIn":"122.4324 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:28.063Z","tokenExpiresIn":"122.43228333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:28.072Z","tokenExpiresIn":"122.43213333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:28.154Z","tokenExpiresIn":"122.43076666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:28.165Z","tokenExpiresIn":"122.43058333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:28.179Z","tokenExpiresIn":"122.43035 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:28.188Z","tokenExpiresIn":"122.4302 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:28.255Z","tokenExpiresIn":"122.42908333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:28.280Z","tokenExpiresIn":"122.42866666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:54:30.552Z","tokenExpiresIn":"122.3908 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"error":"Result validation failed: punteggi: Path `punteggi` is required., utente: Path `utente` is required.","level":"error","message":"Error generating test link:","studentId":"678ccd28e32aff82045c93f3","timestamp":"2025-01-21T16:54:30.590Z"}
+{"duration":"70ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1737478470523_p5swi9yd4","responseSize":"170 Bytes","statusCode":400,"timestamp":"2025-01-21T16:54:30.593Z","url":"/api/v1/tests/csi/generate-link","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-21T16:57:56.628Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-21T16:57:56.631Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-21T16:57:56.632Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-21T16:57:56.633Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-21T16:57:56.633Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-21T16:57:56.634Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-21T16:57:56.662Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-01-21T16:57:56.935Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-21T16:57:57.380Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-21T16:57:57.388Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-21T16:57:57.389Z"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-21T16:58:14.043Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:58:14.081Z","tokenExpiresIn":"118.66531666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-21T16:58:14.081Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T16:58:15.105Z","tokenExpiresIn":"118.64825 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Test link generated successfully:","resultId":"678fd2273291cc476512727d","testId":"678fd2273291cc476512727b","timestamp":"2025-01-21T16:58:15.194Z","token":"45d6fba08b..."}
+{"error":"Token non valido per test CSI","level":"error","message":"Error verifying CSI token:","timestamp":"2025-01-21T16:58:22.708Z","token":"45d6fba08b..."}
+{"error":"Token non valido per test CSI","level":"error","message":"Error verifying test token:","timestamp":"2025-01-21T16:58:22.709Z","token":"45d6fba08b..."}
+{"duration":"54ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1737478702657_pjkxf8mhw","responseSize":"90 Bytes","statusCode":400,"timestamp":"2025-01-21T16:58:22.711Z","url":"/api/v1/tests/csi/public/verify/45d6fba08b8acec630347a6b20773d2f1f2735217fd921298f87ec30c56c06d2","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-21T17:01:33.451Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-21T17:01:33.455Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-21T17:01:33.456Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-21T17:01:33.457Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-21T17:01:33.458Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-21T17:01:33.458Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-21T17:01:33.474Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-01-21T17:01:33.698Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-21T17:01:34.165Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-21T17:01:34.173Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-21T17:01:34.174Z"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-21T17:01:39.216Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:01:39.251Z","tokenExpiresIn":"115.24581666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-21T17:01:39.251Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:01:41.134Z","tokenExpiresIn":"115.21443333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Test link generated successfully:","resultId":"678fd2f591dd9e905117a276","testId":"678fd2f591dd9e905117a274","timestamp":"2025-01-21T17:01:41.194Z","token":"6610244798..."}
+{"error":"Result validation failed: utente: Path `utente` is required.","level":"error","message":"Error initializing CSI test:","params":{"studentId":{"classChangeHistory":[],"classId":"67843ee4e18f3b833160ddb8","createdAt":"2025-01-19T10:00:08.946Z","dateOfBirth":"2012-03-12T00:00:00.000Z","email":"leo@mara.it","firstName":"Leonardos","fiscalCode":null,"fullName":"Leonardos Marangon","gender":"M","id":"678ccd28e32aff82045c93f3","isActive":true,"lastClassChangeDate":"2025-01-19T18:41:12.210Z","lastName":"Marangon","mainTeacher":"677bfe44f6789c907c9f3766","needsClassAssignment":false,"parentEmail":null,"schoolId":"67843ee4e18f3b833160dda8","section":"A","specialNeeds":false,"status":"active","teachers":[],"updatedAt":"2025-01-19T18:41:12.212Z"},"testId":"678fd2f591dd9e905117a274"},"timestamp":"2025-01-21T17:01:46.711Z"}
+{"error":"Result validation failed: utente: Path `utente` is required.","level":"error","message":"Error starting test:","timestamp":"2025-01-21T17:01:46.714Z","token":"6610244798..."}
+{"duration":"125ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1737478906591_wovw43bj3","responseSize":"127 Bytes","statusCode":500,"timestamp":"2025-01-21T17:01:46.716Z","url":"/api/v1/tests/csi/public/start/661024479894b7addfe1705067b5839f1eba30c9a15dbba1f1f959405594255d","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-21T17:06:49.470Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-21T17:06:49.473Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-21T17:06:49.474Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-21T17:06:49.475Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-21T17:06:49.476Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-21T17:06:49.476Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-21T17:06:49.493Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-01-21T17:06:49.720Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-21T17:06:50.125Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-21T17:06:50.135Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-21T17:06:50.135Z"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-21T17:07:12.838Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:12.885Z","tokenExpiresIn":"109.68525 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-21T17:07:12.887Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:18.403Z","tokenExpiresIn":"109.59328333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:18.411Z","tokenExpiresIn":"109.59315 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:18.420Z","tokenExpiresIn":"109.593 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:18.430Z","tokenExpiresIn":"109.59283333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:18.437Z","tokenExpiresIn":"109.59271666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:18.446Z","tokenExpiresIn":"109.59256666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:18.519Z","tokenExpiresIn":"109.59134999999999 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:18.529Z","tokenExpiresIn":"109.59118333333332 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:18.542Z","tokenExpiresIn":"109.59096666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:18.552Z","tokenExpiresIn":"109.5908 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:18.613Z","tokenExpiresIn":"109.58978333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:18.637Z","tokenExpiresIn":"109.58938333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:07:22.994Z","tokenExpiresIn":"109.51676666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Test link generated successfully:","resultId":"678fd44b4dfd35c84be3bd86","testId":"678fd44a4dfd35c84be3bd84","timestamp":"2025-01-21T17:07:23.053Z","token":"2e5f9a6842..."}
+{"error":"Token, expiresAt e studentId sono richiesti","level":"error","message":"Error initializing CSI test:","params":{"studentId":{"classChangeHistory":[],"classId":"67843ee4e18f3b833160ddb8","createdAt":"2025-01-19T10:00:08.946Z","dateOfBirth":"2012-03-12T00:00:00.000Z","email":"leo@mara.it","firstName":"Leonardos","fiscalCode":null,"fullName":"Leonardos Marangon","gender":"M","id":"678ccd28e32aff82045c93f3","isActive":true,"lastClassChangeDate":"2025-01-19T18:41:12.210Z","lastName":"Marangon","mainTeacher":"677bfe44f6789c907c9f3766","needsClassAssignment":false,"parentEmail":null,"schoolId":"67843ee4e18f3b833160dda8","section":"A","specialNeeds":false,"status":"active","teachers":[],"updatedAt":"2025-01-19T18:41:12.212Z"},"testId":"678fd44a4dfd35c84be3bd84"},"timestamp":"2025-01-21T17:07:28.131Z"}
+{"error":"Token, expiresAt e studentId sono richiesti","level":"error","message":"Error starting test:","timestamp":"2025-01-21T17:07:28.134Z","token":"2e5f9a6842..."}
+{"duration":"140ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1737479247996_yqpanm6wp","responseSize":"110 Bytes","statusCode":500,"timestamp":"2025-01-21T17:07:28.136Z","url":"/api/v1/tests/csi/public/start/2e5f9a68428e8420b5a6a80c9901435ac5d1fa3d09cae0a8b8ee99baaf02d76d","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-21T17:12:22.956Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-21T17:12:22.960Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-21T17:12:22.961Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-21T17:12:22.962Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-21T17:12:22.963Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-21T17:12:22.963Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-21T17:12:22.983Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-01-21T17:12:23.241Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-21T17:12:23.684Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-21T17:12:23.692Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-21T17:12:23.693Z"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-21T17:12:30.212Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:12:30.250Z","tokenExpiresIn":"104.39583333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-21T17:12:30.252Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:12:31.561Z","tokenExpiresIn":"104.37398333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Test link generated successfully:","resultId":"678fd57f505cabccf45eb55f","testId":"678fd57f505cabccf45eb55d","timestamp":"2025-01-21T17:12:31.624Z","token":"224e56a572..."}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-21T17:16:14.430Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-21T17:16:14.434Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-21T17:16:14.435Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-21T17:16:14.436Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-21T17:16:14.437Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-21T17:16:14.438Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-21T17:16:14.454Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-01-21T17:16:14.661Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-21T17:16:15.053Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-21T17:16:15.062Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-21T17:16:15.062Z"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-21T17:16:29.778Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:29.840Z","tokenExpiresIn":"100.40266666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-21T17:16:29.841Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:33.510Z","tokenExpiresIn":"100.3415 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:33.522Z","tokenExpiresIn":"100.3413 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:33.535Z","tokenExpiresIn":"100.34108333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:33.549Z","tokenExpiresIn":"100.34085 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:33.558Z","tokenExpiresIn":"100.3407 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:33.567Z","tokenExpiresIn":"100.34055 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:33.660Z","tokenExpiresIn":"100.339 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:33.670Z","tokenExpiresIn":"100.33883333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:33.688Z","tokenExpiresIn":"100.33853333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:33.699Z","tokenExpiresIn":"100.33835 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:33.775Z","tokenExpiresIn":"100.33708333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:33.798Z","tokenExpiresIn":"100.33670000000001 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:16:35.827Z","tokenExpiresIn":"100.30288333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"error":"E11000 duplicate key error collection: brainScannerDB.tests index: nome_1 dup key: { nome: null }","level":"error","message":"Error generating test link:","studentId":"678ccd28e32aff82045c93f3","timestamp":"2025-01-21T17:16:35.864Z"}
+{"duration":"67ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1737479795799_vqdytfzfh","responseSize":"151 Bytes","statusCode":400,"timestamp":"2025-01-21T17:16:35.866Z","url":"/api/v1/tests/csi/generate-link","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:17:07.047Z","tokenExpiresIn":"99.78255 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Test link generated successfully:","resultId":"678fd69386330025b9712405","testId":"678fd69386330025b9712403","timestamp":"2025-01-21T17:17:07.107Z","token":"84c81ccaa0..."}
+{"error":"Token non valido o scaduto","level":"error","message":"Error verifying token in BaseEngine:","timestamp":"2025-01-21T17:17:38.430Z","token":"84c81ccaa0..."}
+{"error":"Token non valido o scaduto","level":"error","message":"Error verifying CSI token:","timestamp":"2025-01-21T17:17:38.431Z","token":"84c81ccaa0..."}
+{"error":"Token non valido o scaduto","level":"error","message":"Error verifying test token:","timestamp":"2025-01-21T17:17:38.431Z","token":"84c81ccaa0..."}
+{"duration":"22ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1737479858410_5rdmj7dxw","responseSize":"90 Bytes","statusCode":400,"timestamp":"2025-01-21T17:17:38.432Z","url":"/api/v1/tests/csi/public/verify/84c81ccaa09a793707eaa280de127e8857fd4190cbd4a598fb029c58c30a7f93","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"}
+{"error":"Token non valido o scaduto","level":"error","message":"Error verifying token in BaseEngine:","timestamp":"2025-01-21T17:17:41.038Z","token":"84c81ccaa0..."}
+{"error":"Token non valido o scaduto","level":"error","message":"Error verifying CSI token:","timestamp":"2025-01-21T17:17:41.040Z","token":"84c81ccaa0..."}
+{"error":"Token non valido o scaduto","level":"error","message":"Error verifying test token:","timestamp":"2025-01-21T17:17:41.040Z","token":"84c81ccaa0..."}
+{"duration":"51ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1737479860991_hy4n21ko8","responseSize":"90 Bytes","statusCode":400,"timestamp":"2025-01-21T17:17:41.042Z","url":"/api/v1/tests/csi/public/verify/84c81ccaa09a793707eaa280de127e8857fd4190cbd4a598fb029c58c30a7f93","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:17:57.614Z","tokenExpiresIn":"98.93976666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Test link generated successfully:","resultId":"678fd6c586330025b9712417","testId":"678fd6c586330025b9712415","timestamp":"2025-01-21T17:17:57.663Z","token":"166f92481c..."}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-21T17:18:00.983Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:18:01.010Z","tokenExpiresIn":"98.88316666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-21T17:18:01.011Z","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-21T17:18:07.243Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:18:07.268Z","tokenExpiresIn":"98.77886666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-21T17:18:07.269Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":"Token non valido o scaduto","level":"error","message":"Error verifying token in BaseEngine:","timestamp":"2025-01-21T17:18:07.320Z","token":"166f92481c..."}
+{"error":"Token non valido o scaduto","level":"error","message":"Error verifying CSI token:","timestamp":"2025-01-21T17:18:07.322Z","token":"166f92481c..."}
+{"error":"Token non valido o scaduto","level":"error","message":"Error verifying test token:","timestamp":"2025-01-21T17:18:07.323Z","token":"166f92481c..."}
+{"duration":"26ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1737479887298_wksq1t5i6","responseSize":"90 Bytes","statusCode":400,"timestamp":"2025-01-21T17:18:07.324Z","url":"/api/v1/tests/csi/public/verify/166f92481c5750851af2d04b186f4b905b5a74b7c67d304ebc9fddb5a002c3ba","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:18:22.458Z","tokenExpiresIn":"98.5257 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Test link generated successfully:","resultId":"678fd6de86330025b971242a","testId":"678fd6de86330025b9712428","timestamp":"2025-01-21T17:18:22.514Z","token":"8dba91be00..."}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-21T17:18:25.227Z","tokenExpiresIn":"98.47955 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"error":"E11000 duplicate key error collection: brainScannerDB.tests index: nome_1 dup key: { nome: null }","level":"error","message":"Error generating test link:","studentId":"678ccd28e32aff82045c93f3","timestamp":"2025-01-21T17:18:25.249Z"}
+{"duration":"54ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1737479905196_am0v0mxq0","responseSize":"151 Bytes","statusCode":400,"timestamp":"2025-01-21T17:18:25.250Z","url":"/api/v1/tests/csi/generate-link","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
