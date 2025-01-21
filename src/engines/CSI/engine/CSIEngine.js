@@ -6,13 +6,28 @@ const { createError, ErrorTypes } = require('../../../utils/errors/errorTypes');
 const logger = require('../../../utils/errors/logger/logger');
 
 class CSIEngine extends BaseEngine {
-    constructor() {
-        super();
+    constructor(testRepository, testModel, resultModel) {
+        super(testRepository, testModel, resultModel); // Passa le dipendenze al BaseEngine
         this.scorer = new CSIScorer();
         this.testType = 'CSI';
+        this.testRepository = testRepository; // Assicurati che testRepository sia disponibile
     }
 
-   
+   // Questo metodo dovrebbe essere aggiunto o corretto
+   async verifyToken(token) {
+        try {
+            // Delega la verifica al repository
+            const test = await this.testRepository.verifyToken(token);
+            return test;
+        } catch (error) {
+            logger.error('Engine: Error verifying token:', { 
+                error: error.message,
+                stack: error.stack
+            });
+            throw error; // Propaga l'errore al controller
+        }
+    }
+
     /**
      * Crea un nuovo test CSI
      * @override
@@ -246,25 +261,220 @@ class CSIEngine extends BaseEngine {
      * @private
      */
     _getQuestions() {
-        // Implementazione di esempio - in produzione caricare da DB/file
         return [
             {
-                testo: "Prima di iniziare una ricerca, leggo diverse fonti per farmi un'idea generale dell'argomento",
-                categoria: "Analitico/Globale",
-                tipo: "likert",
-                polarity: "-",
-                peso: 1
+                id: 1,
+                text: "Prima di iniziare una ricerca, leggo diverse fonti per farmi un'idea generale dell'argomento",
+                category: "Elaborazione",
+                type: "likert",
+                polarity: "-"
             },
             {
-                testo: "Per analizzare un testo letterario, lo divido in sezioni e studio ogni parte separatamente",
-                categoria: "Analitico/Globale",
-                tipo: "likert",
-                polarity: "+",
-                peso: 1
+                id: 2,
+                text: "Preferisco avere regole chiare e precise prima di iniziare un lavoro",
+                category: "Creatività",
+                type: "likert",
+                polarity: "+"
             },
-            // ... altre domande
+            {
+                id: 3,
+                text: "Capisco velocemente i concetti senza bisogno di molte spiegazioni",
+                category: "Creatività",
+                type: "likert",
+                polarity: "-"
+            },
+            {
+                id: 4,
+                text: "Mi piace pianificare tutto nei minimi dettagli prima di agire",
+                category: "Creatività",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 5,
+                text: "Mi capita spesso di avere intuizioni improvvise che mi aiutano a risolvere problemi",
+                category: "Creatività",
+                type: "likert",
+                polarity: "-"
+            },
+            {
+                id: 6,
+                text: "Preferisco seguire un approccio strutturato per affrontare un compito complesso",
+                category: "Creatività",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 7,
+                text: "Mi concentro sui dettagli prima di considerare il quadro generale",
+                category: "Elaborazione",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 8,
+                text: "Riesco a sintetizzare rapidamente le informazioni in una visione complessiva",
+                category: "Elaborazione",
+                type: "likert",
+                polarity: "-"
+            },
+            {
+                id: 9,
+                text: "Mi piace scomporre un problema in parti più piccole per risolverlo",
+                category: "Elaborazione",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 10,
+                text: "Preferisco affrontare i problemi considerando tutti gli aspetti contemporaneamente",
+                category: "Elaborazione",
+                type: "likert",
+                polarity: "-"
+            },
+            {
+                id: 11,
+                text: "Mi sento più a mio agio seguendo un metodo sequenziale per risolvere problemi",
+                category: "Elaborazione",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 12,
+                text: "Capisco meglio un argomento se prima mi viene presentata una visione generale",
+                category: "Elaborazione",
+                type: "likert",
+                polarity: "-"
+            },
+            {
+                id: 13,
+                text: "Rispondo immediatamente alle domande senza pensarci troppo",
+                category: "Decisione",
+                type: "likert",
+                polarity: "-"
+            },
+            {
+                id: 14,
+                text: "Preferisco riflettere attentamente prima di dare una risposta",
+                category: "Decisione",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 15,
+                text: "Mi capita di agire rapidamente senza considerare tutte le conseguenze",
+                category: "Decisione",
+                type: "likert",
+                polarity: "-"
+            },
+            {
+                id: 16,
+                text: "Valuto attentamente tutte le opzioni prima di prendere una decisione",
+                category: "Decisione",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 17,
+                text: "Mi piace risolvere problemi velocemente anche se non ho tutte le informazioni",
+                category: "Decisione",
+                type: "likert",
+                polarity: "-"
+            },
+            {
+                id: 18,
+                text: "Prima di completare un compito, mi assicuro di aver analizzato tutti i dettagli",
+                category: "Decisione",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 19,
+                text: "Ricordo meglio le informazioni se sono presentate in forma di immagini o grafici",
+                category: "Preferenza Visiva",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 20,
+                text: "Preferisco leggere spiegazioni dettagliate piuttosto che osservare schemi",
+                category: "Preferenza Visiva",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 21,
+                text: "Capisco meglio un argomento guardando un video piuttosto che leggendo un testo",
+                category: "Preferenza Visiva",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 22,
+                text: "Mi aiuta prendere appunti dettagliati durante le lezioni",
+                category: "Preferenza Visiva",
+                type: "likert",
+                polarity: "-"
+            },
+            {
+                id: 23,
+                text: "Preferisco usare mappe mentali per organizzare le mie idee",
+                category: "Preferenza Visiva",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 24,
+                text: "Mi trovo a mio agio leggendo testi lunghi con molte spiegazioni",
+                category: "Preferenza Visiva",
+                type: "likert",
+                polarity: "-"
+            },
+            {
+                id: 25,
+                text: "Preferisco che qualcuno mi guidi passo passo in un nuovo compito",
+                category: "Autonomia",
+                type: "likert",
+                polarity: "-"
+            },
+            {
+                id: 26,
+                text: "Mi piace gestire autonomamente i miei tempi e le mie attività",
+                category: "Autonomia",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 27,
+                text: "Trovo difficile organizzarmi senza indicazioni esterne",
+                category: "Autonomia",
+                type: "likert",
+                polarity: "-"
+            },
+            {
+                id: 28,
+                text: "Mi sento motivato quando ho il controllo totale su quello che faccio",
+                category: "Autonomia",
+                type: "likert",
+                polarity: "+"
+            },
+            {
+                id: 29,
+                text: "Ho bisogno di supervisione frequente per portare a termine un lavoro",
+                category: "Autonomia",
+                type: "likert",
+                polarity: "-"
+            },
+            {
+                id: 30,
+                text: "Riesco a completare un progetto da solo senza bisogno di supporto",
+                category: "Autonomia",
+                type: "likert",
+                polarity: "+"
+            }
         ];
     }
+
     /**
      * Salva il token del test per uno studente
      */

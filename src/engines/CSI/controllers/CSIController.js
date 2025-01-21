@@ -8,8 +8,8 @@ const crypto = require('crypto');
 const { student: studentRepository } = require('../../../repositories');
 
 class CSIController {
-    constructor() {
-        this.engine = new CSIEngine();
+    constructor(testRepository, testModel, resultModel) {
+        this.engine = new CSIEngine(testRepository, testModel, resultModel);
     }
 
 

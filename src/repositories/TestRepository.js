@@ -124,28 +124,48 @@ class TestRepository extends BaseRepository {
             token,
             timestamp: new Date().toISOString()
         });
-
+    
         try {
+            // Prima cerca il test senza condizioni per vedere se esiste
+            const testExists = await this.model.findOne({ token });
+            logger.debug('Raw test search result:', {
+                exists: !!testExists,
+                test: testExists ? {
+                    id: testExists._id,
+                    expiresAt: testExists.expiresAt,
+                    used: testExists.used
+                } : null
+            });
+    
+            // Poi cerca con tutte le condizioni
             const test = await this.model.findOne({
                 token,
                 expiresAt: { $gt: new Date() },
                 used: false
             }).populate('studentId');
-
+    
             logger.info('Token verification result:', {
                 found: !!test,
-                expired: test ? new Date() > test.expiresAt : null,
-                used: test ? test.used : null
+                expired: testExists ? new Date() > testExists.expiresAt : null,
+                used: testExists ? testExists.used : null
             });
-
+    
             if (!test) {
-                logger.warn('Invalid or expired token:', { token });
+                logger.warn('Invalid or expired token:', { 
+                    token,
+                    testExists: !!testExists,
+                    reason: testExists ? 
+                        (testExists.used ? 'Token already used' : 
+                         new Date() > testExists.expiresAt ? 'Token expired' : 
+                         'Unknown') : 
+                        'Token not found'
+                });
                 throw createError(
                     ErrorTypes.VALIDATION.INVALID_TOKEN,
                     'Token non valido o scaduto'
                 );
             }
-
+    
             return test;
         } catch (error) {
             logger.error('Token verification failed:', {

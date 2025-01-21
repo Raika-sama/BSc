@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { axiosInstance } from '../../../services/axiosConfig';
 import { 
   Card, 
   CardContent, 
@@ -9,52 +11,89 @@ import {
   FormControlLabel,
   Radio,
   Container,
-  Box
+  Box,
+  CircularProgress
 } from '@mui/material';
 
-const mockQuestions = [
-  {
-    id: 1,
-    text: "Prima di iniziare una ricerca, leggo diverse fonti per farmi un'idea generale dell'argomento",
-    category: "Analitico/Globale",
-    type: "likert",
-    polarity: "-"
-  },
-  {
-    id: 2,
-    text: "Quando risolvo un problema, tendo a seguire un metodo logico e sequenziale",
-    category: "Sistematico/Intuitivo",
-    type: "likert",
-    polarity: "+"
-  },
-  // ... altre domande mock
-];
-
 const PublicCSITest = () => {
-  const [currentStep, setCurrentStep] = useState('intro');
+  const { token } = useParams();
+  const [currentStep, setCurrentStep] = useState('loading');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [studentInfo, setStudentInfo] = useState({
-    firstName: '',
-    lastName: '',
-    class: ''
-  });
+  const [questions, setQuestions] = useState([]);
+  const [testData, setTestData] = useState(null);
+  const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const progress = (currentQuestion / mockQuestions.length) * 100;
+  // Verifica il token e inizia il test
+  useEffect(() => {
+    const initializeTest = async () => {
+        try {
+          console.log('Verifying token:', token); // Debug log
+  
+          // Prima verifica il token
+          const verifyResponse = await axiosInstance.get(`/tests/csi/public/verify/${token}`);
+          console.log('Token verification response:', verifyResponse.data); // Debug log
+          
+          // Se valido, inizia il test
+          const startResponse = await axiosInstance.post(`/tests/csi/public/start/${token}`);
+          console.log('Test start response:', startResponse.data); // Debug log
+          
+          if (startResponse.data?.data?.questions) {
+            setQuestions(startResponse.data.data.questions);
+            setTestData(startResponse.data.data);
+            setCurrentStep('intro');
+          } else {
+            throw new Error('Nessuna domanda ricevuta dal server');
+          }
+        } catch (err) {
+          console.error('Test initialization error:', err); // Debug log
+          setError(err.response?.data?.message || 'Errore durante il caricamento del test');
+          setCurrentStep('error');
+        }
+      };
+  
+      if (token) {
+        initializeTest();
+      }
+    }, [token]);
 
-  const handleAnswer = (event) => {
-    const value = event.target.value;
-    setAnswers(prev => ({
-      ...prev,
-      [currentQuestion]: value
-    }));
-
-    if (currentQuestion < mockQuestions.length - 1) {
-      setCurrentQuestion(prev => prev + 1);
-    } else {
-      setCurrentStep('results');
-    }
-  };
+    const handleAnswer = async (event) => {
+        const value = event.target.value;
+        setIsSubmitting(true);
+        
+        try {
+          console.log('Submitting answer:', { questionIndex: currentQuestion, value }); // Debug log
+    
+          // Invia la risposta al backend
+          const response = await axiosInstance.post(`/tests/csi/public/${token}/answer`, {
+            questionIndex: currentQuestion,
+            value: parseInt(value),
+            timeSpent: 0 // Implementare il timing se necessario
+          });
+    
+          console.log('Answer submission response:', response.data); // Debug log
+    
+          setAnswers(prev => ({
+            ...prev,
+            [currentQuestion]: value
+          }));
+    
+          if (currentQuestion < questions.length - 1) {
+            setCurrentQuestion(prev => prev + 1);
+          } else {
+            // Completa il test
+            const completeResponse = await axiosInstance.post(`/tests/csi/public/${token}/complete`);
+            console.log('Test completion response:', completeResponse.data); // Debug log
+            setCurrentStep('results');
+          }
+        } catch (err) {
+          console.error('Answer submission error:', err); // Debug log
+          setError(err.response?.data?.message || 'Errore durante il salvataggio della risposta');
+        } finally {
+          setIsSubmitting(false);
+        }
+      };
 
   const renderIntro = () => (
     <Card sx={{ maxWidth: 600, mx: 'auto' }}>
@@ -66,6 +105,11 @@ const PublicCSITest = () => {
           Questo test ti aiuterà a comprendere il tuo stile di apprendimento preferito.
           Non ci sono risposte giuste o sbagliate.
         </Typography>
+        {testData?.instructions && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {testData.instructions}
+          </Typography>
+        )}
         <Button 
           variant="contained" 
           fullWidth 
@@ -78,8 +122,21 @@ const PublicCSITest = () => {
   );
 
   const renderQuestion = () => {
-    const question = mockQuestions[currentQuestion];
+    const question = questions[currentQuestion];
+    const progress = (currentQuestion / questions.length) * 100;
     
+    console.log('Rendering question:', { currentQuestion, question }); // Debug log
+    
+    if (!question) {
+      return (
+        <Box display="flex" justifyContent="center" alignItems="center">
+          <Typography color="error">
+            Errore nel caricamento della domanda
+          </Typography>
+        </Box>
+      );
+    }
+
     return (
       <Card sx={{ maxWidth: 600, mx: 'auto' }}>
         <CardContent>
@@ -89,7 +146,7 @@ const PublicCSITest = () => {
             sx={{ mb: 2 }}
           />
           <Typography variant="h6" gutterBottom>
-            Domanda {currentQuestion + 1} di {mockQuestions.length}
+            Domanda {currentQuestion + 1} di {questions.length}
           </Typography>
           <Typography variant="body1" sx={{ mb: 3 }}>
             {question.text}
@@ -110,9 +167,15 @@ const PublicCSITest = () => {
                 value={option.value}
                 control={<Radio />}
                 label={option.label}
+                disabled={isSubmitting}
               />
             ))}
           </RadioGroup>
+          {isSubmitting && (
+            <Box display="flex" justifyContent="center" mt={2}>
+              <CircularProgress size={24} />
+            </Box>
+          )}
         </CardContent>
       </Card>
     );
@@ -122,26 +185,37 @@ const PublicCSITest = () => {
     <Card sx={{ maxWidth: 600, mx: 'auto' }}>
       <CardContent>
         <Typography variant="h5" gutterBottom>
-          I Tuoi Risultati
+          Test Completato
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Ecco l'analisi del tuo stile cognitivo
+          Grazie per aver completato il test. I risultati saranno analizzati e resi disponibili attraverso il tuo insegnante.
         </Typography>
         <Box sx={{ mt: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Stile Dominante:
-          </Typography>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            Analitico-Sistematico
+            Puoi chiudere questa finestra.
           </Typography>
-          <Typography variant="h6" gutterBottom>
-            Punti di Forza:
-          </Typography>
-          <Box component="ul" sx={{ pl: 2 }}>
-            <Typography component="li">Ottima capacità di analisi dei dettagli</Typography>
-            <Typography component="li">Approccio metodico alla risoluzione dei problemi</Typography>
-            <Typography component="li">Buona organizzazione del lavoro</Typography>
-          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  const renderError = () => (
+    <Card sx={{ maxWidth: 600, mx: 'auto' }}>
+      <CardContent>
+        <Typography variant="h5" color="error" gutterBottom>
+          Errore
+        </Typography>
+        <Typography variant="body1">
+          {error}
+        </Typography>
+        <Box mt={2}>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={() => window.location.reload()}
+          >
+            Riprova
+          </Button>
         </Box>
       </CardContent>
     </Card>
@@ -149,8 +223,14 @@ const PublicCSITest = () => {
 
   return (
     <Container sx={{ py: 4 }}>
+      {currentStep === 'loading' && (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+          <CircularProgress />
+        </Box>
+      )}
+      {currentStep === 'error' && renderError()}
       {currentStep === 'intro' && renderIntro()}
-      {currentStep === 'test' && renderQuestion()}
+      {currentStep === 'test' && questions.length > 0 && renderQuestion()}
       {currentStep === 'results' && renderResults()}
     </Container>
   );
