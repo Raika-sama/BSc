@@ -118,6 +118,36 @@ const resultSchema = new mongoose.Schema({
             of: mongoose.Schema.Types.Mixed
         }
     },
+    metadata: {
+        versioneAlgoritmo: String,
+        calcolatoIl: Date,
+        pattern: {
+            isValid: Boolean,
+            consistency: Boolean,  // Cambiato da oggetto a Boolean
+            timePattern: {
+                averageTime: Number,
+                suspicious: Boolean,
+                tooFastResponses: Number,
+                pattern: {
+                    consistent: Boolean,
+                    avgTimePerQuestion: Number
+                }
+            }
+        },
+        profile: {
+            dimensions: {
+                type: Map,
+                of: {
+                    score: Number,
+                    level: String,
+                    interpretation: String
+                }
+            },
+            dominantStyle: [String],
+            recommendations: [String]
+        },
+        warnings: [String]
+    },
     token: {
         type: String,
         unique: true,

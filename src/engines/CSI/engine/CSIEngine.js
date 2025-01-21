@@ -150,7 +150,7 @@ class CSIEngine extends BaseEngine {
         try {
             logger.debug('Attempting to complete test:', { testId, token });
     
-            // Prima verifica il token
+            // Verifica token e recupera test
             const tokenResult = await this.verifyToken(token);
             
             // Trova il risultato del test
@@ -175,38 +175,54 @@ class CSIEngine extends BaseEngine {
                 );
             }
     
+            // Prepara le risposte nel formato per lo scorer
+            const formattedAnswers = result.risposte.map(r => ({
+                value: r.risposta,
+                timeSpent: r.tempoRisposta,
+                question: result.test.domande[r.domanda]
+            }));
+
+            // Log per debug
+        logger.debug('Formatted answers:', {
+            count: formattedAnswers.length,
+            sample: formattedAnswers[0]
+        });
+    
+            // Calcola i punteggi
+            const scores = this.scorer.calculateScores(formattedAnswers);
+            
+            // Analizza pattern di risposta
+            const responseAnalysis = this.scorer.analyzeResponsePattern(formattedAnswers);
+            
+            // Genera profilo
+            const profile = this.scorer.generateProfile(scores);
+    
             // Aggiorna il risultato
             result.completato = true;
             result.dataCompletamento = new Date();
             result.used = true;
     
-            // Per ora, punteggi base
-            result.punteggi = new Map([
-                ['analitico', 0],
-                ['sistematico', 0],
-                ['verbale', 0],
-                ['impulsivo', 0],
-                ['dipendente', 0]
-            ]);
+            // Salva i punteggi
+            result.punteggi = new Map(Object.entries(scores));
     
-            result.analytics = {
+            // Salva metadata
+            result.metadata = {
+                versioneAlgoritmo: this.scorer.version,
+                calcolatoIl: new Date(),
                 tempoTotale: this._calculateTotalTime(result.risposte),
-                profile: {
-                    completedAt: new Date(),
-                    answersCount: result.risposte.length,
-                    status: 'completed'
-                }
+                pattern: responseAnalysis,
+                profile: profile,
+                consistency: responseAnalysis.consistency,
+                warnings: responseAnalysis.warnings
             };
     
             await result.save();
             
-            // Marca il token come usato
-            await this.markTokenAsUsed(token);
-    
             logger.debug('Test completed successfully:', {
                 resultId: result._id,
                 testId: result.test._id,
-                answersCount: result.risposte.length
+                scores,
+                consistency: responseAnalysis.consistency
             });
     
             return result;

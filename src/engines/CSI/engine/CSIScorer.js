@@ -5,6 +5,15 @@ const logger = require('../../../utils/errors/logger/logger');
 
 class CSIScorer {
     constructor() {
+        this.version = "1.0.0";  // Aggiungiamo versione
+        this.categoryMapping = {
+            'Elaborazione': 'analitico',
+            'Creatività': 'sistematico',
+            'Preferenza Visiva': 'verbale',
+            'Decisione': 'impulsivo',
+            'Autonomia': 'dipendente'
+        };
+
         this.dimensions = {
             ANALITICO: 'Analitico/Globale',
             SISTEMATICO: 'Sistematico/Intuitivo',
@@ -12,10 +21,9 @@ class CSIScorer {
             IMPULSIVO: 'Impulsivo/Riflessivo',
             DIPENDENTE: 'Dipendente/Indipendente'
         };
-
         this.thresholds = {
-            low: 33,
-            medium: 66
+            low: 33,    // Sotto il 33% = livello basso
+            medium: 66  // Tra 33% e 66% = livello medio, sopra 66% = livello alto
         };
     }
 
@@ -26,19 +34,32 @@ class CSIScorer {
      */
     calculateScores(answers) {
         try {
-            // Restituisci un oggetto base tanto per completare il test
-            return {
-                completed: true,
-                timestamp: new Date(),
-                answersCount: answers.length,
-                preliminaryScore: "To be calculated"
+            // Mappa le risposte alle dimensioni corrette
+            const mappedAnswers = answers.map(answer => ({
+                ...answer,
+                question: {
+                    ...answer.question,
+                    categoria: this.categoryMapping[answer.question.categoria] || answer.question.categoria
+                }
+            }));
+
+            const scores = {
+                analitico: this._calculateDimensionScore(mappedAnswers, 'analitico'),
+                sistematico: this._calculateDimensionScore(mappedAnswers, 'sistematico'),
+                verbale: this._calculateDimensionScore(mappedAnswers, 'verbale'),
+                impulsivo: this._calculateDimensionScore(mappedAnswers, 'impulsivo'),
+                dipendente: this._calculateDimensionScore(mappedAnswers, 'dipendente')
             };
+
+            // Normalizza i punteggi
+            Object.keys(scores).forEach(dim => {
+                scores[dim] = this._normalizeScore(scores[dim]);
+            });
+
+            return scores;
         } catch (error) {
-            logger.error('Error completing test', { error });
-            throw createError(
-                ErrorTypes.PROCESSING.CALCULATION_FAILED,
-                'Errore nel completamento del test'
-            );
+            logger.error('Error calculating CSI scores', { error });
+            throw error;
         }
     }
 
@@ -84,15 +105,17 @@ class CSIScorer {
             recommendations: []
         };
 
-        // Analisi per ogni dimensione
+        // Genera le dimensioni del profilo con valori numerici
         Object.entries(scores).forEach(([dimension, score]) => {
             profile.dimensions[dimension] = {
-                score,
+                score: score, // Assicuriamoci che sia un numero
                 level: this._determineLevel(score),
                 interpretation: this._getInterpretation(dimension, score)
             };
+        });
 
-            // Aggiungi raccomandazioni basate sul punteggio
+        // Aggiungi raccomandazioni
+        Object.entries(scores).forEach(([dimension, score]) => {
             profile.recommendations.push(
                 ...this._getRecommendations(dimension, score)
             );
@@ -139,11 +162,70 @@ class CSIScorer {
                 medio: "Bilanciamento tra pianificazione e spontaneità",
                 basso: "Tendenza a preferire approcci intuitivi e flessibili"
             },
-            // ... altre dimensioni
+            verbale: {
+                alto: "Forte preferenza per l'apprendimento attraverso il testo scritto",
+                medio: "Bilanciamento tra apprendimento visivo e verbale",
+                basso: "Tendenza a preferire l'apprendimento attraverso elementi visivi"
+            },
+            impulsivo: {
+                alto: "Tendenza a prendere decisioni rapide e immediate",
+                medio: "Bilanciamento tra riflessione e azione immediata",
+                basso: "Forte tendenza alla riflessione prima dell'azione"
+            },
+            dipendente: {
+                alto: "Preferenza per guidance e supporto esterno",
+                medio: "Bilanciamento tra autonomia e necessità di supporto",
+                basso: "Forte autonomia e indipendenza nell'apprendimento"
+            }
         };
-
+    
         return interpretations[dimension]?.[level] || 
             "Interpretazione non disponibile per questa dimensione";
+    }
+
+    _calculateConsistency(answers) {
+        if (!answers || answers.length === 0) return 0;
+    
+        // Calcola deviazione standard dei tempi di risposta
+        const times = answers.map(a => a.timeSpent);
+        const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+        const variance = times.reduce((a, b) => a + Math.pow(b - avgTime, 2), 0) / times.length;
+        const stdDev = Math.sqrt(variance);
+    
+        // Analizza pattern di risposta
+        const values = answers.map(a => a.value);
+        const hasVariation = new Set(values).size > 1;
+        const hasExtremesOnly = values.every(v => v === 1 || v === 5);
+    
+        return {
+            isConsistent: !hasExtremesOnly && hasVariation,
+            timeConsistency: stdDev < avgTime, // Se la deviazione è minore della media, consideriamo consistente
+            confidence: hasVariation ? 1 : 0.5
+        };
+    }
+    
+    // Implementiamo _analyzeTimePattern
+    _analyzeTimePattern(answers) {
+        if (!answers || answers.length === 0) {
+            return { averageTime: 0, suspicious: true };
+        }
+    
+        const times = answers.map(a => a.timeSpent);
+        const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+        
+        // Identifica risposte troppo veloci (< 1 secondo)
+        const tooFastResponses = times.filter(t => t < 1).length;
+        const tooFastPercentage = (tooFastResponses / times.length) * 100;
+    
+        return {
+            averageTime: avgTime,
+            suspicious: tooFastPercentage > 20, // Suspicious se più del 20% delle risposte sono troppo veloci
+            tooFastResponses,
+            pattern: {
+                consistent: Math.max(...times) - Math.min(...times) < avgTime * 2,
+                avgTimePerQuestion: avgTime
+            }
+        };
     }
 
     /**
