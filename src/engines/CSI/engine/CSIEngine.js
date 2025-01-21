@@ -61,8 +61,15 @@ class CSIEngine extends BaseEngine {
             let test;
             if (testId) {
                 test = await this.Test.findById(testId);
+                logger.debug('Loaded existing test:', {
+                    testId,
+                    hasQuestions: test?.domande?.length || 0
+                });
             } else {
                 const questions = await this._loadQuestions();
+                logger.debug('Created new questions:', {
+                    questionCount: questions.length
+                });
                 
                 test = await this.Test.create({
                     tipo: this.testType,
@@ -75,18 +82,14 @@ class CSIEngine extends BaseEngine {
                         mostraRisultatiImmediati: false
                     }
                 });
+    
+                logger.debug('Created new test:', {
+                    testId: test._id,
+                    hasQuestions: test.domande?.length || 0
+                });
             }
     
-            // Crea result usando solo studentId
-            const result = await this.Result.create({
-                studentId,
-                test: test._id,
-                dataInizio: new Date(),
-                completato: false,
-                risposte: []
-            });
-    
-            return { test, result };
+            return { test };
         } catch (error) {
             logger.error('Error initializing CSI test:', {
                 error: error.message,

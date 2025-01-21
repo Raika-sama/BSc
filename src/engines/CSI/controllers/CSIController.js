@@ -63,6 +63,12 @@ class CSIController {
             // Verifica e recupera info test
             const result = await this.engine.verifyToken(token);
             
+            logger.debug('Token verification result:', {
+                studentId: result.studentId,
+                testId: result.test._id,
+                hasQuestions: result.test.domande ? result.test.domande.length : 0
+            });
+
             if (result.used) {
                 throw createError(
                     ErrorTypes.VALIDATION.INVALID_TOKEN,
@@ -78,6 +84,13 @@ class CSIController {
                 studentId: result.studentId,
                 testId: result.test._id
             });
+
+            logger.debug('Test initialized:', {
+                testId: testData.test._id,
+                hasQuestions: testData.test.domande ? testData.test.domande.length : 0,
+                questions: testData.test.domande
+            });
+    
 
             res.json({
                 status: 'success',
@@ -130,21 +143,21 @@ class CSIController {
                     total: result.test.domande.length
                 }
             });
-        } catch (error) {
-            logger.error('Error submitting answer:', {
-                error: error.message,
-                token: token ? token.substring(0, 10) + '...' : 'undefined'
-            });
+            } catch (error) {
+                logger.error('Error submitting answer:', {
+                    error: error.message,
+                    token: token ? token.substring(0, 10) + '...' : 'undefined'
+                });
 
-            res.status(400).json({
-                status: 'error',
-                error: {
-                    message: error.message,
-                    code: error.code || 'SUBMIT_ANSWER_ERROR'
-                }
-            });
-        }
-    };
+                res.status(400).json({
+                    status: 'error',
+                    error: {
+                        message: error.message,
+                        code: error.code || 'SUBMIT_ANSWER_ERROR'
+                    }
+                });
+            }
+        };
 
     /**
      * Completa il test
@@ -198,19 +211,32 @@ class CSIController {
                 );
             }
     
+            // Carica le domande usando il metodo _loadQuestions dell'engine
+            const questions = await this.engine._loadQuestions();
+            
+            logger.debug('Loaded questions for test:', {
+                questionCount: questions.length
+            });
+    
             // Genera token sicuro
             const token = crypto
                 .createHash('sha256')
                 .update(`${studentId}-${Date.now()}-${crypto.randomBytes(16).toString('hex')}`)
                 .digest('hex');
     
-            // Crea il test prima del result
+            // Crea il test con le domande
             const test = await Test.create({
                 tipo: testType,
+                domande: questions,  // Aggiungi le domande qui
                 configurazione: {
                     tempoLimite: 30,
                     tentativiMax: 1
                 }
+            });
+    
+            logger.debug('Created test with questions:', {
+                testId: test._id,
+                questionCount: test.domande.length
             });
     
             // Crea il result usando solo studentId
@@ -227,7 +253,8 @@ class CSIController {
             logger.info('Test link generated successfully:', {
                 testId: test._id,
                 resultId: result._id,
-                token: token.substring(0, 10) + '...'
+                token: token.substring(0, 10) + '...',
+                questionCount: test.domande.length
             });
     
             res.json({

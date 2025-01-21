@@ -158,12 +158,13 @@ resultSchema.pre('save', function(next) {
 
 // Indici per ottimizzazione
 testSchema.index({ tipo: 1, stato: 1 });
-testSchema.index({ nome: 1 }, { unique: true });
+//testSchema.index({ nome: 1 }, { unique: true });
 
-resultSchema.index({ utente: 1, test: 1 });
+//resultSchema.index({ utente: 1, test: 1 });
 resultSchema.index({ test: 1, dataCompletamento: -1 });
 resultSchema.index({ classe: 1, test: 1 });
 resultSchema.index({ scuola: 1, test: 1 });
+resultSchema.index({ studentId: 1, test: 1 });     // Indice composto per query che coinvolgono studente e test
 
 // Middleware pre-save per validazione
 testSchema.pre('save', function(next) {
