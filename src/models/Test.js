@@ -2,6 +2,10 @@
 const mongoose = require('mongoose');
 
 const questionSchema = new mongoose.Schema({
+    id: {                    // Aggiungiamo campo id esplicito
+        type: Number,
+        required: true
+    },
     testo: {
         type: String,
         required: true
@@ -27,7 +31,7 @@ const questionSchema = new mongoose.Schema({
         of: mongoose.Schema.Types.Mixed
     }
 }, {
-    _id: true
+    _id: false
 });
 
 const testSchema = new mongoose.Schema({
