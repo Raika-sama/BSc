@@ -11,7 +11,8 @@ import UsersManagement from '../components/school/UsersManagement'; // Aggiungi 
 import StudentList from '../components/students/StudentList'; // Aggiungi questo import
 import ClassPopulate from '../components/classes/ClassPopulate';    // Aggiungi questo import
 import StudentTestManagement from '../components/students/StudentTestManagement'; // Aggiungi questo import
-
+import Profile from '../components/profile/Profile'; // Aggiungi questo import
+import PersonalTest from '../components/profile/PersonalTest';  // Aggiungi questo import
 
 // Importa le icone da Material-UI
 import {
@@ -58,12 +59,14 @@ export const adminRoutes = [
         path: 'tests',
         element: null, // TestManagement component quando lo creerai
         title: 'Gestione Test',
-        icon: TestIcon
+        icon: TestIcon,
+        showInMenu: false  // Non mostrare nel menu laterale
     },
     {
         path: 'schools/create',
         element: SchoolWizard,
-        title: 'Crea Scuola'
+        title: 'Crea Scuola',
+        showInMenu: false  // Non mostrare nel menu laterale
     },
     {
         path: 'schools/:id/users-management',  // Aggiungi questa rotta
@@ -105,5 +108,17 @@ export const adminRoutes = [
         title: 'Test dello Studente',
         icon: TestIcon,
         showInMenu: false
-    }
+    },
+    {
+        path: 'profile',
+        element: Profile,
+        title: 'Profilo Utente',
+        showInMenu: false  // Non lo mostriamo nel menu laterale
+    },
+   {
+        path: 'personal-test',
+        element: PersonalTest,
+        title: 'Test Personale',
+        showInMenu: false
+    },
 ];
