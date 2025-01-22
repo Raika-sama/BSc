@@ -48,8 +48,34 @@ const normalizeClassId = (classId) => {
 
 const normalizeTeacher = (teacher) => {
     if (!teacher) return null;
-    if (typeof teacher === 'object') return teacher;
-    return { _id: teacher };
+    
+    // Se è una stringa (ID), restituisci un oggetto base
+    if (typeof teacher === 'string') {
+        return { id: teacher, name: `Docente ${teacher.substr(0, 6)}...` };
+    }
+
+    // Se è un oggetto ma senza proprietà necessarie
+    if (typeof teacher === 'object') {
+        const id = teacher._id || teacher.id;
+        if (!id) return null;
+
+        // Costruisci il nome del docente in base alle proprietà disponibili
+        let name = teacher.name;
+        if (!name && teacher.firstName) {
+            name = `${teacher.firstName} ${teacher.lastName || ''}`.trim();
+        }
+        if (!name) {
+            name = `Docente ${id.substr(0, 6)}...`;
+        }
+
+        return {
+            id: id,
+            name: name,
+            ...teacher  // mantieni le altre proprietà
+        };
+    }
+
+    return null;
 };
 
 const StudentContext = createContext();
@@ -242,14 +268,20 @@ export const StudentProvider = ({ children }) => {
     // Modifica la funzione createStudent per validare e formattare i dati prima dell'invio
     const normalizeStudent = (student) => {
     if (!student) return null;
+    
+    // Debugging
+    console.log('Normalizing student:', student);
+    console.log('Original mainTeacher:', student.mainTeacher);
 
     const normalized = {
         ...student,
         id: student._id || student.id,
-        _id: student._id || student.id, // Manteniamo anche _id per compatibilità
-        schoolId: normalizeSchoolId(student.schoolId),
-        classId: normalizeClassId(student.classId),
-        lastName: student.lastName || '',
+       // _id: student._id || student.id, // Manteniamo anche _id per compatibilità
+       // schoolId: normalizeSchoolId(student.schoolId),
+       // classId: normalizeClassId(student.classId),
+       schoolId: typeof student.schoolId === 'object' ? student.schoolId : { _id: student.schoolId, name: 'N/D' },
+       classId: typeof student.classId === 'object' ? student.classId : student.classId ? { _id: student.classId } : null,     
+       lastName: student.lastName || '',
         firstName: student.firstName || '',
         fiscalCode: student.fiscalCode || '',
         gender: student.gender || '',
@@ -260,13 +292,22 @@ export const StudentProvider = ({ children }) => {
         needsClassAssignment: student.needsClassAssignment ?? true,
         isActive: student.isActive ?? true,
         specialNeeds: student.specialNeeds ?? false,
-        mainTeacher: normalizeTeacher(student.mainTeacher),
+        // Gestione più accurata del mainTeacher
+        mainTeacher: student.mainTeacher ? {
+            id: student.mainTeacher._id || student.mainTeacher.id,
+            name: student.mainTeacher.name || student.mainTeacher.firstName + ' ' + student.mainTeacher.lastName || 'N/D',
+            ...student.mainTeacher
+        } : null,        
         teachers: Array.isArray(student.teachers) ? 
-            student.teachers.map(normalizeTeacher) : 
+        student.teachers.map(normalizeTeacher) : 
             []
     };
 
-    return normalized;
+// Debugging
+console.log('Normalized student:', normalized);
+console.log('Normalized mainTeacher:', normalized.mainTeacher);
+    
+return normalized;
 };
 
 const createStudent = async (studentData) => {

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'; // Aggiungi questa riga
 import {
     Box,
     Button,
-    Grid,
     IconButton,
     Tooltip,
     Chip,
@@ -13,7 +12,9 @@ import {
     DialogActions,
     TextField,
     Typography,
-    Paper
+    Paper,
+    alpha,
+    Grid
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
@@ -106,137 +107,286 @@ const StudentList = () => {
         setDetailsDialogOpen(true);
     };
 
-    const columns = [
-        {
-            field: 'firstName',
-            headerName: 'Nome Completo',
-            width: 200,
-            renderCell: (params) => {
-                return params.row ? `${params.row.firstName || ''} ${params.row.lastName || ''}`.trim() : 'N/D';
-            }
-        },
-        {
-            field: 'gender',
-            headerName: 'Genere',
-            width: 100,
-            renderCell: (params) => {
-                return params.row?.gender === 'M' ? 'Maschio' : 
-                       params.row?.gender === 'F' ? 'Femmina' : 'N/D';
-            }
-        },
-        {
-            field: 'dateOfBirth',
-            headerName: 'Data Nascita',
-            width: 150,
-            renderCell: (params) => {
-                if (!params.row?.dateOfBirth) return 'N/D';
-                try {
-                    return new Date(params.row.dateOfBirth).toLocaleDateString('it-IT');
-                } catch {
-                    return 'N/D';
+    // Component styles
+const styles = {
+    pageContainer: {
+        p: { xs: 2, sm: 3 },
+        maxWidth: '100%',
+        backgroundColor: '#f8f9fa'
+    },
+    headerPaper: {
+        p: 3,
+        mb: 3,
+        backgroundColor: '#ffffff',
+        borderRadius: 2,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+    },
+    headerTitle: {
+        fontSize: { xs: '1.5rem', sm: '2rem' },
+        fontWeight: 500,
+        color: '#2c3e50'
+    },
+    searchPaper: {
+        p: 2,
+        mb: 3,
+        backgroundColor: '#ffffff',
+        borderRadius: 2,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+    },
+    searchInput: {
+        '& .MuiOutlinedInput-root': {
+            backgroundColor: '#ffffff',
+            '&:hover': {
+                '& > fieldset': {
+                    borderColor: '#1976d2'
                 }
             }
-        },
-        {
-            field: 'email',
-            headerName: 'Email',
-            width: 200,
-            renderCell: (params) => params.row?.email || 'N/D'
-        },
-        {
-            field: 'school',
-            headerName: 'Scuola',
-            width: 200,
-            renderCell: (params) => params.row?.schoolId?.name || 'N/D'
-        },
-        {
-            field: 'class',
-            headerName: 'Classe',
-            width: 120,
-            renderCell: (params) => {
-                const classId = params.row?.classId;
-                if (!classId) return 'Non Assegnata';
-                return `${classId.year || ''}${classId.section || ''}`;
-            }
-        },
-        {
-            field: 'status',
-            headerName: 'Stato',
-            width: 150,
-            renderCell: (params) => {
-                if (!params.row?.status) return null;
-                return (
-                    <Chip
-                        label={params.row.status === 'active' ? 'Attivo' : 
-                               params.row.status === 'pending' ? 'In Attesa' : 
-                               params.row.status === 'inactive' ? 'Inattivo' : params.row.status}
-                        color={params.row.status === 'active' ? 'success' :
-                               params.row.status === 'pending' ? 'warning' :
-                               params.row.status === 'inactive' ? 'error' : 'default'}
-                        size="small"
-                    />
-                );
-            }
-        },
-        {
-            field: 'mainTeacher',
-            headerName: 'Docente Principale',
-            width: 180,
-            renderCell: (params) => params.row?.mainTeacher?.name || 'Non assegnato'
-        },
-        {
-            field: 'specialNeeds',
-            headerName: 'Necessità Speciali',
-            width: 150,
-            renderCell: (params) => (
-                <Chip
-                    label={params.row?.specialNeeds ? 'Sì' : 'No'}
-                    color={params.row?.specialNeeds ? 'warning' : 'default'}
-                    size="small"
-                />
-            )
-        },
-        {
-            field: 'actions',
-            headerName: 'Azioni',
-            width: 200,
-            renderCell: (params) => (
-                params.row ? (
-                    <Box>
-                        <Tooltip title="Test">
-                            <IconButton 
-                                onClick={() => navigate(`/admin/students/${params.row._id || params.row.id}/tests`)}
-                                size="small"
-                                color="secondary"
-                            >
-                                📝
-                            </IconButton>
-                        </Tooltip>
-                         <Tooltip title="Visualizza">
-                            <IconButton 
-                                onClick={() => handleViewDetails(params.row)} 
-                                size="small"
-                                color="primary"
-                            >
-                                <VisibilityIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Modifica">
-                            <IconButton onClick={() => handleEdit(params.row)} size="small">
-                                <EditIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Elimina">
-                            <IconButton onClick={() => handleDeleteClick(params.row)} size="small" color="error">
-                                <DeleteIcon />
-                            </IconButton>
-                        </Tooltip>
-                    </Box>
-                ) : null
-            )
         }
-    ];
+    },
+    dataGridPaper: {
+        backgroundColor: '#ffffff',
+        borderRadius: 2,
+        overflow: 'hidden',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+        '& .MuiDataGrid-root': {
+            border: 'none'
+        },
+        '& .MuiDataGrid-columnHeaders': {
+            backgroundColor: '#f8f9fa',
+            borderBottom: '1px solid #e9ecef'
+        },
+        '& .MuiDataGrid-cell': {
+            borderBottom: '1px solid #e9ecef',
+            '&:focus': {
+                outline: 'none'
+            }
+        },
+        '& .MuiDataGrid-row': {
+            '&:hover': {
+                backgroundColor: '#f8f9fa'
+            }
+        }
+    },
+    button: {
+        textTransform: 'none',
+        boxShadow: 'none',
+        '&:hover': {
+            boxShadow: 'none'
+        }
+    },
+    statusChip: {
+        height: '24px',
+        fontSize: '0.85rem',
+        fontWeight: 500
+    }
+};
 
+const columns = [
+    {
+        field: 'firstName',
+        headerName: 'Nome Completo',
+        width: 180,
+        flex: 1,
+        renderCell: (params) => (
+            <Typography sx={{ fontSize: '0.875rem' }}>
+                {params.row ? `${params.row.firstName || ''} ${params.row.lastName || ''}`.trim() : 'N/D'}
+            </Typography>
+        )
+    },
+    {
+        field: 'gender',
+        headerName: 'Genere',
+        width: 90,
+        renderCell: (params) => (
+            <Typography sx={{ fontSize: '0.875rem' }}>
+                {params.row?.gender === 'M' ? 'Maschio' : 
+                 params.row?.gender === 'F' ? 'Femmina' : 'N/D'}
+            </Typography>
+        )
+    },
+    {
+        field: 'dateOfBirth',
+        headerName: 'Data Nascita',
+        width: 100,
+        renderCell: (params) => {
+            if (!params.row?.dateOfBirth) return <Typography sx={{ fontSize: '0.875rem' }}>N/D</Typography>;
+            try {
+                return (
+                    <Typography sx={{ fontSize: '0.875rem' }}>
+                        {new Date(params.row.dateOfBirth).toLocaleDateString('it-IT')}
+                    </Typography>
+                );
+            } catch {
+                return <Typography sx={{ fontSize: '0.875rem' }}>N/D</Typography>;
+            }
+        }
+    },
+    {
+        field: 'email',
+        headerName: 'Email',
+        width: 200,
+        flex: 1,
+        renderCell: (params) => (
+            <Typography 
+                noWrap
+                sx={{ 
+                    fontSize: '0.875rem',
+                    color: '#1976d2',
+                    '&:hover': { textDecoration: 'underline', cursor: 'pointer' }
+                }}
+            >
+                {params.row?.email || 'N/D'}
+            </Typography>
+        )
+    },
+    {
+        field: 'school',
+        headerName: 'Scuola',
+        width: 160,
+        flex: 0.8,
+        renderCell: (params) => (
+            <Typography sx={{ fontSize: '0.875rem' }}>
+                {params.row?.schoolId?.name || 'N/D'}
+            </Typography>
+        )
+    },
+    {
+        field: 'class',
+        headerName: 'Classe',
+        width: 70,
+        renderCell: (params) => {
+            const classId = params.row?.classId;
+            return (
+                <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                    {classId ? `${classId.year || ''}${classId.section || ''}` : 'N/A'}
+                </Typography>
+            );
+        }
+    },
+    {
+        field: 'status',
+        headerName: 'Stato',
+        width: 100,
+        renderCell: (params) => {
+            if (!params.row?.status) return null;
+            const statusConfig = {
+                active: { label: 'Attivo', bg: '#e8f5e9', color: '#2e7d32' },
+                pending: { label: 'In Attesa', bg: '#fff3e0', color: '#ef6c00' },
+                inactive: { label: 'Inattivo', bg: '#f5f5f5', color: '#757575' }
+            }[params.row.status] || { label: params.row.status, bg: '#f5f5f5', color: '#757575' };
+
+            return (
+                <Chip
+                    label={statusConfig.label}
+                    size="small"
+                    sx={{
+                        height: '20px',
+                        fontSize: '0.75rem',
+                        backgroundColor: statusConfig.bg,
+                        color: statusConfig.color,
+                        borderRadius: '4px',
+                        '& .MuiChip-label': {
+                            px: 1.5
+                        }
+                    }}
+                />
+            );
+        }
+    },
+    {
+        field: 'mainTeacher',
+        headerName: 'Docente Principale',
+        width: 160,
+        flex: 0.8,
+        renderCell: (params) => {
+            const teacher = params.row?.mainTeacher;
+            return (
+                <Typography sx={{ 
+                    fontSize: '0.875rem',
+                    color: teacher?.id ? '#2c3e50' : '#7f8c8d' 
+                }}>
+                    {teacher?.name || 'Non assegnato'}
+                </Typography>
+            );
+        }
+    },
+    {
+        field: 'specialNeeds',
+        headerName: 'Necessità Speciali',
+        width: 120,
+        renderCell: (params) => {
+            const hasSpecialNeeds = Boolean(params.row?.specialNeeds);
+            return (
+                <Chip
+                    label={hasSpecialNeeds ? 'Sì' : 'No'}
+                    size="small"
+                    sx={{
+                        height: '20px',
+                        fontSize: '0.75rem',
+                        backgroundColor: hasSpecialNeeds ? '#fff3e0' : '#f5f5f5',
+                        color: hasSpecialNeeds ? '#ef6c00' : '#757575',
+                        borderRadius: '4px',
+                        '& .MuiChip-label': {
+                            px: 1.5
+                        }
+                    }}
+                />
+            );
+        }
+    },
+    {
+        field: 'actions',
+        headerName: 'Azioni',
+        width: 130,
+        renderCell: (params) => (
+            params.row ? (
+                <Box sx={{ 
+                    display: 'flex', 
+                    gap: 0.5,
+                    justifyContent: 'flex-end',
+                    width: '100%'
+                }}>
+                    <Tooltip title="Test">
+                        <IconButton 
+                            onClick={() => navigate(`/admin/students/${params.row._id || params.row.id}/tests`)}
+                            size="small"
+                            sx={{ padding: '4px' }}
+                        >
+                            <span style={{ fontSize: '1rem' }}>📝</span>
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Visualizza">
+                        <IconButton 
+                            onClick={() => handleViewDetails(params.row)}
+                            size="small"
+                            sx={{ padding: '4px' }}
+                        >
+                            <VisibilityIcon sx={{ fontSize: '1.1rem' }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Modifica">
+                        <IconButton 
+                            onClick={() => handleEdit(params.row)}
+                            size="small"
+                            sx={{ padding: '4px' }}
+                        >
+                            <EditIcon sx={{ fontSize: '1.1rem' }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Elimina">
+                        <IconButton 
+                            onClick={() => handleDeleteClick(params.row)}
+                            size="small"
+                            sx={{ padding: '4px' }}
+                        >
+                            <DeleteIcon sx={{ fontSize: '1.1rem' }} />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
+            ) : null
+        )
+    }
+];
     const handleDeleteClick = (student) => {
         setSelectedStudent(student);
         setDeleteDialogOpen(true);
@@ -287,73 +437,191 @@ const StudentList = () => {
 
 
     return (
-        <Box p={3}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Typography variant="h4" component="h1">
-                    Gestione Studenti
-                </Typography>
-                <Box display="flex" gap={2}>
-                    <Button
-                        variant="outlined"
-                        startIcon={<CloudUploadIcon />}
-                        onClick={() => setImportFormOpen(true)}
+        <Box sx={{ p: { xs: 2, sm: 3 }, backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+            {/* Header */}
+            <Paper 
+                elevation={0}
+                sx={{ 
+                    p: 3, 
+                    mb: 3, 
+                    backgroundColor: '#ffffff',
+                    borderRadius: '8px',
+                    border: '1px solid #e0e0e0'
+                }}
+            >
+                <Box 
+                    display="flex" 
+                    flexDirection={{ xs: 'column', sm: 'row' }}
+                    justifyContent="space-between" 
+                    alignItems={{ xs: 'start', sm: 'center' }}
+                    gap={2}
+                >
+                    <Typography 
+                        variant="h4" 
+                        component="h1"
+                        sx={{ 
+                            fontSize: { xs: '1.5rem', sm: '2rem' },
+                            fontWeight: 500,
+                            color: '#2c3e50'
+                        }}
                     >
-                        Import Massivo
-                    </Button>
+                        Gestione Studenti
+                    </Typography>
+                    <Box 
+                        display="flex" 
+                        gap={2} 
+                        flexDirection={{ xs: 'column', sm: 'row' }}
+                        width={{ xs: '100%', sm: 'auto' }}
+                    >
+                        <Button
+                            variant="outlined"
+                            startIcon={<CloudUploadIcon />}
+                            onClick={() => setImportFormOpen(true)}
+                            sx={{
+                                textTransform: 'none',
+                                borderColor: '#e0e0e0',
+                                color: '#616161',
+                                '&:hover': {
+                                    borderColor: '#bdbdbd',
+                                    backgroundColor: '#f5f5f5'
+                                }
+                            }}
+                        >
+                            Import Massivo
+                        </Button>
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => setFormOpen(true)}
+                            sx={{
+                                textTransform: 'none',
+                                backgroundColor: '#1976d2',
+                                boxShadow: 'none',
+                                '&:hover': {
+                                    backgroundColor: '#1565c0',
+                                    boxShadow: 'none'
+                                }
+                            }}
+                        >
+                            Nuovo Studente
+                        </Button>
+                    </Box>
+                </Box>
+            </Paper>
+    
+            {/* Search Bar */}
+            <Paper 
+                elevation={0}
+                sx={{ 
+                    p: 2, 
+                    mb: 3,
+                    backgroundColor: '#ffffff',
+                    borderRadius: '8px',
+                    border: '1px solid #e0e0e0'
+                }}
+            >
+                <Box 
+                    display="flex" 
+                    gap={2} 
+                    flexDirection={{ xs: 'column', sm: 'row' }}
+                >
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        placeholder="Cerca studenti..."
+                        size="small"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        InputProps={{
+                            startAdornment: <SearchIcon sx={{ color: '#9e9e9e', mr: 1 }} />,
+                        }}
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                backgroundColor: '#ffffff',
+                                '&:hover fieldset': {
+                                    borderColor: '#1976d2'
+                                }
+                            }
+                        }}
+                    />
                     <Button
                         variant="contained"
-                        color="primary"
-                        startIcon={<AddIcon />}
-                        onClick={() => setFormOpen(true)}
+                        onClick={handleSearch}
+                        sx={{
+                            minWidth: { xs: '100%', sm: '120px' },
+                            textTransform: 'none',
+                            backgroundColor: '#1976d2',
+                            boxShadow: 'none',
+                            '&:hover': {
+                                backgroundColor: '#1565c0',
+                                boxShadow: 'none'
+                            }
+                        }}
                     >
-                        Nuovo Studente
+                        Cerca
                     </Button>
                 </Box>
-            </Box>
-
-            <Box display="flex" gap={2} mb={3}>
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    placeholder="Cerca studenti..."
-                    size="small"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                />
-                <Button
-                    variant="contained"
-                    startIcon={<SearchIcon />}
-                    onClick={handleSearch}
-                >
-                    Cerca
-                </Button>
-            </Box>
-
-            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                <DataGrid
-                    rows={students || []}
-                    columns={columns}
-                    pagination
-                    paginationMode="server"
-                    rowCount={totalStudents}
-                    page={page}
-                    pageSize={pageSize}
-                    rowsPerPageOptions={[5, 10, 20, 50]}
-                    onPageChange={handlePageChange}
-                    onPageSizeChange={handlePageSizeChange}
-                    loading={loading}
-                    autoHeight
-                    disableSelectionOnClick
-                    getRowId={(row) => row._id || row.id}
-                    components={{
-                        NoRowsOverlay: () => (
-                            <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
-                                <Typography>Nessuno studente trovato</Typography>
-                            </Box>
-                        )
-                    }}
-                />
+            </Paper>
+    
+            {/* DataGrid */}
+            <Paper 
+                elevation={0}
+                sx={{ 
+                    backgroundColor: '#ffffff',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    border: '1px solid #e0e0e0'
+                }}
+            >
+                {/* Modifica le props del DataGrid */}
+<DataGrid
+    rows={students || []}
+    columns={columns}
+    pagination
+    paginationMode="server"
+    rowCount={totalStudents}
+    page={page}
+    pageSize={pageSize}
+    rowsPerPageOptions={[5, 10, 20, 50]}
+    onPageChange={handlePageChange}
+    onPageSizeChange={handlePageSizeChange}
+    loading={loading}
+    autoHeight
+    disableSelectionOnClick
+    getRowId={(row) => row._id || row.id}
+    density="compact"  // Aggiunto questo
+    sx={{
+        border: 'none',
+        '& .MuiDataGrid-columnHeaders': {
+            backgroundColor: '#f8f9fa',
+            borderBottom: '1px solid #e0e0e0',
+            '& .MuiDataGrid-columnHeader': {
+                padding: '8px',  // Ridotto padding header
+            }
+        },
+        '& .MuiDataGrid-cell': {
+            padding: '4px 8px',  // Ridotto padding celle
+            borderBottom: '1px solid #f0f0f0',
+            fontSize: '0.875rem'  // Ridotto font size
+        },
+        '& .MuiDataGrid-row': {
+            minHeight: '40px !important',  // Ridotta altezza righe
+            maxHeight: '40px !important',
+            '&:hover': {
+                backgroundColor: '#f8f9fa'
+            }
+        },
+        '& .MuiDataGrid-footerContainer': {
+            borderTop: '1px solid #e0e0e0',
+            minHeight: '42px'  // Ridotta altezza footer
+        },
+        '& .MuiDataGrid-columnHeaderTitle': {
+            fontSize: '0.875rem',  // Ridotto font size headers
+            fontWeight: 600
+        }
+    }}
+/>
             </Paper>
 
             {/* Dialog Conferma Eliminazione */}
