@@ -15,3 +15,349 @@
 {"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T10:32:15.945Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
 {"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:32:15.991Z","tokenExpiresIn":"656.5334833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
 {"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T10:32:15.992Z","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T10:37:21.602Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:21.630Z","tokenExpiresIn":"651.4395000000001 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T10:37:21.631Z","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T10:37:24.576Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:24.606Z","tokenExpiresIn":"651.3899 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T10:37:24.607Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:34.092Z","tokenExpiresIn":"651.2318 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:34.104Z","tokenExpiresIn":"651.2316 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:34.144Z","tokenExpiresIn":"651.2309333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:34.156Z","tokenExpiresIn":"651.2307333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:34.163Z","tokenExpiresIn":"651.2306166666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:34.231Z","tokenExpiresIn":"651.2294833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:34.514Z","tokenExpiresIn":"651.2247666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:34.523Z","tokenExpiresIn":"651.2246166666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:34.548Z","tokenExpiresIn":"651.2242 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:34.553Z","tokenExpiresIn":"651.2241166666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:34.680Z","tokenExpiresIn":"651.222 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:37:34.718Z","tokenExpiresIn":"651.2213666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:39:16.052Z","tokenExpiresIn":"649.5324666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:39:16.158Z","tokenExpiresIn":"649.5306999999999 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:39:17.768Z","tokenExpiresIn":"649.5038666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:39:17.848Z","tokenExpiresIn":"649.5025333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:39:20.188Z","tokenExpiresIn":"649.4635333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T10:39:20.243Z","tokenExpiresIn":"649.4626166666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T11:10:38.588Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T11:10:52.058Z"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T11:41:14.034Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T11:41:26.696Z"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T11:44:08.632Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T11:44:23.103Z"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T11:45:24.210Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T11:45:43.498Z"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T11:46:25.255Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T11:47:05.840Z"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T11:51:06.603Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T11:51:49.973Z"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T11:58:00.498Z","tokenExpiresIn":"570.7917 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T11:58:00.531Z","tokenExpiresIn":"570.7911499999999 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T11:58:17.710Z","tokenExpiresIn":"570.5048333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T11:58:17.742Z","tokenExpiresIn":"570.5043000000001 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:01:40.671Z","tokenExpiresIn":"567.1221499999999 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:01:40.718Z","tokenExpiresIn":"567.1213666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:01:43.330Z","tokenExpiresIn":"567.0778333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:01:43.378Z","tokenExpiresIn":"567.0770333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:01:50.159Z","tokenExpiresIn":"566.9640166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:01:50.201Z","tokenExpiresIn":"566.9633166666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:02:37.508Z","tokenExpiresIn":"566.1748666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:02:37.546Z","tokenExpiresIn":"566.1742333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:03:39.836Z","tokenExpiresIn":"565.1360666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:03:40.467Z","tokenExpiresIn":"565.1255500000001 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:03:41.058Z","tokenExpiresIn":"565.1157166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:03:42.332Z","tokenExpiresIn":"565.0944666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T12:03:45.351Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:03:50.477Z","tokenExpiresIn":"564.9587166666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T12:03:50.479Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:03:50.715Z","tokenExpiresIn":"564.9547500000001 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:03:51.452Z","tokenExpiresIn":"564.9424666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:04:12.692Z","tokenExpiresIn":"564.5884666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:04:12.787Z","tokenExpiresIn":"564.5868833333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T12:05:31.579Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T12:05:50.947Z"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:16:13.792Z","tokenExpiresIn":"552.5701333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:16:13.866Z","tokenExpiresIn":"552.5689 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:16:15.119Z","tokenExpiresIn":"552.5480166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T12:16:15.160Z","tokenExpiresIn":"552.5473333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T12:25:27.377Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T12:25:45.130Z"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T12:28:48.694Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T12:28:59.111Z"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T13:07:11.419Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T13:07:21.646Z"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T13:31:04.102Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T13:31:15.629Z"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T13:42:07.290Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T13:47:26.869Z"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T14:08:28.459Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T14:09:08.690Z"}
+{"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-01-23T15:08:52.036Z"}
+{"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-01-23T15:09:02.213Z"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:44:23.830Z","tokenExpiresIn":"344.4028333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:44:23.883Z","tokenExpiresIn":"344.40195 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:44:27.927Z","tokenExpiresIn":"344.33455 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:44:27.980Z","tokenExpiresIn":"344.33366666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:44:28.940Z","tokenExpiresIn":"344.3176666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:44:28.977Z","tokenExpiresIn":"344.31705 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:44:34.284Z","tokenExpiresIn":"344.22860000000003 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:44:34.330Z","tokenExpiresIn":"344.2278333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:44:42.642Z","tokenExpiresIn":"344.0893 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:44:42.681Z","tokenExpiresIn":"344.08865 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:50:23.987Z","tokenExpiresIn":"338.40021666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:50:24.020Z","tokenExpiresIn":"338.39966666666663 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T15:51:56.541Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:51:56.578Z","tokenExpiresIn":"336.85703333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T15:51:56.580Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:51:56.775Z","tokenExpiresIn":"336.85375 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:51:56.820Z","tokenExpiresIn":"336.853 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:52:35.134Z","tokenExpiresIn":"336.2144333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:52:35.185Z","tokenExpiresIn":"336.2135833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:54:46.392Z","tokenExpiresIn":"334.0268 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:54:46.434Z","tokenExpiresIn":"334.0261 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T15:55:19.720Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:55:19.758Z","tokenExpiresIn":"333.47069999999997 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T15:55:19.759Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:55:19.993Z","tokenExpiresIn":"333.46678333333335 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:55:20.028Z","tokenExpiresIn":"333.4662 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:55:22.349Z","tokenExpiresIn":"333.4275166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:55:22.381Z","tokenExpiresIn":"333.42698333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:55:44.829Z","tokenExpiresIn":"333.05285 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:55:44.860Z","tokenExpiresIn":"333.0523333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:55:45.061Z","tokenExpiresIn":"333.0489833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:55:45.117Z","tokenExpiresIn":"333.04805000000005 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T15:55:55.884Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:55:55.935Z","tokenExpiresIn":"332.86775 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T15:55:55.938Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:55:56.198Z","tokenExpiresIn":"332.86336666666665 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:55:56.277Z","tokenExpiresIn":"332.86205 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:02.168Z","tokenExpiresIn":"332.7638666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:02.241Z","tokenExpiresIn":"332.76264999999995 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:02.387Z","tokenExpiresIn":"332.7602166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:02.442Z","tokenExpiresIn":"332.7593 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:14.528Z","tokenExpiresIn":"332.5578666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:14.567Z","tokenExpiresIn":"332.5572166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T15:56:16.680Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:16.719Z","tokenExpiresIn":"332.52135 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T15:56:16.721Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:17.113Z","tokenExpiresIn":"332.5147833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:17.145Z","tokenExpiresIn":"332.51425 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:41.059Z","tokenExpiresIn":"332.1156833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:41.116Z","tokenExpiresIn":"332.1147333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Nuovo utente registrato","timestamp":"2025-01-23T15:56:41.738Z","userId":"679266b925681c14337fb802"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:41.813Z","tokenExpiresIn":"332.1031166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:41.870Z","tokenExpiresIn":"332.1021666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:48.235Z","tokenExpiresIn":"331.99608333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:48.299Z","tokenExpiresIn":"331.9950166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:48.451Z","tokenExpiresIn":"331.9924833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:48.514Z","tokenExpiresIn":"331.99143333333336 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T15:56:54.654Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:54.690Z","tokenExpiresIn":"331.8885 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T15:56:54.692Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:54.894Z","tokenExpiresIn":"331.8851 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:54.931Z","tokenExpiresIn":"331.8844833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:56.059Z","tokenExpiresIn":"331.8656833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:56:56.102Z","tokenExpiresIn":"331.8649666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:07.798Z","tokenExpiresIn":"331.6700333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:07.850Z","tokenExpiresIn":"331.6691666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:24.805Z","tokenExpiresIn":"331.3865833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:24.866Z","tokenExpiresIn":"331.38556666666665 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:25.019Z","tokenExpiresIn":"331.38301666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:25.077Z","tokenExpiresIn":"331.38205 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:30.592Z","tokenExpiresIn":"331.29015 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:30.656Z","tokenExpiresIn":"331.28906666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:30.798Z","tokenExpiresIn":"331.2867 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:30.854Z","tokenExpiresIn":"331.2857666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:40.297Z","tokenExpiresIn":"331.1284 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:40.334Z","tokenExpiresIn":"331.1277666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:48.155Z","tokenExpiresIn":"330.9974166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:48.213Z","tokenExpiresIn":"330.99645 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:48.392Z","tokenExpiresIn":"330.9934666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:48.426Z","tokenExpiresIn":"330.9929 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:48.462Z","tokenExpiresIn":"330.9923 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:48.484Z","tokenExpiresIn":"330.99193333333335 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:48.602Z","tokenExpiresIn":"330.9899833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:57:48.659Z","tokenExpiresIn":"330.98901666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T15:58:23.909Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:58:23.945Z","tokenExpiresIn":"330.40091666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T15:58:23.946Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:58:24.226Z","tokenExpiresIn":"330.3962333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:58:24.299Z","tokenExpiresIn":"330.39501666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:58:25.763Z","tokenExpiresIn":"330.3706166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:58:25.795Z","tokenExpiresIn":"330.37008333333335 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:58:27.847Z","tokenExpiresIn":"330.3358833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:58:27.877Z","tokenExpiresIn":"330.3353833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:58:30.282Z","tokenExpiresIn":"330.2953 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:58:36.953Z","tokenExpiresIn":"330.1841166666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Test link generated successfully:","questionCount":30,"resultId":"6792672d25681c14337fb874","testId":"6792672c25681c14337fb872","timestamp":"2025-01-23T15:58:37.178Z","token":"fdc91f8820..."}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T15:58:43.014Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:58:43.070Z","tokenExpiresIn":"330.0821666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T15:58:43.073Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:06.123Z","tokenExpiresIn":"329.69795 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:06.155Z","tokenExpiresIn":"329.6974166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:11.555Z","tokenExpiresIn":"329.60741666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:11.587Z","tokenExpiresIn":"329.6068833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:26.173Z","tokenExpiresIn":"329.36378333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:26.226Z","tokenExpiresIn":"329.3629 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:26.368Z","tokenExpiresIn":"329.36053333333336 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:26.423Z","tokenExpiresIn":"329.3596166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T15:59:45.523Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:45.570Z","tokenExpiresIn":"329.0405 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T15:59:45.572Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:45.795Z","tokenExpiresIn":"329.03675000000004 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:45.865Z","tokenExpiresIn":"329.0355833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:53.240Z","tokenExpiresIn":"328.91266666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:53.279Z","tokenExpiresIn":"328.9120166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:53.405Z","tokenExpiresIn":"328.9099166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T15:59:53.438Z","tokenExpiresIn":"328.9093666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:00:24.491Z","tokenExpiresIn":"328.3918166666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:00:24.526Z","tokenExpiresIn":"328.39123333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:00:30.199Z","tokenExpiresIn":"328.2966833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:00:30.258Z","tokenExpiresIn":"328.29569999999995 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:00:30.410Z","tokenExpiresIn":"328.29316666666665 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:00:30.461Z","tokenExpiresIn":"328.2923166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T16:02:19.362Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:02:19.410Z","tokenExpiresIn":"326.4765 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T16:02:19.413Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:02:19.702Z","tokenExpiresIn":"326.47163333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:02:19.738Z","tokenExpiresIn":"326.4710333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:02:38.486Z","tokenExpiresIn":"326.1585666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:02:38.540Z","tokenExpiresIn":"326.15766666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:02:38.700Z","tokenExpiresIn":"326.155 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:02:38.754Z","tokenExpiresIn":"326.15409999999997 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T16:03:03.124Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:03.163Z","tokenExpiresIn":"325.7472833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T16:03:03.165Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:03.545Z","tokenExpiresIn":"325.7409166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:03.563Z","tokenExpiresIn":"325.7406166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:03.580Z","tokenExpiresIn":"325.7403333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:03.599Z","tokenExpiresIn":"325.7400166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:03.613Z","tokenExpiresIn":"325.7397833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:03.622Z","tokenExpiresIn":"325.73963333333336 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:03.736Z","tokenExpiresIn":"325.7377333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:03.747Z","tokenExpiresIn":"325.73755 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:03.766Z","tokenExpiresIn":"325.73723333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:03.781Z","tokenExpiresIn":"325.73698333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:05.112Z","tokenExpiresIn":"325.71479999999997 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:05.145Z","tokenExpiresIn":"325.71425 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:45.537Z","tokenExpiresIn":"325.04105 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:03:45.593Z","tokenExpiresIn":"325.0401166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T16:04:49.167Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:04:49.206Z","tokenExpiresIn":"323.97990000000004 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T16:04:49.208Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:04:53.756Z","tokenExpiresIn":"323.90406666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:04:53.786Z","tokenExpiresIn":"323.9035666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:05:00.146Z","tokenExpiresIn":"323.7975666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:05:00.199Z","tokenExpiresIn":"323.7966833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:05:00.360Z","tokenExpiresIn":"323.794 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:05:00.395Z","tokenExpiresIn":"323.7934333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T16:06:50.416Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:06:50.452Z","tokenExpiresIn":"321.95913333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T16:06:50.454Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:06:50.594Z","tokenExpiresIn":"321.9567666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:06:50.635Z","tokenExpiresIn":"321.95608333333337 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T16:07:05.768Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:07:05.802Z","tokenExpiresIn":"321.7033 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T16:07:05.803Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:07:06.138Z","tokenExpiresIn":"321.6977 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:07:06.180Z","tokenExpiresIn":"321.697 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:07:20.995Z","tokenExpiresIn":"321.45008333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:07:21.057Z","tokenExpiresIn":"321.44905 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:07:21.212Z","tokenExpiresIn":"321.44646666666665 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:07:21.268Z","tokenExpiresIn":"321.44553333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T16:07:27.611Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:07:27.657Z","tokenExpiresIn":"321.33905 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T16:07:27.659Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:07:28.051Z","tokenExpiresIn":"321.33248333333336 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:07:28.089Z","tokenExpiresIn":"321.33185 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:09:06.497Z","tokenExpiresIn":"319.69171666666665 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:09:06.528Z","tokenExpiresIn":"319.69120000000004 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:09:18.640Z","tokenExpiresIn":"319.4893333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:09:18.672Z","tokenExpiresIn":"319.4888 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:09:27.938Z","tokenExpiresIn":"319.3343666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:09:27.993Z","tokenExpiresIn":"319.33345 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:09:28.142Z","tokenExpiresIn":"319.33096666666665 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:09:28.195Z","tokenExpiresIn":"319.33008333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T16:09:46.258Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:09:46.295Z","tokenExpiresIn":"319.0284166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T16:09:46.297Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:09:46.670Z","tokenExpiresIn":"319.0221666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:09:46.701Z","tokenExpiresIn":"319.02164999999997 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T16:11:55.504Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:11:55.539Z","tokenExpiresIn":"316.87435 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T16:11:55.540Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:11:55.895Z","tokenExpiresIn":"316.86841666666663 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:11:55.931Z","tokenExpiresIn":"316.86781666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:12:02.752Z","tokenExpiresIn":"316.7541333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:12:02.813Z","tokenExpiresIn":"316.7531166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:12:02.971Z","tokenExpiresIn":"316.7504833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:12:03.069Z","tokenExpiresIn":"316.74885 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:12:17.541Z","tokenExpiresIn":"316.50764999999996 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:12:17.577Z","tokenExpiresIn":"316.50705 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:13:46.939Z","tokenExpiresIn":"315.01768333333337 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:13:46.987Z","tokenExpiresIn":"315.01688333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:15:55.883Z","tokenExpiresIn":"312.86861666666664 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:15:55.925Z","tokenExpiresIn":"312.8679166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T16:20:51.600Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:20:51.633Z","tokenExpiresIn":"307.93944999999997 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T16:20:51.634Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:20:51.931Z","tokenExpiresIn":"307.93448333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:20:51.969Z","tokenExpiresIn":"307.93385 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:20:52.221Z","tokenExpiresIn":"307.92965 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:20:52.256Z","tokenExpiresIn":"307.92906666666664 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:21:09.479Z","tokenExpiresIn":"307.6420166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:21:09.512Z","tokenExpiresIn":"307.6414666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:21:10.537Z","tokenExpiresIn":"307.62438333333336 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:21:10.599Z","tokenExpiresIn":"307.62336666666664 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:21:41.881Z","tokenExpiresIn":"307.1019833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:21:41.935Z","tokenExpiresIn":"307.1010833333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:21:42.064Z","tokenExpiresIn":"307.0989333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:21:42.116Z","tokenExpiresIn":"307.0980666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:25:18.716Z","tokenExpiresIn":"303.48806666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:25:18.752Z","tokenExpiresIn":"303.48746666666665 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T16:25:19.147Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:25:19.188Z","tokenExpiresIn":"303.4802 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T16:25:19.190Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:25:19.674Z","tokenExpiresIn":"303.4721 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:25:19.707Z","tokenExpiresIn":"303.47155000000004 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:25:49.052Z","tokenExpiresIn":"302.98246666666665 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:25:49.095Z","tokenExpiresIn":"302.98175 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:28:46.721Z","tokenExpiresIn":"300.0213166666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:28:46.766Z","tokenExpiresIn":"300.0205666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:28:46.850Z","tokenExpiresIn":"300.0191666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:28:46.884Z","tokenExpiresIn":"300.01860000000005 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:29:26.510Z","tokenExpiresIn":"299.3581666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:29:26.562Z","tokenExpiresIn":"299.35729999999995 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:29:26.789Z","tokenExpiresIn":"299.3535166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:29:26.844Z","tokenExpiresIn":"299.3526 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"academicYear":"2024/2025","level":"info","message":"Inizializzazione classi per la scuola","schoolId":"67926e6625681c14337fb977","sectionsCount":3,"timestamp":"2025-01-23T16:29:26.861Z"}
+{"classesCreated":9,"level":"info","message":"Classi iniziali create con successo","schoolId":"67926e6625681c14337fb977","timestamp":"2025-01-23T16:29:27.468Z"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:29:27.873Z","tokenExpiresIn":"299.33545 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:29:27.910Z","tokenExpiresIn":"299.33483333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:32:13.106Z","tokenExpiresIn":"296.5815666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:32:13.148Z","tokenExpiresIn":"296.5808666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:32:16.015Z","tokenExpiresIn":"296.53308333333337 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T16:32:16.049Z","tokenExpiresIn":"296.5325166666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-23T19:30:03.860Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-23T19:30:03.863Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-23T19:30:03.864Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-23T19:30:03.865Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-23T19:30:03.865Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","user","class","student","test"],"timestamp":"2025-01-23T19:30:03.866Z"}
+{"controllers":["auth","school","user","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-23T19:30:03.887Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-01-23T19:30:04.145Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-01-23T19:30:04.574Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-23T19:30:04.583Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-23T19:30:04.584Z"}
+{"ip":"::1","level":"info","message":"Auth Route Called","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-01-23T19:30:23.186Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T19:30:23.225Z","tokenExpiresIn":"118.41291666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Verifica token in corso per utente:","timestamp":"2025-01-23T19:30:23.226Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T19:30:43.788Z","tokenExpiresIn":"118.07020000000001 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T19:30:43.815Z","tokenExpiresIn":"118.06975000000001 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T19:30:47.801Z","tokenExpiresIn":"118.00331666666666 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T19:30:47.833Z","tokenExpiresIn":"118.00278333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T19:31:00.794Z","tokenExpiresIn":"117.78676666666667 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T19:31:00.817Z","tokenExpiresIn":"117.78638333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T19:31:37.990Z","tokenExpiresIn":"117.16683333333334 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T19:31:38.014Z","tokenExpiresIn":"117.16643333333333 minutes","userId":"677bfe44f6789c907c9f3766"}
+{"hasSchool":false,"level":"info","message":"✨ Authentication successful","role":"admin","timestamp":"2025-01-23T19:31:43.561Z","tokenExpiresIn":"117.07398333333335 minutes","userId":"677bfe44f6789c907c9f3766"}

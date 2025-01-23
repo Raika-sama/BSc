@@ -6,22 +6,44 @@ import {
     Typography,
     Box,
     Button,
+    Card,
+    CardContent,
+    Grid,
     IconButton,
-    Tooltip,
-    TextField,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Pagination,
-    Alert
+    Tooltip
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import FilterListIcon from '@mui/icons-material/FilterList';
+import {
+    Add as AddIcon,
+    FilterList as FilterListIcon,
+    School as SchoolIcon,
+    LocationOn as LocationIcon,
+    Class as ClassIcon
+} from '@mui/icons-material';
 import { useNotification } from '../../context/NotificationContext';
-import SchoolList from './SchoolList';
 import { useSchool } from '../../context/SchoolContext';
-import { SchoolWizard } from './wizard/SchoolWizard';
+import SchoolList from './SchoolList';
+import { Line } from 'react-chartjs-2';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip as ChartTooltip,
+    Legend
+} from 'chart.js';
+import SchoolFilters from './schoolComponents/SchoolFilters';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    ChartTooltip,
+    Legend
+);
 
 const ITEMS_PER_PAGE = 10;
 
@@ -42,9 +64,7 @@ const SchoolManagement = () => {
         error,
         totalSchools,
         fetchSchools, 
-        deleteSchool,
-        getSchoolsByRegion,
-        getSchoolsByType
+        deleteSchool
     } = useSchool();
 
     useEffect(() => {
@@ -56,6 +76,7 @@ const SchoolManagement = () => {
             await fetchSchools(page, ITEMS_PER_PAGE, filters);
         } catch (error) {
             console.error('Error loading schools:', error);
+            showNotification('Errore nel caricamento delle scuole', 'error');
         }
     };
 
@@ -63,10 +84,9 @@ const SchoolManagement = () => {
         try {
             await deleteSchool(schoolId);
             loadSchools();
+            showNotification('Scuola eliminata con successo', 'success');
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || 
-                               'Errore nell\'eliminazione della scuola';
-            showNotification(errorMessage, 'error');
+            showNotification(error.response?.data?.error?.message || 'Errore nell\'eliminazione della scuola', 'error');
         }
     };
 
@@ -78,22 +98,56 @@ const SchoolManagement = () => {
         setPage(newPage);
     };
 
-    const handleFilterChange = (event) => {
-        const { name, value } = event.target;
-        setFilters(prev => ({
-            ...prev,
-            [name]: value
-        }));
-        setPage(1);
+    const statsCards = [
+        { 
+            title: 'Scuole Totali', 
+            value: totalSchools || 0,
+            icon: <SchoolIcon fontSize="large" />,
+            color: 'primary.main' 
+        },
+        { 
+            title: 'Scuole Medie', 
+            value: schools?.filter(s => s?.schoolType === 'middle_school')?.length || 0,
+            icon: <ClassIcon fontSize="large" />,
+            color: 'secondary.main' 
+        },
+        { 
+            title: 'Scuole Superiori', 
+            value: schools?.filter(s => s?.schoolType === 'high_school')?.length || 0,
+            icon: <SchoolIcon fontSize="large" />,
+            color: 'success.main' 
+        },
+        { 
+            title: 'Regioni', 
+            value: [...new Set(schools?.map(s => s?.region))].length || 0,
+            icon: <LocationIcon fontSize="large" />,
+            color: 'info.main' 
+        }
+    ];
+
+    // Dati per il grafico di distribuzione delle scuole per regione
+    const chartData = {
+        labels: [...new Set(schools?.map(s => s?.region))],
+        datasets: [
+            {
+                label: 'Scuole per Regione',
+                data: [...new Set(schools?.map(s => s?.region))].map(region =>
+                    schools?.filter(s => s?.region === region)?.length || 0
+                ),
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }
+        ]
     };
 
     return (
-        <Container maxWidth="lg">
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            {/* Header */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                 <Typography variant="h4" component="h1">
                     Gestione Scuole
                 </Typography>
-                <Box>
+                <Box sx={{ display: 'flex', gap: 2 }}>
                     <Tooltip title="Filtri">
                         <IconButton onClick={() => setIsFilterOpen(!isFilterOpen)}>
                             <FilterListIcon />
@@ -101,7 +155,6 @@ const SchoolManagement = () => {
                     </Tooltip>
                     <Button
                         variant="contained"
-                        color="primary"
                         startIcon={<AddIcon />}
                         onClick={() => navigate('/admin/schools/create')}
                     >
@@ -110,56 +163,69 @@ const SchoolManagement = () => {
                 </Box>
             </Box>
 
-            {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
-                </Alert>
-            )}
+            {/* Layout superiore con stats e grafico */}
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+                {/* Colonna sinistra con stats cards */}
+                <Grid item xs={12} md={4}>
+                    <Grid container spacing={2}>
+                        {statsCards.map((card, index) => (
+                            <Grid item xs={6} md={12} key={index}>
+                                <Card>
+                                    <CardContent sx={{ py: 1.5 }}>  {/* Ridotto il padding */}
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                            <Box sx={{ color: card.color }}>
+                                                {React.cloneElement(card.icon, { fontSize: 'medium' })}  {/* Icona più piccola */}
+                                            </Box>
+                                            <Box>
+                                                <Typography variant="body2" color="textSecondary">
+                                                    {card.title}
+                                                </Typography>
+                                                <Typography variant="h6" sx={{ color: card.color }}>
+                                                    {card.value}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Grid>
 
+                {/* Colonna destra con grafico */}
+                <Grid item xs={12} md={8}>
+                    <Paper sx={{ p: 2, height: '100%' }}>  {/* Ridotto il padding */}
+                        <Typography variant="h6" gutterBottom>
+                            Distribuzione Scuole per Regione
+                        </Typography>
+                        <Box sx={{ height: 280 }}>  {/* Altezza ridotta */}
+                            <Line
+                                data={chartData}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            position: 'top'
+                                        }
+                                    }
+                                }}
+                            />
+                        </Box>
+                    </Paper>
+                </Grid>
+            </Grid>
+
+            {/* Filtri */}
             {isFilterOpen && (
-                <Paper sx={{ p: 2, mb: 2 }}>
-                    <Box display="flex" gap={2}>
-                        <FormControl sx={{ minWidth: 200 }}>
-                            <InputLabel>Tipo Scuola</InputLabel>
-                            <Select
-                                name="schoolType"
-                                value={filters.schoolType}
-                                onChange={handleFilterChange}
-                                label="Tipo Scuola"
-                            >
-                                <MenuItem value="">Tutti</MenuItem>
-                                <MenuItem value="middle_school">Scuola Media</MenuItem>
-                                <MenuItem value="high_school">Scuola Superiore</MenuItem>
-                            </Select>
-                        </FormControl>
-
-                        <FormControl sx={{ minWidth: 200 }}>
-                            <InputLabel>Tipo Istituto</InputLabel>
-                            <Select
-                                name="institutionType"
-                                value={filters.institutionType}
-                                onChange={handleFilterChange}
-                                label="Tipo Istituto"
-                            >
-                                <MenuItem value="">Tutti</MenuItem>
-                                <MenuItem value="scientific">Scientifico</MenuItem>
-                                <MenuItem value="classical">Classico</MenuItem>
-                                <MenuItem value="artistic">Artistico</MenuItem>
-                                <MenuItem value="none">Nessuno</MenuItem>
-                            </Select>
-                        </FormControl>
-
-                        <TextField
-                            label="Regione"
-                            name="region"
-                            value={filters.region}
-                            onChange={handleFilterChange}
-                            sx={{ minWidth: 200 }}
-                        />
-                    </Box>
-                </Paper>
+                <SchoolFilters
+                    filters={filters}
+                    onChange={setFilters}
+                    onReset={() => setFilters({ region: '', schoolType: '', institutionType: '' })}
+                />
             )}
 
+            {/* Lista Scuole */}
             <SchoolList
                 schools={schools}
                 loading={loading}
@@ -167,8 +233,9 @@ const SchoolManagement = () => {
                 onDelete={handleDeleteSchool}
             />
 
+            {/* Paginazione */}
             {!loading && totalSchools > ITEMS_PER_PAGE && (
-                <Box display="flex" justifyContent="center" mt={3}>
+                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
                     <Pagination
                         count={Math.ceil(totalSchools / ITEMS_PER_PAGE)}
                         page={page}

@@ -25,10 +25,12 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 
+// src/components/profile/Profile.js
+// ... imports rimangono gli stessi ...
+
 const Profile = () => {
     const { user } = useAuth();
 
-    // Dati mock per i test
     const mockTests = [
         {
             id: 1,
@@ -48,7 +50,7 @@ const Profile = () => {
         <Container maxWidth="lg">
             <Paper elevation={0} sx={{ p: 3 }}>
                 <Grid container spacing={3}>
-                    {/* Header Section - invariato */}
+                    {/* Header Section */}
                     <Grid item xs={12}>
                         <Box sx={{ 
                             display: 'flex', 
@@ -125,6 +127,7 @@ const Profile = () => {
                             </Box>
                         </Box>
                     </Grid>
+
                     {/* Test Personali Section */}
                     <Grid item xs={12} md={6}>
                         <Card 
@@ -165,20 +168,43 @@ const Profile = () => {
                                             <ListItemText
                                                 primary={test.name}
                                                 secondary={
-                                                    <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
-                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                            <ScheduleIcon fontSize="small" color="action" />
-                                                            <Typography variant="body2" color="text.secondary">
+                                                    <Typography 
+                                                        component="span" 
+                                                        variant="body2" 
+                                                        color="text.secondary"
+                                                    >
+                                                        <Box 
+                                                            component="span" 
+                                                            sx={{ 
+                                                                display: 'flex', 
+                                                                gap: 2, 
+                                                                mt: 0.5 
+                                                            }}
+                                                        >
+                                                            <Box 
+                                                                component="span" 
+                                                                sx={{ 
+                                                                    display: 'flex', 
+                                                                    alignItems: 'center', 
+                                                                    gap: 0.5 
+                                                                }}
+                                                            >
+                                                                <ScheduleIcon fontSize="small" color="action" />
                                                                 {test.date}
-                                                            </Typography>
-                                                        </Box>
-                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                            <ScoreIcon fontSize="small" color="action" />
-                                                            <Typography variant="body2" color="text.secondary">
+                                                            </Box>
+                                                            <Box 
+                                                                component="span" 
+                                                                sx={{ 
+                                                                    display: 'flex', 
+                                                                    alignItems: 'center', 
+                                                                    gap: 0.5 
+                                                                }}
+                                                            >
+                                                                <ScoreIcon fontSize="small" color="action" />
                                                                 {test.score}
-                                                            </Typography>
+                                                            </Box>
                                                         </Box>
-                                                    </Box>
+                                                    </Typography>
                                                 }
                                             />
                                         </ListItem>

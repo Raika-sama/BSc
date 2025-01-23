@@ -1,27 +1,50 @@
-// src/components/users/UserManagement.js
 import React, { useState, useEffect } from 'react';
 import { 
-    Container, 
+    Box, 
     Paper, 
-    Button, 
+    Grid,
+    Container,
     Typography,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
     IconButton,
-    Box,
-    CircularProgress,
-    Pagination // Aggiunto per la paginazione
+    Button,
+    Card,
+    CardContent,
+    Chip,
+    Stack,
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import SearchInput from '../common/SearchInput'; // Assumo che esista questo componente
+import { DataGrid } from '@mui/x-data-grid';
+import {
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    PersonAdd as PersonAddIcon,
+    FileDownload as FileDownloadIcon,
+} from '@mui/icons-material';
+import { Line } from 'react-chartjs-2';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend
+} from 'chart.js';
+import SearchInput from '../common/SearchInput';
 import UserForm from './UserForm';
 import ConfirmDialog from '../ConfirmDialog';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend
+);
 
 const UserManagement = () => {
     const { 
@@ -38,38 +61,38 @@ const UserManagement = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [page, setPage] = useState(0);
     const [search, setSearch] = useState('');
-    const ITEMS_PER_PAGE = 10;
 
     useEffect(() => {
         loadUsers();
-    }, [page, search]); // Ricarica quando cambiano pagina o ricerca
+    }, [page, search]);
 
     const loadUsers = async () => {
         try {
-            await getUsers(page, ITEMS_PER_PAGE, search);
+            await getUsers(page + 1, pageSize, search);
         } catch (error) {
-            showNotification(
-                'Errore nel caricamento degli utenti',
-                'error'
-            );
+            showNotification('Errore nel caricamento degli utenti', 'error');
         }
     };
 
     const handleSaveUser = async (userData) => {
         try {
+            let updatedUser;
             if (selectedUser) {
-                await updateUser(selectedUser._id, userData);
+                updatedUser = await updateUser(selectedUser._id, {
+                    ...userData,
+                    _id: selectedUser._id // Manteniamo l'_id originale
+                });
             } else {
-                await createUser(userData);
+                updatedUser = await createUser(userData);
             }
             handleCloseForm();
-            loadUsers(); // Ricarica la lista dopo il salvataggio
+            // Aggiorniamo immediatamente la grid con i dati corretti
+            await loadUsers();
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || 
-                               'Errore nel salvare l\'utente';
-            showNotification(errorMessage, 'error');
+            showNotification(error.response?.data?.error?.message || 'Errore nel salvare l\'utente', 'error');
         }
     };
 
@@ -78,11 +101,9 @@ const UserManagement = () => {
             await deleteUser(selectedUser._id);
             setIsDeleteDialogOpen(false);
             setSelectedUser(null);
-            loadUsers(); // Ricarica la lista dopo l'eliminazione
+            loadUsers();
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || 
-                               'Errore nell\'eliminazione dell\'utente';
-            showNotification(errorMessage, 'error');
+            showNotification(error.response?.data?.error?.message || 'Errore nell\'eliminazione dell\'utente', 'error');
         }
     };
 
@@ -101,117 +122,167 @@ const UserManagement = () => {
         setSelectedUser(null);
     };
 
-    const handlePageChange = (event, newPage) => {
-        setPage(newPage);
-    };
+    const columns = [
+        {
+            field: 'avatar',
+            headerName: '',
+            width: 60,
+            renderCell: (params) => (
+                <Box className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    {params.row?.firstName?.[0] || 'U'}
+                </Box>
+            )
+        },
+        {
+            field: 'firstName',
+            headerName: 'Nome',
+            width: 130
+        },
+        {
+            field: 'lastName',
+            headerName: 'Cognome',
+            width: 130
+        },
+        {
+            field: 'email',
+            headerName: 'Email',
+            width: 220
+        },
+        {
+            field: 'role',
+            headerName: 'Ruolo',
+            width: 150,
+            renderCell: (params) => (
+                <Chip
+                    label={params.value === 'admin' ? 'Amministratore' : 'Insegnante'}
+                    color={params.value === 'admin' ? 'primary' : 'default'}
+                    size="small"
+                />
+            )
+        },
+        {
+            field: 'actions',
+            headerName: 'Azioni',
+            width: 120,
+            renderCell: (params) => (
+                <Stack direction="row" spacing={1}>
+                    <IconButton 
+                        size="small" 
+                        color="primary"
+                        onClick={() => handleEditUser(params.row)}
+                    >
+                        <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton 
+                        size="small" 
+                        color="error"
+                        onClick={() => handleDeleteClick(params.row)}
+                    >
+                        <DeleteIcon fontSize="small" />
+                    </IconButton>
+                </Stack>
+            )
+        }
+    ];
 
-    const handleSearchChange = (value) => {
-        setSearch(value);
-        setPage(1); // Resetta la pagina quando cambia la ricerca
-    };
+    const statsCards = [
+        { title: 'Utenti Totali', value: totalUsers || 0, color: 'primary.main' },
+        { title: 'Amministratori', value: users?.filter(u => u?.role === 'admin')?.length || 0, color: 'secondary.main' },
+        { title: 'Insegnanti', value: users?.filter(u => u?.role === 'teacher')?.length || 0, color: 'success.main' },
+        { title: 'Utenti Attivi', value: users?.filter(u => u?.active)?.length || 0, color: 'info.main' }
+    ];
 
     if (error) {
         return (
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-                <Typography color="error" align="center">
-                    {error}
-                </Typography>
+                <Typography color="error" align="center">{error}</Typography>
             </Container>
         );
     }
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                 <Typography variant="h4" component="h1">
                     Gestione Utenti
                 </Typography>
-                <Button 
-                    variant="contained" 
-                    color="primary" 
-                    onClick={() => setIsFormOpen(true)}
-                    disabled={loading}
-                >
-                    Nuovo Utente
-                </Button>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button
+                        variant="contained"
+                        startIcon={<PersonAddIcon />}
+                        onClick={() => setIsFormOpen(true)}
+                        disabled={loading}
+                    >
+                        Nuovo Utente
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<FileDownloadIcon />}
+                    >
+                        Esporta
+                    </Button>
+                </Box>
             </Box>
 
+            {/* Stats Cards */}
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+                {statsCards.map((card, index) => (
+                    <Grid item xs={12} sm={6} md={3} key={index}>
+                        <Card>
+                            <CardContent>
+                                <Typography color="textSecondary" gutterBottom>
+                                    {card.title}
+                                </Typography>
+                                <Typography variant="h4" component="div" color={card.color}>
+                                    {card.value}
+                                </Typography>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                ))}
+            </Grid>
+
+            {/* Search */}
             <Box sx={{ mb: 3 }}>
                 <SearchInput 
                     value={search}
-                    onChange={handleSearchChange}
+                    onChange={setSearch}
                     disabled={loading}
                     placeholder="Cerca utenti..."
                 />
             </Box>
 
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Nome</TableCell>
-                            <TableCell>Cognome</TableCell>
-                            <TableCell>Email</TableCell>
-                            <TableCell>Ruolo</TableCell>
-                            <TableCell align="right">Azioni</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                                    <CircularProgress />
-                                </TableCell>
-                            </TableRow>
-                        ) : users.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={5} align="center">
-                                    Nessun utente trovato
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            users.map((user) => (
-                                <TableRow key={user._id}>
-                                    <TableCell>{user.firstName}</TableCell>
-                                    <TableCell>{user.lastName}</TableCell>
-                                    <TableCell>{user.email}</TableCell>
-                                    <TableCell>
-                                        {user.role === 'admin' ? 'Amministratore' : 'Insegnante'}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <IconButton 
-                                            onClick={() => handleEditUser(user)}
-                                            disabled={loading}
-                                            color="primary"
-                                        >
-                                            <EditIcon />
-                                        </IconButton>
-                                        <IconButton 
-                                            onClick={() => handleDeleteClick(user)}
-                                            disabled={loading}
-                                            color="error"
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+            {/* Users Grid */}
+            <Paper>
+                <DataGrid
+                    rows={Array.isArray(users) ? users
+                        .filter(user => user && user._id) // Filtriamo le righe senza id
+                        .map(user => ({
+                            id: user._id,
+                            _id: user._id,
+                            firstName: user?.firstName || '',
+                            lastName: user?.lastName || '',
+                            email: user?.email || '',
+                            role: user?.role || '',
+                            active: user?.active || false
+                        })) : []}
+                    columns={columns}
+                    pageSize={pageSize}
+                    onPageSizeChange={setPageSize}
+                    rowsPerPageOptions={[5, 10, 20]}
+                    disableSelectionOnClick
+                    autoHeight
+                    loading={loading || !Array.isArray(users)}
+                    page={page}
+                    onPageChange={(newPage) => setPage(newPage)}
+                    rowCount={totalUsers || 0}
+                    paginationMode="server"
+                    className="h-96"
+                />
+            </Paper>
 
-            {!loading && totalUsers > ITEMS_PER_PAGE && (
-                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
-                    <Pagination 
-                        count={Math.ceil(totalUsers / ITEMS_PER_PAGE)}
-                        page={page}
-                        onChange={handlePageChange}
-                        color="primary"
-                    />
-                </Box>
-            )}
-
+            {/* Forms and Dialogs */}
             <UserForm 
                 open={isFormOpen}
                 onClose={handleCloseForm}
