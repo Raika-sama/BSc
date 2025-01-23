@@ -575,6 +575,80 @@ class StudentRepository extends BaseRepository {
             throw error;
         }
     }
+
+    // Aggiungi questo metodo alla classe StudentRepository
+
+async updateStudentsForDeactivatedSection(schoolId, sectionName) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        logger.debug('Aggiornamento studenti per sezione disattivata:', {
+            schoolId,
+            sectionName
+        });
+
+        // 1. Trova tutte le classi della sezione
+        const classes = await Class.find({
+            schoolId,
+            section: sectionName,
+            isActive: true
+        }).session(session);
+
+        const classIds = classes.map(c => c._id);
+
+        // 2. Aggiorna tutti gli studenti delle classi trovate
+        const result = await this.model.updateMany(
+            {
+                schoolId,
+                classId: { $in: classIds },
+                isActive: true
+            },
+            {
+                $set: {
+                    classId: null,
+                    section: null,
+                    currentYear: null,
+                    mainTeacher: null,
+                    teachers: [],
+                    status: 'pending',
+                    needsClassAssignment: true,
+                    lastClassChangeDate: new Date()
+                },
+                $push: {
+                    classChangeHistory: {
+                        fromClass: { $first: "$classId" },
+                        fromSection: sectionName,
+                        fromYear: { $first: "$currentYear" },
+                        date: new Date(),
+                        reason: 'Sezione disattivata',
+                        academicYear: { $first: "$academicYear" }
+                    }
+                }
+            },
+            { session }
+        );
+
+        logger.info('Studenti aggiornati:', {
+            modifiedCount: result.modifiedCount,
+            schoolId,
+            sectionName
+        });
+
+        await session.commitTransaction();
+        return result;
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Errore nell\'aggiornamento degli studenti:', {
+            error,
+            schoolId,
+            sectionName
+        });
+        throw error;
+    } finally {
+        session.endSession();
+    }
+}
 }
 
 module.exports = StudentRepository;

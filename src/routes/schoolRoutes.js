@@ -21,6 +21,23 @@ router.get('/region/:region', schoolController.getByRegion.bind(schoolController
 router.get('/type/:type', schoolController.getByType.bind(schoolController));
 router.get('/:id/academic-years', schoolController.getAcademicYears.bind(schoolController));
 
+
+// Nuove rotte per la gestione delle sezioni
+router.get('/:id/sections', 
+    schoolController.getSections.bind(schoolController)
+);
+
+// Rotte che richiedono privilegi di admin
+router.post('/:schoolId/sections/:sectionName/deactivate',
+    restrictTo('admin'),
+    schoolController.deactivateSection.bind(schoolController)
+);
+
+router.post('/:schoolId/sections/:sectionName/reactivate',
+    restrictTo('admin'),
+    schoolController.reactivateSection.bind(schoolController)
+);
+
 // Rotte che richiedono privilegi di admin
 router.post('/', 
     restrictTo('admin'), 

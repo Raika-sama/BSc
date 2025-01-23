@@ -369,6 +369,137 @@ async getMySchool(req, res) {
         }
     }
 
+    /**
+ * Gestisce la disattivazione di una sezione
+ */
+async deactivateSection(req, res) {
+    try {
+        const { schoolId, sectionName } = req.params;
+
+        logger.debug('Richiesta disattivazione sezione:', {
+            schoolId,
+            sectionName,
+            userId: req.user._id
+        });
+
+        // 1. Prima recupera gli studenti che saranno impattati
+        const students = await this.repository.getStudentsBySection(schoolId, sectionName);
+        
+        // 2. Disattiva la sezione
+        const updatedSchool = await this.repository.deactivateSection(schoolId, sectionName);
+        
+        // 3. Aggiorna gli studenti
+        const studentUpdateResult = await this.studentRepository.updateStudentsForDeactivatedSection(
+            schoolId, 
+            sectionName
+        );
+
+        logger.info('Sezione disattivata con successo:', {
+            schoolId,
+            sectionName,
+            studentsUpdated: studentUpdateResult.modifiedCount
+        });
+
+        this.sendResponse(res, {
+            message: 'Sezione disattivata con successo',
+            studentsUpdated: studentUpdateResult.modifiedCount,
+            school: updatedSchool
+        });
+
+    } catch (error) {
+        logger.error('Errore nella disattivazione della sezione:', {
+            error: error.message,
+            stack: error.stack
+        });
+        this.sendError(res, error);
+    }
+}
+
+/**
+ * Riattiva una sezione precedentemente disattivata
+ */
+async reactivateSection(req, res) {
+    try {
+        const { schoolId, sectionName } = req.params;
+
+        logger.debug('Richiesta riattivazione sezione:', {
+            schoolId,
+            sectionName,
+            userId: req.user._id
+        });
+
+        const updatedSchool = await this.repository.reactivateSection(schoolId, sectionName);
+
+        logger.info('Sezione riattivata con successo:', {
+            schoolId,
+            sectionName
+        });
+
+        this.sendResponse(res, {
+            message: 'Sezione riattivata con successo',
+            school: updatedSchool
+        });
+
+    } catch (error) {
+        logger.error('Errore nella riattivazione della sezione:', {
+            error: error.message,
+            stack: error.stack
+        });
+        this.sendError(res, error);
+    }
+}
+
+/**
+ * Recupera le sezioni di una scuola con il conteggio degli studenti
+ */
+async getSections(req, res) {
+    try {
+        const { schoolId } = req.params;
+        const { includeInactive = false } = req.query;
+
+        logger.debug('Richiesta recupero sezioni:', {
+            schoolId,
+            includeInactive,
+            userId: req.user._id
+        });
+
+        const school = await this.repository.findById(schoolId);
+        
+        // Filtra le sezioni in base al parametro includeInactive
+        const sections = school.sections
+            .filter(section => includeInactive || section.isActive)
+            .map(async (section) => {
+                const students = await this.repository.getStudentsBySection(
+                    schoolId, 
+                    section.name
+                );
+                
+                return {
+                    ...section.toObject(),
+                    studentsCount: students.length
+                };
+            });
+
+        const sectionsWithCounts = await Promise.all(sections);
+
+        logger.debug('Sezioni recuperate:', {
+            count: sectionsWithCounts.length,
+            schoolId
+        });
+
+        this.sendResponse(res, {
+            sections: sectionsWithCounts
+        });
+
+    } catch (error) {
+        logger.error('Errore nel recupero delle sezioni:', {
+            error: error.message,
+            stack: error.stack
+        });
+        this.sendError(res, error);
+    }
+}
+
     
 }
 

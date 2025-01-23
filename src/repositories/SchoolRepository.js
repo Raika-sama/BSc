@@ -372,6 +372,161 @@ class SchoolRepository extends BaseRepository {
             await session.endSession();
         }
     }
+
+    // Aggiungi questi metodi alla classe SchoolRepository
+
+async deactivateSection(schoolId, sectionName) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        logger.debug('Disattivazione sezione:', { schoolId, sectionName });
+
+        // 1. Trova la scuola e verifica che la sezione esista
+        const school = await this.model.findById(schoolId).session(session);
+        if (!school) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            );
+        }
+
+        const sectionIndex = school.sections.findIndex(s => s.name === sectionName);
+        if (sectionIndex === -1) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Sezione non trovata'
+            );
+        }
+
+        // 2. Verifica che la sezione non sia già disattivata
+        if (!school.sections[sectionIndex].isActive) {
+            throw createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'Sezione già disattivata'
+            );
+        }
+
+        // 3. Aggiorna lo stato della sezione
+        const result = await this.model.findOneAndUpdate(
+            { 
+                _id: schoolId,
+                'sections.name': sectionName 
+            },
+            {
+                $set: {
+                    'sections.$.isActive': false,
+                    'sections.$.deactivatedAt': new Date()
+                }
+            },
+            { 
+                new: true,
+                runValidators: true,
+                session 
+            }
+        );
+
+        await session.commitTransaction();
+        logger.info('Sezione disattivata con successo:', {
+            schoolId,
+            sectionName,
+            deactivatedAt: new Date()
+        });
+
+        return result;
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Errore durante la disattivazione della sezione:', {
+            error,
+            schoolId,
+            sectionName
+        });
+        throw error;
+    } finally {
+        session.endSession();
+    }
+}
+
+async reactivateSection(schoolId, sectionName) {
+    try {
+        logger.debug('Riattivazione sezione:', { schoolId, sectionName });
+
+        const result = await this.model.findOneAndUpdate(
+            { 
+                _id: schoolId,
+                'sections.name': sectionName 
+            },
+            {
+                $set: {
+                    'sections.$.isActive': true,
+                    'sections.$.deactivatedAt': null
+                }
+            },
+            { 
+                new: true,
+                runValidators: true 
+            }
+        );
+
+        if (!result) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Sezione non trovata'
+            );
+        }
+
+        logger.info('Sezione riattivata con successo:', {
+            schoolId,
+            sectionName
+        });
+
+        return result;
+    } catch (error) {
+        logger.error('Errore durante la riattivazione della sezione:', {
+            error,
+            schoolId,
+            sectionName
+        });
+        throw error;
+    }
+}
+
+async getStudentsBySection(schoolId, sectionName) {
+    try {
+        logger.debug('Recupero studenti per sezione:', { schoolId, sectionName });
+        
+        // Trova prima tutte le classi attive per questa sezione
+        const classes = await Class.find({
+            schoolId,
+            section: sectionName,
+            isActive: true
+        }).select('_id');
+
+        const classIds = classes.map(c => c._id);
+
+        // Trova tutti gli studenti in queste classi
+        const students = await Student.find({
+            schoolId,
+            classId: { $in: classIds },
+            isActive: true
+        });
+
+        logger.debug('Studenti trovati:', { 
+            count: students.length,
+            schoolId,
+            sectionName 
+        });
+
+        return students;
+    } catch (error) {
+        logger.error('Errore nel recupero studenti per sezione:', {
+            error,
+            schoolId,
+            sectionName
+        });
+        throw error;
+    }
+}
       
 }
 

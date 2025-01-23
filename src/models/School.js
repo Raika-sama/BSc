@@ -63,6 +63,23 @@ const sectionSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    deactivatedAt: {
+        type: Date,
+        validate: {
+            validator: function(value) {
+                // Se c'è una data di disattivazione, isActive deve essere false
+                if (value && this.isActive) {
+                    return false;
+                }
+                // Se isActive è true, non ci deve essere data di disattivazione
+                if (!value && !this.isActive) {
+                    return false;
+                }
+                return true;
+            },
+            message: 'La data di disattivazione deve essere coerente con lo stato della sezione'
+        }
     }
 });
 

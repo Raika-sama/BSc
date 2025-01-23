@@ -276,9 +276,8 @@ export const StudentProvider = ({ children }) => {
     const normalized = {
         ...student,
         id: student._id || student.id,
-       // _id: student._id || student.id, // Manteniamo anche _id per compatibilità
-       // schoolId: normalizeSchoolId(student.schoolId),
-       // classId: normalizeClassId(student.classId),
+       _id: student._id || student.id, // Manteniamo anche _id per compatibilità
+
        schoolId: typeof student.schoolId === 'object' ? student.schoolId : { _id: student.schoolId, name: 'N/D' },
        classId: typeof student.classId === 'object' ? student.classId : student.classId ? { _id: student.classId } : null,     
        lastName: student.lastName || '',

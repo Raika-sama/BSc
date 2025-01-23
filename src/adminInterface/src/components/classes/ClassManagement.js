@@ -38,13 +38,27 @@ const FilterToolbar = ({
     handleApplyFilters,
     handleResetFilters 
 }) => {
+    const smallButtonStyle = {
+        padding: '4px 8px',
+        fontSize: '0.8rem',
+        minWidth: 'auto'
+    };
+
     return (
-        <Box sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ 
+            p: 1, 
+            display: 'flex', 
+            gap: 1, 
+            alignItems: 'center', 
+            borderBottom: 1, 
+            borderColor: 'divider'
+        }}>
             <TextField
                 label="Scuola"
                 size="small"
                 value={schoolFilter}
                 onChange={(e) => setSchoolFilter(e.target.value)}
+                sx={{ '& .MuiInputBase-root': { fontSize: '0.875rem' } }}
             />
             <TextField
                 label="Anno"
@@ -52,7 +66,10 @@ const FilterToolbar = ({
                 select
                 value={yearFilter}
                 onChange={(e) => setYearFilter(e.target.value)}
-                sx={{ minWidth: 100 }}
+                sx={{ 
+                    minWidth: '80px',
+                    '& .MuiInputBase-root': { fontSize: '0.875rem' }
+                }}
             >
                 <MenuItem value="">Tutti</MenuItem>
                 {[1, 2, 3].map((year) => (
@@ -66,18 +83,25 @@ const FilterToolbar = ({
                 size="small"
                 value={sectionFilter}
                 onChange={(e) => setSectionFilter(e.target.value.toUpperCase())}
-                sx={{ width: 100 }}
+                sx={{ 
+                    width: '80px',
+                    '& .MuiInputBase-root': { fontSize: '0.875rem' }
+                }}
             />
             <Button 
                 variant="contained" 
                 onClick={handleApplyFilters}
-                startIcon={<FilterListIcon />}
+                startIcon={<FilterListIcon sx={{ fontSize: '1rem' }} />}
+                size="small"
+                sx={smallButtonStyle}
             >
-                Applica Filtri
+                Applica
             </Button>
             <Button
                 variant="outlined"
                 onClick={handleResetFilters}
+                size="small"
+                sx={smallButtonStyle}
             >
                 Reset
             </Button>
@@ -94,6 +118,7 @@ const ClassManagement = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
+    const [pageSize, setPageSize] = useState(10); // Aggiungi questo nuovo state
 
     // Stati per i filtri
     const [schoolFilter, setSchoolFilter] = useState('');
@@ -185,34 +210,34 @@ const ClassManagement = () => {
         { 
             field: 'schoolName', 
             headerName: 'Scuola', 
-            width: 200,
-            flex: 1
+            flex: 1,
+            minWidth: 180
         },
         { 
             field: 'year', 
             headerName: 'Anno', 
-            width: 100,
+            width: 70,
             align: 'center',
             headerAlign: 'center'
         },
         { 
             field: 'section', 
             headerName: 'Sezione', 
-            width: 100,
+            width: 80,
             align: 'center',
             headerAlign: 'center'
         },
         { 
             field: 'academicYear', 
             headerName: 'Anno Accademico', 
-            width: 150,
+            width: 130,
             align: 'center',
             headerAlign: 'center'
         },
         {
             field: 'studentCount',
             headerName: 'Studenti',
-            width: 130,
+            width: 110,
             align: 'center',
             headerAlign: 'center',
             renderCell: (params) => {
@@ -224,14 +249,26 @@ const ClassManagement = () => {
                                 label="Pending"
                                 color="warning"
                                 size="small"
-                                sx={{ minWidth: '80px' }}
+                                sx={{ 
+                                    minWidth: '70px',
+                                    height: '24px',
+                                    '& .MuiChip-label': {
+                                        fontSize: '0.75rem'
+                                    }
+                                }}
                             />
                         ) : (
                             <Chip
                                 label={`${count} studenti`}
                                 color={count >= params.row.capacity ? 'error' : 'success'}
                                 size="small"
-                                sx={{ minWidth: '80px' }}
+                                sx={{ 
+                                    minWidth: '70px',
+                                    height: '24px',
+                                    '& .MuiChip-label': {
+                                        fontSize: '0.75rem'
+                                    }
+                                }}
                             />
                         )}
                     </Box>
@@ -242,12 +279,12 @@ const ClassManagement = () => {
             field: 'actions',
             type: 'actions',
             headerName: 'Azioni',
-            width: 150,
+            width: 120,
             getActions: (params) => [
                 <GridActionsCellItem
                     icon={
                         <Tooltip title="Visualizza dettagli">
-                            <VisibilityIcon />
+                            <VisibilityIcon sx={{ fontSize: '1.1rem' }} />
                         </Tooltip>
                     }
                     label="Visualizza"
@@ -256,7 +293,7 @@ const ClassManagement = () => {
                 <GridActionsCellItem
                     icon={
                         <Tooltip title="Gestione test">
-                            <QuizIcon />
+                            <QuizIcon sx={{ fontSize: '1.1rem' }} />
                         </Tooltip>
                     }
                     label="Test"
@@ -265,7 +302,7 @@ const ClassManagement = () => {
                 <GridActionsCellItem
                     icon={
                         <Tooltip title="Elimina classe">
-                            <DeleteIcon color="error" />
+                            <DeleteIcon sx={{ fontSize: '1.1rem' }} color="error" />
                         </Tooltip>
                     }
                     label="Elimina"
@@ -278,30 +315,38 @@ const ClassManagement = () => {
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-                <CircularProgress />
+                <CircularProgress size={30} /> {/* Ridotto dimensione */}
             </Box>
         );
     }
 
     if (error) {
         return (
-            <Box p={3}>
+            <Box p={2}>
                 <Alert severity="error">{error}</Alert>
             </Box>
         );
     }
 
     return (
-        <Box p={3}>
-            <Typography variant="h4" gutterBottom color="primary" sx={{ mb: 3 }}>
+        <Box p={2}>
+            <Typography 
+                variant="h5" 
+                gutterBottom 
+                color="primary" 
+                sx={{ 
+                    mb: 2,
+                    fontSize: '1.2rem'
+                }}
+            >
                 {isAdmin ? 'Gestione Classi (Admin)' : 'Gestione Classi'}
             </Typography>
 
             <Paper sx={{ 
                 width: '100%', 
-                mb: 2, 
+                mb: 1, 
                 borderRadius: 2,
-                boxShadow: 3
+                boxShadow: 2
             }}>
                 <FilterToolbar 
                     schoolFilter={schoolFilter}
@@ -315,21 +360,58 @@ const ClassManagement = () => {
                 />
 
                 {isAdmin ? (
-                    <Box sx={{ width: '100%', p: 2 }}>
+                    <Box sx={{ 
+                        width: '100%', 
+                        p: 1,
+                        height: '600px',
+                        overflow: 'auto'
+                    }}>
                         <DataGrid
                             rows={filteredClasses}
                             columns={columns}
                             getRowId={(row) => row.classId}
-                            pageSize={7}
-                            rowsPerPageOptions={[7]}
-                            autoHeight
+                            pageSize={pageSize}
+                            rowsPerPageOptions={[10, 25, 50, 100]}
+                            onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
                             disableSelectionOnClick
+                            density="compact"
                             sx={{
+                                '& .MuiDataGrid-cell': {
+                                    fontSize: '0.875rem',
+                                    py: 0.5
+                                },
+                                '& .MuiDataGrid-columnHeaders': {
+                                    fontSize: '0.875rem',
+                                    minHeight: '45px !important',
+                                    maxHeight: '45px !important'
+                                },
+                                '& .MuiDataGrid-row': {
+                                    minHeight: '35px !important',
+                                    maxHeight: '35px !important'
+                                },
                                 '& .MuiDataGrid-cell:focus': {
                                     outline: 'none'
                                 },
                                 '& .MuiDataGrid-row:hover': {
                                     bgcolor: 'action.hover'
+                                },
+                                '& .MuiDataGrid-root': {
+                                    border: 'none',
+                                    overflowY: 'scroll',
+                                    scrollbarWidth: 'thin',
+                                    '&::-webkit-scrollbar': {
+                                        width: '6px'
+                                    },
+                                    '&::-webkit-scrollbar-track': {
+                                        background: '#f1f1f1'
+                                    },
+                                    '&::-webkit-scrollbar-thumb': {
+                                        background: '#888',
+                                        borderRadius: '3px'
+                                    },
+                                    '&::-webkit-scrollbar-thumb:hover': {
+                                        background: '#555'
+                                    }
                                 }
                             }}
                         />
@@ -340,10 +422,12 @@ const ClassManagement = () => {
                             value={tabValue}
                             onChange={(e, newValue) => setTabValue(newValue)}
                             sx={{
-                                borderBottom: 1,
-                                borderColor: 'divider',
-                                bgcolor: 'background.paper',
-                                borderRadius: '8px 8px 0 0',
+                                minHeight: '40px',
+                                '& .MuiTab-root': {
+                                    minHeight: '40px',
+                                    fontSize: '0.875rem',
+                                    padding: '6px 12px'
+                                }
                             }}
                         >
                             <Tab 
@@ -356,20 +440,58 @@ const ClassManagement = () => {
                             />
                         </Tabs>
 
-                        <Box sx={{ height: 500, width: '100%', p: 2 }}>
+                        <Box sx={{ 
+                            width: '100%', 
+                            p: 1,
+                            height: '600px',
+                            overflow: 'auto'
+                        }}>
                             <DataGrid
                                 rows={tabValue === 0 ? filteredMainTeacherClasses : filteredCoTeacherClasses}
                                 columns={columns}
                                 getRowId={(row) => row.classId}
-                                pageSize={7}
-                                rowsPerPageOptions={[7]}
+                                pageSize={pageSize}
+                                rowsPerPageOptions={[10, 25, 50, 100]}
+                                onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
                                 disableSelectionOnClick
+                                density="compact"
                                 sx={{
+                                    '& .MuiDataGrid-cell': {
+                                        fontSize: '0.875rem',
+                                        py: 0.5
+                                    },
+                                    '& .MuiDataGrid-columnHeaders': {
+                                        fontSize: '0.875rem',
+                                        minHeight: '45px !important',
+                                        maxHeight: '45px !important'
+                                    },
+                                    '& .MuiDataGrid-row': {
+                                        minHeight: '35px !important',
+                                        maxHeight: '35px !important'
+                                    },
                                     '& .MuiDataGrid-cell:focus': {
                                         outline: 'none'
                                     },
                                     '& .MuiDataGrid-row:hover': {
                                         bgcolor: 'action.hover'
+                                    },
+                                    '& .MuiDataGrid-root': {
+                                        border: 'none',
+                                        overflowY: 'scroll',
+                                        scrollbarWidth: 'thin',
+                                        '&::-webkit-scrollbar': {
+                                            width: '6px'
+                                        },
+                                        '&::-webkit-scrollbar-track': {
+                                            background: '#f1f1f1'
+                                        },
+                                        '&::-webkit-scrollbar-thumb': {
+                                            background: '#888',
+                                            borderRadius: '3px'
+                                        },
+                                        '&::-webkit-scrollbar-thumb:hover': {
+                                            background: '#555'
+                                        }
                                     }
                                 }}
                             />
@@ -382,13 +504,15 @@ const ClassManagement = () => {
                 open={openDeleteDialog}
                 onClose={() => setOpenDeleteDialog(false)}
             >
-                <DialogTitle>Conferma eliminazione</DialogTitle>
+                <DialogTitle sx={{ fontSize: '1.1rem', py: 1.5 }}>
+                    Conferma eliminazione
+                </DialogTitle>
                 <DialogContent>
                     {deleteError && <Alert severity="error" sx={{ mb: 2 }}>{deleteError}</Alert>}
-                    <Typography>
+                    <Typography sx={{ fontSize: '0.9rem' }}>
                         Sei sicuro di voler eliminare questa classe?
                         {selectedClass && (
-                            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                            <Typography variant="body2" color="textSecondary" sx={{ mt: 1, fontSize: '0.875rem' }}>
                                 {`${selectedClass.year}${selectedClass.section} - ${selectedClass.schoolName}`}
                             </Typography>
                         )}
@@ -398,6 +522,7 @@ const ClassManagement = () => {
                     <Button 
                         onClick={() => setOpenDeleteDialog(false)}
                         color="primary"
+                        size="small"
                     >
                         Annulla
                     </Button>
@@ -405,6 +530,7 @@ const ClassManagement = () => {
                         onClick={handleDeleteConfirm}
                         color="error"
                         variant="contained"
+                        size="small"
                     >
                         Elimina
                     </Button>

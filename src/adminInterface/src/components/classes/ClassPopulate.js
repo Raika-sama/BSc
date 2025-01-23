@@ -5,13 +5,16 @@ import {
     Paper,
     Button,
     Alert,
-    CircularProgress
+    CircularProgress,
+    Chip
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useStudent } from '../../context/StudentContext';
 import { useClass } from '../../context/ClassContext';
 import { DataGrid } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
+
 
 const ClassPopulate = () => {
     const { classId } = useParams();
@@ -82,12 +85,7 @@ const ClassPopulate = () => {
 
     const handleAssignStudents = async () => {
         try {
-            // Log dei dati prima dell'invio
-            console.log('Attempting batch assignment with:', {
-                selectedStudents,
-                classId,
-                academicYear: classData.academicYear
-            });
+            console.log('Class Data:', classData); // Debug
     
             if (!classId) {
                 throw new Error('ID classe mancante');
@@ -110,6 +108,7 @@ const ClassPopulate = () => {
                 classId,
                 classData.academicYear
             );
+
     
             navigate(`/admin/classes/${classId}`);
     
@@ -121,6 +120,8 @@ const ClassPopulate = () => {
         }
     };
 
+    
+
   
 
     const columns = [
@@ -128,142 +129,179 @@ const ClassPopulate = () => {
             field: 'firstName',
             headerName: 'Nome',
             width: 150,
+            flex: 1,
         },
         {
             field: 'lastName',
             headerName: 'Cognome',
             width: 150,
+            flex: 1,
         },
         {
             field: 'email',
             headerName: 'Email',
             width: 200,
+            flex: 1.5,
         },
         {
             field: 'gender',
             headerName: 'Genere',
             width: 100,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Chip 
+                    label={params.value === 'M' ? 'Maschio' : 'Femmina'}
+                    size="small"
+                    color={params.value === 'M' ? 'primary' : 'secondary'}
+                    variant="outlined"
+                />
+            ),
         }
     ];
 
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-                <CircularProgress />
+                <CircularProgress size={40}/>
             </Box>
         );
     }
 
  
     return (
-        <Box p={3}>
+        <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: '1200px', margin: '0 auto' }}>
             {error && (
                 <Alert severity="error" sx={{ mb: 2 }}>
                     {error}
                 </Alert>
             )}
-    
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Typography variant="h4" component="h1">
+    <Paper 
+                elevation={3} 
+                sx={{ 
+                    p: 3, 
+                    mb: 3, 
+                    borderRadius: 2,
+                    background: 'linear-gradient(to right, #ffffff, #f8f9fa)'
+                }}
+            >
+                <Typography 
+                    variant="h5" 
+                    component="h1" 
+                    sx={{ 
+                        mb: 2,
+                        color: '#1976d2',
+                        fontWeight: 600
+                    }}
+                >
                     Popola Classe {classData?.year}{classData?.section}
                 </Typography>
-            </Box>
-    
-            <Paper sx={{ width: '100%', overflow: 'hidden', mb: 3 }}>
-                <Box p={2}>
-                    <Typography variant="h6" gutterBottom>
-                        Informazioni Classe
-                    </Typography>
-                    <Typography>
-                        Anno Accademico: {classData?.academicYear}
-                    </Typography>
-                    <Typography>
-                        Capacità: {classData?.students?.length || 0}/{classData?.capacity || 0} studenti
-                    </Typography>
+
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    gap: 2, 
+                    mb: 2 
+                }}>
+                    <Chip
+                        label={`Anno Accademico: ${classData?.academicYear}`}
+                        variant="outlined"
+                        color="primary"
+                    />
+                    <Chip
+                        label={`Studenti: ${classData?.students?.length || 0}/${classData?.capacity || 0}`}
+                        variant="outlined"
+                        color={
+                            (classData?.students?.length || 0) >= (classData?.capacity || 0) 
+                                ? 'error' 
+                                : 'success'
+                        }
+                    />
                 </Box>
             </Paper>
-    
-            <Paper sx={{ width: '100%', overflow: 'hidden', mb: 3 }}>
-            <DataGrid
-                rows={unassignedStudents}
-                columns={columns}
-                pageSize={10}
-                rowsPerPageOptions={[10]}
-                checkboxSelection
-                disableSelectionOnClick
-                autoHeight
-                getRowId={(row) => row.id}
-                initialState={{
-                    pagination: {
-                        paginationModel: { pageSize: 10, page: 0 },
-                    },
+
+            <Paper 
+                elevation={3} 
+                sx={{ 
+                    height: 500, 
+                    width: '100%',
+                    borderRadius: 2,
+                    overflow: 'hidden'
                 }}
-                onRowSelectionModelChange={(newSelectionModel) => {  // Cambiato da onSelectionModelChange
-                    console.log('Selection Event Triggered:', {
-                        selection: newSelectionModel,
-                        type: typeof newSelectionModel,
-                        isArray: Array.isArray(newSelectionModel)
-                    });
-                    setSelectedStudents(newSelectionModel);
-                }}
-                rowSelectionModel={selectedStudents}  // Cambiato da selectionModel
-                onStateChange={(state) => {
-                    console.log('DataGrid State Changed:', {
-                        selection: state.selection,
-                        rowSelection: state.rowSelection,  // Aggiungi questo
-                        timestamp: new Date().toISOString()
-                    });
-                }}
-            />
+            >
+                <DataGrid
+                    rows={unassignedStudents}
+                    columns={columns}
+                    pageSize={10}
+                    rowsPerPageOptions={[10, 25, 50]}
+                    checkboxSelection
+                    disableSelectionOnClick
+                    getRowId={(row) => row._id || row.id}
+                    onSelectionModelChange={(newSelectionModel) => {
+                        setSelectedStudents(newSelectionModel);
+                    }}
+                    selectionModel={selectedStudents}
+                    sx={{
+                        border: 'none',
+                        '& .MuiDataGrid-cell': {
+                            fontSize: '0.875rem',
+                            py: 1
+                        },
+                        '& .MuiDataGrid-columnHeaders': {
+                            backgroundColor: '#f5f5f5',
+                            fontSize: '0.875rem',
+                            fontWeight: 600
+                        },
+                        '& .MuiDataGrid-row:hover': {
+                            backgroundColor: '#f8f9fa'
+                        },
+                        '& .MuiCheckbox-root': {
+                            color: '#1976d2'
+                        }
+                    }}
+                />
             </Paper>
-    
-            {/* Solo una Box per i bottoni */}
-            <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
+
+            <Box sx={{ 
+                mt: 3, 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                gap: 2
+            }}>
                 <Button
                     variant="outlined"
                     startIcon={<ArrowBackIcon />}
                     onClick={() => navigate('/admin/classes')}
+                    sx={{
+                        textTransform: 'none',
+                        borderRadius: 2
+                    }}
                 >
                     Indietro
                 </Button>
-    
+
                 <Button
                     variant="contained"
-                    color="primary"
+                    startIcon={<GroupAddIcon />}
                     onClick={handleAssignStudents}
                     disabled={assigning || selectedStudents.length === 0}
-                    sx={{ ml: 2 }} // Aggiunto margine a sinistra
+                    sx={{
+                        textTransform: 'none',
+                        borderRadius: 2,
+                        background: 'linear-gradient(45deg, #1976d2 30%, #2196f3 90%)',
+                        boxShadow: '0 3px 5px 2px rgba(33, 150, 243, .3)'
+                    }}
                 >
-                    {assigning 
-                        ? 'Assegnazione in corso...' 
-                        : selectedStudents.length === 0 
-                            ? 'Seleziona studenti da assegnare' 
-                            : `Popola classe con ${selectedStudents.length} studenti`
-                    }
+                    {assigning ? (
+                        <>
+                            <CircularProgress size={20} sx={{ mr: 1, color: 'white' }}/>
+                            Assegnazione in corso...
+                        </>
+                    ) : (
+                        `Assegna ${selectedStudents.length} studenti`
+                    )}
                 </Button>
             </Box>
-            
-            {/* Debug info */}
-            {process.env.NODE_ENV === 'development' && (
-            <Box mt={2} p={2} bgcolor="grey.100">
-                <Typography variant="subtitle2">Debug Information:</Typography>
-                <pre style={{ fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>
-                    {JSON.stringify({
-                        totalStudents: unassignedStudents.length,
-                        selectedCount: selectedStudents.length,
-                        selectedIds: selectedStudents,
-                        sampleStudent: unassignedStudents[0],
-                        selectionValid: selectedStudents.every(id => 
-                            unassignedStudents.some(s => s.id === id || s._id === id)
-                        ),
-                        idTypes: {
-                            selectedType: typeof selectedStudents[0],
-                            studentIdType: unassignedStudents[0]?.id ? typeof unassignedStudents[0].id : 'undefined'
-                        }
-                    }, null, 2)}
-                </pre>
-            </Box>
-            )}
         </Box>
     );
 };
