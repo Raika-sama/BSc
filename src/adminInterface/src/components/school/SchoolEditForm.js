@@ -1,4 +1,3 @@
-// src/components/school/SchoolEditForm.js
 import React, { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -16,14 +15,14 @@ import {
     Chip,
     FormHelperText,
     CircularProgress,
-    Autocomplete
+    Typography
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { useSchool } from '../../context/SchoolContext';
 import { useNotification } from '../../context/NotificationContext';
 
-const SECTIONS = Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map(letter => ({ label: letter }));
-
 const SchoolEditForm = ({ open, onClose, onSave, school }) => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         name: '',
         schoolType: 'middle_school',
@@ -60,17 +59,17 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        console.log('### SchoolEditForm - Campo modificato:', { name, value });
+        
         setFormData(prev => {
             const newData = { ...prev, [name]: value };
             
-            // Gestione automatica quando cambia il tipo di scuola
             if (name === 'schoolType') {
                 if (value === 'middle_school') {
                     newData.institutionType = 'none';
                     newData.numberOfYears = 3;
                 } else {
                     newData.numberOfYears = 5;
-                    // Per le superiori, manteniamo l'institutionType se valido
                     if (!['scientific', 'classical', 'artistic', 'none'].includes(newData.institutionType)) {
                         newData.institutionType = 'none';
                     }
@@ -80,7 +79,6 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
             return newData;
         });
         
-        // Pulizia errori quando l'utente modifica un campo
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
@@ -88,8 +86,7 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
     
     const validateForm = () => {
         const newErrors = {};
-    
-        // Validazione campi obbligatori
+        
         if (!formData.name?.trim()) {
             newErrors.name = 'Nome scuola richiesto';
         }
@@ -98,7 +95,6 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
             newErrors.schoolType = 'Tipo scuola non valido';
         }
     
-        // Validazione combinata tipo scuola, anni e tipo istituto
         if (formData.schoolType === 'middle_school') {
             if (formData.institutionType !== 'none') {
                 newErrors.institutionType = 'Le scuole medie devono avere tipo istituto impostato come "nessuno"';
@@ -115,7 +111,6 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
             }
         }
     
-        // Validazione altri campi obbligatori
         if (!formData.region?.trim()) {
             newErrors.region = 'Regione richiesta';
         }
@@ -142,18 +137,15 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
     
         try {
             setLoading(true);
-            
-            // Prepara i dati da inviare
             const dataToSend = { ...formData };
             
-            // Assicurati che i valori siano corretti in base al tipo di scuola
             if (dataToSend.schoolType === 'middle_school') {
                 dataToSend.institutionType = 'none';
                 dataToSend.numberOfYears = 3;
             } else {
                 dataToSend.numberOfYears = 5;
             }
-            console.log('### SchoolEditForm - Dati prima del submit:', formData);
+            console.log('### SchoolEditForm - Dati prima del submit:', dataToSend);
             await onSave(dataToSend);
             handleClose();
             showNotification('Scuola aggiornata con successo', 'success');
@@ -184,6 +176,13 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
         });
         setErrors({});
         onClose();
+    };
+
+    const handleManageSections = () => {
+        // Qui implementeremo la navigazione alla pagina di gestione sezioni
+        console.log('### SchoolEditForm - Navigazione alla gestione sezioni');
+        navigate(`/admin/schools/${school._id}/sections`);
+        handleClose();
     };
 
     return (
@@ -263,36 +262,27 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
                         </Grid>
 
                         <Grid item xs={12}>
-                            <Autocomplete
-                                multiple
-                                options={SECTIONS}
-                                getOptionLabel={(option) => option.label}
-                                value={formData.sections.map(section => ({ label: section }))}
-                                onChange={(event, newValue) => {
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        sections: newValue.map(v => v.label)
-                                    }));
-                                }}
-                                renderTags={(tagValue, getTagProps) =>
-                                    tagValue.map((option, index) => (
+                            <Box sx={{ mb: 2 }}>
+                                <Typography variant="subtitle2" gutterBottom>
+                                    Sezioni
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                    {formData.sections.map((section) => (
                                         <Chip
-                                            label={option.label}
-                                            {...getTagProps({ index })}
-                                            size="small"
+                                            key={section._id || section.name}
+                                            label={`${section.name} (${section.maxStudents || 'N/D'} studenti)`}
+                                            variant="outlined"
                                         />
-                                    ))
-                                }
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Sezioni"
-                                        error={!!errors.sections}
-                                        helperText={errors.sections}
-                                    />
-                                )}
-                                disabled={loading}
-                            />
+                                    ))}
+                                </Box>
+                            </Box>
+                            <Button
+                                variant="outlined"
+                                onClick={handleManageSections}
+                                fullWidth
+                            >
+                                Gestione Sezioni
+                            </Button>
                         </Grid>
 
                         <Grid item xs={12} sm={4}>
