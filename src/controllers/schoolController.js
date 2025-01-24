@@ -6,8 +6,10 @@ const mongoose = require('mongoose');
 const BaseController = require('./baseController');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
-const { school: schoolRepository, class: classRepository } = require('../repositories');
-const { student: studentRepository } = require('../models');  // Aggiungi anche questo se non c'è
+const repositories = require('../repositories');
+const schoolRepository = repositories.school;
+const classRepository = repositories.class;
+const studentRepository = repositories.student;
 
 class SchoolController extends BaseController {
     constructor() {

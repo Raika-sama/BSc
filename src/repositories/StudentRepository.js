@@ -578,77 +578,84 @@ class StudentRepository extends BaseRepository {
 
     // Aggiungi questo metodo alla classe StudentRepository
 
-async updateStudentsForDeactivatedSection(schoolId, sectionName) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-        logger.debug('Aggiornamento studenti per sezione disattivata:', {
-            schoolId,
-            sectionName
-        });
-
-        // 1. Trova tutte le classi della sezione
-        const classes = await Class.find({
-            schoolId,
-            section: sectionName,
-            isActive: true
-        }).session(session);
-
-        const classIds = classes.map(c => c._id);
-
-        // 2. Aggiorna tutti gli studenti delle classi trovate
-        const result = await this.model.updateMany(
-            {
+    async updateStudentsForDeactivatedSection(schoolId, sectionName) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+    
+        try {
+            logger.debug('Aggiornamento studenti per sezione disattivata:', {
+                schoolId,
+                sectionName
+            });
+    
+            // 1. Trova tutte le classi della sezione
+            const classes = await Class.find({
+                schoolId,
+                section: sectionName,
+                isActive: true
+            })
+            .select('_id academicYear')  // Aggiungiamo academicYear alla selezione
+            .session(session);
+    
+            const classIds = classes.map(c => c._id);
+    
+            // 2. Trova tutti gli studenti che devono essere aggiornati
+            const students = await this.model.find({
                 schoolId,
                 classId: { $in: classIds },
                 isActive: true
-            },
-            {
-                $set: {
-                    classId: null,
-                    section: null,
-                    currentYear: null,
-                    mainTeacher: null,
-                    teachers: [],
-                    status: 'pending',
-                    needsClassAssignment: true,
-                    lastClassChangeDate: new Date()
-                },
-                $push: {
-                    classChangeHistory: {
-                        fromClass: { $first: "$classId" },
-                        fromSection: sectionName,
-                        fromYear: { $first: "$currentYear" },
-                        date: new Date(),
-                        reason: 'Sezione disattivata',
-                        academicYear: { $first: "$academicYear" }
-                    }
-                }
-            },
-            { session }
-        );
-
-        logger.info('Studenti aggiornati:', {
-            modifiedCount: result.modifiedCount,
-            schoolId,
-            sectionName
-        });
-
-        await session.commitTransaction();
-        return result;
-    } catch (error) {
-        await session.abortTransaction();
-        logger.error('Errore nell\'aggiornamento degli studenti:', {
-            error,
-            schoolId,
-            sectionName
-        });
-        throw error;
-    } finally {
-        session.endSession();
+            }).session(session);
+    
+            // 3. Aggiorna ogni studente
+            for (const student of students) {
+                // Trova la classe corrente dello studente
+                const currentClass = classes.find(c => 
+                    c._id.toString() === student.classId.toString()
+                );
+    
+                // Salva i valori correnti prima dell'update
+                const currentClassId = student.classId;
+                const currentYear = student.currentYear;
+                const currentAcademicYear = currentClass.academicYear; // Usiamo l'anno accademico della classe
+    
+                // Aggiorna lo studente
+                student.classId = null;
+                student.section = null;
+                student.currentYear = null;
+                student.mainTeacher = null;
+                student.teachers = [];
+                student.status = 'pending';
+                student.needsClassAssignment = true;
+                student.lastClassChangeDate = new Date();
+                
+                // Aggiungi la voce nella cronologia con l'anno accademico
+                student.classChangeHistory.push({
+                    fromClass: currentClassId,
+                    fromSection: sectionName,
+                    fromYear: currentYear,
+                    date: new Date(),
+                    reason: 'Sezione disattivata',
+                    academicYear: currentAcademicYear  // Ora includiamo l'anno accademico
+                });
+    
+                await student.save({ session });
+            }
+    
+            await session.commitTransaction();
+            
+            return { modifiedCount: students.length };
+        } catch (error) {
+            await session.abortTransaction();
+            logger.error('Errore nell\'aggiornamento degli studenti:', {
+                error,
+                schoolId,
+                sectionName
+            });
+            throw error;
+        } finally {
+            session.endSession();
+        }
     }
-}
 }
 
 module.exports = StudentRepository;

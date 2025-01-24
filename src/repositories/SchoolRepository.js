@@ -429,41 +429,39 @@ class SchoolRepository extends BaseRepository {
         try {
             logger.debug('Disattivazione sezione:', { schoolId, sectionName });
     
-            // 1. Trova la scuola e verifica che la sezione esista
-            const school = await this.model.findById(schoolId).session(session);
-            if (!school) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Scuola non trovata'
-                );
-            }
-    
-            const sectionIndex = school.sections.findIndex(s => s.name === sectionName);
-            if (sectionIndex === -1) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Sezione non trovata'
-                );
-            }
-    
-            // 2. Verifica che la sezione non sia già disattivata
-            if (!school.sections[sectionIndex].isActive) {
-                throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
-                    'Sezione già disattivata'
-                );
-            }
-    
-            // 3. Procedi con la disattivazione
-            const result = await this.model.findOneAndUpdate(
+            // 1. Prima impostiamo la data di disattivazione
+            const resultWithDate = await this.model.findOneAndUpdate(
                 { 
                     _id: schoolId,
                     'sections.name': sectionName 
                 },
                 {
                     $set: {
-                        'sections.$.isActive': false,
                         'sections.$.deactivatedAt': new Date()
+                    }
+                },
+                { 
+                    new: true,
+                    session 
+                }
+            );
+    
+            if (!resultWithDate) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Sezione non trovata'
+                );
+            }
+    
+            // 2. Poi impostiamo isActive a false
+            const finalResult = await this.model.findOneAndUpdate(
+                { 
+                    _id: schoolId,
+                    'sections.name': sectionName 
+                },
+                {
+                    $set: {
+                        'sections.$.isActive': false
                     }
                 },
                 { 
@@ -476,11 +474,11 @@ class SchoolRepository extends BaseRepository {
             await session.commitTransaction();
             logger.info('Sezione disattivata con successo:', {
                 schoolId,
-                sectionName,
-                deactivatedAt: new Date()
+                sectionName
             });
     
-            return result;
+            return finalResult;
+    
         } catch (error) {
             await session.abortTransaction();
             logger.error('Errore durante la disattivazione della sezione:', {
@@ -495,62 +493,57 @@ class SchoolRepository extends BaseRepository {
     }
 
     async reactivateSection(schoolId, sectionName) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+    
         try {
             logger.debug('Riattivazione sezione:', { schoolId, sectionName });
     
-            // Prima aggiorniamo lo stato isActive
-            const result = await this.model.findOneAndUpdate(
-                { 
-                    _id: schoolId,
-                    'sections.name': sectionName 
-                },
-                {
-                    $set: {
-                        'sections.$.isActive': true
-                    }
-                },
-                { 
-                    new: true
-                }
-            );
+            // 1. Prima recupera il documento
+            const school = await this.model.findById(schoolId).session(session);
+            
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
     
-            if (!result) {
+            // 2. Trova la sezione
+            const section = school.sections.find(s => s.name === sectionName);
+            
+            if (!section) {
                 throw createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,
                     'Sezione non trovata'
                 );
             }
     
-            // Poi aggiorniamo deactivatedAt in una query separata
-            const finalResult = await this.model.findOneAndUpdate(
-                { 
-                    _id: schoolId,
-                    'sections.name': sectionName 
-                },
-                {
-                    $set: {
-                        'sections.$.deactivatedAt': null
-                    }
-                },
-                { 
-                    new: true,
-                    runValidators: true 
-                }
-            );
+            // 3. Modifica direttamente il documento
+            section.isActive = true;
+            section.deactivatedAt = undefined;  // Usiamo undefined invece di null
     
+            // 4. Salva le modifiche
+            const result = await school.save({ session });
+    
+            await session.commitTransaction();
+            
             logger.info('Sezione riattivata con successo:', {
                 schoolId,
                 sectionName
             });
     
-            return finalResult;
+            return result;
         } catch (error) {
+            await session.abortTransaction();
             logger.error('Errore durante la riattivazione della sezione:', {
                 error,
                 schoolId,
                 sectionName
             });
             throw error;
+        } finally {
+            session.endSession();
         }
     }
 
@@ -590,6 +583,7 @@ class SchoolRepository extends BaseRepository {
             throw error;
         }
     }
+
       
 }
 
