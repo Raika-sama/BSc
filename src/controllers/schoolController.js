@@ -7,7 +7,7 @@ const BaseController = require('./baseController');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const { school: schoolRepository, class: classRepository } = require('../repositories');
-const { Class } = require('../models');  // Aggiungi anche questo se non c'è
+const { student: studentRepository } = require('../models');  // Aggiungi anche questo se non c'è
 
 class SchoolController extends BaseController {
     constructor() {
@@ -21,6 +21,8 @@ class SchoolController extends BaseController {
         this.getMySchool = this.getMySchool.bind(this);
         this.setupInitialConfiguration = this.setupInitialConfiguration.bind(this);
         this.classRepository = classRepository;
+        this.studentRepository = studentRepository;  // Aggiungi questa riga
+
     }
 
     // Aggiungi questi metodi di utility
@@ -454,41 +456,60 @@ async reactivateSection(req, res) {
  */
 async getSections(req, res) {
     try {
-        const { schoolId } = req.params;
+        const schoolId = req.params.id; // Cambiato da req.params.schoolId a req.params.id
         const { includeInactive = false } = req.query;
 
         logger.debug('Richiesta recupero sezioni:', {
             schoolId,
             includeInactive,
-            userId: req.user._id
+            userRole: req.user.role
         });
 
-        const school = await this.repository.findById(schoolId);
-        
-        // Filtra le sezioni in base al parametro includeInactive
-        const sections = school.sections
-            .filter(section => includeInactive || section.isActive)
-            .map(async (section) => {
-                const students = await this.repository.getStudentsBySection(
-                    schoolId, 
-                    section.name
-                );
-                
-                return {
-                    ...section.toObject(),
-                    studentsCount: students.length
-                };
+        let school;
+        try {
+            school = await this.repository.findById(schoolId);
+            logger.debug('Scuola trovata:', {
+                schoolId: school._id,
+                schoolName: school.name
             });
+        } catch (error) {
+            logger.error('Errore nel recupero della scuola:', {
+                error: error.message,
+                schoolId
+            });
+            return this.sendError(res, {
+                statusCode: 404,
+                message: 'Scuola non trovata',
+                code: 'SCHOOL_NOT_FOUND'
+            });
+        }
 
-        const sectionsWithCounts = await Promise.all(sections);
+        // Per admin, permettiamo l'accesso a tutte le scuole
+        if (req.user.role !== 'admin') {
+            if (!req.user.schoolId || req.user.schoolId.toString() !== schoolId) {
+                return this.sendError(res, {
+                    statusCode: 403,
+                    message: 'Non autorizzato ad accedere a questa scuola',
+                    code: 'UNAUTHORIZED_SCHOOL_ACCESS'
+                });
+            }
+        }
 
-        logger.debug('Sezioni recuperate:', {
-            count: sectionsWithCounts.length,
-            schoolId
+        // Filtra le sezioni
+        const sections = school.sections
+            .filter(section => includeInactive === 'true' || section.isActive)
+            .map(section => ({
+                ...section.toObject(),
+                studentsCount: 0 // Per ora lo impostiamo a 0, implementeremo il conteggio studenti in seguito
+            }));
+
+        logger.debug('Sezioni recuperate con successo:', {
+            schoolId,
+            sectionsCount: sections.length
         });
 
         this.sendResponse(res, {
-            sections: sectionsWithCounts
+            sections: sections
         });
 
     } catch (error) {
@@ -496,7 +517,11 @@ async getSections(req, res) {
             error: error.message,
             stack: error.stack
         });
-        this.sendError(res, error);
+        this.sendError(res, {
+            statusCode: 500,
+            message: 'Errore interno nel recupero delle sezioni',
+            code: 'INTERNAL_SERVER_ERROR'
+        });
     }
 }
 

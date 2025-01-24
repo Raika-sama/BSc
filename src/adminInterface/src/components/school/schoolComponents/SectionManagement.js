@@ -36,7 +36,7 @@ const SectionManagement = () => {
         reactivateSection
     } = useSchool();
 
-    const [showInactive, setShowInactive] = useState(false);
+    const [showInactive, setShowInactive] = useState(true);
     const [stats, setStats] = useState({
         totalSections: 0,
         activeSections: 0,
@@ -48,10 +48,15 @@ const SectionManagement = () => {
     useEffect(() => {
         const loadData = async () => {
             try {
+                console.log("Loading data...");
                 if (!selectedSchool) {
                     await getSchoolById(schoolId);
                 }
                 await refreshSections();
+                console.log("Data loaded:", {
+                    selectedSchoolSections,
+                    showInactive
+                });
             } catch (error) {
                 console.error('Error loading sections:', error);
             }
@@ -145,7 +150,7 @@ const SectionManagement = () => {
                             onChange={(e) => setShowInactive(e.target.checked)}
                         />
                     }
-                    label="Mostra sezioni inattive"
+                    label={showInactive ? "Mostra tutte le sezioni" : "Mostra solo sezioni attive"}
                 />
             </Box>
 
@@ -203,6 +208,13 @@ const SectionManagement = () => {
                     </Card>
                 </Grid>
             </Grid>
+
+            {/* Aggiungi log prima del render di SectionList */}
+            {console.log("Rendering SectionList with:", {
+                            sections: selectedSchoolSections,
+                            showInactive,
+                            sectionsLength: selectedSchoolSections?.length
+                        })}
 
             {/* Section List */}
             <SectionList

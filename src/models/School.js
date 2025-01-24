@@ -68,11 +68,15 @@ const sectionSchema = new mongoose.Schema({
         type: Date,
         validate: {
             validator: function(value) {
-                // Se c'è una data di disattivazione, isActive deve essere false
+                // Caso 1: Se stiamo riattivando (isActive = true), permettiamo value = null
+                if (this.isActive && value === null) {
+                    return true;
+                }
+                // Caso 2: Se c'è una data di disattivazione, isActive deve essere false
                 if (value && this.isActive) {
                     return false;
                 }
-                // Se isActive è true, non ci deve essere data di disattivazione
+                // Caso 3: Se isActive è false, deve esserci una data di disattivazione
                 if (!value && !this.isActive) {
                     return false;
                 }

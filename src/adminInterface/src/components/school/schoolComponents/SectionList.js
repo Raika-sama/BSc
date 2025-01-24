@@ -23,10 +23,27 @@ const SectionList = ({
     onDeactivate,
     onReactivate 
 }) => {
-    // Filtra le sezioni in base allo stato
-    const filteredSections = sections.filter(section => 
-        showInactive ? true : section.isActive
-    );
+    console.log("SectionList props:", { 
+        sections, 
+        showInactive,
+        sectionsLength: sections?.length 
+    });
+
+    // Modifichiamo il filtro per essere più esplicito
+    const filteredSections = sections.filter(section => {
+        console.log("Filtering section:", { 
+            section,
+            isActive: section.isActive,
+            showInactive,
+            willShow: showInactive ? true : section.isActive
+        });
+        return showInactive ? true : section.isActive;
+    });
+
+    console.log("Filtered sections:", {
+        filteredSections,
+        length: filteredSections.length
+    });
 
     const formatDate = (date) => {
         if (!date) return '-';
@@ -50,11 +67,13 @@ const SectionList = ({
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {filteredSections.length === 0 ? (
+                        {filteredSections.length === 0 ? (
                         <TableRow>
                             <TableCell colSpan={5} align="center">
                                 <Typography color="textSecondary">
-                                    Nessuna sezione trovata
+                                    {showInactive 
+                                        ? 'Nessuna sezione presente'
+                                        : 'Nessuna sezione attiva presente. Abilita "Mostra tutte le sezioni" per vedere le sezioni inattive.'}
                                 </Typography>
                             </TableCell>
                         </TableRow>

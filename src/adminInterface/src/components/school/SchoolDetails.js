@@ -178,7 +178,7 @@ const SchoolDetails = () => {
                                     <ListItemText 
                                         primary="Tipo Scuola"
                                         secondary={selectedSchool.schoolType === 'middle_school' ? 
-                                                 'Scuola Media' : 'Scuola Superiore'}
+                                                'Scuola Media' : 'Scuola Superiore'}
                                     />
                                 </ListItem>
                                 {selectedSchool.schoolType === 'high_school' && (
@@ -193,21 +193,11 @@ const SchoolDetails = () => {
                                     <ListItemText 
                                         primary="Sezioni"
                                         secondary={
-                                            <Typography component="span" variant="body2">
-                                                <Box
-                                                    component="span"
-                                                    sx={{ display: 'inline-flex', gap: 0.5, flexWrap: 'wrap' }}
-                                                >
-                                                    {selectedSchool.sections.map((section) => (
-                                                        <Chip
-                                                            key={section._id || section.name}
-                                                            label={`${section.name} (${section.maxStudents || 'N/D'} studenti)`}
-                                                            size="small"
-                                                            variant="outlined"
-                                                        />
-                                                    ))}
-                                                </Box>
-                                            </Typography>
+                                            selectedSchool.sections.length > 0 ? 
+                                                selectedSchool.sections
+                                                    .map(section => `${section.name} (${section.maxStudents || 'N/D'} studenti)`)
+                                                    .join(', ') 
+                                                : 'Nessuna sezione configurata'
                                         }
                                     />
                                 </ListItem>
@@ -253,11 +243,8 @@ const SchoolDetails = () => {
                                         <ListItemText 
                                             primary="Stato"
                                             secondary={
-                                                <Chip
-                                                    label={selectedSchool.academicYears[0].status}
-                                                    size="small"
-                                                    color={selectedSchool.academicYears[0].status === 'active' ? 'success' : 'default'}
-                                                />
+                                                selectedSchool.academicYears[0].status === 'active' ? 
+                                                    'Attivo' : 'Non attivo'
                                             }
                                         />
                                     </ListItem>

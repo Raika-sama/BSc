@@ -1,6 +1,6 @@
 // src/repositories/SchoolRepository.js
 const mongoose = require('mongoose');
-const { Class } = require('../models');  // Aggiungi anche questo import
+const { Class, Student  } = require('../models');  // Aggiungi anche questo import
 
 const BaseRepository = require('./base/BaseRepository');
 const { School } = require('../models');
@@ -106,6 +106,53 @@ class SchoolRepository extends BaseRepository {
                 'Errore nel recupero delle scuole',
                 { originalError: error.message }
             );
+        }
+    }
+
+    async findById(id, options = {}) {
+        try {
+            logger.debug('Finding school by ID:', { 
+                id,
+                type: typeof id,
+                idToString: id ? id.toString() : null 
+            });
+            
+            if (!id) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'ID scuola non valido'
+                );
+            }
+    
+            let query = this.model.findById(id.toString());  // Forziamo la conversione a string
+            
+            if (options.populate) {
+                query = query.populate(options.populate);
+            }
+    
+            const school = await query.exec();
+            
+            if (!school) {
+                logger.debug('School not found with ID:', { id });
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+    
+            logger.debug('School found:', { 
+                schoolId: school._id,
+                schoolName: school.name 
+            });
+    
+            return school;
+        } catch (error) {
+            logger.error('Error in SchoolRepository.findById:', {
+                error: error.message,
+                schoolId: id,
+                type: typeof id
+            });
+            throw error;
         }
     }
 
@@ -375,77 +422,77 @@ class SchoolRepository extends BaseRepository {
 
     // Aggiungi questi metodi alla classe SchoolRepository
 
-async deactivateSection(schoolId, sectionName) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-        logger.debug('Disattivazione sezione:', { schoolId, sectionName });
-
-        // 1. Trova la scuola e verifica che la sezione esista
-        const school = await this.model.findById(schoolId).session(session);
-        if (!school) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Scuola non trovata'
-            );
-        }
-
-        const sectionIndex = school.sections.findIndex(s => s.name === sectionName);
-        if (sectionIndex === -1) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Sezione non trovata'
-            );
-        }
-
-        // 2. Verifica che la sezione non sia già disattivata
-        if (!school.sections[sectionIndex].isActive) {
-            throw createError(
-                ErrorTypes.VALIDATION.BAD_REQUEST,
-                'Sezione già disattivata'
-            );
-        }
-
-        // 3. Aggiorna lo stato della sezione
-        const result = await this.model.findOneAndUpdate(
-            { 
-                _id: schoolId,
-                'sections.name': sectionName 
-            },
-            {
-                $set: {
-                    'sections.$.isActive': false,
-                    'sections.$.deactivatedAt': new Date()
-                }
-            },
-            { 
-                new: true,
-                runValidators: true,
-                session 
+    async deactivateSection(schoolId, sectionName) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+    
+        try {
+            logger.debug('Disattivazione sezione:', { schoolId, sectionName });
+    
+            // 1. Trova la scuola e verifica che la sezione esista
+            const school = await this.model.findById(schoolId).session(session);
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
             }
-        );
-
-        await session.commitTransaction();
-        logger.info('Sezione disattivata con successo:', {
-            schoolId,
-            sectionName,
-            deactivatedAt: new Date()
-        });
-
-        return result;
-    } catch (error) {
-        await session.abortTransaction();
-        logger.error('Errore durante la disattivazione della sezione:', {
-            error,
-            schoolId,
-            sectionName
-        });
-        throw error;
-    } finally {
-        session.endSession();
+    
+            const sectionIndex = school.sections.findIndex(s => s.name === sectionName);
+            if (sectionIndex === -1) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Sezione non trovata'
+                );
+            }
+    
+            // 2. Verifica che la sezione non sia già disattivata
+            if (!school.sections[sectionIndex].isActive) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Sezione già disattivata'
+                );
+            }
+    
+            // 3. Procedi con la disattivazione
+            const result = await this.model.findOneAndUpdate(
+                { 
+                    _id: schoolId,
+                    'sections.name': sectionName 
+                },
+                {
+                    $set: {
+                        'sections.$.isActive': false,
+                        'sections.$.deactivatedAt': new Date()
+                    }
+                },
+                { 
+                    new: true,
+                    runValidators: true,
+                    session 
+                }
+            );
+    
+            await session.commitTransaction();
+            logger.info('Sezione disattivata con successo:', {
+                schoolId,
+                sectionName,
+                deactivatedAt: new Date()
+            });
+    
+            return result;
+        } catch (error) {
+            await session.abortTransaction();
+            logger.error('Errore durante la disattivazione della sezione:', {
+                error,
+                schoolId,
+                sectionName
+            });
+            throw error;
+        } finally {
+            session.endSession();
+        }
     }
-}
 
 async reactivateSection(schoolId, sectionName) {
     try {
