@@ -179,9 +179,8 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
     };
 
     const handleManageSections = () => {
-        // Qui implementeremo la navigazione alla pagina di gestione sezioni
         console.log('### SchoolEditForm - Navigazione alla gestione sezioni');
-        navigate(`/admin/schools/${school._id}/sections`);
+        navigate(`/admin/schools/${school._id}/sections-management`);
         handleClose();
     };
 

@@ -281,15 +281,25 @@ const getSections = async (schoolId, includeInactive = false) => {
         setLoading(true);
         setError(null);
         
+        console.log('Fetching sections:', { schoolId, includeInactive });
+        
         const response = await axiosInstance.get(
             `/schools/${schoolId}/sections?includeInactive=${includeInactive}`
         );
+        
+        console.log('API Response:', response.data);
 
         if (response.data.status === 'success') {
             setSelectedSchoolSections(response.data.data.sections);
+            console.log('Sections loaded:', response.data.data.sections);
             return response.data.data.sections;
         }
     } catch (error) {
+        console.error('Error fetching sections:', {
+            error: error.message,
+            response: error.response?.data
+        });
+        
         const errorMessage = error.response?.data?.error?.message || 
                            'Errore nel recupero delle sezioni';
         setError(errorMessage);
@@ -299,6 +309,7 @@ const getSections = async (schoolId, includeInactive = false) => {
         setLoading(false);
     }
 };
+
 
 // Metodo per disattivare una sezione
 const deactivateSection = async (schoolId, sectionName) => {

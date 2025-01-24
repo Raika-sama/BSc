@@ -8,7 +8,6 @@ import {
     Grid,
     Card,
     CardContent,
-    Button,
     FormControlLabel,
     Switch,
     CircularProgress,
@@ -20,6 +19,8 @@ import GroupIcon from '@mui/icons-material/Group';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 import { useSchool } from '../../../context/SchoolContext';
+import SectionList from './SectionList';
+import DeactivationDialog from './DeactivationDialog';
 
 const SectionManagement = () => {
     const navigate = useNavigate();
@@ -30,35 +31,27 @@ const SectionManagement = () => {
         loading,
         error,
         getSchoolById,
-        getSections
+        getSections,
+        deactivateSection,
+        reactivateSection
     } = useSchool();
 
-    // Stati locali
     const [showInactive, setShowInactive] = useState(false);
     const [stats, setStats] = useState({
         totalSections: 0,
         activeSections: 0,
         totalStudents: 0
     });
+    const [selectedSection, setSelectedSection] = useState(null);
+    const [isDeactivationDialogOpen, setIsDeactivationDialogOpen] = useState(false);
 
-    // Carica i dati iniziali
     useEffect(() => {
         const loadData = async () => {
             try {
                 if (!selectedSchool) {
                     await getSchoolById(schoolId);
                 }
-                const sections = await getSections(schoolId, true);
-                
-                // Calcola le statistiche
-                const activeSections = sections.filter(s => s.isActive);
-                const totalStudents = sections.reduce((acc, s) => acc + (s.studentsCount || 0), 0);
-                
-                setStats({
-                    totalSections: sections.length,
-                    activeSections: activeSections.length,
-                    totalStudents
-                });
+                await refreshSections();
             } catch (error) {
                 console.error('Error loading sections:', error);
             }
@@ -66,6 +59,45 @@ const SectionManagement = () => {
 
         loadData();
     }, [schoolId]);
+
+    const refreshSections = async () => {
+        const sections = await getSections(schoolId, true);
+        updateStats(sections);
+    };
+
+    const updateStats = (sections) => {
+        const activeSections = sections.filter(s => s.isActive);
+        const totalStudents = sections.reduce((acc, s) => acc + (s.studentsCount || 0), 0);
+        
+        setStats({
+            totalSections: sections.length,
+            activeSections: activeSections.length,
+            totalStudents
+        });
+    };
+
+    const handleDeactivateClick = (section) => {
+        setSelectedSection(section);
+        setIsDeactivationDialogOpen(true);
+    };
+
+    const handleDeactivateConfirm = async (section) => {
+        try {
+            await deactivateSection(schoolId, section.name);
+            await refreshSections();
+        } catch (error) {
+            console.error('Error deactivating section:', error);
+        }
+    };
+
+    const handleReactivate = async (section) => {
+        try {
+            await reactivateSection(schoolId, section.name);
+            await refreshSections();
+        } catch (error) {
+            console.error('Error reactivating section:', error);
+        }
+    };
 
     if (loading) {
         return (
@@ -78,16 +110,7 @@ const SectionManagement = () => {
     if (error) {
         return (
             <Container maxWidth="lg">
-                <Alert severity="error" sx={{ mt: 2 }}>
-                    {error}
-                </Alert>
-                <Button
-                    startIcon={<ArrowBackIcon />}
-                    onClick={() => navigate('/admin/schools')}
-                    sx={{ mt: 2 }}
-                >
-                    Torna alla lista
-                </Button>
+                <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
             </Container>
         );
     }
@@ -96,13 +119,6 @@ const SectionManagement = () => {
         return (
             <Box textAlign="center" py={4}>
                 <Typography variant="h6">Scuola non trovata</Typography>
-                <Button
-                    startIcon={<ArrowBackIcon />}
-                    onClick={() => navigate('/admin/schools')}
-                    sx={{ mt: 2 }}
-                >
-                    Torna alla lista
-                </Button>
             </Box>
         );
     }
@@ -188,10 +204,21 @@ const SectionManagement = () => {
                 </Grid>
             </Grid>
 
-            {/* Qui andrà la lista delle sezioni */}
-            <Box sx={{ mt: 2 }}>
-                {/* SectionList component will be added here */}
-            </Box>
+            {/* Section List */}
+            <SectionList
+                sections={selectedSchoolSections || []}
+                showInactive={showInactive}
+                onDeactivate={handleDeactivateClick}
+                onReactivate={handleReactivate}
+            />
+
+            {/* Deactivation Dialog */}
+            <DeactivationDialog
+                open={isDeactivationDialogOpen}
+                onClose={() => setIsDeactivationDialogOpen(false)}
+                onConfirm={handleDeactivateConfirm}
+                section={selectedSection}
+            />
         </Container>
     );
 };

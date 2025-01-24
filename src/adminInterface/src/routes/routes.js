@@ -13,6 +13,8 @@ import ClassPopulate from '../components/classes/ClassPopulate';    // Aggiungi 
 import StudentTestManagement from '../components/students/StudentTestManagement'; // Aggiungi questo import
 import Profile from '../components/profile/Profile'; // Aggiungi questo import
 import PersonalTest from '../components/profile/PersonalTest';  // Aggiungi questo import
+import SectionManagement from '../components/school/schoolComponents/SectionManagement';
+
 
 // Importa le icone da Material-UI
 import {
@@ -74,6 +76,20 @@ export const adminRoutes = [
         title: 'Gestione Utenze',
         icon: PersonIcon,
         showInMenu: false  // Non mostrare nel menu laterale
+    },
+    {
+        path: 'schools/:id/details',  // Cambiato da schools/:id
+        element: SchoolDetails,
+        title: 'Dettagli Scuola',
+        icon: SchoolIcon,
+        showInMenu: false
+    },
+    {
+        path: 'schools/:id/sections-management',  // Path più specifico
+        element: SectionManagement,
+        title: 'Gestione Sezioni',
+        icon: SchoolIcon,
+        showInMenu: false
     },
     {
         path: 'classes/:classId',
