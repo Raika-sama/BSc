@@ -494,86 +494,102 @@ class SchoolRepository extends BaseRepository {
         }
     }
 
-async reactivateSection(schoolId, sectionName) {
-    try {
-        logger.debug('Riattivazione sezione:', { schoolId, sectionName });
-
-        const result = await this.model.findOneAndUpdate(
-            { 
-                _id: schoolId,
-                'sections.name': sectionName 
-            },
-            {
-                $set: {
-                    'sections.$.isActive': true,
-                    'sections.$.deactivatedAt': null
+    async reactivateSection(schoolId, sectionName) {
+        try {
+            logger.debug('Riattivazione sezione:', { schoolId, sectionName });
+    
+            // Prima aggiorniamo lo stato isActive
+            const result = await this.model.findOneAndUpdate(
+                { 
+                    _id: schoolId,
+                    'sections.name': sectionName 
+                },
+                {
+                    $set: {
+                        'sections.$.isActive': true
+                    }
+                },
+                { 
+                    new: true
                 }
-            },
-            { 
-                new: true,
-                runValidators: true 
-            }
-        );
-
-        if (!result) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Sezione non trovata'
             );
+    
+            if (!result) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Sezione non trovata'
+                );
+            }
+    
+            // Poi aggiorniamo deactivatedAt in una query separata
+            const finalResult = await this.model.findOneAndUpdate(
+                { 
+                    _id: schoolId,
+                    'sections.name': sectionName 
+                },
+                {
+                    $set: {
+                        'sections.$.deactivatedAt': null
+                    }
+                },
+                { 
+                    new: true,
+                    runValidators: true 
+                }
+            );
+    
+            logger.info('Sezione riattivata con successo:', {
+                schoolId,
+                sectionName
+            });
+    
+            return finalResult;
+        } catch (error) {
+            logger.error('Errore durante la riattivazione della sezione:', {
+                error,
+                schoolId,
+                sectionName
+            });
+            throw error;
         }
-
-        logger.info('Sezione riattivata con successo:', {
-            schoolId,
-            sectionName
-        });
-
-        return result;
-    } catch (error) {
-        logger.error('Errore durante la riattivazione della sezione:', {
-            error,
-            schoolId,
-            sectionName
-        });
-        throw error;
     }
-}
 
-async getStudentsBySection(schoolId, sectionName) {
-    try {
-        logger.debug('Recupero studenti per sezione:', { schoolId, sectionName });
-        
-        // Trova prima tutte le classi attive per questa sezione
-        const classes = await Class.find({
-            schoolId,
-            section: sectionName,
-            isActive: true
-        }).select('_id');
+    async getStudentsBySection(schoolId, sectionName) {
+        try {
+            logger.debug('Recupero studenti per sezione:', { schoolId, sectionName });
+            
+            // Trova prima tutte le classi attive per questa sezione
+            const classes = await Class.find({
+                schoolId,
+                section: sectionName,
+                isActive: true
+            }).select('_id');
 
-        const classIds = classes.map(c => c._id);
+            const classIds = classes.map(c => c._id);
 
-        // Trova tutti gli studenti in queste classi
-        const students = await Student.find({
-            schoolId,
-            classId: { $in: classIds },
-            isActive: true
-        });
+            // Trova tutti gli studenti in queste classi
+            const students = await Student.find({
+                schoolId,
+                classId: { $in: classIds },
+                isActive: true
+            });
 
-        logger.debug('Studenti trovati:', { 
-            count: students.length,
-            schoolId,
-            sectionName 
-        });
+            logger.debug('Studenti trovati:', { 
+                count: students.length,
+                schoolId,
+                sectionName 
+            });
 
-        return students;
-    } catch (error) {
-        logger.error('Errore nel recupero studenti per sezione:', {
-            error,
-            schoolId,
-            sectionName
-        });
-        throw error;
+            return students;
+        } catch (error) {
+            logger.error('Errore nel recupero studenti per sezione:', {
+                error,
+                schoolId,
+                sectionName
+            });
+            throw error;
+        }
     }
-}
       
 }
 
