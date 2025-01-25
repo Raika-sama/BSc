@@ -1,29 +1,10 @@
-// MainLayout.js
 import React, { useState } from 'react';
 import { Box, CssBaseline } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { motion } from 'framer-motion';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
 const drawerWidth = 240;
-
-const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
-    ({ theme, open }) => ({
-        flexGrow: 1,
-        padding: 10, // Rimosso il padding
-        paddingTop: theme.spacing(8), // Solo padding top per l'header
-        backgroundColor: '#fafafa',
-        transition: theme.transitions.create(['margin', 'width'], {
-            easing: theme.transitions.easing.easeInOut,
-            duration: 300,
-        }),
-        marginLeft: 0,
-        width: '100%',
-        ...(open && {
-            width: `calc(100% - ${drawerWidth}px)`,
-        }),
-    }),
-);
 
 const MainLayout = ({ children }) => {
     const [open, setOpen] = useState(true);
@@ -35,26 +16,48 @@ const MainLayout = ({ children }) => {
     return (
         <Box sx={{ 
             display: 'flex',
-            bgcolor: '#fafafa',
             minHeight: '100vh',
-            color: '#37474f'
+            overflow: 'hidden' // Previene scrollbar orizzontale
         }}>
             <CssBaseline />
-            <Header open={open} drawerWidth={drawerWidth} onDrawerToggle={handleDrawerToggle} />
-            <Sidebar open={open} drawerWidth={drawerWidth} onDrawerToggle={handleDrawerToggle} />
-            <Main open={open}>
-                <Box 
-                    component="div" 
-                    sx={{ 
-                        height: '100%',
-                        p: 2, // Ridotto il padding
-                        backgroundColor: '#fff',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                    }}
-                >
-                    {children}
-                </Box>
-            </Main>
+            
+            <Header 
+                open={open} 
+                drawerWidth={drawerWidth} 
+                onDrawerToggle={handleDrawerToggle} 
+            />
+            
+            <Sidebar 
+                open={open} 
+                drawerWidth={drawerWidth} 
+                onDrawerToggle={handleDrawerToggle} 
+            />
+            
+            <Box
+                component={motion.main}
+                layout
+                sx={{
+                    position: 'fixed',
+                    left: open ? drawerWidth : 0,
+                    right: 0,
+                    top: '64px', // Header height
+                    bottom: 0,
+                    overflow: 'auto',
+                    bgcolor: 'background.default',
+                    transition: theme => theme.transitions.create('left', {
+                        easing: theme.transitions.easing.sharp,
+                        duration: theme.transitions.duration.leavingScreen,
+                    }),
+                    padding: '16px', // Sostituisce il border con padding per mantenere lo spazio bianco
+                    '& > *': { // Applica uno sfondo al contenuto effettivo
+                        bgcolor: 'white',
+                        minHeight: '100%',
+                        padding: '24px' // Aggiunto padding interno al contenuto
+                    }
+                }}
+            >
+                {children}
+            </Box>
         </Box>
     );
 };

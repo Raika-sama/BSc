@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Box, 
     Paper, 
@@ -19,7 +20,6 @@ import {
     PersonAdd as PersonAddIcon,
     FileDownload as FileDownloadIcon,
 } from '@mui/icons-material';
-import { Line } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -44,6 +44,26 @@ ChartJS.register(
     Title,
     Tooltip,
     Legend
+);
+
+const StatCard = ({ title, value, color }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+    >
+        <Card>
+            <CardContent>
+                <Typography color="textSecondary" gutterBottom>
+                    {title}
+                </Typography>
+                <Typography variant="h4" component="div" sx={{ color }}>
+                    {value}
+                </Typography>
+            </CardContent>
+        </Card>
+    </motion.div>
 );
 
 const UserManagement = () => {
@@ -77,20 +97,19 @@ const UserManagement = () => {
         }
     };
 
-    const handleSaveUser = async (userData) => {
+     const handleSaveUser = async (userData) => {
         try {
-            let updatedUser;
             if (selectedUser) {
-                updatedUser = await updateUser(selectedUser._id, {
-                    ...userData,
-                    _id: selectedUser._id // Manteniamo l'_id originale
-                });
+                await updateUser(selectedUser._id, {...userData, _id: selectedUser._id});
             } else {
-                updatedUser = await createUser(userData);
+                await createUser(userData);
             }
             handleCloseForm();
-            // Aggiorniamo immediatamente la grid con i dati corretti
             await loadUsers();
+            showNotification(
+                selectedUser ? 'Utente aggiornato con successo' : 'Utente creato con successo',
+                'success'
+            );
         } catch (error) {
             showNotification(error.response?.data?.error?.message || 'Errore nel salvare l\'utente', 'error');
         }
@@ -102,6 +121,7 @@ const UserManagement = () => {
             setIsDeleteDialogOpen(false);
             setSelectedUser(null);
             loadUsers();
+            showNotification('Utente eliminato con successo', 'success');
         } catch (error) {
             showNotification(error.response?.data?.error?.message || 'Errore nell\'eliminazione dell\'utente', 'error');
         }
@@ -128,9 +148,11 @@ const UserManagement = () => {
             headerName: '',
             width: 60,
             renderCell: (params) => (
-                <Box className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                    {params.row?.firstName?.[0] || 'U'}
-                </Box>
+                <motion.div whileHover={{ scale: 1.1 }}>
+                    <Box className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        {params.row?.firstName?.[0] || 'U'}
+                    </Box>
+                </motion.div>
             )
         },
         {
@@ -166,20 +188,24 @@ const UserManagement = () => {
             width: 120,
             renderCell: (params) => (
                 <Stack direction="row" spacing={1}>
-                    <IconButton 
-                        size="small" 
-                        color="primary"
-                        onClick={() => handleEditUser(params.row)}
-                    >
-                        <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton 
-                        size="small" 
-                        color="error"
-                        onClick={() => handleDeleteClick(params.row)}
-                    >
-                        <DeleteIcon fontSize="small" />
-                    </IconButton>
+                    <motion.div whileHover={{ scale: 1.1 }}>
+                        <IconButton 
+                            size="small" 
+                            color="primary"
+                            onClick={() => handleEditUser(params.row)}
+                        >
+                            <EditIcon fontSize="small" />
+                        </IconButton>
+                    </motion.div>
+                    <motion.div whileHover={{ scale: 1.1 }}>
+                        <IconButton 
+                            size="small" 
+                            color="error"
+                            onClick={() => handleDeleteClick(params.row)}
+                        >
+                            <DeleteIcon fontSize="small" />
+                        </IconButton>
+                    </motion.div>
                 </Stack>
             )
         }
@@ -201,105 +227,148 @@ const UserManagement = () => {
     }
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+        >
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h4" component="h1">
-                    Gestione Utenti
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Button
-                        variant="contained"
-                        startIcon={<PersonAddIcon />}
-                        onClick={() => setIsFormOpen(true)}
-                        disabled={loading}
-                    >
-                        Nuovo Utente
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        startIcon={<FileDownloadIcon />}
-                    >
-                        Esporta
-                    </Button>
-                </Box>
+                <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                >
+                    <Typography variant="h4" component="h1">
+                        Gestione Utenti
+                    </Typography>
+                </motion.div>
+                <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                >
+                    <Stack direction="row" spacing={2}>
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <Button
+                                variant="contained"
+                                startIcon={<PersonAddIcon />}
+                                onClick={() => setIsFormOpen(true)}
+                                disabled={loading}
+                            >
+                                Nuovo Utente
+                            </Button>
+                        </motion.div>
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <Button
+                                variant="outlined"
+                                startIcon={<FileDownloadIcon />}
+                            >
+                                Esporta
+                            </Button>
+                        </motion.div>
+                    </Stack>
+                </motion.div>
             </Box>
 
             {/* Stats Cards */}
             <Grid container spacing={3} sx={{ mb: 3 }}>
                 {statsCards.map((card, index) => (
                     <Grid item xs={12} sm={6} md={3} key={index}>
-                        <Card>
-                            <CardContent>
-                                <Typography color="textSecondary" gutterBottom>
-                                    {card.title}
-                                </Typography>
-                                <Typography variant="h4" component="div" color={card.color}>
-                                    {card.value}
-                                </Typography>
-                            </CardContent>
-                        </Card>
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                        >
+                            <StatCard {...card} />
+                        </motion.div>
                     </Grid>
                 ))}
             </Grid>
 
             {/* Search */}
-            <Box sx={{ mb: 3 }}>
-                <SearchInput 
-                    value={search}
-                    onChange={setSearch}
-                    disabled={loading}
-                    placeholder="Cerca utenti..."
-                />
-            </Box>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+            >
+                <Box sx={{ mb: 3 }}>
+                    <SearchInput 
+                        value={search}
+                        onChange={setSearch}
+                        disabled={loading}
+                        placeholder="Cerca utenti..."
+                    />
+                </Box>
+            </motion.div>
 
             {/* Users Grid */}
-            <Paper>
-                <DataGrid
-                    rows={Array.isArray(users) ? users
-                        .filter(user => user && user._id) // Filtriamo le righe senza id
-                        .map(user => ({
-                            id: user._id,
-                            _id: user._id,
-                            firstName: user?.firstName || '',
-                            lastName: user?.lastName || '',
-                            email: user?.email || '',
-                            role: user?.role || '',
-                            active: user?.active || false
-                        })) : []}
-                    columns={columns}
-                    pageSize={pageSize}
-                    onPageSizeChange={setPageSize}
-                    rowsPerPageOptions={[5, 10, 20]}
-                    disableSelectionOnClick
-                    autoHeight
-                    loading={loading || !Array.isArray(users)}
-                    page={page}
-                    onPageChange={(newPage) => setPage(newPage)}
-                    rowCount={totalUsers || 0}
-                    paginationMode="server"
-                    className="h-96"
-                />
-            </Paper>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+            >
+                <Paper sx={{ height: 400, width: '100%' }}>
+                    <DataGrid
+                        rows={Array.isArray(users) ? users
+                            .filter(user => user && user._id)
+                            .map(user => ({
+                                id: user._id,
+                                _id: user._id,
+                                firstName: user?.firstName || '',
+                                lastName: user?.lastName || '',
+                                email: user?.email || '',
+                                role: user?.role || '',
+                                active: user?.active || false
+                            })) : []}
+                        columns={columns}
+                        pageSize={pageSize}
+                        onPageSizeChange={setPageSize}
+                        rowsPerPageOptions={[5, 10, 20]}
+                        disableSelectionOnClick
+                        loading={loading || !Array.isArray(users)}
+                        page={page}
+                        onPageChange={setPage}
+                        rowCount={totalUsers || 0}
+                        paginationMode="server"
+                    />
+                </Paper>
+            </motion.div>
 
-            {/* Forms and Dialogs */}
-            <UserForm 
-                open={isFormOpen}
-                onClose={handleCloseForm}
-                onSave={handleSaveUser}
-                initialData={selectedUser}
-                isLoading={loading}
-            />
+            {/* Dialogs */}
+            <AnimatePresence>
+                {isFormOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                    >
+                        <UserForm 
+                            open={isFormOpen}
+                            onClose={() => setIsFormOpen(false)}
+                            onSave={handleSaveUser}
+                            initialData={selectedUser}
+                            isLoading={loading}
+                        />
+                    </motion.div>
+                )}
 
-            <ConfirmDialog
-                open={isDeleteDialogOpen}
-                onClose={() => setIsDeleteDialogOpen(false)}
-                onConfirm={handleDeleteConfirm}
-                title="Conferma eliminazione"
-                content={`Sei sicuro di voler eliminare l'utente ${selectedUser?.firstName} ${selectedUser?.lastName}?`}
-                isLoading={loading}
-            />
-        </Container>
+                {isDeleteDialogOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                    >
+                        <ConfirmDialog
+                            open={isDeleteDialogOpen}
+                            onClose={() => setIsDeleteDialogOpen(false)}
+                            onConfirm={handleDeleteConfirm}
+                            title="Conferma eliminazione"
+                            content={`Sei sicuro di voler eliminare l'utente ${selectedUser?.firstName} ${selectedUser?.lastName}?`}
+                            isLoading={loading}
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
     );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
     Box,
     Grid,
@@ -6,16 +7,14 @@ import {
     Typography,
     Card,
     CardContent,
-    CardHeader,
     IconButton,
     Divider,
     List,
     ListItem,
-    ListItemText,
     ListItemIcon,
+    ListItemText,
     Button,
     Alert,
-    Fade,
     useTheme
 } from '@mui/material';
 import {
@@ -26,11 +25,13 @@ import {
     Notifications as NotificationIcon,
     CheckCircle as CheckCircleIcon,
     Warning as WarningIcon,
-    ArrowUpward as ArrowUpwardIcon,
-    ArrowDownward as ArrowDownwardIcon,
-    Refresh as RefreshIcon
+    Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { Line } from 'react-chartjs-2';
+import { useAuth } from '../context/AuthContext';
+import AnimatedStatCard from './AnimatedStatCard';  // Il componente che abbiamo creato prima
+
+// Configurazione Chart.js rimane invariata
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -41,9 +42,7 @@ import {
     Tooltip,
     Legend
 } from 'chart.js';
-import { useAuth } from '../context/AuthContext';
 
-// Registrazione dei componenti necessari per Chart.js
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -54,81 +53,33 @@ ChartJS.register(
     Legend
 );
 
-// Componente StatCard migliorato
-const StatCard = ({ title, value, icon, color, trend, percentage }) => {
-    const theme = useTheme();
-    
-    return (
-        <Card sx={{ 
-            height: '100%',
-            transition: 'transform 0.3s',
-            '&:hover': {
-                transform: 'translateY(-5px)',
-                boxShadow: theme.shadows[4]
-            }
-        }}>
-            <CardHeader
-                avatar={
-                    <Box
-                        sx={{
-                            backgroundColor: `${color}.light`,
-                            borderRadius: 2,
-                            p: 1.5,
-                            display: 'flex',
-                        }}
-                    >
-                        {icon}
-                    </Box>
-                }
-                action={
-                    <IconButton size="small">
-                        <RefreshIcon />
-                    </IconButton>
-                }
-            />
-            <CardContent>
-                <Typography variant="h4" component="div" gutterBottom>
-                    {value}
-                </Typography>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                    <Typography variant="body2" color="text.secondary">
-                        {title}
-                    </Typography>
-                    {trend && (
-                        <Box display="flex" alignItems="center" sx={{ color: trend === 'up' ? 'success.main' : 'error.main' }}>
-                            {trend === 'up' ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />}
-                            <Typography variant="body2" component="span" sx={{ ml: 0.5 }}>
-                                {percentage}%
-                            </Typography>
-                        </Box>
-                    )}
+// Componente ActivityItem con animazioni
+const ActivityItem = ({ icon, primary, secondary, color, index }) => (
+    <motion.div
+        initial={{ x: -50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: index * 0.2, duration: 0.5 }}
+    >
+        <ListItem>
+            <ListItemIcon>
+                <Box
+                    sx={{
+                        backgroundColor: `${color}.light`,
+                        borderRadius: 1,
+                        p: 1,
+                        display: 'flex',
+                    }}
+                >
+                    {icon}
                 </Box>
-            </CardContent>
-        </Card>
-    );
-};
-
-// Componente ActivityItem
-const ActivityItem = ({ icon, primary, secondary, color }) => (
-    <ListItem>
-        <ListItemIcon>
-            <Box
-                sx={{
-                    backgroundColor: `${color}.light`,
-                    borderRadius: 1,
-                    p: 1,
-                    display: 'flex',
-                }}
-            >
-                {icon}
-            </Box>
-        </ListItemIcon>
-        <ListItemText 
-            primary={primary}
-            secondary={secondary}
-            primaryTypographyProps={{ fontWeight: 'medium' }}
-        />
-    </ListItem>
+            </ListItemIcon>
+            <ListItemText 
+                primary={primary}
+                secondary={secondary}
+                primaryTypographyProps={{ fontWeight: 'medium' }}
+            />
+        </ListItem>
+    </motion.div>
 );
 
 const Dashboard = () => {
@@ -141,7 +92,7 @@ const Dashboard = () => {
         tests: { value: 150, trend: 'up', percentage: 15 }
     });
 
-    // Dati per il grafico
+    // Configurazione del grafico rimane invariata
     const chartData = {
         labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
         datasets: [
@@ -175,7 +126,44 @@ const Dashboard = () => {
         }
     };
 
-    // Attività recenti mockup
+
+    // Array delle statistiche per le card
+    const statsCards = [
+        {
+            title: 'Scuole',
+            value: stats.schools.value,
+            icon: <SchoolIcon color="primary" />,
+            color: 'primary',
+            trend: stats.schools.trend,
+            percentage: stats.schools.percentage
+        },
+        {
+            title: 'Utenti',
+            value: stats.users.value,
+            icon: <PersonIcon color="success" />,
+            color: 'success',
+            trend: stats.users.trend,
+            percentage: stats.users.percentage
+        },
+        {
+            title: 'Classi',
+            value: stats.classes.value,
+            icon: <ClassIcon color="warning" />,
+            color: 'warning',
+            trend: stats.classes.trend,
+            percentage: stats.classes.percentage
+        },
+        {
+            title: 'Test',
+            value: stats.tests.value,
+            icon: <TestIcon color="error" />,
+            color: 'error',
+            trend: stats.tests.trend,
+            percentage: stats.tests.percentage
+        }
+    ];
+
+    // Attività recenti
     const recentActivities = [
         {
             icon: <CheckCircleIcon color="success" />,
@@ -198,153 +186,150 @@ const Dashboard = () => {
     ];
 
     return (
-        <Box sx={{ flexGrow: 1 }}>
+        <Box sx={{ 
+            width: '100%',
+            height: '100%',
+            bgcolor: 'white',   // Cambiato il background in bianco
+            m: 0,              // Rimosso qualsiasi margine
+            p: 0               // Rimosso qualsiasi padding
+        }}>
             {/* Header Welcome */}
-            <Paper 
-                sx={{ 
-                    p: 3, 
-                    mb: 3, 
-                    background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.dark} 90%)`,
-                    color: 'white'
-                }}
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
             >
-                <Typography variant="h4" gutterBottom>
-                    Benvenuto, {user?.firstName}!
-                </Typography>
-                <Typography variant="body1">
-                    {new Date().toLocaleDateString('it-IT', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    })}
-                </Typography>
-            </Paper>
+                <Paper 
+                    elevation={0}  // Rimossa l'ombra
+                    sx={{ 
+                        p: 3, 
+                        mb: 3, 
+                        background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.dark} 90%)`,
+                        color: 'white',
+                        borderRadius: 0  // Rimossi i bordi arrotondati
+                    }}
+                >
+                    <Typography variant="h4" gutterBottom>
+                        Benvenuto, {user?.firstName}!
+                    </Typography>
+                    <Typography variant="body1">
+                        {new Date().toLocaleDateString('it-IT', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        })}
+                    </Typography>
+                </Paper>
+            </motion.div>
 
             {/* Stats Grid */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Fade in={true} timeout={500}>
-                        <Box>
-                            <StatCard
-                                title="Scuole"
-                                value={stats.schools.value}
-                                icon={<SchoolIcon color="primary" />}
-                                color="primary"
-                                trend={stats.schools.trend}
-                                percentage={stats.schools.percentage}
-                            />
-                        </Box>
-                    </Fade>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Fade in={true} timeout={700}>
-                        <Box>
-                            <StatCard
-                                title="Utenti"
-                                value={stats.users.value}
-                                icon={<PersonIcon color="success" />}
-                                color="success"
-                                trend={stats.users.trend}
-                                percentage={stats.users.percentage}
-                            />
-                        </Box>
-                    </Fade>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Fade in={true} timeout={900}>
-                        <Box>
-                            <StatCard
-                                title="Classi"
-                                value={stats.classes.value}
-                                icon={<ClassIcon color="warning" />}
-                                color="warning"
-                                trend={stats.classes.trend}
-                                percentage={stats.classes.percentage}
-                            />
-                        </Box>
-                    </Fade>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Fade in={true} timeout={1100}>
-                        <Box>
-                            <StatCard
-                                title="Test"
-                                value={stats.tests.value}
-                                icon={<TestIcon color="error" />}
-                                color="error"
-                                trend={stats.tests.trend}
-                                percentage={stats.tests.percentage}
-                            />
-                        </Box>
-                    </Fade>
-                </Grid>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+                {statsCards.map((card, index) => (
+                    <Grid item xs={12} sm={6} md={3} key={index}>
+                        <AnimatedStatCard {...card} />
+                    </Grid>
+                ))}
             </Grid>
 
             {/* Main Content */}
-            <Grid container spacing={3}>
+            <Grid container spacing={2}>
                 {/* Chart Section */}
-                <Grid item xs={12} md={8}>
-                    <Paper sx={{ p: 3, height: '400px' }}>
-                        <Typography variant="h6" gutterBottom>
-                            Andamento Test
-                        </Typography>
-                        <Box sx={{ height: 'calc(100% - 40px)' }}>
-                            <Line options={chartOptions} data={chartData} />
-                        </Box>
-                    </Paper>
+                <Grid item xs={12} lg={8}>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                    >
+                        <Paper sx={{ p: 3, height: '400px', position: 'relative' }}>
+                            <Typography variant="h6" gutterBottom>
+                                Andamento Test
+                            </Typography>
+                            <Box sx={{ 
+                                position: 'relative',
+                                height: 'calc(100% - 40px)',
+                                width: '100%'
+                            }}>
+                                <Line options={chartOptions} data={chartData} />
+                            </Box>
+                        </Paper>
+                    </motion.div>
                 </Grid>
 
                 {/* Activity Section */}
-                <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3, height: '400px' }}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                            <Typography variant="h6">
-                                Attività Recenti
-                            </Typography>
-                            <Button size="small" startIcon={<RefreshIcon />}>
-                                Aggiorna
-                            </Button>
-                        </Box>
-                        <Divider sx={{ mb: 2 }} />
-                        <List>
-                            {recentActivities.map((activity, index) => (
-                                <ActivityItem key={index} {...activity} />
-                            ))}
-                        </List>
-                    </Paper>
+                <Grid item xs={12} lg={4}>
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.4 }}
+                    >
+                        <Paper sx={{ p: 3, height: '400px', overflow: 'hidden' }}>
+                            <Box sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                mb: 2
+                            }}>
+                                <Typography variant="h6">
+                                    Attività Recenti
+                                </Typography>
+                                <Button
+                                    size="small"
+                                    startIcon={<RefreshIcon />}
+                                    sx={{ minWidth: 'auto' }}
+                                >
+                                    Aggiorna
+                                </Button>
+                            </Box>
+                            <Divider sx={{ mb: 2 }} />
+                            <List sx={{ 
+                                overflow: 'auto',
+                                height: 'calc(100% - 60px)'
+                            }}>
+                                {recentActivities.map((activity, index) => (
+                                    <ActivityItem key={index} {...activity} index={index} />
+                                ))}
+                            </List>
+                        </Paper>
+                    </motion.div>
                 </Grid>
 
                 {/* System Status */}
                 <Grid item xs={12}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Stato del Sistema
-                        </Typography>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                                <Alert severity="success" sx={{ mb: 1 }}>
-                                    Tutti i sistemi sono operativi
-                                </Alert>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.6 }}
+                    >
+                        <Paper sx={{ p: 3 }}>
+                            <Typography variant="h6" gutterBottom>
+                                Stato del Sistema
+                            </Typography>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12}>
+                                    <Alert severity="success" sx={{ mb: 1 }}>
+                                        Tutti i sistemi sono operativi
+                                    </Alert>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="body1">
+                                        <strong>Versione:</strong> 1.0.0
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        <strong>Ultimo aggiornamento:</strong> {new Date().toLocaleDateString()}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="body1">
+                                        <strong>Stato Database:</strong> Connesso
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        <strong>Latenza:</strong> 45ms
+                                    </Typography>
+                                </Grid>
                             </Grid>
-                            <Grid item xs={12} md={6}>
-                                <Typography variant="body1">
-                                    <strong>Versione:</strong> 1.0.0
-                                </Typography>
-                                <Typography variant="body1">
-                                    <strong>Ultimo aggiornamento:</strong> {new Date().toLocaleDateString()}
-                                </Typography>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <Typography variant="body1">
-                                    <strong>Stato Database:</strong> Connesso
-                                </Typography>
-                                <Typography variant="body1">
-                                    <strong>Latenza:</strong> 45ms
-                                </Typography>
-                            </Grid>
-                        </Grid>
-                    </Paper>
+                        </Paper>
+                    </motion.div>
                 </Grid>
             </Grid>
         </Box>
