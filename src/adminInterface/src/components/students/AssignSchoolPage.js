@@ -46,18 +46,37 @@ const AssignSchoolPage = () => {
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [filteredStudents, setFilteredStudents] = useState([]);
 
+    // Primo useEffect per caricare i dati iniziali
     useEffect(() => {
-        fetchUnassignedToSchoolStudents();
-        fetchSchools();
+        const loadData = async () => {
+            try {
+                await fetchUnassignedToSchoolStudents();
+                await fetchSchools();
+            } catch (error) {
+                console.error('Error loading initial data:', error);
+            }
+        };
+        
+        loadData();
     }, []);
 
+    // Secondo useEffect per il filtraggio
     useEffect(() => {
-        if (students) {
-            const filtered = students.filter(student => 
+        if (students && Array.isArray(students)) {
+            // Normalizza gli studenti aggiungendo un campo id se non presente
+            const normalizedStudents = students.map(student => ({
+                ...student,
+                // Usa _id come fallback se id non è presente
+                id: student.id || student._id
+            }));
+            
+            const filtered = normalizedStudents.filter(student => 
                 student.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 student.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 student.email?.toLowerCase().includes(searchTerm.toLowerCase())
             );
+            
+            console.log('Normalized and filtered students:', filtered);
             setFilteredStudents(filtered);
         }
     }, [students, searchTerm]);
@@ -108,6 +127,10 @@ const AssignSchoolPage = () => {
     };
 
     const selectedSchoolName = schools.find(s => s._id === selectedSchool)?.name;
+
+
+    console.log('Current filteredStudents:', filteredStudents);
+    console.log('Current loading state:', loading);
 
     return (
         <Box sx={{ p: 3, maxWidth: '100%', bgcolor: '#f5f5f5', minHeight: '100vh' }}>
@@ -185,22 +208,26 @@ const AssignSchoolPage = () => {
                 </Stack>
 
                 <Box sx={{ height: 400, width: '100%' }}>
-                <DataGrid
-                    rows={filteredStudents}
-                    columns={columns}
-                    pageSize={5}
-                    rowsPerPageOptions={[5, 10, 20]}
-                    checkboxSelection
-                    disableSelectionOnClick
-                    loading={loading}
-                    getRowId={(row) => row.id}  // Semplificato perché normalizeStudent già gestisce gli ID
-                    selectionModel={selectedStudents}
-                    onSelectionModelChange={(newSelection) => {
-                        setSelectedStudents(newSelection);
-                    }}
-                    hideFooterSelectedRowCount={false}  // Mostra il conteggio delle righe selezionate
-                />
-                </Box>
+                {filteredStudents && filteredStudents.length > 0 ? (
+                    <DataGrid
+                        rows={filteredStudents}
+                        columns={columns}
+                        pageSize={5}
+                        rowsPerPageOptions={[5, 10, 20]}
+                        checkboxSelection
+                        disableSelectionOnClick
+                        loading={loading}
+                        getRowId={(row) => row.id || row._id}
+                        selectionModel={selectedStudents}
+                        onSelectionModelChange={(newSelection) => {
+                            setSelectedStudents(newSelection);
+                        }}
+                        hideFooterSelectedRowCount={false}
+                    />
+                ) : (
+                    <Typography>No students found</Typography>
+                )}
+            </Box>
 
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                     <Button

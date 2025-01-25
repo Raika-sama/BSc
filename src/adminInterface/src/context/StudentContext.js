@@ -560,9 +560,12 @@ const fetchUnassignedToSchoolStudents = async () => {
     try {
         dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
         
+        console.log('Chiamata API iniziata'); // Nuovo log
         const response = await axiosInstance.get('/students/unassigned-to-school');
-        
+        console.log('Risposta API ricevuta:', response); // Nuovo log
+
         if (response.data.status === 'success') {
+            console.log('Dati studenti ricevuti:', response.data.data.students); // Nuovo log
             dispatch({
                 type: STUDENT_ACTIONS.SET_UNASSIGNED_TO_SCHOOL_STUDENTS,
                 payload: response.data.data.students
@@ -570,6 +573,8 @@ const fetchUnassignedToSchoolStudents = async () => {
             return response.data.data.students;
         }
     } catch (error) {
+        console.error('Errore dettagliato:', error); // Nuovo log
+        console.error('Response error:', error.response); // Nuovo log
         const errorMessage = error.response?.data?.error?.message || 
                            'Errore nel caricamento degli studenti';
         dispatch({
