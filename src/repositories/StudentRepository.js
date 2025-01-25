@@ -1,7 +1,7 @@
 // src/repositories/StudentRepository.js
 
 const BaseRepository = require('./base/BaseRepository');
-const { Student, Class } = require('../models');
+const { Student, School, Class } = require('../models');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const mongoose = require('mongoose');
@@ -100,11 +100,15 @@ class StudentRepository extends BaseRepository {
 
 async findUnassignedToSchoolStudents() {
     try {
-        logger.debug('Cercando studenti non assegnati a scuole...');
+        logger.debug('Cercando studenti senza scuola...');
         
+        
+
         const query = {
-            status: 'pending',
-            isActive: true
+            $or: [
+                { schoolId: null },
+                { schoolId: { $exists: false } }
+            ],
         };
 
         logger.debug('Query di ricerca:', query);
@@ -112,8 +116,16 @@ async findUnassignedToSchoolStudents() {
         const students = await this.findWithDetails(query, {
             sort: { createdAt: -1 }
         });
-
-        logger.debug(`Trovati ${students.length} studenti non assegnati`);
+        
+        logger.debug(`Trovati ${students.length} studenti non assegnati:`, {
+            students: students.map(s => ({
+                id: s._id,
+                name: `${s.firstName} ${s.lastName}`,
+                status: s.status,
+                schoolId: s.schoolId,
+                isActive: s.isActive
+            }))
+        });
         
         return students;
     } catch (error) {
@@ -234,55 +246,64 @@ async findUnassignedToSchoolStudents() {
     // Aggiungi questo nuovo metodo alla classe StudentRepository
 
     async batchAssignToSchool(studentIds, schoolId) {
+        
+        console.log('Debug - School model:', {
+            isSchoolDefined: !!School,
+            modelName: School?.modelName,
+            isMongooseModel: School?.prototype?.constructor?.name === 'model'
+        });
         const session = await mongoose.startSession();
         session.startTransaction();
-    
+
         try {
+            logger.debug('Starting batch school assignment:', {
+                studentCount: studentIds.length,
+                schoolId,
+                schoolModelExists: !!School  // Debug log
+            });
+
             // 1. Verifica che la scuola esista
-            const school = await mongoose.model('School').findById(schoolId).session(session);
+            const school = await School.findById(schoolId).session(session);
+            
             if (!school) {
                 throw createError(
                     ErrorTypes.VALIDATION.NOT_FOUND,
                     'Scuola non trovata'
                 );
             }
-    
+
             // 2. Verifica che gli studenti esistano
-            const students = await this.model.find({
+            const students = await Student.find({
                 _id: { $in: studentIds },
                 $or: [
                     { schoolId: { $exists: false } },
-                    { schoolId: null },
-                    { schoolId: undefined }
+                    { schoolId: null }
                 ]
             }).session(session);
-    
-            // Debug log
-            console.log('Students found:', {
+
+            logger.debug('Students found:', {
                 requested: studentIds.length,
                 found: students.length,
                 studentDetails: students.map(s => ({
                     id: s._id,
-                    hasSchoolId: !!s.schoolId,
-                    schoolId: s.schoolId
+                    hasSchoolId: !!s.schoolId
                 }))
             });
-    
+
             if (students.length !== studentIds.length) {
                 throw createError(
                     ErrorTypes.VALIDATION.BAD_REQUEST,
                     'Alcuni studenti selezionati non sono validi o hanno già una scuola assegnata'
                 );
             }
-    
+
             // 3. Aggiorna gli studenti
-            const updateResult = await this.model.updateMany(
+            const updateResult = await Student.updateMany(
                 {
                     _id: { $in: studentIds },
                     $or: [
                         { schoolId: { $exists: false } },
-                        { schoolId: null },
-                        { schoolId: undefined }
+                        { schoolId: null }
                     ]
                 },
                 {
@@ -295,16 +316,9 @@ async findUnassignedToSchoolStudents() {
                 },
                 { session }
             );
-    
-            // Log dell'operazione
-            logger.info('Students assigned to school:', {
-                schoolId,
-                studentsCount: updateResult.modifiedCount,
-                studentIds
-            });
-    
+
             await session.commitTransaction();
-    
+            
             return {
                 success: true,
                 modifiedCount: updateResult.modifiedCount,
@@ -312,10 +326,11 @@ async findUnassignedToSchoolStudents() {
             };
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Error in batchAssignToSchool:', {
-                error,
+            logger.error('Error in batch assigning students to school:', {
+                error: error.message,
                 studentIds,
-                schoolId
+                schoolId,
+                user: this.userId
             });
             throw error;
         } finally {

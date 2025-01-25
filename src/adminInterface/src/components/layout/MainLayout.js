@@ -10,21 +10,17 @@ const drawerWidth = 240;
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
     ({ theme, open }) => ({
         flexGrow: 1,
-        padding: theme.spacing(3),
+        padding: 10, // Rimosso il padding
+        paddingTop: theme.spacing(8), // Solo padding top per l'header
         backgroundColor: '#fafafa',
         transition: theme.transitions.create(['margin', 'width'], {
             easing: theme.transitions.easing.easeInOut,
             duration: 300,
         }),
-        marginLeft: `-${drawerWidth}px`,
-        width: `calc(100% - ${drawerWidth}px)`,
+        marginLeft: 0,
+        width: '100%',
         ...(open && {
-            marginLeft: 0,
             width: `calc(100% - ${drawerWidth}px)`,
-        }),
-        ...(!open && {
-            marginLeft: 0,
-            width: '100%',
         }),
     }),
 );
@@ -50,9 +46,8 @@ const MainLayout = ({ children }) => {
                 <Box 
                     component="div" 
                     sx={{ 
-                        mt: 8,
-                        p: 3,
-                        borderRadius: 1,
+                        height: '100%',
+                        p: 2, // Ridotto il padding
                         backgroundColor: '#fff',
                         boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                     }}

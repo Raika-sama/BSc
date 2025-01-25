@@ -141,7 +141,7 @@ const studentSchema = new mongoose.Schema({
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'School',
-        required: true,
+        required: false,
         description: 'Riferimento alla scuola di appartenenza'
     },
     classId: {
@@ -176,7 +176,7 @@ const studentSchema = new mongoose.Schema({
     // Gestione stato e note
     status: {
         type: String,
-        enum: ['pending', 'active', 'inactive', 'transferred', 'graduated'],
+        enum: ['pending', 'active', 'inactive', 'transferred', 'graduated', 'unregistered'],
         default: 'pending',
         required: true,
         description: 'Stato corrente dello studente nel sistema'

@@ -35,6 +35,10 @@ const FilterToolbar = ({
     setYearFilter, 
     sectionFilter, 
     setSectionFilter,
+    statusFilter,        // Nuovo
+    setStatusFilter,     // Nuovo
+    studentsFilter,      // Nuovo
+    setStudentsFilter,   // Nuovo
     handleApplyFilters,
     handleResetFilters 
 }) => {
@@ -50,6 +54,7 @@ const FilterToolbar = ({
             display: 'flex', 
             gap: 1, 
             alignItems: 'center', 
+            flexWrap: 'wrap',  // Permette il wrap su schermi piccoli
             borderBottom: 1, 
             borderColor: 'divider'
         }}>
@@ -66,13 +71,10 @@ const FilterToolbar = ({
                 select
                 value={yearFilter}
                 onChange={(e) => setYearFilter(e.target.value)}
-                sx={{ 
-                    minWidth: '80px',
-                    '& .MuiInputBase-root': { fontSize: '0.875rem' }
-                }}
+                sx={{ minWidth: '80px' }}
             >
                 <MenuItem value="">Tutti</MenuItem>
-                {[1, 2, 3].map((year) => (
+                {[1, 2, 3, 4, 5].map((year) => (
                     <MenuItem key={year} value={year}>
                         {year}°
                     </MenuItem>
@@ -83,11 +85,36 @@ const FilterToolbar = ({
                 size="small"
                 value={sectionFilter}
                 onChange={(e) => setSectionFilter(e.target.value.toUpperCase())}
-                sx={{ 
-                    width: '80px',
-                    '& .MuiInputBase-root': { fontSize: '0.875rem' }
-                }}
+                sx={{ width: '80px' }}
             />
+            {/* Nuovo select per status */}
+            <TextField
+                label="Status"
+                size="small"
+                select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                sx={{ minWidth: '120px' }}
+            >
+                <MenuItem value="">Tutti</MenuItem>
+                <MenuItem value="active">Attive</MenuItem>
+                <MenuItem value="planned">Pianificate</MenuItem>
+                <MenuItem value="archived">Archiviate</MenuItem>
+            </TextField>
+            {/* Nuovo select per filtro studenti */}
+            <TextField
+                label="Studenti"
+                size="small"
+                select
+                value={studentsFilter}
+                onChange={(e) => setStudentsFilter(e.target.value)}
+                sx={{ minWidth: '150px' }}
+            >
+                <MenuItem value="">Tutti</MenuItem>
+                <MenuItem value="with_students">Con studenti</MenuItem>
+                <MenuItem value="without_students">Senza studenti</MenuItem>
+                <MenuItem value="pending">In attesa (Pending)</MenuItem>
+            </TextField>
             <Button 
                 variant="contained" 
                 onClick={handleApplyFilters}
@@ -109,6 +136,7 @@ const FilterToolbar = ({
     );
 };
 
+
 const ClassManagement = () => {
     const [tabValue, setTabValue] = useState(0);
     const { mainTeacherClasses = [], coTeacherClasses = [], loading, error, getMyClasses, deleteClass } = useClass();
@@ -118,12 +146,14 @@ const ClassManagement = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
-    const [pageSize, setPageSize] = useState(10); // Aggiungi questo nuovo state
+    const [pageSize, setPageSize] = useState(25); // Aggiungi questo nuovo state
 
     // Stati per i filtri
     const [schoolFilter, setSchoolFilter] = useState('');
     const [yearFilter, setYearFilter] = useState('');
     const [sectionFilter, setSectionFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    const [studentsFilter, setStudentsFilter] = useState('');
     const [filterModel, setFilterModel] = useState({
         items: []
     });
@@ -156,6 +186,42 @@ const ClassManagement = () => {
                 value: sectionFilter
             });
         }
+        if (statusFilter) {
+            newFilters.push({
+                field: 'status',
+                operator: 'equals',
+                value: statusFilter
+            });
+        }
+        if (studentsFilter) {
+            switch (studentsFilter) {
+                case 'with_students':
+                    newFilters.push({
+                        field: 'students',
+                        operator: 'isNotEmpty'
+                    });
+                    break;
+                case 'without_students':
+                    newFilters.push({
+                        field: 'students',
+                        operator: 'isEmpty'
+                    });
+                    break;
+                case 'pending':
+                    // Una classe è "pending" quando:
+                    // 1. Ha almeno uno studente
+                    // 2. Il numero di studenti è minore della capacità
+                    newFilters.push({
+                        field: 'students',
+                        operator: 'custom',
+                        value: (params) => {
+                            const studentCount = params.value?.length || 0;
+                            return studentCount > 0 && studentCount < params.row.capacity;
+                        }
+                    });
+                    break;
+            }
+        }
         setFilterModel({ items: newFilters });
     };
 
@@ -163,16 +229,41 @@ const ClassManagement = () => {
         setSchoolFilter('');
         setYearFilter('');
         setSectionFilter('');
+        setStatusFilter('');
+        setStudentsFilter('');
         setFilterModel({ items: [] });
     };
 
     // Funzione per filtrare le classi
     const filterClasses = (classes) => {
         return classes.filter(classItem => {
-            if (schoolFilter && !classItem.schoolName.toLowerCase().includes(schoolFilter.toLowerCase())) return false;
-            if (yearFilter && classItem.year !== parseInt(yearFilter)) return false;
-            if (sectionFilter && classItem.section !== sectionFilter.toUpperCase()) return false;
-            return true;
+            // Filtri base
+            const matchesSchool = !schoolFilter || classItem.schoolName.toLowerCase().includes(schoolFilter.toLowerCase());
+            const matchesYear = !yearFilter || classItem.year === parseInt(yearFilter);
+            const matchesSection = !sectionFilter || classItem.section === sectionFilter.toUpperCase();
+            const matchesStatus = !statusFilter || classItem.status === statusFilter;
+    
+            // Filtro studenti
+            let matchesStudentFilter = true;
+            if (studentsFilter) {
+                const studentCount = classItem.students?.length || 0;
+                const capacity = classItem.capacity || 0;
+    
+                switch (studentsFilter) {
+                    case 'with_students':
+                        matchesStudentFilter = studentCount > 0;
+                        break;
+                    case 'without_students':
+                        matchesStudentFilter = studentCount === 0;
+                        break;
+                    case 'pending':
+                        // Una classe è pending se ha spazio per altri studenti
+                        matchesStudentFilter = studentCount < capacity;
+                        break;
+                }
+            }
+    
+            return matchesSchool && matchesYear && matchesSection && matchesStatus && matchesStudentFilter;
         });
     };
 
@@ -329,7 +420,7 @@ const ClassManagement = () => {
     }
 
     return (
-        <Box p={2}>
+        <Box sx={{ p: 2, height: 'calc(100vh - 100px)' }}> {/* Aumentato spazio verticale */}
             <Typography 
                 variant="h5" 
                 gutterBottom 
@@ -343,10 +434,12 @@ const ClassManagement = () => {
             </Typography>
 
             <Paper sx={{ 
-                width: '100%', 
+                width: '100%',
+                height: 'calc(100% - 50px)', // Adatta l'altezza in base allo spazio disponibile 
                 mb: 1, 
                 borderRadius: 2,
-                boxShadow: 2
+                boxShadow: 2,
+                flexDirection: 'column'
             }}>
                 <FilterToolbar 
                     schoolFilter={schoolFilter}
@@ -355,15 +448,19 @@ const ClassManagement = () => {
                     setYearFilter={setYearFilter}
                     sectionFilter={sectionFilter}
                     setSectionFilter={setSectionFilter}
+                    statusFilter={statusFilter}
+                    setStatusFilter={setStatusFilter}
+                    studentsFilter={studentsFilter}
+                    setStudentsFilter={setStudentsFilter}
                     handleApplyFilters={handleApplyFilters}
                     handleResetFilters={handleResetFilters}
                 />
 
                 {isAdmin ? (
-                    <Box sx={{ 
+                    <Box sx={{
+                        flexGrow: 1, 
                         width: '100%', 
-                        p: 1,
-                        height: '600px',
+                        height: 'calc(100% - 52px)', // Altezza calcolata sottraendo l'altezza della FilterToolbar
                         overflow: 'auto'
                     }}>
                         <DataGrid
@@ -371,23 +468,29 @@ const ClassManagement = () => {
                             columns={columns}
                             getRowId={(row) => row.classId}
                             pageSize={pageSize}
-                            rowsPerPageOptions={[10, 25, 50, 100]}
+                            rowsPerPageOptions={[25, 50, 100]}
                             onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
                             disableSelectionOnClick
                             density="compact"
                             sx={{
                                 '& .MuiDataGrid-cell': {
                                     fontSize: '0.875rem',
-                                    py: 0.5
+                                    py: 0.5,
+                                    borderColor: 'divider'
                                 },
                                 '& .MuiDataGrid-columnHeaders': {
                                     fontSize: '0.875rem',
                                     minHeight: '45px !important',
-                                    maxHeight: '45px !important'
+                                    maxHeight: '45px !important',
+                                    backgroundColor: '#f5f5f5',
+                                    borderBottom: '2px solid #e0e0e0'
                                 },
                                 '& .MuiDataGrid-row': {
-                                    minHeight: '35px !important',
-                                    maxHeight: '35px !important'
+                                    minHeight: '40px !important', // Aumentato leggermente
+                                    maxHeight: '40px !important',
+                                    '&:nth-of-type(odd)': {
+                                        backgroundColor: '#fafafa'
+                                    }
                                 },
                                 '& .MuiDataGrid-cell:focus': {
                                     outline: 'none'
@@ -395,23 +498,13 @@ const ClassManagement = () => {
                                 '& .MuiDataGrid-row:hover': {
                                     bgcolor: 'action.hover'
                                 },
-                                '& .MuiDataGrid-root': {
-                                    border: 'none',
-                                    overflowY: 'scroll',
-                                    scrollbarWidth: 'thin',
-                                    '&::-webkit-scrollbar': {
-                                        width: '6px'
-                                    },
-                                    '&::-webkit-scrollbar-track': {
-                                        background: '#f1f1f1'
-                                    },
-                                    '&::-webkit-scrollbar-thumb': {
-                                        background: '#888',
-                                        borderRadius: '3px'
-                                    },
-                                    '&::-webkit-scrollbar-thumb:hover': {
-                                        background: '#555'
-                                    }
+                                border: 'none',
+                                '& .MuiDataGrid-footerContainer': {
+                                    borderTop: '2px solid #e0e0e0',
+                                    backgroundColor: '#f5f5f5'
+                                },
+                                '& .MuiTablePagination-root': {
+                                    fontSize: '0.875rem'
                                 }
                             }}
                         />

@@ -22,13 +22,12 @@ import {
 import { useNotification } from '../../context/NotificationContext';
 import { useSchool } from '../../context/SchoolContext';
 import SchoolList from './SchoolList';
-import { Line } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';  // Rimosso Line, teniamo solo Bar
 import {
     Chart as ChartJS,
     CategoryScale,
     LinearScale,
-    PointElement,
-    LineElement,
+    BarElement,        // Aggiunto BarElement
     Title,
     Tooltip as ChartTooltip,
     Legend
@@ -38,8 +37,7 @@ import SchoolFilters from './schoolComponents/SchoolFilters';
 ChartJS.register(
     CategoryScale,
     LinearScale,
-    PointElement,
-    LineElement,
+    BarElement,         // Aggiunto BarElement
     Title,
     ChartTooltip,
     Legend
@@ -134,15 +132,28 @@ const SchoolManagement = () => {
                 data: [...new Set(schools?.map(s => s?.region))].map(region =>
                     schools?.filter(s => s?.region === region)?.length || 0
                 ),
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.1
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(153, 102, 255, 0.6)',
+                    'rgba(255, 159, 64, 0.6)',
+                    'rgba(255, 99, 132, 0.6)',
+                ],
+                borderColor: [
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(255, 99, 132, 1)',
+                ],
+                borderWidth: 1
             }
         ]
     };
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            {/* Header */}
+        <Container maxWidth={false} sx={{ mt: 4, mb: 4, px: 3 }}> 
+        {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                 <Typography variant="h4" component="h1">
                     Gestione Scuole
@@ -164,23 +175,23 @@ const SchoolManagement = () => {
             </Box>
 
             {/* Layout superiore con stats e grafico */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid container spacing={2} sx={{ mb: 2 }}>  {/* Ridotto spacing da 3 a 2 e mb da 3 a 2 */}
                 {/* Colonna sinistra con stats cards */}
                 <Grid item xs={12} md={4}>
-                    <Grid container spacing={2}>
+                    <Grid container spacing={1}>  {/* Ridotto spacing da 2 a 1 */}
                         {statsCards.map((card, index) => (
-                            <Grid item xs={6} md={12} key={index}>
+                            <Grid item xs={6} md={6} key={index}>  {/* Cambiato md da 12 a 6 per layout 2x2 */}
                                 <Card>
-                                    <CardContent sx={{ py: 1.5 }}>  {/* Ridotto il padding */}
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <CardContent sx={{ py: 1, px: 1.5 }}>  {/* Ridotto ulteriormente il padding */}
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}> {/* Ridotto gap da 2 a 1 */}
                                             <Box sx={{ color: card.color }}>
-                                                {React.cloneElement(card.icon, { fontSize: 'medium' })}  {/* Icona più piccola */}
+                                                {React.cloneElement(card.icon, { fontSize: 'small' })}  {/* Icona ancora più piccola */}
                                             </Box>
                                             <Box>
-                                                <Typography variant="body2" color="textSecondary">
+                                                <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.75rem' }}> {/* Testo più piccolo */}
                                                     {card.title}
                                                 </Typography>
-                                                <Typography variant="h6" sx={{ color: card.color }}>
+                                                <Typography variant="h6" sx={{ color: card.color, fontSize: '1.1rem' }}> {/* Numero più piccolo */}
                                                     {card.value}
                                                 </Typography>
                                             </Box>
@@ -194,19 +205,47 @@ const SchoolManagement = () => {
 
                 {/* Colonna destra con grafico */}
                 <Grid item xs={12} md={8}>
-                    <Paper sx={{ p: 2, height: '100%' }}>  {/* Ridotto il padding */}
-                        <Typography variant="h6" gutterBottom>
-                            Distribuzione Scuole per Regione
-                        </Typography>
-                        <Box sx={{ height: 280 }}>  {/* Altezza ridotta */}
-                            <Line
+                    <Paper sx={{ p: 1.5, height: '100%' }}>  {/* Ridotto padding da 2 a 1.5 */}
+                        
+                        <Box sx={{ 
+                             height: 200,
+                             width: '90%',        // Aggiunto width al 90%
+                             margin: '0 auto',    // Centra il grafico
+                             position: 'relative' // Assicura il corretto posizionamento
+                        }}>  {/* Ridotto altezza da 280 a 200 */}
+                            <Bar
                                 data={chartData}
                                 options={{
                                     responsive: true,
                                     maintainAspectRatio: false,
                                     plugins: {
                                         legend: {
-                                            position: 'top'
+                                            position: 'top',
+                                            labels: {
+                                                boxWidth: 10,  // Legenda più piccola
+                                                padding: 8,    // Padding più piccolo
+                                                font: {
+                                                    size: 11   // Font più piccolo
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: {
+                                                stepSize: 1,
+                                                font: {
+                                                    size: 10  // Font assi più piccolo
+                                                }
+                                            }
+                                        },
+                                        x: {
+                                            ticks: {
+                                                font: {
+                                                    size: 10  // Font assi più piccolo
+                                                }
+                                            }
                                         }
                                     }
                                 }}

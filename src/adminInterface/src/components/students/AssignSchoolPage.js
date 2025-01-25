@@ -215,7 +215,7 @@ const AssignSchoolPage = () => {
                     </FormControl>
                 </Stack>
 
-                <Box sx={{ height: 400, width: '100%' }}>
+                <Box sx={{ height: 600, width: '100%' }}>
                 {loading ? (
                     <CircularProgress />
                 ) : error ? (
@@ -224,8 +224,12 @@ const AssignSchoolPage = () => {
                     <DataGrid
                         rows={filteredStudents}
                         columns={columns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5, 10, 20]}
+                        initialState={{
+                            pagination: {
+                                paginationModel: { pageSize: 25, page: 0 },
+                            },
+                        }}
+                        pageSizeOptions={[25, 50, 100]}  // Opzioni per il numero di righe per pagina
                         checkboxSelection
                         disableSelectionOnClick
                         getRowId={(row) => row.id || row._id}
