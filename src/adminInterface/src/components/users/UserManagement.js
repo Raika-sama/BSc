@@ -4,7 +4,6 @@ import {
     Box, 
     Paper, 
     Grid,
-    Container,
     Typography,
     IconButton,
     Button,
@@ -12,40 +11,24 @@ import {
     CardContent,
     Chip,
     Stack,
+    Avatar
 } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-material.css';
 import {
     Edit as EditIcon,
     Delete as DeleteIcon,
     PersonAdd as PersonAddIcon,
     FileDownload as FileDownloadIcon,
 } from '@mui/icons-material';
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend
-} from 'chart.js';
 import SearchInput from '../common/SearchInput';
 import UserForm from './UserForm';
 import ConfirmDialog from '../ConfirmDialog';
 import { useUser } from '../../context/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend
-);
-
+// Componente StatCard
 const StatCard = ({ title, value, color }) => (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -84,6 +67,7 @@ const UserManagement = () => {
     const [pageSize, setPageSize] = useState(10);
     const [page, setPage] = useState(0);
     const [search, setSearch] = useState('');
+    const [gridApi, setGridApi] = useState(null);
 
     useEffect(() => {
         loadUsers();
@@ -97,7 +81,7 @@ const UserManagement = () => {
         }
     };
 
-     const handleSaveUser = async (userData) => {
+    const handleSaveUser = async (userData) => {
         try {
             if (selectedUser) {
                 await updateUser(selectedUser._id, {...userData, _id: selectedUser._id});
@@ -142,74 +126,84 @@ const UserManagement = () => {
         setSelectedUser(null);
     };
 
-    const columns = [
+    // Configurazione colonne AG Grid
+    const columnDefs = [
         {
             field: 'avatar',
             headerName: '',
-            width: 60,
-            renderCell: (params) => (
-                <motion.div whileHover={{ scale: 1.1 }}>
-                    <Box className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                        {params.row?.firstName?.[0] || 'U'}
-                    </Box>
-                </motion.div>
-            )
+            width: 80,
+            cellRenderer: params => (
+                <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+                    {params.data?.firstName?.[0] || 'U'}
+                </Avatar>
+            ),
+            sortable: false,
+            filter: false
         },
         {
             field: 'firstName',
             headerName: 'Nome',
-            width: 130
+            flex: 1,
+            filter: 'agTextColumnFilter'
         },
         {
             field: 'lastName',
             headerName: 'Cognome',
-            width: 130
+            flex: 1,
+            filter: 'agTextColumnFilter'
         },
         {
             field: 'email',
             headerName: 'Email',
-            width: 220
+            flex: 1.5,
+            filter: 'agTextColumnFilter'
         },
         {
             field: 'role',
             headerName: 'Ruolo',
-            width: 150,
-            renderCell: (params) => (
+            flex: 1,
+            cellRenderer: params => (
                 <Chip
                     label={params.value === 'admin' ? 'Amministratore' : 'Insegnante'}
                     color={params.value === 'admin' ? 'primary' : 'default'}
                     size="small"
                 />
-            )
+            ),
+            filter: 'agSetColumnFilter'
         },
         {
             field: 'actions',
             headerName: 'Azioni',
             width: 120,
-            renderCell: (params) => (
+            cellRenderer: params => (
                 <Stack direction="row" spacing={1}>
-                    <motion.div whileHover={{ scale: 1.1 }}>
-                        <IconButton 
-                            size="small" 
-                            color="primary"
-                            onClick={() => handleEditUser(params.row)}
-                        >
-                            <EditIcon fontSize="small" />
-                        </IconButton>
-                    </motion.div>
-                    <motion.div whileHover={{ scale: 1.1 }}>
-                        <IconButton 
-                            size="small" 
-                            color="error"
-                            onClick={() => handleDeleteClick(params.row)}
-                        >
-                            <DeleteIcon fontSize="small" />
-                        </IconButton>
-                    </motion.div>
+                    <IconButton 
+                        size="small" 
+                        color="primary"
+                        onClick={() => handleEditUser(params.data)}
+                    >
+                        <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton 
+                        size="small" 
+                        color="error"
+                        onClick={() => handleDeleteClick(params.data)}
+                    >
+                        <DeleteIcon fontSize="small" />
+                    </IconButton>
                 </Stack>
-            )
+            ),
+            sortable: false,
+            filter: false
         }
     ];
+
+    const defaultColDef = {
+        sortable: true,
+        filter: true,
+        resizable: true,
+        floatingFilter: true
+    };
 
     const statsCards = [
         { title: 'Utenti Totali', value: totalUsers || 0, color: 'primary.main' },
@@ -218,11 +212,13 @@ const UserManagement = () => {
         { title: 'Utenti Attivi', value: users?.filter(u => u?.active)?.length || 0, color: 'info.main' }
     ];
 
+    const onGridReady = params => {
+        setGridApi(params.api);
+    };
+
     if (error) {
         return (
-            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-                <Typography color="error" align="center">{error}</Typography>
-            </Container>
+            <Typography color="error" align="center">{error}</Typography>
         );
     }
 
@@ -306,30 +302,24 @@ const UserManagement = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
             >
-                <Paper sx={{ height: 400, width: '100%' }}>
-                    <DataGrid
-                        rows={Array.isArray(users) ? users
-                            .filter(user => user && user._id)
-                            .map(user => ({
-                                id: user._id,
-                                _id: user._id,
-                                firstName: user?.firstName || '',
-                                lastName: user?.lastName || '',
-                                email: user?.email || '',
-                                role: user?.role || '',
-                                active: user?.active || false
-                            })) : []}
-                        columns={columns}
-                        pageSize={pageSize}
-                        onPageSizeChange={setPageSize}
-                        rowsPerPageOptions={[5, 10, 20]}
-                        disableSelectionOnClick
-                        loading={loading || !Array.isArray(users)}
-                        page={page}
-                        onPageChange={setPage}
-                        rowCount={totalUsers || 0}
-                        paginationMode="server"
-                    />
+                <Paper sx={{ width: '100%', height: '600px' }}>
+                    <div className="ag-theme-material" style={{ height: '100%', width: '100%' }}>
+                        <AgGridReact
+                            columnDefs={columnDefs}
+                            rowData={users}
+                            defaultColDef={defaultColDef}
+                            pagination={true}
+                            paginationPageSize={pageSize}
+                            onGridReady={onGridReady}
+                            rowSelection="multiple"
+                            animateRows={true}
+                            suppressCellFocus={true}
+                            rowModelType="clientSide"
+                            enableCellTextSelection={true}
+                            suppressRowClickSelection={true}
+                            loading={loading}
+                        />
+                    </div>
                 </Paper>
             </motion.div>
 
