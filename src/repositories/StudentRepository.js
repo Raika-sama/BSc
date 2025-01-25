@@ -98,23 +98,32 @@ class StudentRepository extends BaseRepository {
 
 // nuovo metodo specifico con una query diversa dove cerchiamo schoolId: { $exists: false } invece di usare schoolId come filtro.    
 
-    async findUnassignedToSchoolStudents() {
-        try {
-            const query = {
-                schoolId: { $exists: false },  // studenti senza scuola
-                isActive: true
-            };
-    
-            return await this.findWithDetails(query, {
-                sort: { createdAt: -1 }
-            });
-        } catch (error) {
-            logger.error('Error in findUnassignedToSchoolStudents:', {
-                error
-            });
-            throw error;
-        }
+async findUnassignedToSchoolStudents() {
+    try {
+        logger.debug('Cercando studenti non assegnati a scuole...');
+        
+        const query = {
+            status: 'pending',
+            isActive: true
+        };
+
+        logger.debug('Query di ricerca:', query);
+        
+        const students = await this.findWithDetails(query, {
+            sort: { createdAt: -1 }
+        });
+
+        logger.debug(`Trovati ${students.length} studenti non assegnati`);
+        
+        return students;
+    } catch (error) {
+        logger.error('Error in findUnassignedToSchoolStudents:', {
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
     }
+}
     
     async batchAssignToClass(studentIds, { classId, academicYear }) {
         const session = await mongoose.startSession();

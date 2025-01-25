@@ -560,21 +560,38 @@ const fetchUnassignedToSchoolStudents = async () => {
     try {
         dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
         
-        console.log('Chiamata API iniziata'); // Nuovo log
+        console.log('Chiamata API iniziata');
         const response = await axiosInstance.get('/students/unassigned-to-school');
-        console.log('Risposta API ricevuta:', response); // Nuovo log
+        console.log('Risposta API completa:', response.data);
 
         if (response.data.status === 'success') {
-            console.log('Dati studenti ricevuti:', response.data.data.students); // Nuovo log
-            dispatch({
-                type: STUDENT_ACTIONS.SET_UNASSIGNED_TO_SCHOOL_STUDENTS,
-                payload: response.data.data.students
+            // Aggiungiamo più controlli sulla struttura della risposta
+            const students = response.data.data?.students || [];
+            console.log('Struttura risposta:', {
+                status: response.data.status,
+                hasData: !!response.data.data,
+                studentsArray: students,
+                studentsCount: students.length
             });
-            return response.data.data.students;
+
+            // Se non ci sono studenti, non aggiorniamo lo stato
+            if (students.length === 0) {
+                console.log('Nessuno studente da assegnare trovato');
+                return [];
+            }
+
+            dispatch({
+                type: STUDENT_ACTIONS.SET_STUDENTS,
+                payload: {
+                    students: students,
+                    total: students.length
+                }
+            });
+            return students;
         }
     } catch (error) {
-        console.error('Errore dettagliato:', error); // Nuovo log
-        console.error('Response error:', error.response); // Nuovo log
+        console.error('Errore dettagliato:', error);
+        console.error('Response error:', error.response);
         const errorMessage = error.response?.data?.error?.message || 
                            'Errore nel caricamento degli studenti';
         dispatch({
@@ -583,6 +600,8 @@ const fetchUnassignedToSchoolStudents = async () => {
         });
         showNotification(errorMessage, 'error');
         return [];
+    } finally {
+        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: false });
     }
 };
 

@@ -46,40 +46,48 @@ const AssignSchoolPage = () => {
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [filteredStudents, setFilteredStudents] = useState([]);
 
-    // Primo useEffect per caricare i dati iniziali
+    // Primo useEffect per il caricamento
     useEffect(() => {
         const loadData = async () => {
             try {
-                await fetchUnassignedToSchoolStudents();
-                await fetchSchools();
+                console.log('Inizio caricamento dati iniziale');
+                const result = await fetchUnassignedToSchoolStudents();
+                console.log('Risultato caricamento:', result);
+                
+                if (!result || result.length === 0) {
+                    // Se non ci sono studenti, mostra una notifica
+                    console.log('Nessuno studente da assegnare trovato');
+                }
             } catch (error) {
-                console.error('Error loading initial data:', error);
+                console.error('Errore nel caricamento dati:', error);
             }
         };
         
         loadData();
+        fetchSchools();
     }, []);
 
-    // Secondo useEffect per il filtraggio
+    // Effetto per il filtraggio
     useEffect(() => {
-        if (students && Array.isArray(students)) {
-            // Normalizza gli studenti aggiungendo un campo id se non presente
-            const normalizedStudents = students.map(student => ({
-                ...student,
-                // Usa _id come fallback se id non è presente
-                id: student.id || student._id
-            }));
+        console.log('Effetto filtraggio attivato:', { studentsLength: students?.length });
+        
+        if (students && Array.isArray(students) && students.length > 0) {
+            const filtered = searchTerm.trim() === ''
+                ? [...students]
+                : students.filter(student => 
+                    student?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    student?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    student?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                );
             
-            const filtered = normalizedStudents.filter(student => 
-                student.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                student.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                student.email?.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            
-            console.log('Normalized and filtered students:', filtered);
+            console.log(`Filtrati ${filtered.length} studenti da ${students.length} totali`);
             setFilteredStudents(filtered);
+        } else {
+            console.log('Nessuno studente disponibile per il filtraggio');
+            setFilteredStudents([]);
         }
     }, [students, searchTerm]);
+
 
     const columns = [
         {
@@ -208,7 +216,11 @@ const AssignSchoolPage = () => {
                 </Stack>
 
                 <Box sx={{ height: 400, width: '100%' }}>
-                {filteredStudents && filteredStudents.length > 0 ? (
+                {loading ? (
+                    <CircularProgress />
+                ) : error ? (
+                    <Alert severity="error">{error}</Alert>
+                ) : filteredStudents.length > 0 ? (
                     <DataGrid
                         rows={filteredStudents}
                         columns={columns}
@@ -216,7 +228,6 @@ const AssignSchoolPage = () => {
                         rowsPerPageOptions={[5, 10, 20]}
                         checkboxSelection
                         disableSelectionOnClick
-                        loading={loading}
                         getRowId={(row) => row.id || row._id}
                         selectionModel={selectedStudents}
                         onSelectionModelChange={(newSelection) => {
@@ -225,9 +236,13 @@ const AssignSchoolPage = () => {
                         hideFooterSelectedRowCount={false}
                     />
                 ) : (
-                    <Typography>No students found</Typography>
+                    <Alert severity="info">
+                        {searchTerm.trim() !== '' 
+                            ? 'Nessuno studente trovato con i criteri di ricerca specificati'
+                            : 'Non ci sono studenti da assegnare a una scuola'}
+                    </Alert>
                 )}
-            </Box>
+                </Box>
 
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                     <Button
