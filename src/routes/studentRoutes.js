@@ -77,6 +77,11 @@ router.get('/unassigned-to-school',
     studentController.batchAssignToClass
     );
 
+    router.post('/batch-assign-to-school',
+        restrictTo('admin'),
+        studentController.batchAssignToSchool
+    );
+
 
 
 

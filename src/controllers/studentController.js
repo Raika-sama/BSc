@@ -442,6 +442,12 @@ class StudentController extends BaseController {
 async batchAssignToSchool(req, res, next) {
     try {
         const { studentIds, schoolId } = req.body;
+        
+        console.log('Attempting to assign students:', {
+            studentIds,
+            schoolId,
+            user: req.user?.id
+        });
 
         // 1. Validazione input
         if (!studentIds?.length || !schoolId) {
@@ -464,6 +470,33 @@ async batchAssignToSchool(req, res, next) {
                 'Non autorizzato ad assegnare studenti'
             );
         }
+
+// Debug: verifica lo studente direttamente
+const debugStudent = await this.model.findById(studentIds[0]);
+console.log('Debug - Stato attuale dello studente:', {
+    id: debugStudent?._id,
+    exists: !!debugStudent,
+    schoolId: debugStudent?.schoolId,
+    status: debugStudent?.status,
+    fullData: debugStudent
+});
+
+// 2. Verifica che gli studenti esistano
+const students = await this.model.find({
+    _id: { $in: studentIds }  // Rimuoviamo temporaneamente il filtro schoolId per debug
+}).session(session);
+
+console.log('Debug - Query risultati:', {
+    queryUsed: {
+        _id: { $in: studentIds }
+    },
+    studentsFound: students.length,
+    studentDetails: students.map(s => ({
+        id: s._id,
+        schoolId: s.schoolId,
+        status: s.status
+    }))
+});
 
         // 3. Chiama il repository per l'assegnazione
         const result = await this.repository.batchAssignToSchool(
