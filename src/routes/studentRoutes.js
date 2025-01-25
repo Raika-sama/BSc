@@ -59,7 +59,11 @@ router.get('/class/:classId',
     studentController.getStudentsByClass
 );
 
-
+// Aggiungere questa rotta prima delle route base CRUD
+router.get('/unassigned-to-school',
+    restrictTo('admin'),
+    studentController.getUnassignedToSchoolStudents
+);
 
 // Nuove route CRUD per gestione studenti non assegnati
     router.get('/unassigned/:schoolId',

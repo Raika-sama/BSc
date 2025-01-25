@@ -645,6 +645,39 @@ async findWithDetails(id) {
                 );
             }
         }
+        
+        async deactivateClassesBySection(schoolId, sectionName, session) {
+            try {
+                // 1. Trova tutte le classi della sezione
+                const classes = await this.model.find({
+                    schoolId,
+                    section: sectionName,
+                    isActive: true
+                }).session(session);
+        
+                // 2. Aggiorna lo stato delle classi
+                for (const classDoc of classes) {
+                    classDoc.isActive = false;
+                    classDoc.deactivatedAt = new Date();
+                    classDoc.students = classDoc.students.map(student => ({
+                        ...student,
+                        status: 'inactive',
+                        deactivatedAt: new Date()
+                    }));
+                    
+                    await classDoc.save({ session });
+                }
+        
+                return classes;
+            } catch (error) {
+                logger.error('Errore nella disattivazione delle classi:', {
+                    error,
+                    schoolId,
+                    sectionName
+                });
+                throw error;
+            }
+        }
 
 }
 

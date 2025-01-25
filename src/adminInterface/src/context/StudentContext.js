@@ -91,7 +91,9 @@ const STUDENT_ACTIONS = {
     UPDATE_STUDENT: 'UPDATE_STUDENT',
     DELETE_STUDENT: 'DELETE_STUDENT',
     SET_UNASSIGNED_STUDENTS: 'SET_UNASSIGNED_STUDENTS',
-    BATCH_ASSIGN_STUDENTS: 'BATCH_ASSIGN_STUDENTS'
+    BATCH_ASSIGN_STUDENTS: 'BATCH_ASSIGN_STUDENTS',
+    SET_UNASSIGNED_TO_SCHOOL_STUDENTS: 'SET_UNASSIGNED_TO_SCHOOL_STUDENTS',
+    BATCH_ASSIGN_TO_SCHOOL: 'BATCH_ASSIGN_TO_SCHOOL'
 };
 
 // Stato iniziale
@@ -198,6 +200,22 @@ const studentReducer = (state, action) => {
             };
         default:
             return state;
+
+            case STUDENT_ACTIONS.SET_UNASSIGNED_TO_SCHOOL_STUDENTS:
+                return {
+                    ...state,
+                    students: action.payload.map(student => normalizeStudent(student)),
+                    loading: false
+                };
+            
+            case STUDENT_ACTIONS.BATCH_ASSIGN_TO_SCHOOL:
+                return {
+                    ...state,
+                    students: state.students.filter(
+                        student => !action.payload.studentIds.includes(student.id)
+                    ),
+                    loading: false
+                };
     }
 };
 
@@ -537,6 +555,76 @@ const createStudent = async (studentData) => {
         }
     };
 
+// Recupera studenti senza scuola
+const fetchUnassignedToSchoolStudents = async () => {
+    try {
+        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+        
+        const response = await axiosInstance.get('/students/unassigned-to-school');
+        
+        if (response.data.status === 'success') {
+            dispatch({
+                type: STUDENT_ACTIONS.SET_UNASSIGNED_TO_SCHOOL_STUDENTS,
+                payload: response.data.data.students
+            });
+            return response.data.data.students;
+        }
+    } catch (error) {
+        const errorMessage = error.response?.data?.error?.message || 
+                           'Errore nel caricamento degli studenti';
+        dispatch({
+            type: STUDENT_ACTIONS.SET_ERROR,
+            payload: errorMessage
+        });
+        showNotification(errorMessage, 'error');
+        return [];
+    }
+};
+
+// Assegna studenti alla scuola
+const batchAssignToSchool = async (studentIds, schoolId) => {
+    try {
+        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+        
+        // Modifica il path per allinearlo con il backend
+        const response = await axiosInstance.post('/students/batch-assign-to-school', {
+            studentIds,
+            schoolId
+        });
+
+        if (response.data.status === 'success') {
+            dispatch({
+                type: STUDENT_ACTIONS.BATCH_ASSIGN_TO_SCHOOL,
+                payload: {
+                    studentIds,
+                    schoolId,
+                    modifiedCount: response.data.data.modifiedCount,
+                    schoolName: response.data.data.schoolName
+                }
+            });
+
+            showNotification(
+                `${response.data.data.modifiedCount} studenti assegnati alla scuola ${response.data.data.schoolName}`,
+                'success'
+            );
+            
+            return response.data.data;
+        }
+    } catch (error) {
+        const errorMessage = error.response?.data?.error?.message || 
+                           'Errore nell\'assegnazione degli studenti';
+        dispatch({
+            type: STUDENT_ACTIONS.SET_ERROR,
+            payload: errorMessage
+        });
+        showNotification(errorMessage, 'error');
+        throw error;
+    } finally {
+        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: false });  // Aggiungiamo questo per sicurezza
+    }
+};
+
+
     // Reset errori
     const clearError = () => {
         dispatch({ type: STUDENT_ACTIONS.CLEAR_ERROR });
@@ -557,7 +645,9 @@ const createStudent = async (studentData) => {
             searchStudents,
             clearError,
             fetchUnassignedStudents,
-            batchAssignStudents
+            batchAssignStudents,
+            fetchUnassignedToSchoolStudents,
+            batchAssignToSchool
         }}>
             {children}
         </StudentContext.Provider>

@@ -60,6 +60,7 @@ class StudentRepository extends BaseRepository {
         }
     }
 
+    
      /**
      * Trova studenti non assegnati ad una classe per una specifica scuola
      * @param {string} schoolId - ID della scuola
@@ -90,6 +91,26 @@ class StudentRepository extends BaseRepository {
                 error,
                 schoolId,
                 options
+            });
+            throw error;
+        }
+    }
+
+// nuovo metodo specifico con una query diversa dove cerchiamo schoolId: { $exists: false } invece di usare schoolId come filtro.    
+
+    async findUnassignedToSchoolStudents() {
+        try {
+            const query = {
+                schoolId: { $exists: false },  // studenti senza scuola
+                isActive: true
+            };
+    
+            return await this.findWithDetails(query, {
+                sort: { createdAt: -1 }
+            });
+        } catch (error) {
+            logger.error('Error in findUnassignedToSchoolStudents:', {
+                error
             });
             throw error;
         }
@@ -200,6 +221,76 @@ class StudentRepository extends BaseRepository {
             session.endSession();
         }
     }
+
+    // Aggiungi questo nuovo metodo alla classe StudentRepository
+
+async batchAssignToSchool(studentIds, schoolId) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        // 1. Verifica che la scuola esista
+        const school = await mongoose.model('School').findById(schoolId).session(session);
+        if (!school) {
+            throw createError(
+                ErrorTypes.VALIDATION.NOT_FOUND,
+                'Scuola non trovata'
+            );
+        }
+
+        // 2. Verifica che gli studenti esistano e non abbiano già una scuola
+        const students = await this.model.find({
+            _id: { $in: studentIds },
+            schoolId: { $exists: false }  // Solo studenti senza scuola
+        }).session(session);
+
+        if (students.length !== studentIds.length) {
+            throw createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'Alcuni studenti selezionati non sono validi o hanno già una scuola assegnata'
+            );
+        }
+
+        // 3. Aggiorna gli studenti
+        const updateResult = await this.model.updateMany(
+            { _id: { $in: studentIds } },
+            {
+                $set: {
+                    schoolId: schoolId,
+                    status: 'pending',
+                    needsClassAssignment: true,
+                    lastSchoolAssignmentDate: new Date()
+                }
+            },
+            { session }
+        );
+
+        // 4. Log dell'operazione
+        logger.info('Students assigned to school:', {
+            schoolId,
+            studentsCount: updateResult.modifiedCount,
+            studentIds
+        });
+
+        await session.commitTransaction();
+
+        return {
+            success: true,
+            modifiedCount: updateResult.modifiedCount,
+            schoolName: school.name
+        };
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Error in batchAssignToSchool:', {
+            error,
+            studentIds,
+            schoolId
+        });
+        throw error;
+    } finally {
+        session.endSession();
+    }
+}
 
     /**
      * Trova studenti per classe con controllo permessi

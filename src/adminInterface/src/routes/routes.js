@@ -14,6 +14,7 @@ import StudentTestManagement from '../components/students/StudentTestManagement'
 import Profile from '../components/profile/Profile'; // Aggiungi questo import
 import PersonalTest from '../components/profile/PersonalTest';  // Aggiungi questo import
 import SectionManagement from '../components/school/schoolComponents/SectionManagement';
+import AssignSchoolPage from '../components/students/AssignSchoolPage';
 
 
 // Importa le icone da Material-UI
@@ -117,6 +118,13 @@ export const adminRoutes = [
         element: StudentList,
         title: 'Gestione Studenti',
         icon: PersonIcon
+    },
+    {
+        path: 'students/assign-school',    // viene dopo 'students'
+        element: AssignSchoolPage,
+        title: 'Assegnazione Studenti',
+        icon: PersonIcon,
+        showInMenu: false  // Non lo mostriamo nel menu laterale
     },
     {
         path: 'students/:studentId/tests',    // Aggiungi questa route

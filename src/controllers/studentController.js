@@ -17,6 +17,8 @@ class StudentController extends BaseController {
         this.searchStudents = this.searchStudents.bind(this);
         this.getUnassignedStudents = this.getUnassignedStudents.bind(this); // Aggiungi questa riga
         this.batchAssignToClass = this.batchAssignToClass.bind(this); // Aggiungi questo!
+        this.batchAssignToSchool = this.batchAssignToSchool.bind(this);
+        this.getUnassignedToSchoolStudents = this.getUnassignedToSchoolStudents.bind(this);
 
     }
 
@@ -338,6 +340,32 @@ class StudentController extends BaseController {
             next(error);
         }
     }
+
+    async getUnassignedToSchoolStudents(req, res, next) {
+        try {
+            logger.debug('Getting students without school:', { 
+                user: req.user?.id
+            });
+    
+            // Verifica permessi
+            if (req.user.role !== 'admin') {
+                throw createError(
+                    ErrorTypes.AUTH.FORBIDDEN,
+                    'Non autorizzato ad accedere a questa risorsa'
+                );
+            }
+    
+            const students = await this.repository.findUnassignedToSchoolStudents();
+            
+            this.sendResponse(res, { 
+                students,
+                count: students.length
+            });
+        } catch (error) {
+            logger.error('Error getting unassigned to school students:', error);
+            next(error);
+        }
+    }
     
     async batchAssignToClass(req, res, next) {
         try {
@@ -408,6 +436,71 @@ class StudentController extends BaseController {
             }
         }
     }
+
+    // Aggiungi questo metodo alla classe StudentController
+
+async batchAssignToSchool(req, res, next) {
+    try {
+        const { studentIds, schoolId } = req.body;
+
+        // 1. Validazione input
+        if (!studentIds?.length || !schoolId) {
+            throw createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'Dati mancanti per l\'assegnazione'
+            );
+        }
+
+        logger.debug('Starting batch school assignment:', {
+            studentCount: studentIds.length,
+            schoolId,
+            user: req.user?.id
+        });
+
+        // 2. Verifica permessi
+        if (req.user.role !== 'admin') {
+            throw createError(
+                ErrorTypes.AUTH.FORBIDDEN,
+                'Non autorizzato ad assegnare studenti'
+            );
+        }
+
+        // 3. Chiama il repository per l'assegnazione
+        const result = await this.repository.batchAssignToSchool(
+            studentIds,
+            schoolId
+        );
+
+        // 4. Log del successo
+        logger.info('Batch school assignment completed:', {
+            modifiedCount: result.modifiedCount,
+            schoolName: result.schoolName,
+            user: req.user?.id
+        });
+
+        // 5. Invia risposta
+        this.sendResponse(res, {
+            status: 'success',
+            message: `${result.modifiedCount} studenti assegnati alla scuola ${result.schoolName}`,
+            data: {
+                modifiedCount: result.modifiedCount,
+                schoolName: result.schoolName
+            }
+        });
+
+    } catch (error) {
+        logger.error('Error in batch assigning students to school:', {
+            error,
+            user: req.user?.id
+        });
+
+        next(createError(
+            error.code || ErrorTypes.SYSTEM.OPERATION_FAILED,
+            error.message || 'Errore nell\'assegnazione degli studenti alla scuola',
+            { originalError: error.message }
+        ));
+    }
+}
 }
 
 module.exports = new StudentController();

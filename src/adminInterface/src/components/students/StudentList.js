@@ -27,6 +27,7 @@ import StudentForm from './StudentForm';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import StudentBulkImportForm from './StudentBulkImportForm';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import SchoolIcon from '@mui/icons-material/School';
 
 
 const StudentList = () => {
@@ -473,6 +474,22 @@ const columns = [
                         flexDirection={{ xs: 'column', sm: 'row' }}
                         width={{ xs: '100%', sm: 'auto' }}
                     >
+                        <Button
+                            variant="outlined"
+                            startIcon={<SchoolIcon />}  // Importa SchoolIcon da @mui/icons-material
+                            onClick={() => navigate('/admin/students/assign-school')}
+                            sx={{
+                                textTransform: 'none',
+                                borderColor: '#e0e0e0',
+                                color: '#616161',
+                                '&:hover': {
+                                    borderColor: '#bdbdbd',
+                                    backgroundColor: '#f5f5f5'
+                                }
+                            }}
+                        >
+                            Assegna a Scuola
+                        </Button>
                         <Button
                             variant="outlined"
                             startIcon={<CloudUploadIcon />}

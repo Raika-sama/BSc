@@ -10,6 +10,7 @@ const repositories = require('../repositories');
 const schoolRepository = repositories.school;
 const classRepository = repositories.class;
 const studentRepository = repositories.student;
+const sectionService = require('../services/SectionService');
 
 class SchoolController extends BaseController {
     constructor() {
