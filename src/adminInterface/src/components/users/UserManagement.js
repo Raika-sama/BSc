@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Box, 
-    Paper, 
+import {
+    Box,
+    Paper,
     Grid,
     Typography,
     IconButton,
@@ -11,9 +11,10 @@ import {
     CardContent,
     Chip,
     Stack,
-    Avatar
+    Avatar,
 } from '@mui/material';
 import { AgGridReact } from 'ag-grid-react';
+import { ClientSideRowModelModule } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-material.css';
 import {
@@ -50,15 +51,15 @@ const StatCard = ({ title, value, color }) => (
 );
 
 const UserManagement = () => {
-    const { 
-        users, 
-        loading, 
+    const {
+        users,
+        loading,
         error,
-        totalUsers, 
-        getUsers, 
-        createUser, 
-        updateUser, 
-        deleteUser 
+        totalUsers,
+        getUsers,
+        createUser,
+        updateUser,
+        deleteUser,
     } = useUser();
     const { showNotification } = useNotification();
     const [selectedUser, setSelectedUser] = useState(null);
@@ -84,7 +85,7 @@ const UserManagement = () => {
     const handleSaveUser = async (userData) => {
         try {
             if (selectedUser) {
-                await updateUser(selectedUser._id, {...userData, _id: selectedUser._id});
+                await updateUser(selectedUser._id, { ...userData, _id: selectedUser._id });
             } else {
                 await createUser(userData);
             }
@@ -126,7 +127,6 @@ const UserManagement = () => {
         setSelectedUser(null);
     };
 
-    // Configurazione colonne AG Grid
     const columnDefs = [
         {
             field: 'avatar',
@@ -138,25 +138,25 @@ const UserManagement = () => {
                 </Avatar>
             ),
             sortable: false,
-            filter: false
+            filter: false,
         },
         {
             field: 'firstName',
             headerName: 'Nome',
             flex: 1,
-            filter: 'agTextColumnFilter'
+            filter: 'agTextColumnFilter',
         },
         {
             field: 'lastName',
             headerName: 'Cognome',
             flex: 1,
-            filter: 'agTextColumnFilter'
+            filter: 'agTextColumnFilter',
         },
         {
             field: 'email',
             headerName: 'Email',
             flex: 1.5,
-            filter: 'agTextColumnFilter'
+            filter: 'agTextColumnFilter',
         },
         {
             field: 'role',
@@ -169,7 +169,7 @@ const UserManagement = () => {
                     size="small"
                 />
             ),
-            filter: 'agSetColumnFilter'
+            filter: 'agSetColumnFilter',
         },
         {
             field: 'actions',
@@ -177,15 +177,15 @@ const UserManagement = () => {
             width: 120,
             cellRenderer: params => (
                 <Stack direction="row" spacing={1}>
-                    <IconButton 
-                        size="small" 
+                    <IconButton
+                        size="small"
                         color="primary"
                         onClick={() => handleEditUser(params.data)}
                     >
                         <EditIcon fontSize="small" />
                     </IconButton>
-                    <IconButton 
-                        size="small" 
+                    <IconButton
+                        size="small"
                         color="error"
                         onClick={() => handleDeleteClick(params.data)}
                     >
@@ -194,22 +194,23 @@ const UserManagement = () => {
                 </Stack>
             ),
             sortable: false,
-            filter: false
-        }
+            filter: false,
+        },
     ];
 
     const defaultColDef = {
         sortable: true,
         filter: true,
         resizable: true,
-        floatingFilter: true
+        floatingFilter: true,
+        cellClass: 'custom-cell-style',
     };
 
     const statsCards = [
         { title: 'Utenti Totali', value: totalUsers || 0, color: 'primary.main' },
         { title: 'Amministratori', value: users?.filter(u => u?.role === 'admin')?.length || 0, color: 'secondary.main' },
         { title: 'Insegnanti', value: users?.filter(u => u?.role === 'teacher')?.length || 0, color: 'success.main' },
-        { title: 'Utenti Attivi', value: users?.filter(u => u?.active)?.length || 0, color: 'info.main' }
+        { title: 'Utenti Attivi', value: users?.filter(u => u?.active)?.length || 0, color: 'info.main' },
     ];
 
     const onGridReady = params => {
@@ -287,7 +288,7 @@ const UserManagement = () => {
                 transition={{ delay: 0.4 }}
             >
                 <Box sx={{ mb: 3 }}>
-                    <SearchInput 
+                    <SearchInput
                         value={search}
                         onChange={setSearch}
                         disabled={loading}
@@ -305,6 +306,7 @@ const UserManagement = () => {
                 <Paper sx={{ width: '100%', height: '600px' }}>
                     <div className="ag-theme-material" style={{ height: '100%', width: '100%' }}>
                         <AgGridReact
+                            modules={[ClientSideRowModelModule]}
                             columnDefs={columnDefs}
                             rowData={users}
                             defaultColDef={defaultColDef}
@@ -317,7 +319,7 @@ const UserManagement = () => {
                             rowModelType="clientSide"
                             enableCellTextSelection={true}
                             suppressRowClickSelection={true}
-                            loading={loading}
+                            rowHeight={60} // Aumenta l'altezza delle righe
                         />
                     </div>
                 </Paper>
@@ -331,7 +333,7 @@ const UserManagement = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
                     >
-                        <UserForm 
+                        <UserForm
                             open={isFormOpen}
                             onClose={() => setIsFormOpen(false)}
                             onSave={handleSaveUser}

@@ -15,6 +15,7 @@ import { Class } from '@mui/icons-material';
 import { ClassProvider } from './context/ClassContext';
 import { StudentProvider } from './context/StudentContext'; // Aggiungi questo import
 import PublicCSI from './components/engines/CSI/publicCSI';
+import './styles.css';
 
 
 setupAxiosInterceptors();

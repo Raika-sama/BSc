@@ -26,21 +26,21 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import QuizIcon from '@mui/icons-material/Quiz';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
-// Componente FilterToolbar separato
-const FilterToolbar = ({ 
-    schoolFilter, 
-    setSchoolFilter, 
-    yearFilter, 
-    setYearFilter, 
-    sectionFilter, 
+const FilterToolbar = ({
+    schoolFilter,
+    setSchoolFilter,
+    yearFilter,
+    setYearFilter,
+    sectionFilter,
     setSectionFilter,
-    statusFilter,        // Nuovo
-    setStatusFilter,     // Nuovo
-    studentsFilter,      // Nuovo
-    setStudentsFilter,   // Nuovo
+    statusFilter,
+    setStatusFilter,
+    studentsFilter,
+    setStudentsFilter,
     handleApplyFilters,
-    handleResetFilters 
+    handleResetFilters
 }) => {
     const smallButtonStyle = {
         padding: '4px 8px',
@@ -49,13 +49,13 @@ const FilterToolbar = ({
     };
 
     return (
-        <Box sx={{ 
-            p: 1, 
-            display: 'flex', 
-            gap: 1, 
-            alignItems: 'center', 
-            flexWrap: 'wrap',  // Permette il wrap su schermi piccoli
-            borderBottom: 1, 
+        <Box sx={{
+            p: 1,
+            display: 'flex',
+            gap: 1,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            borderBottom: 1,
             borderColor: 'divider'
         }}>
             <TextField
@@ -87,7 +87,6 @@ const FilterToolbar = ({
                 onChange={(e) => setSectionFilter(e.target.value.toUpperCase())}
                 sx={{ width: '80px' }}
             />
-            {/* Nuovo select per status */}
             <TextField
                 label="Status"
                 size="small"
@@ -101,7 +100,6 @@ const FilterToolbar = ({
                 <MenuItem value="planned">Pianificate</MenuItem>
                 <MenuItem value="archived">Archiviate</MenuItem>
             </TextField>
-            {/* Nuovo select per filtro studenti */}
             <TextField
                 label="Studenti"
                 size="small"
@@ -115,8 +113,8 @@ const FilterToolbar = ({
                 <MenuItem value="without_students">Senza studenti</MenuItem>
                 <MenuItem value="pending">In attesa (Pending)</MenuItem>
             </TextField>
-            <Button 
-                variant="contained" 
+            <Button
+                variant="contained"
                 onClick={handleApplyFilters}
                 startIcon={<FilterListIcon sx={{ fontSize: '1rem' }} />}
                 size="small"
@@ -136,7 +134,6 @@ const FilterToolbar = ({
     );
 };
 
-
 const ClassManagement = () => {
     const [tabValue, setTabValue] = useState(0);
     const { mainTeacherClasses = [], coTeacherClasses = [], loading, error, getMyClasses, deleteClass } = useClass();
@@ -146,9 +143,8 @@ const ClassManagement = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
-    const [pageSize, setPageSize] = useState(25); // Aggiungi questo nuovo state
+    const [pageSize, setPageSize] = useState(25);
 
-    // Stati per i filtri
     const [schoolFilter, setSchoolFilter] = useState('');
     const [yearFilter, setYearFilter] = useState('');
     const [sectionFilter, setSectionFilter] = useState('');
@@ -162,7 +158,6 @@ const ClassManagement = () => {
         getMyClasses();
     }, []);
 
-    // Funzioni di gestione filtri
     const handleApplyFilters = () => {
         const newFilters = [];
         if (schoolFilter) {
@@ -208,9 +203,6 @@ const ClassManagement = () => {
                     });
                     break;
                 case 'pending':
-                    // Una classe è "pending" quando:
-                    // 1. Ha almeno uno studente
-                    // 2. Il numero di studenti è minore della capacità
                     newFilters.push({
                         field: 'students',
                         operator: 'custom',
@@ -234,21 +226,18 @@ const ClassManagement = () => {
         setFilterModel({ items: [] });
     };
 
-    // Funzione per filtrare le classi
     const filterClasses = (classes) => {
         return classes.filter(classItem => {
-            // Filtri base
             const matchesSchool = !schoolFilter || classItem.schoolName.toLowerCase().includes(schoolFilter.toLowerCase());
             const matchesYear = !yearFilter || classItem.year === parseInt(yearFilter);
             const matchesSection = !sectionFilter || classItem.section === sectionFilter.toUpperCase();
             const matchesStatus = !statusFilter || classItem.status === statusFilter;
-    
-            // Filtro studenti
+
             let matchesStudentFilter = true;
             if (studentsFilter) {
                 const studentCount = classItem.students?.length || 0;
                 const capacity = classItem.capacity || 0;
-    
+
                 switch (studentsFilter) {
                     case 'with_students':
                         matchesStudentFilter = studentCount > 0;
@@ -257,17 +246,15 @@ const ClassManagement = () => {
                         matchesStudentFilter = studentCount === 0;
                         break;
                     case 'pending':
-                        // Una classe è pending se ha spazio per altri studenti
                         matchesStudentFilter = studentCount < capacity;
                         break;
                 }
             }
-    
+
             return matchesSchool && matchesYear && matchesSection && matchesStatus && matchesStudentFilter;
         });
     };
 
-    // Handle functions
     const handleDeleteClick = (classData) => {
         setSelectedClass(classData);
         setOpenDeleteDialog(true);
@@ -292,35 +279,34 @@ const ClassManagement = () => {
         navigate(`/admin/classes/${classData.classId}/tests`);
     };
 
-    // Preparazione delle classi filtrate
     const filteredMainTeacherClasses = filterClasses(mainTeacherClasses);
     const filteredCoTeacherClasses = filterClasses(coTeacherClasses);
     const filteredClasses = isAdmin ? filterClasses(mainTeacherClasses) : [];
 
     const columns = [
-        { 
-            field: 'schoolName', 
-            headerName: 'Scuola', 
+        {
+            field: 'schoolName',
+            headerName: 'Scuola',
             flex: 1,
             minWidth: 180
         },
-        { 
-            field: 'year', 
-            headerName: 'Anno', 
+        {
+            field: 'year',
+            headerName: 'Anno',
             width: 70,
             align: 'center',
             headerAlign: 'center'
         },
-        { 
-            field: 'section', 
-            headerName: 'Sezione', 
+        {
+            field: 'section',
+            headerName: 'Sezione',
             width: 80,
             align: 'center',
             headerAlign: 'center'
         },
-        { 
-            field: 'academicYear', 
-            headerName: 'Anno Accademico', 
+        {
+            field: 'academicYear',
+            headerName: 'Anno Accademico',
             width: 130,
             align: 'center',
             headerAlign: 'center'
@@ -340,7 +326,7 @@ const ClassManagement = () => {
                                 label="Pending"
                                 color="warning"
                                 size="small"
-                                sx={{ 
+                                sx={{
                                     minWidth: '70px',
                                     height: '24px',
                                     '& .MuiChip-label': {
@@ -353,7 +339,7 @@ const ClassManagement = () => {
                                 label={`${count} studenti`}
                                 color={count >= params.row.capacity ? 'error' : 'success'}
                                 size="small"
-                                sx={{ 
+                                sx={{
                                     minWidth: '70px',
                                     height: '24px',
                                     '& .MuiChip-label': {
@@ -420,28 +406,34 @@ const ClassManagement = () => {
     }
 
     return (
-        <Box sx={{ p: 2, height: 'calc(100vh - 100px)' }}> {/* Aumentato spazio verticale */}
-            <Typography 
-                variant="h5" 
-                gutterBottom 
-                color="primary" 
-                sx={{ 
+        <Box sx={{ 
+            p: 2, 
+            height: 'calc(100vh - 100px)', // Altezza totale del contenitore principale
+            display: 'flex',
+            flexDirection: 'column'
+        }}> 
+            <Typography
+                variant="h5"
+                gutterBottom
+                color="primary"
+                sx={{
                     mb: 2,
                     fontSize: '1.2rem'
                 }}
             >
                 {isAdmin ? 'Gestione Classi (Admin)' : 'Gestione Classi'}
             </Typography>
-
-            <Paper sx={{ 
-                width: '100%',
-                height: 'calc(100% - 50px)', // Adatta l'altezza in base allo spazio disponibile 
-                mb: 1, 
+        
+            <Paper sx={{
+                flex: 1, // Importante: questo fa sì che il Paper occupi tutto lo spazio disponibile
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 0, // Importante: permette al flex child di shrinkare
+                mb: 1,
                 borderRadius: 2,
-                boxShadow: 2,
-                flexDirection: 'column'
+                boxShadow: 2
             }}>
-                <FilterToolbar 
+                <FilterToolbar
                     schoolFilter={schoolFilter}
                     setSchoolFilter={setSchoolFilter}
                     yearFilter={yearFilter}
@@ -455,59 +447,57 @@ const ClassManagement = () => {
                     handleApplyFilters={handleApplyFilters}
                     handleResetFilters={handleResetFilters}
                 />
-
+        
                 {isAdmin ? (
                     <Box sx={{
-                        flexGrow: 1, 
-                        width: '100%', 
-                        height: 'calc(100% - 52px)', // Altezza calcolata sottraendo l'altezza della FilterToolbar
-                        overflow: 'auto'
+                        flex: 1, // Importante: questo fa sì che il Box occupi tutto lo spazio disponibile
+                        display: 'flex',
+                        flexDirection: 'column',
+                        minHeight: 0, // Importante: permette al flex child di shrinkare
+                        width: '100%'
                     }}>
-                        <DataGrid
-                            rows={filteredClasses}
-                            columns={columns}
-                            getRowId={(row) => row.classId}
-                            pageSize={pageSize}
-                            rowsPerPageOptions={[25, 50, 100]}
-                            onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-                            disableSelectionOnClick
-                            density="compact"
-                            sx={{
-                                '& .MuiDataGrid-cell': {
-                                    fontSize: '0.875rem',
-                                    py: 0.5,
-                                    borderColor: 'divider'
-                                },
-                                '& .MuiDataGrid-columnHeaders': {
-                                    fontSize: '0.875rem',
-                                    minHeight: '45px !important',
-                                    maxHeight: '45px !important',
-                                    backgroundColor: '#f5f5f5',
-                                    borderBottom: '2px solid #e0e0e0'
-                                },
-                                '& .MuiDataGrid-row': {
-                                    minHeight: '40px !important', // Aumentato leggermente
-                                    maxHeight: '40px !important',
-                                    '&:nth-of-type(odd)': {
-                                        backgroundColor: '#fafafa'
+                        <motion.div style={{ 
+                            height: '100%', // Importante: assicura che motion.div occupi tutto lo spazio
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}>
+                            <DataGrid
+                                rows={filteredClasses}
+                                columns={columns}
+                                getRowId={(row) => row.classId}
+                                pageSize={pageSize}
+                                rowsPerPageOptions={[25, 50, 100]}
+                                onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+                                disableSelectionOnClick
+                                density="compact"
+                                autoHeight={false} // Importante: non utilizziamo autoHeight
+                                sx={{
+                                    flex: 1, // Importante: fa sì che DataGrid occupi tutto lo spazio disponibile
+                                    '& .MuiDataGrid-root': {
+                                        height: '100%'
+                                    },
+                                    '& .MuiDataGrid-cell': {
+                                        fontSize: '0.875rem',
+                                        py: 0.5,
+                                        borderColor: 'divider'
+                                    },
+                                    '& .MuiDataGrid-columnHeaders': {
+                                        fontSize: '0.875rem',
+                                        minHeight: '45px !important',
+                                        maxHeight: '45px !important',
+                                        backgroundColor: '#f5f5f5',
+                                        borderBottom: '2px solid #e0e0e0'
+                                    },
+                                    '& .MuiDataGrid-row': {
+                                        minHeight: '40px !important',
+                                        maxHeight: '40px !important',
+                                        '&:nth-of-type(odd)': {
+                                            backgroundColor: '#fafafa'
+                                        }
                                     }
-                                },
-                                '& .MuiDataGrid-cell:focus': {
-                                    outline: 'none'
-                                },
-                                '& .MuiDataGrid-row:hover': {
-                                    bgcolor: 'action.hover'
-                                },
-                                border: 'none',
-                                '& .MuiDataGrid-footerContainer': {
-                                    borderTop: '2px solid #e0e0e0',
-                                    backgroundColor: '#f5f5f5'
-                                },
-                                '& .MuiTablePagination-root': {
-                                    fontSize: '0.875rem'
-                                }
-                            }}
-                        />
+                                }}
+                            />
+                        </motion.div>
                     </Box>
                 ) : (
                     <>
@@ -523,114 +513,94 @@ const ClassManagement = () => {
                                 }
                             }}
                         >
-                            <Tab 
+                            <Tab
                                 label={`Le mie classi (${filteredMainTeacherClasses.length})`}
                                 sx={{ textTransform: 'none' }}
                             />
-                            <Tab 
+                            <Tab
                                 label={`Classi co-insegnate (${filteredCoTeacherClasses.length})`}
                                 sx={{ textTransform: 'none' }}
                             />
                         </Tabs>
-
-                        <Box sx={{ 
-                            width: '100%', 
-                            p: 1,
-                            height: '600px',
-                            overflow: 'auto'
+        
+                        <Box sx={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            minHeight: 0,
+                            width: '100%'
                         }}>
-                            <DataGrid
-                                rows={tabValue === 0 ? filteredMainTeacherClasses : filteredCoTeacherClasses}
-                                columns={columns}
-                                getRowId={(row) => row.classId}
-                                pageSize={pageSize}
-                                rowsPerPageOptions={[10, 25, 50, 100]}
-                                onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-                                disableSelectionOnClick
-                                density="compact"
-                                sx={{
-                                    '& .MuiDataGrid-cell': {
-                                        fontSize: '0.875rem',
-                                        py: 0.5
-                                    },
-                                    '& .MuiDataGrid-columnHeaders': {
-                                        fontSize: '0.875rem',
-                                        minHeight: '45px !important',
-                                        maxHeight: '45px !important'
-                                    },
-                                    '& .MuiDataGrid-row': {
-                                        minHeight: '35px !important',
-                                        maxHeight: '35px !important'
-                                    },
-                                    '& .MuiDataGrid-cell:focus': {
-                                        outline: 'none'
-                                    },
-                                    '& .MuiDataGrid-row:hover': {
-                                        bgcolor: 'action.hover'
-                                    },
-                                    '& .MuiDataGrid-root': {
-                                        border: 'none',
-                                        overflowY: 'scroll',
-                                        scrollbarWidth: 'thin',
-                                        '&::-webkit-scrollbar': {
-                                            width: '6px'
+                            <motion.div style={{ 
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}>
+                                <DataGrid
+                                    rows={tabValue === 0 ? filteredMainTeacherClasses : filteredCoTeacherClasses}
+                                    columns={columns}
+                                    getRowId={(row) => row.classId}
+                                    pageSize={pageSize}
+                                    rowsPerPageOptions={[10, 25, 50, 100]}
+                                    onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+                                    disableSelectionOnClick
+                                    density="compact"
+                                    autoHeight={false}
+                                    sx={{
+                                        flex: 1,
+                                        '& .MuiDataGrid-root': {
+                                            height: '100%'
                                         },
-                                        '&::-webkit-scrollbar-track': {
-                                            background: '#f1f1f1'
-                                        },
-                                        '&::-webkit-scrollbar-thumb': {
-                                            background: '#888',
-                                            borderRadius: '3px'
-                                        },
-                                        '&::-webkit-scrollbar-thumb:hover': {
-                                            background: '#555'
+                                        '& .MuiDataGrid-cell': {
+                                            fontSize: '0.875rem',
+                                            py: 0.5
                                         }
-                                    }
-                                }}
-                            />
+                                    }}
+                                />
+                            </motion.div>
                         </Box>
                     </>
                 )}
             </Paper>
+        
 
-            <Dialog
-                open={openDeleteDialog}
-                onClose={() => setOpenDeleteDialog(false)}
-            >
-                <DialogTitle sx={{ fontSize: '1.1rem', py: 1.5 }}>
-                    Conferma eliminazione
-                </DialogTitle>
-                <DialogContent>
-                    {deleteError && <Alert severity="error" sx={{ mb: 2 }}>{deleteError}</Alert>}
-                    <Typography sx={{ fontSize: '0.9rem' }}>
-                        Sei sicuro di voler eliminare questa classe?
-                        {selectedClass && (
-                            <Typography variant="body2" color="textSecondary" sx={{ mt: 1, fontSize: '0.875rem' }}>
-                                {`${selectedClass.year}${selectedClass.section} - ${selectedClass.schoolName}`}
-                            </Typography>
-                        )}
-                    </Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button 
-                        onClick={() => setOpenDeleteDialog(false)}
-                        color="primary"
-                        size="small"
-                    >
-                        Annulla
-                    </Button>
-                    <Button 
-                        onClick={handleDeleteConfirm}
-                        color="error"
-                        variant="contained"
-                        size="small"
-                    >
-                        Elimina
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
-    );
+        <Dialog
+            open={openDeleteDialog}
+            onClose={() => setOpenDeleteDialog(false)}
+        >
+            <DialogTitle sx={{ fontSize: '1.1rem', py: 1.5 }}>
+                Conferma eliminazione
+            </DialogTitle>
+            <DialogContent>
+                {deleteError && <Alert severity="error" sx={{ mb: 2 }}>{deleteError}</Alert>}
+                <Typography sx={{ fontSize: '0.9rem' }}>
+                    Sei sicuro di voler eliminare questa classe?
+                    {selectedClass && (
+                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1, fontSize: '0.875rem' }}>
+                            {`${selectedClass.year}${selectedClass.section} - ${selectedClass.schoolName}`}
+                        </Typography>
+                    )}
+                </Typography>
+            </DialogContent>
+            <DialogActions>
+                <Button
+                    onClick={() => setOpenDeleteDialog(false)}
+                    color="primary"
+                    size="small"
+                >
+                    Annulla
+                </Button>
+                <Button
+                    onClick={handleDeleteConfirm}
+                    color="error"
+                    variant="contained"
+                    size="small"
+                >
+                    Elimina
+                </Button>
+            </DialogActions>
+        </Dialog>
+    </Box>
+);
 };
 
 export default ClassManagement;

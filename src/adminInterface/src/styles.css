@@ -1,0 +1,26 @@
+/* styles.css */
+.ag-theme-material .ag-cell {
+    padding: 10px; /* Aggiunge padding alle celle */
+    margin: 5px 0; /* Aggiunge margini verticali alle celle */
+}
+
+.custom-cell-style {
+    font-size: 14px; /* Dimensione del font delle celle */
+    color: #333; /* Colore del testo delle celle */
+    text-align: left; /* Allineamento del testo nelle celle */
+}
+
+/* Aggiungi queste regole per definire l'altezza del contenitore della tabella */
+.table-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Imposta l'altezza al 100% del genitore */
+    min-height: 500px; /* Imposta un'altezza minima per assicurarti che la tabella sia visibile */
+    max-height: 100vh; /* Imposta un'altezza massima per evitare che la tabella cresca troppo */
+}
+
+/* Aggiungi queste regole per definire l'altezza della griglia */
+.ag-theme-material {
+    flex-grow: 1; /* Permetti alla griglia di crescere per riempire lo spazio disponibile */
+    height: 100%; /* Imposta l'altezza al 100% del contenitore */
+}
