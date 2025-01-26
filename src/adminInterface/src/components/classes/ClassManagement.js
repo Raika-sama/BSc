@@ -117,16 +117,52 @@ const ClassManagement = () => {
         {
             field: 'year',
             headerName: 'Anno',
-            width: 70,
+            width: 80,
             align: 'center',
-            headerAlign: 'center'
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Chip
+                    label={`${params.value}°`}
+                    color="primary"
+                    size="small"
+                    sx={{
+                        minWidth: '50px',
+                        height: '24px',
+                        backgroundColor: (theme) => theme.palette.primary.main,
+                        color: 'white',
+                        fontWeight: 'bold',
+                        '& .MuiChip-label': {
+                            fontSize: '0.875rem',
+                            px: 1
+                        }
+                    }}
+                />
+            )
         },
         {
             field: 'section',
             headerName: 'Sezione',
-            width: 80,
+            width: 90,
             align: 'center',
-            headerAlign: 'center'
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Chip
+                    label={params.value}
+                    color="secondary"
+                    size="small"
+                    sx={{
+                        minWidth: '50px',
+                        height: '24px',
+                        backgroundColor: (theme) => theme.palette.secondary.main,
+                        color: 'white',
+                        fontWeight: 'bold',
+                        '& .MuiChip-label': {
+                            fontSize: '0.875rem',
+                            px: 1
+                        }
+                    }}
+                />
+            )
         },
         {
             field: 'academicYear',
@@ -136,9 +172,77 @@ const ClassManagement = () => {
             headerAlign: 'center'
         },
         {
+            field: 'status',
+            headerName: 'Status',
+            width: 150,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => {
+                const status = params.value;
+                let chipColor;
+                let label;
+                
+                switch (status) {
+                    case 'active':
+                        chipColor = 'success';
+                        label = 'Attiva';
+                        break;
+                    case 'planned':
+                        chipColor = 'info';
+                        label = 'Pianificata';
+                        break;
+                    case 'archived':
+                        chipColor = 'default';
+                        label = 'Archiviata';
+                        break;
+                    default:
+                        chipColor = 'default';
+                        label = status;
+                }
+                
+                return (
+                    <Chip
+                        label={label}
+                        color={chipColor}
+                        size="small"
+                        sx={{
+                            minWidth: '90px',
+                            height: '24px',
+                            '& .MuiChip-label': {
+                                fontSize: '0.75rem'
+                            }
+                        }}
+                    />
+                );
+            }
+        },
+        {
+            field: 'isActive',
+            headerName: 'Attiva',
+            width: 120,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => {
+                return (
+                    <Chip
+                        label={params.value ? 'Sì' : 'No'}
+                        color={params.value ? 'success' : 'error'}
+                        size="small"
+                        sx={{
+                            minWidth: '60px',
+                            height: '24px',
+                            '& .MuiChip-label': {
+                                fontSize: '0.75rem'
+                            }
+                        }}
+                    />
+                );
+            }
+        },
+        {
             field: 'studentCount',
             headerName: 'Studenti',
-            width: 130,
+            width: 150,
             align: 'center',
             headerAlign: 'center',
             renderCell: (params) => {
@@ -181,7 +285,7 @@ const ClassManagement = () => {
             field: 'actions',
             type: 'actions',
             headerName: 'Azioni',
-            width: 120,
+            width: 150,
             getActions: (params) => [
                 <GridActionsCellItem
                     icon={

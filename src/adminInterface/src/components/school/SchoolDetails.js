@@ -10,45 +10,41 @@ import {
     IconButton,
     Card,
     CardContent,
-    ListItemAvatar,  // Aggiunto
-    Avatar,          // Aggiunto
+    ListItemAvatar,
+    Avatar,
     List,
     ListItem,
     ListItemText,
     CircularProgress,
     Alert,
-    Dialog,
-    DialogTitle,
-    DialogContent
+    Tabs,
+    Tab,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import { Tabs, Tab } from '@mui/material';  // Aggiungi questo import
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
-import PersonIcon from '@mui/icons-material/Person';    // Aggiunto
-import StarIcon from '@mui/icons-material/Star';        // Aggiunto
-import CloseIcon from '@mui/icons-material/Close';
+import PersonIcon from '@mui/icons-material/Person';
+import StarIcon from '@mui/icons-material/Star';
+import SchoolIcon from '@mui/icons-material/School';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ClassIcon from '@mui/icons-material/Class';
+
 import SchoolEditForm from './SchoolEditForm';
-import SchoolUsersManagement from './schoolComponents/SchoolUsersManagement';
+import SectionManagement from './schoolComponents/SectionManagement';
 import { useSchool } from '../../context/SchoolContext';
 
 const SchoolDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState(0);
+    const [isEditMode, setIsEditMode] = useState(false);
+
     const { 
         selectedSchool,
         loading,
         error,
         getSchoolById,
-        updateSchool,
-        updateSchoolUser
+        updateSchool
     } = useSchool();
-
-    // States
-    const [isEditMode, setIsEditMode] = useState(false);
-    const [isUsersDialogOpen, setIsUsersDialogOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState('mainTeacher');  // Nuovo stato per i tabs
 
     useEffect(() => {
         getSchoolById(id);
@@ -64,108 +60,29 @@ const SchoolDetails = () => {
         }
     };
 
-    const handleAddUser = async (userData) => {
-        try {
-            await updateSchoolUser(id, userData.email, {
-                action: 'add',
-                role: userData.role
-            });
-            await getSchoolById(id);
-        } catch (error) {
-            console.error('Error adding user:', error);
-        }
-    };
-
-    const handleRemoveUser = async (userId) => {
-        try {
-            await updateSchoolUser(id, userId, {
-                action: 'remove'
-            });
-            await getSchoolById(id);
-        } catch (error) {
-            console.error('Error removing user:', error);
-        }
-    };
-
-    const handleChangeManager = async (newManagerId) => {
-        try {
-            await updateSchool(id, { manager: newManagerId });
-            await getSchoolById(id);
-        } catch (error) {
-            console.error('Error changing manager:', error);
-        }
-    };
-
-
-
     if (loading) {
-        return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-                <CircularProgress />
-            </Box>
-        );
+        return <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+            <CircularProgress size={30} />
+        </Box>;
     }
 
-    if (error) {
-        return (
-            <Container maxWidth="lg">
-                <Alert severity="error" sx={{ mt: 2 }}>
-                    {error}
-                </Alert>
-                <Button
-                    startIcon={<ArrowBackIcon />}
-                    onClick={() => navigate('/admin/schools')}
-                    sx={{ mt: 2 }}
-                >
-                    Torna alla lista
-                </Button>
-            </Container>
-        );
-    }
-
-    if (!selectedSchool) {
-        return (
-            <Box textAlign="center" py={4}>
-                <Typography variant="h6">Scuola non trovata</Typography>
-                <Button
-                    startIcon={<ArrowBackIcon />}
-                    onClick={() => navigate('/admin/schools')}
-                    sx={{ mt: 2 }}
-                >
-                    Torna alla lista
-                </Button>
-            </Box>
-        );
+    if (error || !selectedSchool) {
+        return <Alert severity="error" sx={{ m: 2 }}>{error || 'Scuola non trovata'}</Alert>;
     }
 
     return (
-        <Container maxWidth="lg">
-            {/* Header con bottoni */}
-            <Box display="flex" alignItems="center" mb={3} gap={2}>
-                <IconButton onClick={() => navigate('/admin/schools')}>
+        <Container maxWidth="lg" sx={{ mt: 2 }}>
+            {/* Header */}
+            <Box display="flex" alignItems="center" mb={2}>
+                <IconButton onClick={() => navigate('/admin/schools')} size="small">
                     <ArrowBackIcon />
                 </IconButton>
-                <Typography variant="h4" component="h1" flex={1}>
+                <Typography variant="h5" sx={{ ml: 2, flex: 1 }}>
                     {selectedSchool.name}
                 </Typography>
                 <Button
-                    variant="outlined"
-                    startIcon={<ListAltIcon />}
-                    onClick={() => navigate(`/admin/schools/${id}/sections-management`)}
-                    sx={{ mr: 1 }}
-                >
-                    Gestione Sezioni
-                </Button>
-                <Button
-                    variant="outlined"
-                    startIcon={<ManageAccountsIcon />}
-                    onClick={() => navigate(`/admin/schools/${id}/users-management`)}
-                    sx={{ mr: 1 }}
-                >
-                    Gestione Utenze
-                </Button>
-                <Button
                     variant="contained"
+                    size="small"
                     startIcon={<EditIcon />}
                     onClick={() => setIsEditMode(true)}
                 >
@@ -173,199 +90,132 @@ const SchoolDetails = () => {
                 </Button>
             </Box>
 
-            {/* Contenuto principale */}
-            <Grid container spacing={3}>
-                {/* Informazioni Base */}
-                <Grid item xs={12} md={6}>
-                    <Card>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                                Informazioni Generali
-                            </Typography>
-                            <List>
-                                <ListItem>
-                                    <ListItemText 
-                                        primary="Tipo Scuola"
-                                        secondary={selectedSchool.schoolType === 'middle_school' ? 
-                                                'Scuola Media' : 'Scuola Superiore'}
-                                    />
-                                </ListItem>
-                                {selectedSchool.schoolType === 'high_school' && (
-                                    <ListItem>
-                                        <ListItemText 
-                                            primary="Tipo Istituto"
-                                            secondary={selectedSchool.institutionType}
-                                        />
-                                    </ListItem>
-                                )}
-                                <ListItem>
-                                    <ListItemText 
-                                        primary="Sezioni"
-                                        secondary={
-                                            selectedSchool.sections.length > 0 ? 
-                                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
-                                                    {selectedSchool.sections.map((section) => (
-                                                        <Chip
-                                                            key={section.name}
-                                                            label={`${section.name} (${section.maxStudents || 'N/D'} studenti)`}
-                                                            size="small"
-                                                            variant="outlined"
-                                                        />
-                                                    ))}
-                                                </Box>
-                                                : 'Nessuna sezione configurata'
-                                        }
-                                    />
-                                </ListItem>
-                                <ListItem>
-                                    <ListItemText 
-                                        primary="Indirizzo"
-                                        secondary={selectedSchool.address}
-                                    />
-                                </ListItem>
-                                <ListItem>
-                                    <ListItemText 
-                                        primary="Regione"
-                                        secondary={selectedSchool.region}
-                                    />
-                                </ListItem>
-                                <ListItem>
-                                    <ListItemText 
-                                        primary="Provincia"
-                                        secondary={selectedSchool.province}
-                                    />
-                                </ListItem>
-                            </List>
-                        </CardContent>
-                    </Card>
-                </Grid>
+            {/* Tabs */}
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                <Tabs 
+                    value={activeTab} 
+                    onChange={(e, newValue) => setActiveTab(newValue)}
+                    variant="scrollable"
+                    scrollButtons="auto"
+                >
+                    <Tab label="Informazioni" />
+                    <Tab label="Sezioni" />
+                    <Tab label="Utenti" />
+                </Tabs>
+            </Box>
 
-                {/* Anno Accademico Corrente */}
-                <Grid item xs={12} md={6}>
-                    <Card>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                                Anno Accademico
-                            </Typography>
-                            {selectedSchool.academicYears && selectedSchool.academicYears.length > 0 ? (
-                                <List>
+            {/* Tab Panels */}
+            {activeTab === 0 && (
+                <Grid container spacing={2}>
+                    {/* Info Card */}
+                    <Grid item xs={12} md={6}>
+                        <Card elevation={1}>
+                            <CardContent sx={{ p: 2 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <SchoolIcon color="primary" sx={{ mr: 1 }} />
+                                    <Typography variant="h6" sx={{ fontSize: '1rem' }}>
+                                        Informazioni Generali
+                                    </Typography>
+                                </Box>
+                                <List dense>
                                     <ListItem>
                                         <ListItemText 
-                                            primary="Anno"
-                                            secondary={selectedSchool.academicYears[0].year}
+                                            primary="Tipo Scuola"
+                                            secondary={selectedSchool.schoolType === 'middle_school' ? 
+                                                'Scuola Media' : 'Scuola Superiore'}
+                                            primaryTypographyProps={{ fontSize: '0.875rem' }}
+                                            secondaryTypographyProps={{ fontSize: '0.875rem' }}
+                                        />
+                                    </ListItem>
+                                    {selectedSchool.schoolType === 'high_school' && (
+                                        <ListItem>
+                                            <ListItemText 
+                                                primary="Tipo Istituto"
+                                                secondary={selectedSchool.institutionType}
+                                                primaryTypographyProps={{ fontSize: '0.875rem' }}
+                                                secondaryTypographyProps={{ fontSize: '0.875rem' }}
+                                            />
+                                        </ListItem>
+                                    )}
+                                </List>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Location Card */}
+                    <Grid item xs={12} md={6}>
+                        <Card elevation={1}>
+                            <CardContent sx={{ p: 2 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <LocationOnIcon color="primary" sx={{ mr: 1 }} />
+                                    <Typography variant="h6" sx={{ fontSize: '1rem' }}>
+                                        Ubicazione
+                                    </Typography>
+                                </Box>
+                                <List dense>
+                                    <ListItem>
+                                        <ListItemText 
+                                            primary="Indirizzo"
+                                            secondary={selectedSchool.address}
+                                            primaryTypographyProps={{ fontSize: '0.875rem' }}
+                                            secondaryTypographyProps={{ fontSize: '0.875rem' }}
                                         />
                                     </ListItem>
                                     <ListItem>
                                         <ListItemText 
-                                            primary="Stato"
-                                            secondary={
-                                                selectedSchool.academicYears[0].status === 'active' ? 
-                                                    'Attivo' : 'Non attivo'
-                                            }
+                                            primary={`${selectedSchool.region} - ${selectedSchool.province}`}
+                                            primaryTypographyProps={{ fontSize: '0.875rem' }}
                                         />
                                     </ListItem>
                                 </List>
-                            ) : (
-                                <Typography color="textSecondary">
-                                    Nessun anno accademico configurato
-                                </Typography>
-                            )}
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Academic Year Card */}
+                    <Grid item xs={12}>
+                        <Card elevation={1}>
+                            <CardContent sx={{ p: 2 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <ClassIcon color="primary" sx={{ mr: 1 }} />
+                                    <Typography variant="h6" sx={{ fontSize: '1rem' }}>
+                                        Anno Accademico Corrente
+                                    </Typography>
+                                </Box>
+                                {selectedSchool.academicYears?.[0] ? (
+                                    <Box sx={{ display: 'flex', gap: 2 }}>
+                                        <Chip 
+                                            label={`Anno: ${selectedSchool.academicYears[0].year}`}
+                                            size="small"
+                                        />
+                                        <Chip 
+                                            label={selectedSchool.academicYears[0].status === 'active' ? 'Attivo' : 'Non attivo'}
+                                            color={selectedSchool.academicYears[0].status === 'active' ? 'success' : 'default'}
+                                            size="small"
+                                        />
+                                    </Box>
+                                ) : (
+                                    <Typography variant="body2" color="text.secondary">
+                                        Nessun anno accademico configurato
+                                    </Typography>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
                 </Grid>
-            </Grid>
-            {/* Nuova sezione Utenti con Tabs */}
-            <Grid item xs={12}>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant="h6" gutterBottom>
-                                            Utenti della Scuola
-                                        </Typography>
-                                        <Tabs
-                                            value={activeTab}
-                                            onChange={(e, newValue) => setActiveTab(newValue)}
-                                            sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
-                                        >
-                                            <Tab 
-                                                label="Manager" 
-                                                value="mainTeacher"
-                                                sx={{ textTransform: 'none' }}
-                                            />
-                                            <Tab 
-                                                label="Insegnanti" 
-                                                value="teachers"
-                                                sx={{ textTransform: 'none' }}
-                                            />
-                                        </Tabs>
+            )}
 
-                                        {activeTab === 'mainTeacher' && selectedSchool?.manager && (
-                                            <Box sx={{ p: 2, bgcolor: 'rgba(25, 118, 210, 0.08)', borderRadius: 1 }}>
-                                                <ListItem>
-                                                    <ListItemAvatar>
-                                                        <Avatar sx={{ bgcolor: 'primary.main' }}>
-                                                            <StarIcon />
-                                                        </Avatar>
-                                                    </ListItemAvatar>
-                                                    <ListItemText
-                                                        primary={`${selectedSchool.manager.firstName} ${selectedSchool.manager.lastName}`}
-                                                        secondary={selectedSchool.manager.email}
-                                                    />
-                                                </ListItem>
-                                            </Box>
-                                        )}
+            {activeTab === 1 && (
+                <Box sx={{ mt: -3 }}> {/* Negativo margin per compensare il padding del container di SectionManagement */}
+                    <SectionManagement />
+                </Box>
+            )}
 
-                                        {activeTab === 'teachers' && (
-                                            <List>
-                                                {selectedSchool?.users?.filter(user => user.role === 'teacher').map((user) => (
-                                                    <ListItem key={user._id}>
-                                                        <ListItemAvatar>
-                                                            <Avatar>
-                                                                <PersonIcon />
-                                                            </Avatar>
-                                                        </ListItemAvatar>
-                                                        <ListItemText
-                                                            primary={`${user.firstName} ${user.lastName}`}
-                                                            secondary={user.email}
-                                                        />
-                                                    </ListItem>
-                                                ))}
-                                                {(!selectedSchool?.users || selectedSchool.users.filter(u => u.role === 'teacher').length === 0) && (
-                                                    <Typography color="textSecondary" sx={{ p: 2, textAlign: 'center' }}>
-                                                        Nessun insegnante associato
-                                                    </Typography>
-                                                )}
-                                            </List>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-            {/* Dialog per la lista utenti */}
-            <Dialog 
-                open={isUsersDialogOpen}
-                onClose={() => setIsUsersDialogOpen(false)}
-                maxWidth="md"
-                fullWidth
-            >
-                <DialogTitle>
-                    <Box display="flex" alignItems="center" justifyContent="space-between">
-                        <Typography variant="h6">Utenti della Scuola</Typography>
-                        <IconButton onClick={() => setIsUsersDialogOpen(false)}>
-                            <CloseIcon />
-                        </IconButton>
-                    </Box>
-                </DialogTitle>
-                <DialogContent dividers>
-                    <SchoolUsersManagement
-                        manager={selectedSchool?.manager}
-                        users={selectedSchool?.users || []}
-                        onAddUser={handleAddUser}
-                        onRemoveUser={handleRemoveUser}
-                        onChangeManager={handleChangeManager}
-                    />
-                </DialogContent>
-            </Dialog>
+            {activeTab === 2 && (
+                <UsersTab school={selectedSchool} />
+            )}
 
-            {/* Form Modifica */}
+            {/* Edit Form Dialog */}
             <SchoolEditForm
                 open={isEditMode}
                 onClose={() => setIsEditMode(false)}
@@ -373,6 +223,51 @@ const SchoolDetails = () => {
                 school={selectedSchool}
             />
         </Container>
+    );
+};
+
+// Componente separato per il tab degli utenti
+const UsersTab = ({ school }) => {
+    return (
+        <Card elevation={1}>
+            <CardContent>
+                <List dense>
+                    {/* Manager */}
+                    {school.manager && (
+                        <ListItem>
+                            <ListItemAvatar>
+                                <Avatar sx={{ bgcolor: 'primary.main' }}>
+                                    <StarIcon />
+                                </Avatar>
+                            </ListItemAvatar>
+                            <ListItemText
+                                primary={`${school.manager.firstName} ${school.manager.lastName}`}
+                                secondary={`Manager - ${school.manager.email}`}
+                                primaryTypographyProps={{ fontSize: '0.875rem' }}
+                                secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                            />
+                        </ListItem>
+                    )}
+                    
+                    {/* Teachers */}
+                    {school.users?.filter(user => user.role === 'teacher').map((user) => (
+                        <ListItem key={user._id}>
+                            <ListItemAvatar>
+                                <Avatar>
+                                    <PersonIcon />
+                                </Avatar>
+                            </ListItemAvatar>
+                            <ListItemText
+                                primary={`${user.firstName} ${user.lastName}`}
+                                secondary={`Insegnante - ${user.email}`}
+                                primaryTypographyProps={{ fontSize: '0.875rem' }}
+                                secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                            />
+                        </ListItem>
+                    ))}
+                </List>
+            </CardContent>
+        </Card>
     );
 };
 
