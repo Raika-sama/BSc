@@ -12,8 +12,14 @@ const logger = require('../utils/errors/logger/logger');
  * Estende le funzionalità base del BaseRepository
  */
 class SchoolRepository extends BaseRepository {
-    constructor() {
+    constructor(classRepository, studentRepository) {
         super(School);
+        this.classRepository = classRepository;
+        this.studentRepository = studentRepository;
+        
+        // Binding dei metodi che usano i repository
+        this.deactivateSection = this.deactivateSection.bind(this);
+        this.reactivateSection = this.reactivateSection.bind(this);
     }
 
     async findOne(criteria, options = {}) {
@@ -427,8 +433,12 @@ class SchoolRepository extends BaseRepository {
         session.startTransaction();
     
         try {
-            logger.debug('Starting section deactivation:', { schoolId, sectionName });
-    
+            logger.debug('Repository: Inizio deactivateSection', {
+                schoolId,
+                sectionName,
+                hasClassRepository: !!this.classRepository, // Verifica se classRepository è definito
+                hasStudentRepository: !!this.studentRepository
+            });    
             // 1. Aggiorna la sezione nella scuola
             const school = await this.model.findOneAndUpdate(
                 { 
@@ -454,7 +464,14 @@ class SchoolRepository extends BaseRepository {
                     'Scuola o sezione non trovata'
                 );
             }
-    
+
+            logger.debug('Prima di chiamare deactivateClassesBySection', {
+                schoolId,
+                sectionName,
+                hasClassRepository: !!this.classRepository,
+                session: !!session
+            });
+
             // 2. Disattiva le classi usando il metodo dedicato nel classRepository
             await this.classRepository.deactivateClassesBySection(schoolId, sectionName, session);
     
@@ -496,7 +513,7 @@ class SchoolRepository extends BaseRepository {
         try {
             logger.debug('Riattivazione sezione:', { schoolId, sectionName });
     
-            // 1. Prima recupera il documento
+            // 1. Prima recupera il documento della scuola
             const school = await this.model.findById(schoolId).session(session);
             
             if (!school) {
@@ -516,21 +533,53 @@ class SchoolRepository extends BaseRepository {
                 );
             }
     
-            // 3. Modifica direttamente il documento
+            // 3. Modifica la sezione
             section.isActive = true;
-            section.deactivatedAt = undefined;  // Usiamo undefined invece di null
+            section.deactivatedAt = undefined;
     
-            // 4. Salva le modifiche
-            const result = await school.save({ session });
+            // 4. Trova e riattiva tutte le classi della sezione
+            const classesToReactivate = await Class.find({
+                schoolId,
+                section: sectionName,
+                isActive: false
+            }).session(session);
+    
+            logger.debug('Classi da riattivare trovate:', {
+                count: classesToReactivate.length,
+                classi: classesToReactivate.map(c => ({
+                    id: c._id,
+                    year: c.year,
+                    section: c.section
+                }))
+            });
+    
+            // 5. Aggiorna solo lo stato delle classi
+            for (const classDoc of classesToReactivate) {
+                // Modifica solo i campi relativi allo stato
+                classDoc.isActive = true;
+                classDoc.status = 'planned';
+                classDoc.deactivatedAt = undefined;
+                classDoc.updatedAt = new Date();
+                
+                await classDoc.save({ session });
+            }
+    
+            // 6. Salva le modifiche alla scuola
+            const updatedSchool = await school.save({ session });
     
             await session.commitTransaction();
             
-            logger.info('Sezione riattivata con successo:', {
+            logger.info('Sezione e classi riattivate con successo:', {
                 schoolId,
-                sectionName
+                sectionName,
+                classesReactivated: classesToReactivate.length
             });
     
-            return result;
+            return {
+                school: updatedSchool,
+                classesReactivated: classesToReactivate.length
+            };
+    
         } catch (error) {
             await session.abortTransaction();
             logger.error('Errore durante la riattivazione della sezione:', {

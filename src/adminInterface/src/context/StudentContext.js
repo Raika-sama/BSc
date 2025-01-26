@@ -224,39 +224,51 @@ export const StudentProvider = ({ children }) => {
     const [state, dispatch] = useReducer(studentReducer, initialState);
     const { showNotification } = useNotification();
 
-    // Recupera tutti gli studenti con filtri opzionali
-    const fetchStudents = async (filters = {}) => {
-        try {
-            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
-            
-            const queryParams = new URLSearchParams(filters);
-            const response = await axiosInstance.get(`/students?${queryParams}`);
+ // In StudentContext.js, nella funzione fetchStudents:
+const fetchStudents = async (filters = {}) => {
+    try {
+        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+        
+        // Costruisci i query params
+        const queryParams = new URLSearchParams();
+        
+        // Aggiungi i parametri base
+        queryParams.append('page', filters.page || 1);
+        queryParams.append('limit', filters.limit || 10);
 
-            console.log('API Response:', response.data);
-
-            if (response.data.status === 'success') {
-                const students = response.data.data?.students || [];
-                const total = response.data.data?.count || students.length;
-
-                dispatch({
-                    type: STUDENT_ACTIONS.SET_STUDENTS,
-                    payload: {
-                        students,
-                        total
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('Error in fetchStudents:', error);
-            const errorMessage = error.response?.data?.error?.message || 
-                               'Errore nel caricamento degli studenti';
-            dispatch({
-                type: STUDENT_ACTIONS.SET_ERROR,
-                payload: errorMessage
-            });
-            showNotification(errorMessage, 'error');
+        // Aggiungi i filtri se presenti
+        if (filters.search) queryParams.append('search', filters.search);
+        if (filters.schoolId) queryParams.append('schoolId', filters.schoolId);
+        if (filters.year) queryParams.append('year', filters.year);
+        if (filters.section) queryParams.append('section', filters.section);
+        if (filters.status) queryParams.append('status', filters.status);
+        if (filters.specialNeeds !== undefined) {
+            queryParams.append('specialNeeds', filters.specialNeeds);
         }
-    };
+
+        console.log('Fetching students with params:', queryParams.toString());
+        const response = await axiosInstance.get(`/students?${queryParams}`);
+
+        if (response.data.status === 'success') {
+            dispatch({
+                type: STUDENT_ACTIONS.SET_STUDENTS,
+                payload: {
+                    students: response.data.data.students,
+                    total: response.data.data.count
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error in fetchStudents:', error);
+        const errorMessage = error.response?.data?.error?.message || 
+                           'Errore nel caricamento degli studenti';
+        dispatch({
+            type: STUDENT_ACTIONS.SET_ERROR,
+            payload: errorMessage
+        });
+        showNotification(errorMessage, 'error');
+    }
+};
 
     // Recupera un singolo studente per ID
     const getStudentById = async (studentId) => {

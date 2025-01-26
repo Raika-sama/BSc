@@ -348,26 +348,16 @@ const getSectionStudents = async (schoolId, sectionName) => {
             );
 
             if (response.data.status === 'success') {
-                // Invece di usare setSections, aggiorniamo direttamente selectedSchool
-                setSelectedSchool(prevSchool => {
-                    if (!prevSchool) return null;
-                    
-                    return {
-                        ...prevSchool,
-                        sections: prevSchool.sections.map(section => 
-                            section.name === sectionName
-                                ? {
-                                    ...section,
-                                    isActive: false,
-                                    deactivatedAt: new Date(),
-                                    students: [] // Svuotiamo l'array degli studenti
-                                }
-                                : section
-                        )
-                    };
-                });
+                // Aggiorniamo lo stato con i dati aggiornati dal server
+                const { school, studentsUpdated } = response.data.data;
+                
+                // Aggiorna la scuola selezionata con i dati più recenti
+                setSelectedSchool(school);
 
-                showNotification('Sezione disattivata con successo', 'success');
+                showNotification(
+                    `Sezione disattivata con successo. ${studentsUpdated} studenti aggiornati.`,
+                    'success'
+                );
                 return response.data.data;
             }
         } catch (error) {
@@ -386,34 +376,21 @@ const getSectionStudents = async (schoolId, sectionName) => {
         try {
             setLoading(true);
             setError(null);
-
+    
             console.log('Reactivating section:', { schoolId, sectionName });
-
+    
             const response = await axiosInstance.post(
                 `/schools/${schoolId}/sections/${sectionName}/reactivate`
             );
-
+    
             if (response.data.status === 'success') {
-                // Aggiorniamo selectedSchool invece di sections
-                setSelectedSchool(prevSchool => {
-                    if (!prevSchool) return null;
-                    
-                    return {
-                        ...prevSchool,
-                        sections: prevSchool.sections.map(section => 
-                            section.name === sectionName
-                                ? {
-                                    ...section,
-                                    isActive: true,
-                                    deactivatedAt: null
-                                }
-                                : section
-                        )
-                    };
-                });
-
+                const { school, classesReactivated } = response.data.data;
+                
+                // Aggiorniamo selectedSchool con i nuovi dati
+                setSelectedSchool(school);
+    
                 showNotification(
-                    `Sezione ${sectionName} riattivata con successo`,
+                    `Sezione ${sectionName} riattivata con successo. ${classesReactivated} classi riattivate.`,
                     'success'
                 );
                 return response.data.data;

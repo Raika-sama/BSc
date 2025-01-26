@@ -10,7 +10,6 @@ const repositories = require('../repositories');
 const schoolRepository = repositories.school;
 const classRepository = repositories.class;
 const studentRepository = repositories.student;
-const sectionService = require('../services/SectionService');
 const { School, Class } = require('../models');  // Aggiungi Class qui
 
 class SchoolController extends BaseController {
@@ -382,10 +381,11 @@ async deactivateSection(req, res) {
     try {
         const { schoolId, sectionName } = req.params;
 
-        logger.debug('Richiesta disattivazione sezione:', {
+        logger.debug('Controller: Inizio deactivateSection', {
             schoolId,
             sectionName,
-            userId: req.user._id
+            hasRepository: !!this.repository,
+            hasClassRepository: !!this.repository.classRepository // Verifica se classRepository è definito
         });
 
         // 1. Prima recupera gli studenti che saranno impattati
@@ -434,16 +434,21 @@ async reactivateSection(req, res) {
             userId: req.user._id
         });
 
-        const updatedSchool = await this.repository.reactivateSection(schoolId, sectionName);
+        const { school, classesReactivated } = await this.repository.reactivateSection(
+            schoolId, 
+            sectionName
+        );
 
         logger.info('Sezione riattivata con successo:', {
             schoolId,
-            sectionName
+            sectionName,
+            classesReactivated
         });
 
         this.sendResponse(res, {
             message: 'Sezione riattivata con successo',
-            school: updatedSchool
+            school,
+            classesReactivated
         });
 
     } catch (error) {

@@ -18,41 +18,27 @@ const TestRepository = require('./TestRepository');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
-/**
- * Oggetto che contiene le istanze singleton dei repository
- * @type {Object}
- */
+// Prima creiamo le istanze dei repository che non hanno dipendenze
+const classRepository = new ClassRepository();
+const studentRepository = new StudentRepository();
+
+// Poi creiamo il repository della scuola iniettando le dipendenze
+const schoolRepository = new SchoolRepository(classRepository, studentRepository);
+
 const repositories = {
-    /**
-     * Repository per la gestione delle scuole
-     * @type {SchoolRepository}
-     */
-    school: new SchoolRepository(),
-
-    /**
-     * Repository per la gestione degli utenti
-     * @type {UserRepository}
-     */
+    school: schoolRepository,
+    class: classRepository,
+    student: studentRepository,
     user: new UserRepository(),
-
-    /**
-     * Repository per la gestione delle classi
-     * @type {ClassRepository}
-     */
-    class: new ClassRepository(),
-
-    /**
-     * Repository per la gestione degli studenti
-     * @type {StudentRepository}
-     */
-    student: new StudentRepository(),
-
-    /**
-     * Repository per la gestione dei test
-     * @type {TestRepository}
-     */
     test: new TestRepository()
 };
+
+// Dopo l'inizializzazione dei repository
+logger.debug('Repository initialization check:', {
+    hasSchoolRepo: !!repositories.school,
+    schoolRepoHasClassRepo: !!repositories.school.classRepository,
+    schoolRepoHasStudentRepo: !!repositories.school.studentRepository
+});
 
 /**
  * Verifica l'inizializzazione corretta dei repository
@@ -88,6 +74,7 @@ const validateRepositories = () => {
         );
     }
 };
+
 
 /**
  * Log dei repository caricati

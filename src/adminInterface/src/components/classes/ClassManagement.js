@@ -1,4 +1,6 @@
+// src/components/ClassManagement/ClassManagement.jsx
 import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Box,
     Typography,
@@ -6,8 +8,6 @@ import {
     Tabs,
     Tab,
     CircularProgress,
-    IconButton,
-    Tooltip,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -15,124 +15,22 @@ import {
     Button,
     Alert,
     Chip,
-    TextField,
-    MenuItem,
+    Tooltip,
 } from '@mui/material';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { useClass } from '../../context/ClassContext';
 import { useAuth } from '../../context/AuthContext';
-import DeleteIcon from '@mui/icons-material/Delete';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import QuizIcon from '@mui/icons-material/Quiz';
-import FilterListIcon from '@mui/icons-material/FilterList';
+import { 
+    Delete as DeleteIcon,
+    Visibility as VisibilityIcon,
+    Quiz as QuizIcon,
+    School as SchoolIcon,
+    Warning as WarningIcon,
+    CheckCircle as CheckCircleIcon
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-
-const FilterToolbar = ({
-    schoolFilter,
-    setSchoolFilter,
-    yearFilter,
-    setYearFilter,
-    sectionFilter,
-    setSectionFilter,
-    statusFilter,
-    setStatusFilter,
-    studentsFilter,
-    setStudentsFilter,
-    handleApplyFilters,
-    handleResetFilters
-}) => {
-    const smallButtonStyle = {
-        padding: '4px 8px',
-        fontSize: '0.8rem',
-        minWidth: 'auto'
-    };
-
-    return (
-        <Box sx={{
-            p: 1,
-            display: 'flex',
-            gap: 1,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            borderBottom: 1,
-            borderColor: 'divider'
-        }}>
-            <TextField
-                label="Scuola"
-                size="small"
-                value={schoolFilter}
-                onChange={(e) => setSchoolFilter(e.target.value)}
-                sx={{ '& .MuiInputBase-root': { fontSize: '0.875rem' } }}
-            />
-            <TextField
-                label="Anno"
-                size="small"
-                select
-                value={yearFilter}
-                onChange={(e) => setYearFilter(e.target.value)}
-                sx={{ minWidth: '80px' }}
-            >
-                <MenuItem value="">Tutti</MenuItem>
-                {[1, 2, 3, 4, 5].map((year) => (
-                    <MenuItem key={year} value={year}>
-                        {year}°
-                    </MenuItem>
-                ))}
-            </TextField>
-            <TextField
-                label="Sezione"
-                size="small"
-                value={sectionFilter}
-                onChange={(e) => setSectionFilter(e.target.value.toUpperCase())}
-                sx={{ width: '80px' }}
-            />
-            <TextField
-                label="Status"
-                size="small"
-                select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                sx={{ minWidth: '120px' }}
-            >
-                <MenuItem value="">Tutti</MenuItem>
-                <MenuItem value="active">Attive</MenuItem>
-                <MenuItem value="planned">Pianificate</MenuItem>
-                <MenuItem value="archived">Archiviate</MenuItem>
-            </TextField>
-            <TextField
-                label="Studenti"
-                size="small"
-                select
-                value={studentsFilter}
-                onChange={(e) => setStudentsFilter(e.target.value)}
-                sx={{ minWidth: '150px' }}
-            >
-                <MenuItem value="">Tutti</MenuItem>
-                <MenuItem value="with_students">Con studenti</MenuItem>
-                <MenuItem value="without_students">Senza studenti</MenuItem>
-                <MenuItem value="pending">In attesa (Pending)</MenuItem>
-            </TextField>
-            <Button
-                variant="contained"
-                onClick={handleApplyFilters}
-                startIcon={<FilterListIcon sx={{ fontSize: '1rem' }} />}
-                size="small"
-                sx={smallButtonStyle}
-            >
-                Applica
-            </Button>
-            <Button
-                variant="outlined"
-                onClick={handleResetFilters}
-                size="small"
-                sx={smallButtonStyle}
-            >
-                Reset
-            </Button>
-        </Box>
-    );
-};
+import { StatCards } from './StatCards';
+import { FilterToolbar } from './FilterToolbar';
 
 const ClassManagement = () => {
     const [tabValue, setTabValue] = useState(0);
@@ -145,76 +43,22 @@ const ClassManagement = () => {
     const isAdmin = user?.role === 'admin';
     const [pageSize, setPageSize] = useState(25);
 
+    // Stati per i filtri
     const [schoolFilter, setSchoolFilter] = useState('');
     const [yearFilter, setYearFilter] = useState('');
     const [sectionFilter, setSectionFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [studentsFilter, setStudentsFilter] = useState('');
-    const [filterModel, setFilterModel] = useState({
-        items: []
-    });
 
     useEffect(() => {
         getMyClasses();
     }, []);
 
     const handleApplyFilters = () => {
-        const newFilters = [];
-        if (schoolFilter) {
-            newFilters.push({
-                field: 'schoolName',
-                operator: 'contains',
-                value: schoolFilter
-            });
-        }
-        if (yearFilter) {
-            newFilters.push({
-                field: 'year',
-                operator: 'equals',
-                value: yearFilter
-            });
-        }
-        if (sectionFilter) {
-            newFilters.push({
-                field: 'section',
-                operator: 'equals',
-                value: sectionFilter
-            });
-        }
-        if (statusFilter) {
-            newFilters.push({
-                field: 'status',
-                operator: 'equals',
-                value: statusFilter
-            });
-        }
-        if (studentsFilter) {
-            switch (studentsFilter) {
-                case 'with_students':
-                    newFilters.push({
-                        field: 'students',
-                        operator: 'isNotEmpty'
-                    });
-                    break;
-                case 'without_students':
-                    newFilters.push({
-                        field: 'students',
-                        operator: 'isEmpty'
-                    });
-                    break;
-                case 'pending':
-                    newFilters.push({
-                        field: 'students',
-                        operator: 'custom',
-                        value: (params) => {
-                            const studentCount = params.value?.length || 0;
-                            return studentCount > 0 && studentCount < params.row.capacity;
-                        }
-                    });
-                    break;
-            }
-        }
-        setFilterModel({ items: newFilters });
+        // La logica dei filtri rimane la stessa
+        const filtered = filterClasses(isAdmin ? mainTeacherClasses : 
+            tabValue === 0 ? mainTeacherClasses : coTeacherClasses);
+        return filtered;
     };
 
     const handleResetFilters = () => {
@@ -223,14 +67,15 @@ const ClassManagement = () => {
         setSectionFilter('');
         setStatusFilter('');
         setStudentsFilter('');
-        setFilterModel({ items: [] });
     };
 
     const filterClasses = (classes) => {
         return classes.filter(classItem => {
-            const matchesSchool = !schoolFilter || classItem.schoolName.toLowerCase().includes(schoolFilter.toLowerCase());
+            const matchesSchool = !schoolFilter || 
+                classItem.schoolName.toLowerCase().includes(schoolFilter.toLowerCase());
             const matchesYear = !yearFilter || classItem.year === parseInt(yearFilter);
-            const matchesSection = !sectionFilter || classItem.section === sectionFilter.toUpperCase();
+            const matchesSection = !sectionFilter || 
+                classItem.section === sectionFilter.toUpperCase();
             const matchesStatus = !statusFilter || classItem.status === statusFilter;
 
             let matchesStudentFilter = true;
@@ -251,44 +96,23 @@ const ClassManagement = () => {
                 }
             }
 
-            return matchesSchool && matchesYear && matchesSection && matchesStatus && matchesStudentFilter;
+            return matchesSchool && matchesYear && matchesSection && 
+                   matchesStatus && matchesStudentFilter;
         });
     };
-
-    const handleDeleteClick = (classData) => {
-        setSelectedClass(classData);
-        setOpenDeleteDialog(true);
-    };
-
-    const handleDeleteConfirm = async () => {
-        try {
-            await deleteClass(selectedClass.classId);
-            setOpenDeleteDialog(false);
-            setSelectedClass(null);
-            getMyClasses();
-        } catch (err) {
-            setDeleteError('Errore durante l\'eliminazione della classe');
-        }
-    };
-
-    const handleViewDetails = (classData) => {
-        navigate(`/admin/classes/${classData.classId}`);
-    };
-
-    const handleTestManagement = (classData) => {
-        navigate(`/admin/classes/${classData.classId}/tests`);
-    };
-
-    const filteredMainTeacherClasses = filterClasses(mainTeacherClasses);
-    const filteredCoTeacherClasses = filterClasses(coTeacherClasses);
-    const filteredClasses = isAdmin ? filterClasses(mainTeacherClasses) : [];
 
     const columns = [
         {
             field: 'schoolName',
             headerName: 'Scuola',
             flex: 1,
-            minWidth: 180
+            minWidth: 180,
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <SchoolIcon sx={{ fontSize: '1.1rem', color: 'primary.main' }} />
+                    <Typography variant="body2">{params.value}</Typography>
+                </Box>
+            )
         },
         {
             field: 'year',
@@ -314,41 +138,42 @@ const ClassManagement = () => {
         {
             field: 'studentCount',
             headerName: 'Studenti',
-            width: 110,
+            width: 130,
             align: 'center',
             headerAlign: 'center',
             renderCell: (params) => {
                 const count = params.row.students?.length || 0;
+                const capacity = params.row.capacity || 0;
+                const isFull = count >= capacity;
+                const isPending = count > 0 && count < capacity;
+                const isEmpty = count === 0;
+
                 return (
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        {count === 0 ? (
-                            <Chip
-                                label="Pending"
-                                color="warning"
-                                size="small"
-                                sx={{
-                                    minWidth: '70px',
-                                    height: '24px',
-                                    '& .MuiChip-label': {
-                                        fontSize: '0.75rem'
-                                    }
-                                }}
-                            />
-                        ) : (
-                            <Chip
-                                label={`${count} studenti`}
-                                color={count >= params.row.capacity ? 'error' : 'success'}
-                                size="small"
-                                sx={{
-                                    minWidth: '70px',
-                                    height: '24px',
-                                    '& .MuiChip-label': {
-                                        fontSize: '0.75rem'
-                                    }
-                                }}
-                            />
-                        )}
-                    </Box>
+                    <Tooltip title={`${count}/${capacity} studenti`}>
+                        <Chip
+                            icon={isEmpty ? 
+                                <WarningIcon sx={{ fontSize: '1rem !important' }} /> :
+                                isFull ? 
+                                <CheckCircleIcon sx={{ fontSize: '1rem !important' }} /> :
+                                <WarningIcon sx={{ fontSize: '1rem !important' }} />
+                            }
+                            label={isEmpty ? 'Vuota' : 
+                                   isFull ? 'Completa' : 
+                                   `${count}/${capacity}`}
+                            color={isEmpty ? 'warning' : 
+                                   isFull ? 'success' : 
+                                   'primary'}
+                            size="small"
+                            sx={{
+                                minWidth: '90px',
+                                height: '24px',
+                                '& .MuiChip-label': {
+                                    fontSize: '0.75rem',
+                                    px: 1
+                                }
+                            }}
+                        />
+                    </Tooltip>
                 );
             }
         },
@@ -379,7 +204,7 @@ const ClassManagement = () => {
                 <GridActionsCellItem
                     icon={
                         <Tooltip title="Elimina classe">
-                            <DeleteIcon sx={{ fontSize: '1.1rem' }} color="error" />
+                            <DeleteIcon sx={{ fontSize: '1.1rem', color: 'error.main' }} />
                         </Tooltip>
                     }
                     label="Elimina"
@@ -389,218 +214,188 @@ const ClassManagement = () => {
         }
     ];
 
+    const handleDeleteClick = (classData) => {
+        setSelectedClass(classData);
+        setOpenDeleteDialog(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        try {
+            await deleteClass(selectedClass.classId);
+            setOpenDeleteDialog(false);
+            setSelectedClass(null);
+            getMyClasses();
+        } catch (err) {
+            setDeleteError('Errore durante l\'eliminazione della classe');
+        }
+    };
+
+    const handleViewDetails = (classData) => {
+        navigate(`/admin/classes/${classData.classId}`);
+    };
+
+    const handleTestManagement = (classData) => {
+        navigate(`/admin/classes/${classData.classId}/tests`);
+    };
+
+    const filteredMainTeacherClasses = filterClasses(mainTeacherClasses);
+    const filteredCoTeacherClasses = filterClasses(coTeacherClasses);
+    const currentClasses = isAdmin ? filteredMainTeacherClasses : 
+        (tabValue === 0 ? filteredMainTeacherClasses : filteredCoTeacherClasses);
+
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-                <CircularProgress size={30} /> {/* Ridotto dimensione */}
-            </Box>
-        );
-    }
-
-    if (error) {
-        return (
-            <Box p={2}>
-                <Alert severity="error">{error}</Alert>
+                <CircularProgress size={30} />
             </Box>
         );
     }
 
     return (
-        <Box sx={{ 
-            p: 2, 
-            height: 'calc(100vh - 100px)', // Altezza totale del contenitore principale
-            display: 'flex',
-            flexDirection: 'column'
-        }}> 
-            <Typography
-                variant="h5"
-                gutterBottom
-                color="primary"
-                sx={{
-                    mb: 2,
-                    fontSize: '1.2rem'
-                }}
-            >
-                {isAdmin ? 'Gestione Classi (Admin)' : 'Gestione Classi'}
-            </Typography>
-        
-            <Paper sx={{
-                flex: 1, // Importante: questo fa sì che il Paper occupi tutto lo spazio disponibile
-                display: 'flex',
-                flexDirection: 'column',
-                minHeight: 0, // Importante: permette al flex child di shrinkare
-                mb: 1,
-                borderRadius: 2,
-                boxShadow: 2
-            }}>
-                <FilterToolbar
-                    schoolFilter={schoolFilter}
-                    setSchoolFilter={setSchoolFilter}
-                    yearFilter={yearFilter}
-                    setYearFilter={setYearFilter}
-                    sectionFilter={sectionFilter}
-                    setSectionFilter={setSectionFilter}
-                    statusFilter={statusFilter}
-                    setStatusFilter={setStatusFilter}
-                    studentsFilter={studentsFilter}
-                    setStudentsFilter={setStudentsFilter}
-                    handleApplyFilters={handleApplyFilters}
-                    handleResetFilters={handleResetFilters}
-                />
-        
-                {isAdmin ? (
-                    <Box sx={{
-                        flex: 1, // Importante: questo fa sì che il Box occupi tutto lo spazio disponibile
-                        display: 'flex',
-                        flexDirection: 'column',
-                        minHeight: 0, // Importante: permette al flex child di shrinkare
-                        width: '100%'
-                    }}>
-                        <motion.div style={{ 
-                            height: '100%', // Importante: assicura che motion.div occupi tutto lo spazio
-                            display: 'flex',
-                            flexDirection: 'column'
-                        }}>
-                            <DataGrid
-                                rows={filteredClasses}
-                                columns={columns}
-                                getRowId={(row) => row.classId}
-                                pageSize={pageSize}
-                                rowsPerPageOptions={[25, 50, 100]}
-                                onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-                                disableSelectionOnClick
-                                density="compact"
-                                autoHeight={false} // Importante: non utilizziamo autoHeight
-                                sx={{
-                                    flex: 1, // Importante: fa sì che DataGrid occupi tutto lo spazio disponibile
-                                    '& .MuiDataGrid-root': {
-                                        height: '100%'
-                                    },
-                                    '& .MuiDataGrid-cell': {
-                                        fontSize: '0.875rem',
-                                        py: 0.5,
-                                        borderColor: 'divider'
-                                    },
-                                    '& .MuiDataGrid-columnHeaders': {
-                                        fontSize: '0.875rem',
-                                        minHeight: '45px !important',
-                                        maxHeight: '45px !important',
-                                        backgroundColor: '#f5f5f5',
-                                        borderBottom: '2px solid #e0e0e0'
-                                    },
-                                    '& .MuiDataGrid-row': {
-                                        minHeight: '40px !important',
-                                        maxHeight: '40px !important',
-                                        '&:nth-of-type(odd)': {
-                                            backgroundColor: '#fafafa'
-                                        }
-                                    }
-                                }}
-                            />
-                        </motion.div>
-                    </Box>
-                ) : (
-                    <>
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+        >
+            <Box sx={{ p: 3, height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
+                {/* Header con titolo */}
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                >
+                    <Typography
+                        variant="h5"
+                        color="primary"
+                        sx={{
+                            mb: 3,
+                            fontSize: '1.2rem',
+                            fontWeight: 600
+                        }}
+                    >
+                        {isAdmin ? 'Gestione Classi (Admin)' : 'Gestione Classi'}
+                    </Typography>
+                </motion.div>
+
+                {/* Stat Cards */}
+                <StatCards classes={currentClasses} />
+
+                {/* Main Content */}
+                <Paper sx={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minHeight: 0,
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    boxShadow: theme => theme.shadows[3]
+                }}>
+                    {/* Toolbar Filtri */}
+                    <FilterToolbar
+                        schoolFilter={schoolFilter}
+                        setSchoolFilter={setSchoolFilter}
+                        yearFilter={yearFilter}
+                        setYearFilter={setYearFilter}
+                        sectionFilter={sectionFilter}
+                        setSectionFilter={setSectionFilter}
+                        statusFilter={statusFilter}
+                        setStatusFilter={setStatusFilter}
+                        studentsFilter={studentsFilter}
+                        setStudentsFilter={setStudentsFilter}
+                        handleApplyFilters={handleApplyFilters}
+                        handleResetFilters={handleResetFilters}
+                    />
+
+                    {/* Tabs e Grid */}
+                    {!isAdmin && (
                         <Tabs
                             value={tabValue}
                             onChange={(e, newValue) => setTabValue(newValue)}
                             sx={{
                                 minHeight: '40px',
+                                borderBottom: 1,
+                                borderColor: 'divider',
                                 '& .MuiTab-root': {
                                     minHeight: '40px',
                                     fontSize: '0.875rem',
-                                    padding: '6px 12px'
+                                    textTransform: 'none'
                                 }
                             }}
                         >
-                            <Tab
-                                label={`Le mie classi (${filteredMainTeacherClasses.length})`}
-                                sx={{ textTransform: 'none' }}
-                            />
-                            <Tab
-                                label={`Classi co-insegnate (${filteredCoTeacherClasses.length})`}
-                                sx={{ textTransform: 'none' }}
-                            />
+                            <Tab label={`Le mie classi (${filteredMainTeacherClasses.length})`} />
+                            <Tab label={`Classi co-insegnate (${filteredCoTeacherClasses.length})`} />
                         </Tabs>
-        
-                        <Box sx={{
-                            flex: 1,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            minHeight: 0,
-                            width: '100%'
-                        }}>
-                            <motion.div style={{ 
-                                height: '100%',
-                                display: 'flex',
-                                flexDirection: 'column'
-                            }}>
-                                <DataGrid
-                                    rows={tabValue === 0 ? filteredMainTeacherClasses : filteredCoTeacherClasses}
-                                    columns={columns}
-                                    getRowId={(row) => row.classId}
-                                    pageSize={pageSize}
-                                    rowsPerPageOptions={[10, 25, 50, 100]}
-                                    onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-                                    disableSelectionOnClick
-                                    density="compact"
-                                    autoHeight={false}
-                                    sx={{
-                                        flex: 1,
-                                        '& .MuiDataGrid-root': {
-                                            height: '100%'
-                                        },
-                                        '& .MuiDataGrid-cell': {
-                                            fontSize: '0.875rem',
-                                            py: 0.5
-                                        }
-                                    }}
-                                />
-                            </motion.div>
-                        </Box>
-                    </>
-                )}
-            </Paper>
-        
-
-        <Dialog
-            open={openDeleteDialog}
-            onClose={() => setOpenDeleteDialog(false)}
-        >
-            <DialogTitle sx={{ fontSize: '1.1rem', py: 1.5 }}>
-                Conferma eliminazione
-            </DialogTitle>
-            <DialogContent>
-                {deleteError && <Alert severity="error" sx={{ mb: 2 }}>{deleteError}</Alert>}
-                <Typography sx={{ fontSize: '0.9rem' }}>
-                    Sei sicuro di voler eliminare questa classe?
-                    {selectedClass && (
-                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1, fontSize: '0.875rem' }}>
-                            {`${selectedClass.year}${selectedClass.section} - ${selectedClass.schoolName}`}
-                        </Typography>
                     )}
-                </Typography>
-            </DialogContent>
-            <DialogActions>
-                <Button
-                    onClick={() => setOpenDeleteDialog(false)}
-                    color="primary"
-                    size="small"
+
+                    {/* DataGrid */}
+                    <Box sx={{ flex: 1, minHeight: 0 }}>
+                        <DataGrid
+                            rows={currentClasses}
+                            columns={columns}
+                            getRowId={(row) => row.classId}
+                            pageSize={pageSize}
+                            rowsPerPageOptions={[25, 50, 100]}
+                            onPageSizeChange={setPageSize}
+                            disableSelectionOnClick
+                            density="compact"
+                            sx={{
+                                border: 'none',
+                                '& .MuiDataGrid-cell': {
+                                    fontSize: '0.875rem',
+                                    py: 1
+                                },
+                                '& .MuiDataGrid-columnHeaders': {
+                                    backgroundColor: 'background.default',
+                                    borderBottom: 2,
+                                    borderColor: 'divider'
+                                },
+                                '& .MuiDataGrid-row': {
+                                    '&:hover': {
+                                        backgroundColor: 'action.hover'
+                                    }
+                                }
+                            }}
+                        />
+                    </Box>
+                </Paper>
+
+                {/* Delete Dialog */}
+                <Dialog
+                    open={openDeleteDialog}
+                    onClose={() => setOpenDeleteDialog(false)}
+                    TransitionComponent={motion.div}
                 >
-                    Annulla
-                </Button>
-                <Button
-                    onClick={handleDeleteConfirm}
-                    color="error"
-                    variant="contained"
-                    size="small"
-                >
-                    Elimina
-                </Button>
-            </DialogActions>
-        </Dialog>
-    </Box>
-);
+                    <DialogTitle>Conferma eliminazione</DialogTitle>
+                    <DialogContent>
+                        {deleteError && (
+                            <Alert severity="error" sx={{ mb: 2 }}>
+                                {deleteError}
+                            </Alert>
+                        )}
+                        <Typography>
+                            Sei sicuro di voler eliminare questa classe?
+                            {selectedClass && (
+                                <Typography color="textSecondary" sx={{ mt: 1 }}>
+                                    {`${selectedClass.year}${selectedClass.section} - ${selectedClass.schoolName}`}
+                                </Typography>
+                            )}
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setOpenDeleteDialog(false)}>
+                            Annulla
+                        </Button>
+                        <Button 
+                            onClick={handleDeleteConfirm}
+                            color="error"
+                            variant="contained"
+                        >
+                            Elimina
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </Box>
+        </motion.div>
+    );
 };
 
 export default ClassManagement;

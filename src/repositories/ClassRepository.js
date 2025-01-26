@@ -645,9 +645,15 @@ async findWithDetails(id) {
                 );
             }
         }
-        
+
         async deactivateClassesBySection(schoolId, sectionName, session) {
             try {
+                logger.debug('Inizio deactivateClassesBySection', {
+                    schoolId,
+                    sectionName,
+                    session: !!session
+                });
+        
                 // 1. Trova tutte le classi della sezione
                 const classes = await this.model.find({
                     schoolId,
@@ -655,15 +661,25 @@ async findWithDetails(id) {
                     isActive: true
                 }).session(session);
         
+                logger.debug('Classi trovate da disattivare:', {
+                    count: classes.length,
+                    classi: classes.map(c => ({
+                        id: c._id,
+                        section: c.section,
+                        isActive: c.isActive
+                    }))
+                });
+        
                 // 2. Aggiorna lo stato delle classi
                 for (const classDoc of classes) {
+                    // Resetta tutti i campi
                     classDoc.isActive = false;
+                    classDoc.status = 'archived';
                     classDoc.deactivatedAt = new Date();
-                    classDoc.students = classDoc.students.map(student => ({
-                        ...student,
-                        status: 'inactive',
-                        deactivatedAt: new Date()
-                    }));
+                    classDoc.mainTeacher = null;
+                    classDoc.teachers = [];
+                    classDoc.students = [];
+                    classDoc.updatedAt = new Date();
                     
                     await classDoc.save({ session });
                 }
