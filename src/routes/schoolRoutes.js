@@ -10,30 +10,35 @@ router.get('/my-school', schoolController.getMySchool.bind(schoolController));
 router.get('/region/:region', schoolController.getByRegion.bind(schoolController));
 router.get('/type/:type', schoolController.getByType.bind(schoolController));
 
-// 2. Rotte specifiche per le sezioni (raggruppate)
-router.route('/:id/sections')
-    .get(schoolController.getSections.bind(schoolController));
+// 2. Rotte di configurazione (prima delle rotte con parametri dinamici)
+router.get('/:id/academic-years', schoolController.getAcademicYears.bind(schoolController));
+router.post('/:id/academic-years', 
+    restrictTo('admin'), 
+    schoolController.setupAcademicYear.bind(schoolController)
+);
 
-router.route('/:schoolId/sections/:sectionName')
-    .get(schoolController.getSectionStudents.bind(schoolController))
-    .post(
-        restrictTo('admin'),
-        schoolController.deactivateSection.bind(schoolController)
-    );
+router.post('/:id/setup', 
+    restrictTo('admin'), 
+    schoolController.setupInitialConfiguration.bind(schoolController)
+);
 
-router.post(
-    '/:schoolId/sections/:sectionName/deactivate',
+// 3. Rotte per la gestione delle sezioni (raggruppate con un router dedicato)
+const sectionsRouter = express.Router({ mergeParams: true });
+router.use('/:schoolId/sections', sectionsRouter);
+
+// Rotte specifiche per le sezioni
+sectionsRouter.get('/', schoolController.getSections.bind(schoolController));
+sectionsRouter.get('/:sectionName/students', schoolController.getSectionStudents.bind(schoolController));
+sectionsRouter.post('/:sectionName/deactivate', 
     restrictTo('admin'),
     schoolController.deactivateSection.bind(schoolController)
 );
-
-router.post(
-    '/:schoolId/sections/:sectionName/reactivate',
+sectionsRouter.post('/:sectionName/reactivate',
     restrictTo('admin'),
     schoolController.reactivateSection.bind(schoolController)
 );
 
-// 3. Rotte per la gestione della scuola
+// 4. Rotte per la gestione della scuola
 router.route('/')
     .get(schoolController.getAll.bind(schoolController))
     .post(
@@ -51,17 +56,5 @@ router.route('/:id')
         restrictTo('admin'), 
         schoolController.delete.bind(schoolController)
     );
-
-// 4. Rotte di configurazione
-router.get('/:id/academic-years', schoolController.getAcademicYears.bind(schoolController));
-router.post('/:id/academic-years', 
-    restrictTo('admin'), 
-    schoolController.setupAcademicYear.bind(schoolController)
-);
-
-router.post('/:id/setup', 
-    restrictTo('admin'), 
-    schoolController.setupInitialConfiguration.bind(schoolController)
-);
 
 module.exports = router;

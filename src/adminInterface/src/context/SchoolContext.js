@@ -308,28 +308,31 @@ export const SchoolProvider = ({ children }) => {
         }
     }, []);
 
-const getSectionStudents = async (schoolId, sectionName) => {
-    try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await axiosInstance.get(
-            `/schools/${schoolId}/sections/${sectionName}/students`
-        );
-        
-        if (response.data.status === 'success') {
-            return response.data.data.students;
+    const getSectionStudents = async (schoolId, sectionName) => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            console.log('Fetching section students:', { schoolId, sectionName });
+            
+            const response = await axiosInstance.get(
+                `/schools/${schoolId}/sections/${sectionName}/students`
+            );
+            
+            if (response.data.status === 'success') {
+                return response.data.data.students;
+            }
+            return [];
+        } catch (error) {
+            console.error('Error in getSectionStudents:', error);
+            const errorMessage = error.response?.data?.error?.message || 
+                               'Errore nel recupero degli studenti della sezione';
+            setError(errorMessage);
+            throw error;
+        } finally {
+            setLoading(false);
         }
-    } catch (error) {
-        const errorMessage = error.response?.data?.error?.message || 
-                           'Errore nel recupero degli studenti della sezione';
-        setError(errorMessage);
-        showNotification(errorMessage, 'error');
-        throw error;
-    } finally {
-        setLoading(false);
-    }
-};
+    };
 
  // I metodi di operazione rimangono ma vengono semplificati
  const deactivateSection = async (schoolId, sectionName) => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     Container,
@@ -204,7 +204,7 @@ const SectionManagement = () => {
                 onReactivate={handleReactivate}
             />
 
-        <DeactivationDialog
+            <DeactivationDialog
                 open={isDeactivationDialogOpen}
                 onClose={() => {
                     setIsDeactivationDialogOpen(false);
