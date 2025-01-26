@@ -12,7 +12,7 @@ export const SchoolProvider = ({ children }) => {
     const [totalSchools, setTotalSchools] = useState(0);
     const { showNotification } = useNotification();
     const [selectedSchool, setSelectedSchool] = useState(null);
-    const [selectedSchoolSections, setSelectedSchoolSections] = useState([]);
+    const [sections, setSections] = useState([]); // Aggiungiamo questo stato
 
     const validateSchoolData = (schoolData) => {
         const errors = {};
@@ -276,39 +276,30 @@ export const SchoolProvider = ({ children }) => {
     };
 
     // Metodo per recuperare le sezioni di una scuola
-const getSections = async (schoolId, includeInactive = false) => {
-    try {
-        setLoading(true);
-        setError(null);
-        
-        console.log('Fetching sections:', { schoolId, includeInactive });
-        
-        const response = await axiosInstance.get(
-            `/schools/${schoolId}/sections?includeInactive=${includeInactive}`
-        );
-        
-        console.log('API Response:', response.data);
-
-        if (response.data.status === 'success') {
-            setSelectedSchoolSections(response.data.data.sections);
-            console.log('Sections loaded:', response.data.data.sections);
-            return response.data.data.sections;
+     // Modifichiamo anche getSections per usare il nuovo stato
+     const getSections = async (schoolId, includeInactive = false) => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            const response = await axiosInstance.get(
+                `/schools/${schoolId}/sections?includeInactive=${includeInactive}`
+            );
+            
+            if (response.data.status === 'success') {
+                setSections(response.data.data.sections);
+                return response.data.data.sections;
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.error?.message || 
+                               'Errore nel recupero delle sezioni';
+            setError(errorMessage);
+            showNotification(errorMessage, 'error');
+            throw error;
+        } finally {
+            setLoading(false);
         }
-    } catch (error) {
-        console.error('Error fetching sections:', {
-            error: error.message,
-            response: error.response?.data
-        });
-        
-        const errorMessage = error.response?.data?.error?.message || 
-                           'Errore nel recupero delle sezioni';
-        setError(errorMessage);
-        showNotification(errorMessage, 'error');
-        throw error;
-    } finally {
-        setLoading(false);
-    }
-};
+    };
 
 const getSectionStudents = async (schoolId, sectionName) => {
     try {
@@ -333,20 +324,22 @@ const getSectionStudents = async (schoolId, sectionName) => {
     }
 };
 
-// Metodo per disattivare una sezione
-const deactivateSection = async (schoolId, sectionName) => {
+ // I metodi di operazione rimangono ma vengono semplificati
+ const deactivateSection = async (schoolId, sectionName) => {
     try {
         setLoading(true);
         setError(null);
+
+        console.log('Deactivating section:', { schoolId, sectionName });
 
         const response = await axiosInstance.post(
             `/schools/${schoolId}/sections/${sectionName}/deactivate`
         );
 
         if (response.data.status === 'success') {
-            // Aggiorna lo stato delle sezioni localmente
-            setSelectedSchoolSections(prev => 
-                prev.map(section => 
+            // Aggiorna lo stato delle sezioni
+            setSections(prevSections => 
+                prevSections.map(section => 
                     section.name === sectionName
                         ? {
                             ...section,
@@ -358,13 +351,14 @@ const deactivateSection = async (schoolId, sectionName) => {
             );
 
             showNotification(
-                `Sezione ${sectionName} disattivata con successo. ${response.data.data.studentsUpdated} studenti aggiornati.`,
+                'Sezione disattivata con successo',
                 'success'
             );
 
             return response.data.data;
         }
     } catch (error) {
+        console.error('Error in deactivateSection:', error);
         const errorMessage = error.response?.data?.error?.message || 
                            'Errore nella disattivazione della sezione';
         setError(errorMessage);
@@ -375,35 +369,18 @@ const deactivateSection = async (schoolId, sectionName) => {
     }
 };
 
-// Metodo per riattivare una sezione
 const reactivateSection = async (schoolId, sectionName) => {
     try {
         setLoading(true);
-        setError(null);
-
         const response = await axiosInstance.post(
             `/schools/${schoolId}/sections/${sectionName}/reactivate`
         );
 
         if (response.data.status === 'success') {
-            // Aggiorna lo stato delle sezioni localmente
-            setSelectedSchoolSections(prev => 
-                prev.map(section => 
-                    section.name === sectionName
-                        ? {
-                            ...section,
-                            isActive: true,
-                            deactivatedAt: null
-                        }
-                        : section
-                )
-            );
-
             showNotification(
                 `Sezione ${sectionName} riattivata con successo`,
                 'success'
             );
-
             return response.data.data;
         }
     } catch (error) {
@@ -432,7 +409,7 @@ const reactivateSection = async (schoolId, sectionName) => {
             updateSchool,
             deleteSchool,
             validateSchoolData,
-            selectedSchoolSections,
+            sections, 
             getSections,
             getSectionStudents,
             deactivateSection,

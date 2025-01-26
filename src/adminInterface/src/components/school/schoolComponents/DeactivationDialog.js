@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -14,59 +14,76 @@ import {
     CircularProgress
 } from '@mui/material';
 import GroupIcon from '@mui/icons-material/Group';
-import { axiosInstance } from '../../../services/axiosConfig';
 import { useSchool } from '../../../context/SchoolContext';
 
-
-
 const DeactivationDialog = ({ open, onClose, onConfirm, section }) => {
+    // Local state
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    
+    // Context
     const { getSectionStudents } = useSchool();
 
-    // Aggiungiamo una flag per tracciare se abbiamo già fatto il fetch
-    const [hasFetchedStudents, setHasFetchedStudents] = useState(false);
-
-    useEffect(() => {
-        // Resetta lo stato quando il dialog si chiude
-        if (!open) {
-            setStudents([]);
-            setError(null);
-            setHasFetchedStudents(false);
+    // Fetch students function
+    const fetchStudents = useCallback(async () => {
+        if (!section?.schoolId || !section?.name) {
+            console.log('Missing required section data:', { section });
             return;
         }
 
-        // Fetch solo se non l'abbiamo già fatto e abbiamo i dati necessari
-        if (!hasFetchedStudents && section?.schoolId && section?.name) {
-            const fetchStudents = async () => {
-                setLoading(true);
-                try {
-                    const fetchedStudents = await getSectionStudents(section.schoolId, section.name);
-                    setStudents(fetchedStudents || []);
-                    setHasFetchedStudents(true);
-                } catch (err) {
-                    setError('Errore nel recupero degli studenti');
-                    console.error('Error fetching students:', err);
-                } finally {
-                    setLoading(false);
-                }
-            };
+        setLoading(true);
+        setError(null);
 
+        try {
+            const fetchedStudents = await getSectionStudents(section.schoolId, section.name);
+            setStudents(fetchedStudents || []);
+        } catch (err) {
+            console.error('Error fetching students:', err);
+            setError('Errore nel recupero degli studenti');
+        } finally {
+            setLoading(false);
+        }
+    }, [section?.schoolId, section?.name, getSectionStudents]);
+
+    // Effect for fetching students
+    useEffect(() => {
+        // Reset state when dialog closes
+        if (!open) {
+            setStudents([]);
+            setError(null);
+            return;
+        }
+
+        // Fetch students when dialog opens
+        if (open && section) {
             fetchStudents();
         }
-    }, [open, section?.schoolId, section?.name, hasFetchedStudents, getSectionStudents]);
+    }, [open, section, fetchStudents]);
+
+    // Early return if no section
     if (!section) return null;
 
+    // Handlers
     const handleConfirm = () => {
+        if (students.length > 0) {
+            // Se ci sono studenti, mostra un messaggio di errore
+            setError('Non è possibile disattivare una sezione con studenti assegnati');
+            return;
+        }
         onConfirm(section);
+        onClose();
+    };
+
+    const handleClose = () => {
+        setError(null);
         onClose();
     };
 
     return (
         <Dialog 
             open={open} 
-            onClose={onClose}
+            onClose={handleClose}
             maxWidth="sm"
             fullWidth
         >
@@ -81,45 +98,62 @@ const DeactivationDialog = ({ open, onClose, onConfirm, section }) => {
                 <Box sx={{ my: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <GroupIcon color="primary" />
                     <Typography>
-                        {section.studentsCount > 0 
-                            ? `${section.studentsCount} studenti verranno rimossi dalle loro classi:`
-                            : 'Nessuno studente verrà influenzato da questa operazione.'}
+                        {loading ? (
+                            'Verifica studenti in corso...'
+                        ) : students.length > 0 ? (
+                            `${students.length} studenti sono attualmente assegnati a questa sezione:`
+                        ) : (
+                            'Nessuno studente verrà influenzato da questa operazione.'
+                        )}
                     </Typography>
                 </Box>
 
-                {loading ? (
+                {loading && (
                     <Box display="flex" justifyContent="center" my={2}>
                         <CircularProgress size={24} />
                     </Box>
-                ) : error ? (
+                )}
+
+                {error && (
                     <Alert severity="error" sx={{ mt: 2 }}>
                         {error}
                     </Alert>
-                ) : students.length > 0 ? (
-                    <List dense sx={{ bgcolor: 'background.paper', mt: 2 }}>
-                        {students.map((student) => (
-                            <ListItem key={student._id}>
-                                <ListItemText
-                                    primary={`${student.lastName} ${student.firstName}`}
-                                    secondary={`Classe ${student.year}${section.name}`}
-                                />
-                            </ListItem>
-                        ))}
-                    </List>
-                ) : null}
+                )}
 
-                <Alert severity="warning" sx={{ mt: 2 }}>
-                    Questa operazione non può essere annullata. Gli studenti dovranno essere riassegnati manualmente ad altre sezioni.
-                </Alert>
+                {!loading && students.length > 0 && (
+                    <>
+                        <List dense sx={{ bgcolor: 'background.paper', mt: 2 }}>
+                            {students.map((student) => (
+                                <ListItem key={student._id}>
+                                    <ListItemText
+                                        primary={`${student.lastName} ${student.firstName}`}
+                                        secondary={`Classe ${student.year}${section.name}`}
+                                    />
+                                </ListItem>
+                            ))}
+                        </List>
+                        <Alert severity="warning" sx={{ mt: 2 }}>
+                            Non è possibile disattivare una sezione con studenti assegnati.
+                            Riassegna prima gli studenti ad altre sezioni.
+                        </Alert>
+                    </>
+                )}
+
+                {!loading && students.length === 0 && (
+                    <Alert severity="warning" sx={{ mt: 2 }}>
+                        Questa operazione non può essere annullata.
+                    </Alert>
+                )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={onClose}>
+                <Button onClick={handleClose}>
                     Annulla
                 </Button>
                 <Button 
                     onClick={handleConfirm}
                     color="warning"
                     variant="contained"
+                    disabled={loading || students.length > 0}
                 >
                     Conferma Disattivazione
                 </Button>
@@ -128,4 +162,4 @@ const DeactivationDialog = ({ open, onClose, onConfirm, section }) => {
     );
 };
 
-export default DeactivationDialog;
+export default React.memo(DeactivationDialog);

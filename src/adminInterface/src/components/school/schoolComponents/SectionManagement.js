@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     Container,
@@ -26,83 +26,73 @@ const SectionManagement = () => {
     const navigate = useNavigate();
     const { id: schoolId } = useParams();
     const { 
-        selectedSchool,
-        selectedSchoolSections,
-        loading,
-        error,
-        getSchoolById,
+        selectedSchool, 
+        getSchoolById, 
         getSections,
         deactivateSection,
-        reactivateSection
+        reactivateSection,
+        sections, // Sezioni dal context
+        loading,
+        error
     } = useSchool();
 
     const [showInactive, setShowInactive] = useState(true);
-    const [stats, setStats] = useState({
-        totalSections: 0,
-        activeSections: 0,
-        totalStudents: 0
-    });
     const [selectedSection, setSelectedSection] = useState(null);
     const [isDeactivationDialogOpen, setIsDeactivationDialogOpen] = useState(false);
 
-    // Separiamo il caricamento iniziale
+    // Effetto per caricare la scuola
     useEffect(() => {
         if (!selectedSchool) {
             getSchoolById(schoolId);
         }
     }, [schoolId, selectedSchool, getSchoolById]);
 
-    // Gestiamo il caricamento delle sezioni separatamente
+    // Effetto per caricare le sezioni
     useEffect(() => {
         const loadSections = async () => {
             if (selectedSchool) {
-                const sections = await getSections(schoolId, true);
-                if (sections) {
-                    updateStats(sections);
+                try {
+                    await getSections(schoolId, true);
+                } catch (error) {
+                    console.error('Error loading sections:', error);
                 }
             }
         };
 
         loadSections();
-    }, [schoolId, selectedSchool, getSections]);
+    }, [schoolId, selectedSchool]);
 
-    const updateStats = useCallback((sections) => {
-        const activeSections = sections.filter(s => s.isActive);
-        const totalStudents = sections.reduce((acc, s) => acc + (s.studentsCount || 0), 0);
-        
-        setStats({
-            totalSections: sections.length,
-            activeSections: activeSections.length,
-            totalStudents
-        });
-    }, []);
-
-    // Memorizziamo le sezioni filtrate
-    const filteredSections = useMemo(() => {
-        return selectedSchoolSections || [];
-    }, [selectedSchoolSections]);
-
+    // Handler per apertura dialog di disattivazione
     const handleDeactivateClick = (section) => {
         setSelectedSection({
             ...section,
-            schoolId: schoolId  // Aggiungi lo schoolId
+            schoolId: schoolId
         });
         setIsDeactivationDialogOpen(true);
     };
 
-    const handleDeactivateConfirm = async (section) => {
+    // Handler per conferma disattivazione
+    const handleDeactivateConfirm = async () => {
         try {
-            await deactivateSection(schoolId, section.name);
-            await refreshSections();
+            if (!selectedSection) return;
+
+            await deactivateSection(schoolId, selectedSection.name);
+            // Ricarica le sezioni dopo la disattivazione
+            await getSections(schoolId, true);
         } catch (error) {
             console.error('Error deactivating section:', error);
+        } finally {
+            setIsDeactivationDialogOpen(false);
+            setSelectedSection(null);
         }
     };
 
+    // Handler per riattivazione
     const handleReactivate = async (section) => {
         try {
             await reactivateSection(schoolId, section.name);
-            await refreshSections();
+            // Ricarica le sezioni dopo la riattivazione
+            await getSections(schoolId, true);
         } catch (error) {
             console.error('Error reactivating section:', error);
         }
@@ -124,24 +114,17 @@ const SectionManagement = () => {
         );
     }
 
-    if (!selectedSchool) {
-        return (
-            <Box textAlign="center" py={4}>
-                <Typography variant="h6">Scuola non trovata</Typography>
-            </Box>
-        );
-    }
+
 
     return (
         <Container maxWidth="lg">
-            {/* Header */}
             <Box display="flex" alignItems="center" mb={3} gap={2}>
                 <IconButton onClick={() => navigate(`/admin/schools/${schoolId}`)}>
                     <ArrowBackIcon />
                 </IconButton>
                 <Box flex={1}>
                     <Typography variant="caption" display="block" color="text.secondary">
-                        {selectedSchool.name}
+                        {selectedSchool?.name}
                     </Typography>
                     <Typography variant="h4" component="h1">
                         Gestione Sezioni
@@ -158,7 +141,6 @@ const SectionManagement = () => {
                 />
             </Box>
 
-            {/* Stats Cards */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} sm={4}>
                     <Card>
@@ -170,7 +152,7 @@ const SectionManagement = () => {
                                         Sezioni Totali
                                     </Typography>
                                     <Typography variant="h4">
-                                        {stats.totalSections}
+                                        {sections.length}
                                     </Typography>
                                 </Box>
                             </Box>
@@ -187,7 +169,7 @@ const SectionManagement = () => {
                                         Sezioni Attive
                                     </Typography>
                                     <Typography variant="h4">
-                                        {stats.activeSections}
+                                        {sections.filter(s => s.isActive).length}
                                     </Typography>
                                 </Box>
                             </Box>
@@ -204,7 +186,7 @@ const SectionManagement = () => {
                                         Studenti Totali
                                     </Typography>
                                     <Typography variant="h4">
-                                        {stats.totalStudents}
+                                        {sections.reduce((acc, s) => acc + (s.studentsCount || 0), 0)}
                                     </Typography>
                                 </Box>
                             </Box>
@@ -213,25 +195,19 @@ const SectionManagement = () => {
                 </Grid>
             </Grid>
 
-            {/* Aggiungi log prima del render di SectionList */}
-            {console.log("Rendering SectionList with:", {
-                            sections: selectedSchoolSections,
-                            showInactive,
-                            sectionsLength: selectedSchoolSections?.length
-                        })}
-
-            {/* Section List */}
             <SectionList
-                sections={selectedSchoolSections || []}
+                sections={sections || []}
                 showInactive={showInactive}
                 onDeactivate={handleDeactivateClick}
                 onReactivate={handleReactivate}
             />
 
-            {/* Deactivation Dialog */}
             <DeactivationDialog
                 open={isDeactivationDialogOpen}
-                onClose={() => setIsDeactivationDialogOpen(false)}
+                onClose={() => {
+                    setIsDeactivationDialogOpen(false);
+                    setSelectedSection(null);
+                }}
                 onConfirm={handleDeactivateConfirm}
                 section={selectedSection}
             />

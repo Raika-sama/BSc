@@ -427,16 +427,17 @@ class SchoolRepository extends BaseRepository {
         session.startTransaction();
     
         try {
-            logger.debug('Disattivazione sezione:', { schoolId, sectionName });
+            logger.debug('Starting section deactivation:', { schoolId, sectionName });
     
-            // 1. Prima impostiamo la data di disattivazione
-            const resultWithDate = await this.model.findOneAndUpdate(
+            // 1. Aggiorna la sezione nella scuola
+            const school = await this.model.findOneAndUpdate(
                 { 
                     _id: schoolId,
                     'sections.name': sectionName 
                 },
                 {
                     $set: {
+                        'sections.$.isActive': false,
                         'sections.$.deactivatedAt': new Date()
                     }
                 },
@@ -446,43 +447,37 @@ class SchoolRepository extends BaseRepository {
                 }
             );
     
-            if (!resultWithDate) {
+            if (!school) {
                 throw createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Sezione non trovata'
+                    'Scuola o sezione non trovata'
                 );
             }
     
-            // 2. Poi impostiamo isActive a false
-            const finalResult = await this.model.findOneAndUpdate(
-                { 
-                    _id: schoolId,
-                    'sections.name': sectionName 
+            // 2. Aggiorna le classi
+            await Class.updateMany(
+                {
+                    schoolId,
+                    section: sectionName,
+                    isActive: true
                 },
                 {
                     $set: {
-                        'sections.$.isActive': false
+                        isActive: false,
+                        status: 'archived',
+                        deactivatedAt: new Date()
                     }
                 },
-                { 
-                    new: true,
-                    runValidators: true,
-                    session 
-                }
+                { session }
             );
     
             await session.commitTransaction();
-            logger.info('Sezione disattivata con successo:', {
-                schoolId,
-                sectionName
-            });
-    
-            return finalResult;
-    
+            logger.debug('Section deactivation completed successfully');
+            return school;
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Errore durante la disattivazione della sezione:', {
-                error,
+            logger.error('Error in deactivateSection:', {
+                error: error.message,
                 schoolId,
                 sectionName
             });
