@@ -178,11 +178,6 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
         onClose();
     };
 
-    const handleManageSections = () => {
-        console.log('### SchoolEditForm - Navigazione alla gestione sezioni');
-        navigate(`/admin/schools/${school._id}/sections-management`);
-        handleClose();
-    };
 
     return (
         <Dialog 
@@ -258,30 +253,6 @@ const SchoolEditForm = ({ open, onClose, onSave, school }) => {
                                     <FormHelperText>{errors.institutionType}</FormHelperText>
                                 )}
                             </FormControl>
-                        </Grid>
-
-                        <Grid item xs={12}>
-                            <Box sx={{ mb: 2 }}>
-                                <Typography variant="subtitle2" gutterBottom>
-                                    Sezioni
-                                </Typography>
-                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                    {formData.sections.map((section) => (
-                                        <Chip
-                                            key={section._id || section.name}
-                                            label={`${section.name} (${section.maxStudents || 'N/D'} studenti)`}
-                                            variant="outlined"
-                                        />
-                                    ))}
-                                </Box>
-                            </Box>
-                            <Button
-                                variant="outlined"
-                                onClick={handleManageSections}
-                                fullWidth
-                            >
-                                Gestione Sezioni
-                            </Button>
                         </Grid>
 
                         <Grid item xs={12} sm={4}>

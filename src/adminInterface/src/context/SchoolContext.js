@@ -310,6 +310,28 @@ const getSections = async (schoolId, includeInactive = false) => {
     }
 };
 
+const getSectionStudents = async (schoolId, sectionName) => {
+    try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await axiosInstance.get(
+            `/schools/${schoolId}/sections/${sectionName}/students`
+        );
+        
+        if (response.data.status === 'success') {
+            return response.data.data.students;
+        }
+    } catch (error) {
+        const errorMessage = error.response?.data?.error?.message || 
+                           'Errore nel recupero degli studenti della sezione';
+        setError(errorMessage);
+        showNotification(errorMessage, 'error');
+        throw error;
+    } finally {
+        setLoading(false);
+    }
+};
 
 // Metodo per disattivare una sezione
 const deactivateSection = async (schoolId, sectionName) => {
@@ -412,6 +434,7 @@ const reactivateSection = async (schoolId, sectionName) => {
             validateSchoolData,
             selectedSchoolSections,
             getSections,
+            getSectionStudents,
             deactivateSection,
             reactivateSection
         }}>

@@ -485,9 +485,11 @@ console.log("Students data:", classData.students);
             {/* Nuovo Form Aggiunta Studente */}
             <StudentClassForm 
                 open={studentFormOpen}
-                onClose={() => {
+                onClose={(shouldRefresh) => {
                     setStudentFormOpen(false);
-                    fetchData(); // Ricarica i dati della classe
+                    if (shouldRefresh) {
+                        fetchData(); // Ricarica i dati della classe
+                    }
                 }}
                 classData={classData}
             />

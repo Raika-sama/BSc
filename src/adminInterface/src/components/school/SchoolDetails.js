@@ -24,6 +24,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import { Tabs, Tab } from '@mui/material';  // Aggiungi questo import
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ListAltIcon from '@mui/icons-material/ListAlt';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import PersonIcon from '@mui/icons-material/Person';    // Aggiunto
 import StarIcon from '@mui/icons-material/Star';        // Aggiunto
@@ -149,6 +150,14 @@ const SchoolDetails = () => {
                 </Typography>
                 <Button
                     variant="outlined"
+                    startIcon={<ListAltIcon />}
+                    onClick={() => navigate(`/admin/schools/${id}/sections-management`)}
+                    sx={{ mr: 1 }}
+                >
+                    Gestione Sezioni
+                </Button>
+                <Button
+                    variant="outlined"
                     startIcon={<ManageAccountsIcon />}
                     onClick={() => navigate(`/admin/schools/${id}/users-management`)}
                     sx={{ mr: 1 }}
@@ -194,9 +203,16 @@ const SchoolDetails = () => {
                                         primary="Sezioni"
                                         secondary={
                                             selectedSchool.sections.length > 0 ? 
-                                                selectedSchool.sections
-                                                    .map(section => `${section.name} (${section.maxStudents || 'N/D'} studenti)`)
-                                                    .join(', ') 
+                                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                                                    {selectedSchool.sections.map((section) => (
+                                                        <Chip
+                                                            key={section.name}
+                                                            label={`${section.name} (${section.maxStudents || 'N/D'} studenti)`}
+                                                            size="small"
+                                                            variant="outlined"
+                                                        />
+                                                    ))}
+                                                </Box>
                                                 : 'Nessuna sezione configurata'
                                         }
                                     />

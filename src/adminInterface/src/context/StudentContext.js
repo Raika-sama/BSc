@@ -382,7 +382,6 @@ return normalized;
         try {
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
             
-            // Creiamo lo studente
             const formattedData = {
                 firstName: studentData.firstName?.trim(),
                 lastName: studentData.lastName?.trim(),
@@ -391,27 +390,29 @@ return normalized;
                 email: studentData.email?.trim().toLowerCase(),
                 schoolId: studentData.schoolId,
                 classId: studentData.classId,
-                section: studentData.section, // Usa studentData.section
-                academicYear: studentData.academicYear, // Usa studentData.academicYear
+                section: studentData.section,
+                academicYear: studentData.academicYear,
                 parentEmail: studentData.parentEmail?.trim().toLowerCase() || null,
                 fiscalCode: studentData.fiscalCode?.trim().toUpperCase() || null,
                 mainTeacher: studentData.mainTeacher || null,
                 teachers: studentData.teachers || [],
                 specialNeeds: studentData.specialNeeds || false,
-                status: 'pending',  // Inizialmente pending
-                needsClassAssignment: true,  // Inizialmente true
+                status: 'active',  // Cambiato da 'pending' a 'active'
+                needsClassAssignment: false,  // Cambiato da true a false
                 isActive: true
             };
     
-            const response = await axiosInstance.post('/students', formattedData);
+            // Modifica qui: usa il nuovo endpoint
+            const response = await axiosInstance.post('/students/with-class', formattedData);
             
             if (response.data.status === 'success') {
+                const newStudent = normalizeStudent(response.data.data.student);
                 dispatch({
                     type: STUDENT_ACTIONS.ADD_STUDENT,
-                    payload: response.data.data.student
+                    payload: newStudent
                 });
-                showNotification('Studente creato con successo', 'success');
-                return response.data.data.student;
+                showNotification('Studente creato e assegnato con successo', 'success');
+                return newStudent;
             }
         } catch (error) {
             console.error('Error creating student:', error);

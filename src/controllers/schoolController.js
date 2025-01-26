@@ -11,6 +11,7 @@ const schoolRepository = repositories.school;
 const classRepository = repositories.class;
 const studentRepository = repositories.student;
 const sectionService = require('../services/SectionService');
+const { School, Class } = require('../models');  // Aggiungi Class qui
 
 class SchoolController extends BaseController {
     constructor() {
@@ -459,7 +460,7 @@ async reactivateSection(req, res) {
  */
 async getSections(req, res) {
     try {
-        const schoolId = req.params.id; // Cambiato da req.params.schoolId a req.params.id
+        const schoolId = req.params.id;
         const { includeInactive = false } = req.query;
 
         logger.debug('Richiesta recupero sezioni:', {
@@ -468,6 +469,7 @@ async getSections(req, res) {
             userRole: req.user.role
         });
 
+        // Recupera la scuola
         let school;
         try {
             school = await this.repository.findById(schoolId);
@@ -487,7 +489,7 @@ async getSections(req, res) {
             });
         }
 
-        // Per admin, permettiamo l'accesso a tutte le scuole
+        // Verifica autorizzazioni
         if (req.user.role !== 'admin') {
             if (!req.user.schoolId || req.user.schoolId.toString() !== schoolId) {
                 return this.sendError(res, {
@@ -498,17 +500,50 @@ async getSections(req, res) {
             }
         }
 
-        // Filtra le sezioni
+        // Recupera il conteggio degli studenti per sezione
+        const classesWithStudents = await Class.aggregate([
+            { 
+                $match: { 
+                    schoolId: new mongoose.Types.ObjectId(schoolId),
+                    isActive: true 
+                } 
+            },
+            {
+                $group: {
+                    _id: '$section',
+                    studentCount: {
+                        $sum: {
+                            $size: {
+                                $filter: {
+                                    input: '$students',
+                                    as: 'student',
+                                    cond: { $eq: ['$$student.status', 'active'] }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ]);
+
+        // Mappa le sezioni con i conteggi
         const sections = school.sections
             .filter(section => includeInactive === 'true' || section.isActive)
-            .map(section => ({
-                ...section.toObject(),
-                studentsCount: 0 // Per ora lo impostiamo a 0, implementeremo il conteggio studenti in seguito
-            }));
+            .map(section => {
+                const stats = classesWithStudents.find(c => c._id === section.name);
+                return {
+                    ...section.toObject(),
+                    studentsCount: stats?.studentCount || 0
+                };
+            });
 
         logger.debug('Sezioni recuperate con successo:', {
             schoolId,
-            sectionsCount: sections.length
+            sectionsCount: sections.length,
+            sectionsWithStudents: sections.map(s => ({
+                name: s.name,
+                studentsCount: s.studentsCount
+            }))
         });
 
         this.sendResponse(res, {
@@ -523,6 +558,43 @@ async getSections(req, res) {
         this.sendError(res, {
             statusCode: 500,
             message: 'Errore interno nel recupero delle sezioni',
+            code: 'INTERNAL_SERVER_ERROR'
+        });
+    }
+}
+
+async getSectionStudents(req, res) {
+    try {
+        const { schoolId, sectionName } = req.params;
+
+        logger.debug('Recupero studenti della sezione:', {
+            schoolId,
+            sectionName
+        });
+
+        const students = await this.repository.getStudentsBySection(schoolId, sectionName);
+
+        // Formatta i dati degli studenti per il frontend
+        const formattedStudents = students.map(student => ({
+            _id: student._id,
+            firstName: student.firstName,
+            lastName: student.lastName,
+            year: student.year,
+            currentClass: student.currentClass
+        }));
+
+        this.sendResponse(res, {
+            students: formattedStudents
+        });
+
+    } catch (error) {
+        logger.error('Errore nel recupero degli studenti della sezione:', {
+            error: error.message,
+            stack: error.stack
+        });
+        this.sendError(res, {
+            statusCode: 500,
+            message: 'Errore nel recupero degli studenti della sezione',
             code: 'INTERNAL_SERVER_ERROR'
         });
     }

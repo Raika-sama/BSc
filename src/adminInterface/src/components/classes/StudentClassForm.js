@@ -81,42 +81,25 @@ const StudentClassForm = ({ open, onClose, classData }) => {
         setError(null);
     
         try {
-            console.log('ClassData ricevuto:', {
-                _id: classData._id,
-                schoolId: classData.schoolId?._id,
-                mainTeacher: classData.mainTeacher?._id,
-            });
-            
             const studentData = {
                 ...formData,
                 schoolId: classData.schoolId._id,
                 classId: classData._id,
-                section: classData.section, // Aggiungi questa linea
-                academicYear: classData.academicYear, // Aggiungi questa linea
-                status: 'active',
-                needsClassAssignment: false,
-                isActive: true,
+                section: classData.section,
+                academicYear: classData.academicYear,
                 mainTeacher: classData.mainTeacher?._id,
                 teachers: classData.teachers?.map(t => t._id) || []
             };
     
-            console.log('Dati studente da creare (dettagliato):', {
-                firstName: studentData.firstName,
-                lastName: studentData.lastName,
-                schoolId: studentData.schoolId,
-                classId: studentData.classId,
-                mainTeacher: studentData.mainTeacher,
-                status: studentData.status,
-                needsClassAssignment: studentData.needsClassAssignment,
-                section: studentData.section, // Aggiungi questa linea
-                academicYear: studentData.academicYear // Aggiungi questa linea
-            });
-    
             const response = await createStudentWithClass(studentData);
-            console.log('Risposta creazione studente:', response);
+            console.log('Studente creato:', response);
     
             showNotification('Studente creato e assegnato con successo', 'success');
             handleClose();
+            // Aggiungi qui una chiamata per aggiornare la lista degli studenti nella classe
+            if (typeof onClose === 'function') {
+                onClose(true); // Passa true per indicare che è necessario aggiornare i dati
+            }
         } catch (err) {
             console.error('Error creating student:', err);
             setError(err.response?.data?.message || err.message);

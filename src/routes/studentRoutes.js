@@ -82,8 +82,12 @@ router.get('/unassigned-to-school',
         studentController.batchAssignToSchool
     );
 
-
-
+    router.post('/with-class', 
+        protect,  // Usa protect invece di authenticate
+        restrictTo('admin'),
+        studentValidation.validateCreate, 
+        studentController.createStudentWithClass
+    );
 
 // Route base CRUD con validazioni
 router.route('/')

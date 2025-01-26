@@ -22,6 +22,12 @@ router.get('/type/:type', schoolController.getByType.bind(schoolController));
 router.get('/:id/academic-years', schoolController.getAcademicYears.bind(schoolController));
 
 
+
+// Rotte per la gestione delle sezioni
+router.get('/:schoolId/sections/:sectionName/students', 
+    schoolController.getSectionStudents.bind(schoolController)
+);
+
 // Nuove rotte per la gestione delle sezioni
 router.get('/:id/sections', 
     schoolController.getSections.bind(schoolController)

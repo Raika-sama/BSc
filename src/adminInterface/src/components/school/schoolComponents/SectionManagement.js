@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     Container,
@@ -45,32 +45,28 @@ const SectionManagement = () => {
     const [selectedSection, setSelectedSection] = useState(null);
     const [isDeactivationDialogOpen, setIsDeactivationDialogOpen] = useState(false);
 
+    // Separiamo il caricamento iniziale
     useEffect(() => {
-        const loadData = async () => {
-            try {
-                console.log("Loading data...");
-                if (!selectedSchool) {
-                    await getSchoolById(schoolId);
+        if (!selectedSchool) {
+            getSchoolById(schoolId);
+        }
+    }, [schoolId, selectedSchool, getSchoolById]);
+
+    // Gestiamo il caricamento delle sezioni separatamente
+    useEffect(() => {
+        const loadSections = async () => {
+            if (selectedSchool) {
+                const sections = await getSections(schoolId, true);
+                if (sections) {
+                    updateStats(sections);
                 }
-                await refreshSections();
-                console.log("Data loaded:", {
-                    selectedSchoolSections,
-                    showInactive
-                });
-            } catch (error) {
-                console.error('Error loading sections:', error);
             }
         };
 
-        loadData();
-    }, [schoolId]);
+        loadSections();
+    }, [schoolId, selectedSchool, getSections]);
 
-    const refreshSections = async () => {
-        const sections = await getSections(schoolId, true);
-        updateStats(sections);
-    };
-
-    const updateStats = (sections) => {
+    const updateStats = useCallback((sections) => {
         const activeSections = sections.filter(s => s.isActive);
         const totalStudents = sections.reduce((acc, s) => acc + (s.studentsCount || 0), 0);
         
@@ -79,10 +75,18 @@ const SectionManagement = () => {
             activeSections: activeSections.length,
             totalStudents
         });
-    };
+    }, []);
+
+    // Memorizziamo le sezioni filtrate
+    const filteredSections = useMemo(() => {
+        return selectedSchoolSections || [];
+    }, [selectedSchoolSections]);
 
     const handleDeactivateClick = (section) => {
-        setSelectedSection(section);
+        setSelectedSection({
+            ...section,
+            schoolId: schoolId  // Aggiungi lo schoolId
+        });
         setIsDeactivationDialogOpen(true);
     };
 

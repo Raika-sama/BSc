@@ -584,6 +584,53 @@ class SchoolRepository extends BaseRepository {
         }
     }
 
+    async getSectionsWithStudentCount(schoolId) {
+        try {
+            // 1. Trova tutte le classi attive della scuola raggruppate per sezione
+            const classesWithStudents = await Class.aggregate([
+                { 
+                    $match: { 
+                        schoolId: new mongoose.Types.ObjectId(schoolId),
+                        isActive: true 
+                    } 
+                },
+                {
+                    $group: {
+                        _id: '$section',
+                        studentCount: {
+                            $sum: {
+                                $size: {
+                                    $filter: {
+                                        input: '$students',
+                                        as: 'student',
+                                        cond: { $eq: ['$$student.status', 'active'] }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ]);
+    
+            // 2. Trova la scuola con le sue sezioni
+            const school = await this.model.findById(schoolId);
+            
+            // 3. Mappa le sezioni con i conteggi degli studenti
+            const sectionsWithCounts = school.sections.map(section => {
+                const stats = classesWithStudents.find(c => c._id === section.name);
+                return {
+                    ...section.toObject(),
+                    studentsCount: stats?.studentCount || 0
+                };
+            });
+    
+            return sectionsWithCounts;
+        } catch (error) {
+            logger.error('Error in getSectionsWithStudentCount:', error);
+            throw error;
+        }
+    }
+
       
 }
 

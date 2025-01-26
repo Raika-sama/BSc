@@ -19,6 +19,7 @@ class StudentController extends BaseController {
         this.batchAssignToClass = this.batchAssignToClass.bind(this); // Aggiungi questo!
         this.batchAssignToSchool = this.batchAssignToSchool.bind(this);
         this.getUnassignedToSchoolStudents = this.getUnassignedToSchoolStudents.bind(this);
+        this.createStudentWithClass = this.createStudentWithClass.bind(this); // Aggiungi questo
 
     }
 
@@ -91,6 +92,42 @@ class StudentController extends BaseController {
             this.sendResponse(res, { student }, 201);
         } catch (error) {
             logger.error('Error creating student:', error);
+            next(error);
+        }
+    }
+
+    /**
+     * Crea uno studente e lo assegna direttamente a una classe
+     */
+    async createStudentWithClass(req, res, next) {
+        try {
+            const studentData = req.body;
+            
+            logger.debug('Creating student with class:', { 
+                studentData,
+                user: req.user?.id
+            });
+
+            // Verifica permessi
+            if (req.user.role !== 'admin') {
+                throw createError(
+                    ErrorTypes.AUTH.FORBIDDEN,
+                    'Non autorizzato a creare studenti'
+                );
+            }
+
+            // Usa il repository ereditato da BaseController
+            const student = await this.repository.createWithClass(studentData);
+            
+            logger.info('Student created with class successfully:', {
+                studentId: student._id,
+                school: student.schoolId,
+                class: student.classId
+            });
+
+            this.sendResponse(res, { student }, 201);
+        } catch (error) {
+            logger.error('Error in createStudentWithClass:', error);
             next(error);
         }
     }

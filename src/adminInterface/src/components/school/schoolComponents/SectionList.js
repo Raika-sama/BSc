@@ -109,7 +109,6 @@ const SectionList = ({
                                             <IconButton
                                                 onClick={() => onDeactivate(section)}
                                                 color="warning"
-                                                disabled={section.studentsCount > 0}
                                             >
                                                 <PowerSettingsNewIcon />
                                             </IconButton>

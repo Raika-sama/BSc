@@ -116,7 +116,7 @@ async findUnassignedToSchoolStudents() {
         const students = await this.findWithDetails(query, {
             sort: { createdAt: -1 }
         });
-        
+
         logger.debug(`Trovati ${students.length} studenti non assegnati:`, {
             students: students.map(s => ({
                 id: s._id,
@@ -497,6 +497,67 @@ async findUnassignedToSchoolStudents() {
             session.endSession();
         }
     }
+
+    // Aggiungiamo un nuovo metodo specifico per la creazione con classe
+async createWithClass(studentData) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        // 1. Verifica l'unicità dell'email
+        const exists = await this.model.findOne({
+            email: studentData.email
+        }).session(session);
+
+        if (exists) {
+            throw createError(
+                ErrorTypes.VALIDATION.ALREADY_EXISTS,
+                'Email già registrata'
+            );
+        }
+
+        // 2. Verifica e recupera la classe
+        const classDoc = await Class.findById(studentData.classId).session(session);
+        if (!classDoc) {
+            throw createError(
+                ErrorTypes.VALIDATION.NOT_FOUND,
+                'Classe non trovata'
+            );
+        }
+
+        // 3. Verifica capacità classe
+        if (classDoc.students.length >= classDoc.capacity) {
+            throw createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'La classe ha raggiunto la capacità massima'
+            );
+        }
+
+        // 4. Crea lo studente
+        const newStudent = await this.model.create([studentData], { session });
+
+        // 5. Aggiorna la classe
+        classDoc.students.push({
+            studentId: newStudent[0]._id,
+            joinedAt: new Date(),
+            status: 'active'
+        });
+
+        await classDoc.save({ session });
+        await session.commitTransaction();
+
+        return newStudent[0];
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Error in createWithClass:', {
+            error,
+            studentData
+        });
+        throw error;
+    } finally {
+        session.endSession();
+    }
+}
 
     /**
      * Assegna uno studente a una classe
