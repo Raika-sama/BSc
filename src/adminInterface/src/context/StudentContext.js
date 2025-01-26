@@ -391,7 +391,8 @@ return normalized;
                 email: studentData.email?.trim().toLowerCase(),
                 schoolId: studentData.schoolId,
                 classId: studentData.classId,
-                section: studentData.classData.section,
+                section: studentData.section, // Usa studentData.section
+                academicYear: studentData.academicYear, // Usa studentData.academicYear
                 parentEmail: studentData.parentEmail?.trim().toLowerCase() || null,
                 fiscalCode: studentData.fiscalCode?.trim().toUpperCase() || null,
                 mainTeacher: studentData.mainTeacher || null,
@@ -402,24 +403,27 @@ return normalized;
                 isActive: true
             };
     
-            // Prima creiamo lo studente
-            const createResponse = await axiosInstance.post('/students', formattedData);
+            const response = await axiosInstance.post('/students', formattedData);
             
-            if (createResponse.data.status === 'success') {
-                // Poi lo assegniamo alla classe usando il metodo batch che sappiamo funzionare
-                await axiosInstance.post('/students/batch-assign', {
-                    studentIds: [createResponse.data.data.student._id],
-                    classId: studentData.classId,
-                    academicYear: studentData.classData.academicYear
+            if (response.data.status === 'success') {
+                dispatch({
+                    type: STUDENT_ACTIONS.ADD_STUDENT,
+                    payload: response.data.data.student
                 });
-    
-                showNotification('Studente creato e assegnato con successo', 'success');
-                await fetchData(); // Ricarica i dati della classe
-                return createResponse.data.data.student;
+                showNotification('Studente creato con successo', 'success');
+                return response.data.data.student;
             }
-        } catch (err) {
-            console.error('Error creating student:', err);
-            throw err;
+        } catch (error) {
+            console.error('Error creating student:', error);
+            const errorMessage = error.response?.data?.error?.message || 
+                            error.message || 
+                            'Errore nella creazione dello studente';
+            dispatch({
+                type: STUDENT_ACTIONS.SET_ERROR,
+                payload: errorMessage
+            });
+            showNotification(errorMessage, 'error');
+            throw error;
         }
     };
 

@@ -91,6 +91,8 @@ const StudentClassForm = ({ open, onClose, classData }) => {
                 ...formData,
                 schoolId: classData.schoolId._id,
                 classId: classData._id,
+                section: classData.section, // Aggiungi questa linea
+                academicYear: classData.academicYear, // Aggiungi questa linea
                 status: 'active',
                 needsClassAssignment: false,
                 isActive: true,
@@ -105,10 +107,11 @@ const StudentClassForm = ({ open, onClose, classData }) => {
                 classId: studentData.classId,
                 mainTeacher: studentData.mainTeacher,
                 status: studentData.status,
-                needsClassAssignment: studentData.needsClassAssignment
+                needsClassAssignment: studentData.needsClassAssignment,
+                section: studentData.section, // Aggiungi questa linea
+                academicYear: studentData.academicYear // Aggiungi questa linea
             });
     
-            // Salviamo la risposta in una variabile
             const response = await createStudentWithClass(studentData);
             console.log('Risposta creazione studente:', response);
     
