@@ -6,3 +6,35 @@
 {"error":"Cannot read properties of undefined (reading 'repository')","level":"error","message":"Student route error:","method":"POST","path":"/with-class","stack":"TypeError: Cannot read properties of undefined (reading 'repository')\n    at createStudentWithClass (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\studentController.js:101:36)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at validateCreate (C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\studentValidation.js:109:13)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)","timestamp":"2025-01-26T14:46:44.383Z","userId":"677bfe44f6789c907c9f3766"}
 {"error":"Class is not defined","level":"error","message":"Errore nel recupero delle sezioni:","stack":"ReferenceError: Class is not defined\n    at SchoolController.getSections (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\schoolController.js:503:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-01-26T15:32:16.234Z"}
 {"error":"Class is not defined","level":"error","message":"Errore nel recupero delle sezioni:","stack":"ReferenceError: Class is not defined\n    at SchoolController.getSections (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\schoolController.js:503:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-01-26T15:35:02.560Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:23:11.324Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:23:11.324Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:23:11.385Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:23:11.386Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:23:12.829Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:23:12.830Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:23:12.888Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:23:12.888Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:23:40.398Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:23:40.398Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:23:59.725Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:23:59.726Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:23:59.789Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:23:59.789Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:28:16.461Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:28:16.461Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:28:29.153Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:28:29.153Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:28:29.208Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:28:29.209Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:28:33.424Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:28:33.425Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:28:37.130Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:28:37.131Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:30:51.225Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:30:51.226Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:30:51.300Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:30:51.301Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:31:19.116Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:31:19.116Z"}
+{"error":"ID scuola non valido","level":"error","message":"Error in SchoolRepository.findById:","timestamp":"2025-01-26T18:31:19.168Z","type":"undefined"}
+{"error":"ID scuola non valido","level":"error","message":"Errore nel recupero della scuola:","timestamp":"2025-01-26T18:31:19.168Z"}

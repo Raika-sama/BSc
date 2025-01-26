@@ -420,8 +420,8 @@ class SchoolRepository extends BaseRepository {
         }
     }
 
-    // Aggiungi questi metodi alla classe SchoolRepository
-
+//il metodo deactivateSection() disattiva una sezione di una scuola
+//usa metodi di classRep e studentRep
     async deactivateSection(schoolId, sectionName) {
         const session = await mongoose.startSession();
         session.startTransaction();
@@ -438,7 +438,8 @@ class SchoolRepository extends BaseRepository {
                 {
                     $set: {
                         'sections.$.isActive': false,
-                        'sections.$.deactivatedAt': new Date()
+                        'sections.$.deactivatedAt': new Date(),
+                        'sections.$.students': [] // Svuota l'array degli studenti nella sezione
                     }
                 },
                 { 
@@ -454,26 +455,27 @@ class SchoolRepository extends BaseRepository {
                 );
             }
     
-            // 2. Aggiorna le classi
-            await Class.updateMany(
-                {
-                    schoolId,
-                    section: sectionName,
-                    isActive: true
-                },
-                {
-                    $set: {
-                        isActive: false,
-                        status: 'archived',
-                        deactivatedAt: new Date()
-                    }
-                },
-                { session }
+            // 2. Disattiva le classi usando il metodo dedicato nel classRepository
+            await this.classRepository.deactivateClassesBySection(schoolId, sectionName, session);
+    
+            // 3. Aggiorna gli studenti usando il metodo dedicato nel studentRepository
+            const studentUpdateResult = await this.studentRepository.updateStudentsForDeactivatedSection(
+                schoolId, 
+                sectionName
             );
     
             await session.commitTransaction();
-            logger.debug('Section deactivation completed successfully');
-            return school;
+            
+            logger.debug('Section deactivation completed successfully:', {
+                schoolId,
+                sectionName,
+                studentsUpdated: studentUpdateResult.modifiedCount
+            });
+    
+            return {
+                school,
+                studentsUpdated: studentUpdateResult.modifiedCount
+            };
         } catch (error) {
             await session.abortTransaction();
             logger.error('Error in deactivateSection:', {
