@@ -1,26 +1,40 @@
 // SectionStats.js
 import React from 'react';
 import { Grid, Card, CardContent, Box, Typography } from '@mui/material';
+import { motion } from 'framer-motion';
 import ClassIcon from '@mui/icons-material/Class';
 import GroupIcon from '@mui/icons-material/Group';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-const StatsCard = ({ icon, title, value, color }) => (
-    <Card elevation={1}>
-        <CardContent sx={{ py: 1.5, px: 2 }}>
-            <Box display="flex" alignItems="center" gap={1.5}>
-                {icon}
-                <Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                        {title}
-                    </Typography>
-                    <Typography variant="h6" sx={{ fontSize: '1.25rem', color: `${color}.main` }}>
-                        {value}
-                    </Typography>
+
+const StatsCard = ({ icon, title, value, color, index }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.1 }}
+    >
+        <Card elevation={1}>
+            <CardContent sx={{ py: 1.5, px: 2 }}>
+                <Box display="flex" alignItems="center" gap={1.5}>
+                    {icon}
+                    <Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                            {title}
+                        </Typography>
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ duration: 0.5, delay: index * 0.1 + 0.3 }}
+                        >
+                            <Typography variant="h6" sx={{ fontSize: '1.25rem', color: `${color}.main` }}>
+                                {value}
+                            </Typography>
+                        </motion.div>
+                    </Box>
                 </Box>
-            </Box>
-        </CardContent>
-    </Card>
+            </CardContent>
+        </Card>
+    </motion.div>
 );
 
 const SectionStats = ({ sections }) => {

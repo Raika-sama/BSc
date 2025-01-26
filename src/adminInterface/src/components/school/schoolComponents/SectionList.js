@@ -1,123 +1,137 @@
 import React, { useMemo } from 'react';
-import {
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    IconButton,
-    Chip,
-    Tooltip,
-    Typography,
-    Box
-} from '@mui/material';
+import { Box } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import { motion } from 'framer-motion';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import GroupIcon from '@mui/icons-material/Group';
+import { IconButton, Chip, Tooltip } from '@mui/material';
 
-const SectionList = ({ 
-    sections = [], // Valore di default
-    showInactive = false,
-    onDeactivate,
-    onReactivate 
-}) => {
-   
+const SectionList = ({ sections = [], showInactive = false, onDeactivate, onReactivate }) => {
+    const columns = [
+        {
+            field: 'name',
+            headerName: 'Sezione',
+            flex: 1,
+            minWidth: 120,
+            renderCell: (params) => (
+                <Box sx={{ fontWeight: 500 }}>
+                    {params.value}
+                </Box>
+            ),
+        },
+        {
+            field: 'isActive',
+            headerName: 'Stato',
+            flex: 1,
+            minWidth: 120,
+            renderCell: (params) => (
+                <Chip
+                    label={params.value ? 'Attiva' : 'Inattiva'}
+                    color={params.value ? 'success' : 'default'}
+                    size="small"
+                />
+            ),
+        },
+        {
+            field: 'studentsCount',
+            headerName: 'Studenti',
+            flex: 1,
+            minWidth: 120,
+            renderCell: (params) => (
+                <Box display="flex" alignItems="center" gap={1}>
+                    <GroupIcon fontSize="small" color="action" />
+                    {params.value || 0}
+                </Box>
+            ),
+        },
+        {
+            field: 'deactivatedAt',
+            headerName: 'Data Disattivazione',
+            flex: 1,
+            minWidth: 150,
+            valueFormatter: (params) => {
+                if (!params.value) return '-';
+                return new Date(params.value).toLocaleDateString('it-IT', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+            },
+        },
+        {
+            field: 'actions',
+            headerName: 'Azioni',
+            flex: 1,
+            minWidth: 100,
+            sortable: false,
+            renderCell: (params) => (
+                params.row.isActive ? (
+                    <Tooltip title="Disattiva sezione">
+                        <IconButton
+                            onClick={() => onDeactivate(params.row)}
+                            color="warning"
+                            size="small"
+                        >
+                            <PowerSettingsNewIcon />
+                        </IconButton>
+                    </Tooltip>
+                ) : (
+                    <Tooltip title="Riattiva sezione">
+                        <IconButton
+                            onClick={() => onReactivate(params.row)}
+                            color="success"
+                            size="small"
+                        >
+                            <PlayArrowIcon />
+                        </IconButton>
+                    </Tooltip>
+                )
+            ),
+        },
+    ];
 
-    // Modifichiamo il filtro per essere più esplicito
     const filteredSections = useMemo(() => {
-        return sections.filter(section => showInactive ? true : section.isActive);
+        return sections.filter(section => showInactive ? true : section.isActive)
+            .map(section => ({
+                id: section.name, // Necessario per DataGrid
+                ...section
+            }));
     }, [sections, showInactive]);
 
-   
-
-    const formatDate = (date) => {
-        if (!date) return '-';
-        return new Date(date).toLocaleDateString('it-IT', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    };
-
     return (
-        <TableContainer component={Paper}>
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell>Sezione</TableCell>
-                        <TableCell align="center">Stato</TableCell>
-                        <TableCell align="center">Studenti</TableCell>
-                        <TableCell align="center">Data Disattivazione</TableCell>
-                        <TableCell align="right">Azioni</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                        {filteredSections.length === 0 ? (
-                        <TableRow>
-                            <TableCell colSpan={5} align="center">
-                                <Typography color="textSecondary">
-                                    {showInactive 
-                                        ? 'Nessuna sezione presente'
-                                        : 'Nessuna sezione attiva presente. Abilita "Mostra tutte le sezioni" per vedere le sezioni inattive.'}
-                                </Typography>
-                            </TableCell>
-                        </TableRow>
-                    ) : (
-                        filteredSections.map((section) => (
-                            <TableRow key={section.name}>
-                                <TableCell>
-                                    <Typography variant="body1" fontWeight="medium">
-                                        {section.name}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell align="center">
-                                    <Chip
-                                        label={section.isActive ? 'Attiva' : 'Inattiva'}
-                                        color={section.isActive ? 'success' : 'default'}
-                                        size="small"
-                                    />
-                                </TableCell>
-                                <TableCell align="center">
-                                    <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                                        <GroupIcon fontSize="small" color="action" />
-                                        <Typography>
-                                            {section.studentsCount || 0}
-                                        </Typography>
-                                    </Box>
-                                </TableCell>
-                                <TableCell align="center">
-                                    {formatDate(section.deactivatedAt)}
-                                </TableCell>
-                                <TableCell align="right">
-                                    {section.isActive ? (
-                                        <Tooltip title="Disattiva sezione">
-                                            <IconButton
-                                                onClick={() => onDeactivate(section)}
-                                                color="warning"
-                                            >
-                                                <PowerSettingsNewIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                    ) : (
-                                        <Tooltip title="Riattiva sezione">
-                                            <IconButton
-                                                onClick={() => onReactivate(section)}
-                                                color="success"
-                                            >
-                                                <PlayArrowIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                    )}
-                                </TableCell>
-                            </TableRow>
-                        ))
-                    )}
-                </TableBody>
-            </Table>
-        </TableContainer>
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            style={{ width: '100%', height: 400 }}
+        >
+            <DataGrid
+                rows={filteredSections}
+                columns={columns}
+                pageSize={5}
+                rowsPerPageOptions={[5, 10, 25]}
+                disableSelectionOnClick
+                density="comfortable"
+                autoHeight
+                sx={{
+                    '& .MuiDataGrid-cell': {
+                        fontSize: '0.875rem',
+                        py: 1
+                    },
+                    '& .MuiDataGrid-columnHeaders': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                        fontSize: '0.875rem'
+                    },
+                    '& .MuiDataGrid-row': {
+                        '&:nth-of-type(odd)': {
+                            backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                        }
+                    }
+                }}
+            />
+        </motion.div>
     );
 };
 
-export default React.memo(SectionList); // Ottimizziamo con memo
+export default React.memo(SectionList);

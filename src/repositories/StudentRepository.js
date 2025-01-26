@@ -137,111 +137,88 @@ async findUnassignedToSchoolStudents() {
     }
 }
     
-    async batchAssignToClass(studentIds, { classId, academicYear }) {
-        const session = await mongoose.startSession();
-        session.startTransaction();
-    
-        try {
-            // 1. Verifica esistenza e dettagli della classe
-            const classDoc = await Class.findById(classId)
-                .populate('mainTeacher')
-                .populate('teachers')
-                .session(session);
-    
-            if (!classDoc) {
-                throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
-                    'Classe non trovata'
-                );
-            }
-    
-            // 2. Verifica capacità della classe
-            const currentStudentsCount = classDoc.students?.length || 0;
-            if (currentStudentsCount + studentIds.length > classDoc.capacity) {
-                throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
-                    `Capacità classe superata. Capacità: ${classDoc.capacity}, Attuali: ${currentStudentsCount}, Da aggiungere: ${studentIds.length}`
-                );
-            }
-    
-            logger.debug('Debug batchAssignToClass:', {
-                modelName: this.model.modelName,
-                updateQuery: {
-                    _id: { $in: studentIds },
-                    schoolId: classDoc.schoolId,
-                    needsClassAssignment: true
-                },
-                updateData: {
+async batchAssignToClass(studentIds, { classId, academicYear }) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        // 1. Verifica esistenza e dettagli della classe
+        const classDoc = await Class.findById(classId)
+            .populate('mainTeacher')
+            .populate('teachers')
+            .session(session);
+
+        if (!classDoc) {
+            throw createError(
+                ErrorTypes.VALIDATION.NOT_FOUND,
+                'Classe non trovata'
+            );
+        }
+
+        // 2. Verifica capacità della classe
+        const currentStudentsCount = classDoc.students?.length || 0;
+        if (currentStudentsCount + studentIds.length > classDoc.capacity) {
+            throw createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                `Capacità classe superata. Capacità: ${classDoc.capacity}, Attuali: ${currentStudentsCount}, Da aggiungere: ${studentIds.length}`
+            );
+        }
+
+        // 3. Aggiorna gli studenti (non serve il campo 'teachers' qui)
+        const updateResult = await this.model.updateMany(
+            {
+                _id: { $in: studentIds },
+                schoolId: classDoc.schoolId,
+                needsClassAssignment: true
+            },
+            {
+                $set: {
                     classId: classId,
                     status: 'active',
                     needsClassAssignment: false,
                     currentYear: classDoc.year,
-                    mainTeacher: classDoc.mainTeacher._id,
-                    teachers: classDoc.teachers.map(t => t._id),
-                    section: classDoc.section
+                    section: classDoc.section,
+                    lastClassChangeDate: new Date()
                 }
-            });
-            // 3. Aggiorna gli studenti
-            const updateResult = await this.model.updateMany(
-                {
-                    _id: { $in: studentIds },
-                    schoolId: classDoc.schoolId, // Verifica stessa scuola
-                    needsClassAssignment: true // Solo studenti non assegnati
-                },
-                {
-                    $set: {
-                        classId: classId,
-                        status: 'active',
-                        needsClassAssignment: false,
-                        currentYear: classDoc.year,
-                        mainTeacher: classDoc.mainTeacher._id,
-                        teachers: classDoc.teachers.map(t => t._id),
-                        lastClassChangeDate: new Date(),
-                        section: classDoc.section
-                    }
-                },
-                { session }
-            );
-    
-            // 4. Aggiorna la classe
-            const newStudentRecords = studentIds.map(studentId => ({
-                studentId: studentId,
-                joinedAt: new Date(),
-                status: 'active'
-            }));
+            },
+            { session }
+        );
 
-            classDoc.students = [
-                ...classDoc.students,
-                ...newStudentRecords
-            ];
-            await classDoc.save({ session });
-                // Commit della transazione
-            await session.commitTransaction();
+        // 4. Aggiorna la classe con il formato corretto degli studenti
+        const newStudentRecords = studentIds.map(studentId => ({
+            studentId: studentId,
+            status: 'active',
+            joinedAt: new Date()
+        }));
 
-            // Aggiungi questo return
-            return {
-                success: true,
-                modifiedCount: updateResult.modifiedCount,
-                className: `${classDoc.year}${classDoc.section}`
-            };
-        } catch (error) {
-            await session.abortTransaction();
-            logger.error('Error in batchAssignToClass:', {
-                errorMessage: error.message,
-                errorStack: error.stack,
-                studentIds,
-                classId,
-                academicYear,
-                modelInfo: {
-                    name: this.model?.modelName,
-                    exists: !!this.model
-                }
-            });
-            throw error;
-        } finally {
-            session.endSession();
-        }
+        classDoc.students.push(...newStudentRecords);
+        await classDoc.save({ session });
+
+        await session.commitTransaction();
+        
+        return {
+            success: true,
+            modifiedCount: updateResult.modifiedCount,
+            className: `${classDoc.year}${classDoc.section}`
+        };
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Error in batchAssignToClass:', {
+            errorMessage: error.message,
+            errorStack: error.stack,
+            studentIds,
+            classId,
+            academicYear,
+            modelInfo: {
+                name: this.model?.modelName,
+                exists: !!this.model
+            }
+        });
+        throw error;
+    } finally {
+        session.endSession();
     }
+}
 
     // Aggiungi questo nuovo metodo alla classe StudentRepository
 

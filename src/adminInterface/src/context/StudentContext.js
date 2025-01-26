@@ -574,14 +574,29 @@ return normalized;
         try {
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
             
+            // Verifica che studentIds sia un array e non sia vuoto
+            if (!Array.isArray(studentIds) || studentIds.length === 0) {
+                throw new Error('Lista studenti non valida');
+            }
+    
+            // Verifica che classId e academicYear siano presenti
+            if (!classId || !academicYear) {
+                throw new Error('ID classe e anno accademico sono richiesti');
+            }
+    
+            // IMPORTANTE: Invia solo gli ID degli studenti, non l'oggetto completo
+            const studentIdsArray = Array.isArray(studentIds) 
+                ? studentIds.map(id => typeof id === 'object' ? id.studentId : id)
+                : [];
             
             console.log('Payload being sent to backend:', {
-                studentIds: studentIds,
-                classId: classId,
-                academicYear: academicYear
+                studentIds: studentIdsArray,
+                classId,
+                academicYear
             });
+    
             const response = await axiosInstance.post('/students/batch-assign', {
-                studentIds,
+                studentIds: studentIdsArray,  // Invia solo array di ID
                 classId,
                 academicYear
             });
@@ -590,7 +605,7 @@ return normalized;
                 dispatch({
                     type: STUDENT_ACTIONS.BATCH_ASSIGN_STUDENTS,
                     payload: {
-                        studentIds,
+                        studentIds: studentIdsArray,
                         classId,
                         modifiedCount: response.data.data.modifiedCount,
                         className: response.data.data.className
@@ -606,11 +621,21 @@ return normalized;
             }
         } catch (error) {
             const errorMessage = error.response?.data?.error?.message || 
+                               error.message || 
                                'Errore nell\'assegnazione degli studenti';
+            
+            console.error('Error in batchAssignStudents:', {
+                error,
+                studentIds,
+                classId,
+                academicYear
+            });
+    
             dispatch({
                 type: STUDENT_ACTIONS.SET_ERROR,
                 payload: errorMessage
             });
+            
             showNotification(errorMessage, 'error');
             throw error;
         } finally {

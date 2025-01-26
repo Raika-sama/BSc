@@ -85,44 +85,57 @@ const ClassPopulate = () => {
 
     const handleAssignStudents = async () => {
         try {
-            console.log('Class Data:', classData); // Debug
-    
             if (!classId) {
                 throw new Error('ID classe mancante');
             }
-    
+
             if (!classData?.academicYear) {
                 throw new Error('Anno accademico mancante');
             }
-    
+
             if (!selectedStudents || selectedStudents.length === 0) {
                 throw new Error('Nessuno studente selezionato');
             }
-    
+
             setAssigning(true);
             setError(null);
-    
-            // Chiamata API
-            await batchAssignStudents(
-                selectedStudents,
+
+            // Debug logs
+            console.log('Selected Students IDs:', selectedStudents);
+            console.log('Unassigned Students:', unassignedStudents);
+            console.log('Class Data:', classData);
+
+            // Verifica che tutti gli ID selezionati esistano in unassignedStudents
+            const validStudents = selectedStudents.filter(selectedId => 
+                unassignedStudents.some(student => 
+                    (student._id === selectedId || student.id === selectedId)
+                )
+            );
+
+            if (validStudents.length !== selectedStudents.length) {
+                throw new Error('Alcuni studenti selezionati non sono validi');
+            }
+
+            console.log('Valid Students to assign:', validStudents);
+
+            // Chiamata API con gli ID validati
+            const result = await batchAssignStudents(
+                validStudents,
                 classId,
                 classData.academicYear
             );
 
-    
+            console.log('Assignment Result:', result);
+
             navigate(`/admin/classes/${classId}`);
-    
         } catch (err) {
-            console.error('Error assigning students:', err);
+            console.error('Error in handleAssignStudents:', err);
             setError(err.message || 'Errore nell\'assegnazione degli studenti');
         } finally {
             setAssigning(false);
         }
     };
 
-    
-
-  
 
     const columns = [
         {
@@ -167,6 +180,12 @@ const ClassPopulate = () => {
             </Box>
         );
     }
+
+    const getRowId = (row) => {
+        const id = row._id || row.id;
+        console.log('Getting Row ID:', { row, id });
+        return id;
+    };
 
  
     return (
@@ -236,8 +255,9 @@ const ClassPopulate = () => {
                     rowsPerPageOptions={[10, 25, 50]}
                     checkboxSelection
                     disableSelectionOnClick
-                    getRowId={(row) => row._id || row.id}
+                    getRowId={getRowId}
                     onSelectionModelChange={(newSelectionModel) => {
+                        console.log('Selection Model Change:', newSelectionModel);
                         setSelectedStudents(newSelectionModel);
                     }}
                     selectionModel={selectedStudents}
