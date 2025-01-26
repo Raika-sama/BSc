@@ -37,6 +37,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import EditIcon from '@mui/icons-material/Edit';      // Aggiunto
 import VisibilityIcon from '@mui/icons-material/Visibility';  // Aggiunto
 import SendIcon from '@mui/icons-material/Send';  // Aggiungi questo import con gli altri
+import StudentClassForm from './StudentClassForm';
 
 
 // Components
@@ -54,7 +55,8 @@ const ClassDetails = () => {
    const [formOpen, setFormOpen] = useState(false);
    const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
    const [pageSize, setPageSize] = useState(25);  // Default a 25 come richiesto
-   
+   const [studentFormOpen, setStudentFormOpen] = useState(false);
+
    const fetchData = async () => {
     try {
         const response = await getClassDetails(classId);
@@ -133,17 +135,16 @@ const getStatusColor = (status) => {
 
    // E modifichiamo il DataGrid così:
    const rows = classData.students.map(student => {
-    console.log("Raw student data:", student); // Per debug
+    console.log("Raw student data:", student);
     
-    // Se lo studente è annidato in studentId
     const studentData = student.studentId || student;
     
     return {
-        id: student._id, // Usa l'ID del record della classe
+        id: studentData._id, // Usa l'ID dello studente, non del record della classe
         firstName: studentData.firstName || 'N/D',
         lastName: studentData.lastName || 'N/D',
         email: studentData.email || 'N/D',
-        status: student.status || 'N/D', // Prendi lo status dalla radice
+        status: student.status || 'N/D',
         joinedAt: student.joinedAt || 'N/D'
     };
 });
@@ -420,13 +421,14 @@ console.log("Students data:", classData.students);
                         />
                     </Typography>
                     <Button
-                        variant="contained"
-                        startIcon={<GroupAddIcon />}
-                        onClick={() => navigate(`/admin/classes/${classId}/populate`)}
-                        size="small"
-                    >
-                        Aggiungi Studenti
-                    </Button>
+                            variant="contained"
+                            startIcon={<GroupAddIcon />}
+                            onClick={() => setStudentFormOpen(true)}
+                            sx={{ mr: 1 }}
+                            size="small"
+                        >
+                            Aggiungi Studente
+                        </Button>
                 </Box>
 
                 <Box sx={{ height: 600, width: '100%' }}>
@@ -478,6 +480,16 @@ console.log("Students data:", classData.students);
                     fetchData();
                 }}
                 student={selectedStudent}
+            />
+
+            {/* Nuovo Form Aggiunta Studente */}
+            <StudentClassForm 
+                open={studentFormOpen}
+                onClose={() => {
+                    setStudentFormOpen(false);
+                    fetchData(); // Ricarica i dati della classe
+                }}
+                classData={classData}
             />
         </Box>
     );

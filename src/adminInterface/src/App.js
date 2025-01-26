@@ -5,15 +5,14 @@ import { AuthProvider } from './context/AuthContext';
 import { SchoolProvider } from './context/SchoolContext';
 import { UserProvider } from './context/UserContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { ClassProvider } from './context/ClassContext';
+import { StudentProvider } from './context/StudentContext';
 import setupAxiosInterceptors from './services/axiosConfig';
 import MainLayout from './components/layout/MainLayout';
 import Login from './components/Login';
 import Unauthorized from './components/Unauthorized';
 import PrivateRoute from './routes/PrivateRoute';
 import { adminRoutes } from './routes/routes';
-import { Class } from '@mui/icons-material';
-import { ClassProvider } from './context/ClassContext';
-import { StudentProvider } from './context/StudentContext'; // Aggiungi questo import
 import PublicCSI from './components/engines/CSI/publicCSI';
 import './styles.css';
 
@@ -25,11 +24,10 @@ function App() {
         <Router>
             <AuthProvider>
                 <NotificationProvider>
-                       
-                            <UserProvider>
+                    <UserProvider>
+                        <SchoolProvider>
                             <ClassProvider>
-                                <SchoolProvider>
-                                <StudentProvider>  {/* Aggiungi questo provider */}
+                                <StudentProvider>
                                     <Routes>
                                         <Route path="/login" element={<Login />} />
                                         <Route path="/unauthorized" element={<Unauthorized />} />
@@ -57,10 +55,9 @@ function App() {
                                         />
                                     </Routes>
                                 </StudentProvider>
-                                </SchoolProvider>
-                                </ClassProvider> 
-                            </UserProvider>
-                        
+                            </ClassProvider>
+                        </SchoolProvider>
+                    </UserProvider>
                 </NotificationProvider>
             </AuthProvider>
         </Router>
@@ -68,4 +65,3 @@ function App() {
 }
 
 export default App;
-
