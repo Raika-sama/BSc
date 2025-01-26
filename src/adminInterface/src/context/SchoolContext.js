@@ -277,7 +277,7 @@ export const SchoolProvider = ({ children }) => {
 
     // Metodo per recuperare le sezioni di una scuola
      // Modifichiamo anche getSections per usare il nuovo stato
-     const getSections = async (schoolId, includeInactive = false) => {
+     const getSections = useCallback(async (schoolId, includeInactive = false) => {
         try {
             setLoading(true);
             setError(null);
@@ -287,8 +287,15 @@ export const SchoolProvider = ({ children }) => {
             );
             
             if (response.data.status === 'success') {
-                setSections(response.data.data.sections);
-                return response.data.data.sections;
+                const newSections = response.data.data.sections;
+                setSections(prev => {
+                    // Previene aggiornamenti non necessari
+                    if (JSON.stringify(prev) === JSON.stringify(newSections)) {
+                        return prev;
+                    }
+                    return newSections;
+                });
+                return newSections;
             }
         } catch (error) {
             const errorMessage = error.response?.data?.error?.message || 
@@ -299,7 +306,7 @@ export const SchoolProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
 const getSectionStudents = async (schoolId, sectionName) => {
     try {
@@ -330,16 +337,14 @@ const getSectionStudents = async (schoolId, sectionName) => {
         setLoading(true);
         setError(null);
 
-        console.log('Deactivating section:', { schoolId, sectionName });
-
         const response = await axiosInstance.post(
             `/schools/${schoolId}/sections/${sectionName}/deactivate`
         );
 
         if (response.data.status === 'success') {
-            // Aggiorna lo stato delle sezioni
-            setSections(prevSections => 
-                prevSections.map(section => 
+            // Aggiorniamo lo stato solo se la chiamata ha successo
+            setSections(prev => 
+                prev.map(section => 
                     section.name === sectionName
                         ? {
                             ...section,
@@ -350,15 +355,10 @@ const getSectionStudents = async (schoolId, sectionName) => {
                 )
             );
 
-            showNotification(
-                'Sezione disattivata con successo',
-                'success'
-            );
-
+            showNotification('Sezione disattivata con successo', 'success');
             return response.data.data;
         }
     } catch (error) {
-        console.error('Error in deactivateSection:', error);
         const errorMessage = error.response?.data?.error?.message || 
                            'Errore nella disattivazione della sezione';
         setError(errorMessage);

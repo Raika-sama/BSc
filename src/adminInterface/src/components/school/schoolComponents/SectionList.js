@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     Paper,
     Table,
@@ -18,32 +18,19 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import GroupIcon from '@mui/icons-material/Group';
 
 const SectionList = ({ 
-    sections, 
+    sections = [], // Valore di default
     showInactive = false,
     onDeactivate,
     onReactivate 
 }) => {
-    console.log("SectionList props:", { 
-        sections, 
-        showInactive,
-        sectionsLength: sections?.length 
-    });
+   
 
     // Modifichiamo il filtro per essere più esplicito
-    const filteredSections = sections.filter(section => {
-        console.log("Filtering section:", { 
-            section,
-            isActive: section.isActive,
-            showInactive,
-            willShow: showInactive ? true : section.isActive
-        });
-        return showInactive ? true : section.isActive;
-    });
+    const filteredSections = useMemo(() => {
+        return sections.filter(section => showInactive ? true : section.isActive);
+    }, [sections, showInactive]);
 
-    console.log("Filtered sections:", {
-        filteredSections,
-        length: filteredSections.length
-    });
+   
 
     const formatDate = (date) => {
         if (!date) return '-';
@@ -133,4 +120,4 @@ const SectionList = ({
     );
 };
 
-export default SectionList;
+export default React.memo(SectionList); // Ottimizziamo con memo

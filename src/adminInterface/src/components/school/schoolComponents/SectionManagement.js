@@ -31,7 +31,7 @@ const SectionManagement = () => {
         getSections,
         deactivateSection,
         reactivateSection,
-        sections, // Sezioni dal context
+        sections,
         loading,
         error
     } = useSchool();
@@ -39,30 +39,33 @@ const SectionManagement = () => {
     const [showInactive, setShowInactive] = useState(true);
     const [selectedSection, setSelectedSection] = useState(null);
     const [isDeactivationDialogOpen, setIsDeactivationDialogOpen] = useState(false);
+    const [sectionsLoaded, setSectionsLoaded] = useState(false); // Nuovo stato
 
-    // Effetto per caricare la scuola
+    // Effetto modificato per il caricamento iniziale
     useEffect(() => {
-        if (!selectedSchool) {
-            getSchoolById(schoolId);
-        }
-    }, [schoolId, selectedSchool, getSchoolById]);
-
-    // Effetto per caricare le sezioni
-    useEffect(() => {
-        const loadSections = async () => {
-            if (selectedSchool) {
-                try {
-                    await getSections(schoolId, true);
-                } catch (error) {
-                    console.error('Error loading sections:', error);
+        const loadData = async () => {
+            try {
+                if (!selectedSchool) {
+                    await getSchoolById(schoolId);
                 }
+                if (!sectionsLoaded) {
+                    await getSections(schoolId, true);
+                    setSectionsLoaded(true);
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
             }
         };
 
-        loadSections();
-    }, [schoolId, selectedSchool]);
+        loadData();
+    }, [schoolId, selectedSchool, sectionsLoaded]);
 
-    // Handler per apertura dialog di disattivazione
+    // Reset del flag quando cambia la scuola
+    useEffect(() => {
+        setSectionsLoaded(false);
+    }, [schoolId]);
+
+    // Handler per la disattivazione
     const handleDeactivateClick = (section) => {
         setSelectedSection({
             ...section,
@@ -71,14 +74,14 @@ const SectionManagement = () => {
         setIsDeactivationDialogOpen(true);
     };
 
-    // Handler per conferma disattivazione
+    // Handler per la conferma della disattivazione
     const handleDeactivateConfirm = async () => {
         try {
             if (!selectedSection) return;
 
             await deactivateSection(schoolId, selectedSection.name);
-            // Ricarica le sezioni dopo la disattivazione
-            await getSections(schoolId, true);
+            // Ricarica le sezioni solo dopo la disattivazione
+            setSectionsLoaded(false); // Forza il ricaricamento
         } catch (error) {
             console.error('Error deactivating section:', error);
         } finally {
@@ -87,12 +90,11 @@ const SectionManagement = () => {
         }
     };
 
-    // Handler per riattivazione
+    // Handler per la riattivazione
     const handleReactivate = async (section) => {
         try {
             await reactivateSection(schoolId, section.name);
-            // Ricarica le sezioni dopo la riattivazione
-            await getSections(schoolId, true);
+            setSectionsLoaded(false); // Forza il ricaricamento
         } catch (error) {
             console.error('Error reactivating section:', error);
         }
@@ -202,7 +204,7 @@ const SectionManagement = () => {
                 onReactivate={handleReactivate}
             />
 
-            <DeactivationDialog
+        <DeactivationDialog
                 open={isDeactivationDialogOpen}
                 onClose={() => {
                     setIsDeactivationDialogOpen(false);

@@ -1,73 +1,67 @@
-/**
- * @file schoolRoutes.js
- * @description Router per la gestione delle scuole
- */
-
 const express = require('express');
 const router = express.Router();
 const { school: schoolController } = require('../controllers');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
 
-// Aggiungi il middleware protect a tutte le route
-// Questo è già gestito in index.js, ma lo manteniamo per sicurezza
 router.use(protect);
 
-// Rotte accessibili a tutti gli utenti autenticati
-router.get('/my-school', schoolController.getMySchool.bind(schoolController)); // Nuovo endpoint
-
-router.get('/', schoolController.getAll.bind(schoolController));
-router.get('/:id', schoolController.getById.bind(schoolController));
+// 1. Rotte generali
+router.get('/my-school', schoolController.getMySchool.bind(schoolController));
 router.get('/region/:region', schoolController.getByRegion.bind(schoolController));
 router.get('/type/:type', schoolController.getByType.bind(schoolController));
-router.get('/:id/academic-years', schoolController.getAcademicYears.bind(schoolController));
 
+// 2. Rotte specifiche per le sezioni (raggruppate)
+router.route('/:id/sections')
+    .get(schoolController.getSections.bind(schoolController));
 
+router.route('/:schoolId/sections/:sectionName')
+    .get(schoolController.getSectionStudents.bind(schoolController))
+    .post(
+        restrictTo('admin'),
+        schoolController.deactivateSection.bind(schoolController)
+    );
 
-// Rotte per la gestione delle sezioni
-router.get('/:schoolId/sections/:sectionName/students', 
-    schoolController.getSectionStudents.bind(schoolController)
-);
-
-// Nuove rotte per la gestione delle sezioni
-router.get('/:id/sections', 
-    schoolController.getSections.bind(schoolController)
-);
-
-// Rotte che richiedono privilegi di admin
-router.post('/:schoolId/sections/:sectionName/deactivate',
+router.post(
+    '/:schoolId/sections/:sectionName/deactivate',
     restrictTo('admin'),
     schoolController.deactivateSection.bind(schoolController)
 );
 
-router.post('/:schoolId/sections/:sectionName/reactivate',
+router.post(
+    '/:schoolId/sections/:sectionName/reactivate',
     restrictTo('admin'),
     schoolController.reactivateSection.bind(schoolController)
 );
 
-// Rotte che richiedono privilegi di admin
-router.post('/', 
-    restrictTo('admin'), 
-    schoolController.create.bind(schoolController)
-);
+// 3. Rotte per la gestione della scuola
+router.route('/')
+    .get(schoolController.getAll.bind(schoolController))
+    .post(
+        restrictTo('admin'), 
+        schoolController.create.bind(schoolController)
+    );
 
-router.post('/:id/setup', 
-    restrictTo('admin'), 
-    schoolController.setupInitialConfiguration.bind(schoolController)
-);
+router.route('/:id')
+    .get(schoolController.getById.bind(schoolController))
+    .put(
+        restrictTo('admin'), 
+        schoolController.update.bind(schoolController)
+    )
+    .delete(
+        restrictTo('admin'), 
+        schoolController.delete.bind(schoolController)
+    );
 
+// 4. Rotte di configurazione
+router.get('/:id/academic-years', schoolController.getAcademicYears.bind(schoolController));
 router.post('/:id/academic-years', 
     restrictTo('admin'), 
     schoolController.setupAcademicYear.bind(schoolController)
 );
 
-router.put('/:id', 
+router.post('/:id/setup', 
     restrictTo('admin'), 
-    schoolController.update.bind(schoolController)
-);
-
-router.delete('/:id', 
-    restrictTo('admin'), 
-    schoolController.delete.bind(schoolController)
+    schoolController.setupInitialConfiguration.bind(schoolController)
 );
 
 module.exports = router;
