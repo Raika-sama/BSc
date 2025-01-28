@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Box, Paper, Typography, Breadcrumbs, Link, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CompletedTestsList from './components/CompletedTestsList';
 import TestResultsView from './components/TestResultsView';
 import { useStudentTest } from './hooks/useStudentTest';
-import axiosInstance from '../../../services/axiosConfig';
+import { axiosInstance } from '../../../services/axiosConfig';
 import { useNotification } from '../../../context/NotificationContext';
-import TestLinkDialog from './components/TestLinkDialog'; // Importa il tuo componente
+import TestLinkDialog from './components/TestLinkDialog';
 
 const StudentTestsLayout = () => {
     const { studentId } = useParams();
     const navigate = useNavigate();
-    const { showNotification } = useNotification(); // Usa il custom hook per ottenere showNotification
+    const { showNotification } = useNotification();
     const {
         loading,
         error,
@@ -22,19 +22,11 @@ const StudentTestsLayout = () => {
         formatDate,
         setCompletedTests,
         setSelectedTest,
-        setTestLink,
-        setDialogOpen,
         dialogOpen,
-        testLink
+        setDialogOpen,
+        testLink,
+        setTestLink
     } = useStudentTest(studentId);
-
-    useEffect(() => {
-        if (!studentId || studentId === 'undefined') {
-            showNotification('ID studente non valido', 'error');
-            navigate('/admin/students');
-            return;
-        }
-    }, [studentId, navigate, showNotification]);
 
     useEffect(() => {
         const fetchTests = async () => {
@@ -55,7 +47,7 @@ const StudentTestsLayout = () => {
         if (studentId && studentId !== 'undefined') {
             fetchTests();
         }
-    }, [studentId, showNotification]);
+    }, [studentId, showNotification, setCompletedTests]);
 
     const handleCreateTest = async () => {
         try {
@@ -125,7 +117,7 @@ const StudentTestsLayout = () => {
                     <CompletedTestsList 
                         tests={completedTests}
                         selectedTest={selectedTest}
-                        onTestSelect={setSelectedTest}
+                        onTestSelect={handleTestSelect}
                         onCreateTest={handleCreateTest}
                     />
                 </Paper>
@@ -139,7 +131,11 @@ const StudentTestsLayout = () => {
             </Box>
 
             {/* Test Link Dialog */}
-            <TestLinkDialog />
+            <TestLinkDialog 
+                open={dialogOpen}
+                onClose={() => setDialogOpen(false)}
+                testLink={testLink}
+            />
         </Box>
     );
 };

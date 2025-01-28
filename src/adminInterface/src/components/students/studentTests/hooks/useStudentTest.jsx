@@ -8,6 +8,8 @@ export const useStudentTest = (studentId) => {
     const [error, setError] = useState(null);
     const [completedTests, setCompletedTests] = useState([]);
     const [selectedTest, setSelectedTest] = useState(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [testLink, setTestLink] = useState('');
     const { showNotification } = useNotification();
     const navigate = useNavigate();
 
@@ -81,7 +83,14 @@ export const useStudentTest = (studentId) => {
         selectedTest,
         handleTestSelect,
         formatDate,
-        refreshTests: fetchCompletedTests
+        refreshTests: fetchCompletedTests,
+        // Aggiungi questi
+        setCompletedTests,
+        setSelectedTest,
+        dialogOpen,
+        setDialogOpen,
+        testLink,
+        setTestLink
     };
 };
 
