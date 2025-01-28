@@ -1,12 +1,6 @@
 import React from 'react';
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer,
-  Tooltip,
-  Label 
-} from 'recharts';
+import { Doughnut } from 'react-chartjs-2';
+import 'chart.js/auto';
 
 const CognitiveGauge = ({ 
   value = 50,
@@ -18,30 +12,32 @@ const CognitiveGauge = ({
   // Normalizza il valore tra 0 e 100
   const normalizedValue = Math.min(Math.max(value, 0), 100);
   
-  // Calcola il valore per la visualizzazione del gauge
-  const gaugeData = [
-    { name: 'value', value: normalizedValue },
-    { name: 'empty', value: 100 - normalizedValue }
-  ];
+  // Dati per il grafico
+  const data = {
+    datasets: [{
+      data: [normalizedValue, 100 - normalizedValue],
+      backgroundColor: [color, '#f5f5f5'],
+      borderWidth: 0
+    }],
+  };
 
-  // Calcola la deviazione dall'equilibrio (50%)
-  const deviation = normalizedValue - 50;
-  const deviationText = deviation > 0 ? `+${deviation}` : deviation;
-
-  // Colori per il gauge
-  const colors = [color, '#f5f5f5'];
-
-  // Custom tooltip che mostra il valore preciso
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-2 shadow-lg rounded border text-sm">
-          <p className="font-medium">{`${payload[0].value}%`}</p>
-          <p className="text-gray-600">{`${deviationText}% dall'equilibrio`}</p>
-        </div>
-      );
+  // Opzioni per il grafico
+  const options = {
+    cutout: '70%',
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function(tooltipItem) {
+            const deviation = normalizedValue - 50;
+            const deviationText = deviation > 0 ? `+${deviation}` : deviation;
+            return `${tooltipItem.raw}% (${deviationText}% dall'equilibrio)`;
+          }
+        }
+      },
+      legend: {
+        display: false
+      }
     }
-    return null;
   };
 
   return (
@@ -61,46 +57,13 @@ const CognitiveGauge = ({
 
       {/* Gauge */}
       <div className="h-48">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={gaugeData}
-              cx="50%"
-              cy="80%"
-              startAngle={180}
-              endAngle={0}
-              innerRadius="60%"
-              outerRadius="80%"
-              paddingAngle={0}
-              dataKey="value"
-            >
-              {gaugeData.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={colors[index]} 
-                  strokeWidth={0}
-                />
-              ))}
-              <Label
-                value={`${normalizedValue}%`}
-                position="center"
-                fill={color}
-                style={{
-                  fontSize: '24px',
-                  fontWeight: 'bold',
-                  transform: 'translateY(-20px)'
-                }}
-              />
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-          </PieChart>
-        </ResponsiveContainer>
+        <Doughnut data={data} options={options} />
       </div>
 
       {/* Deviation indicator */}
       <div className="text-center mt-2">
         <span className="text-sm text-gray-500">
-          {deviationText}% dall'equilibrio
+          {normalizedValue - 50}% dall'equilibrio
         </span>
       </div>
     </div>

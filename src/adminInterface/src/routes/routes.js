@@ -16,6 +16,8 @@ import PersonalTest from '../components/profile/PersonalTest';  // Aggiungi ques
 import SectionManagement from '../components/school/schoolComponents/SectionManagement';
 import AssignSchoolPage from '../components/students/AssignSchoolPage';
 import ApiExplorer from '../components/api-explorer/ApiExplorer';
+import StudentTestsLayout from '../components/students/studentTests/StudentTestsLayout';
+
 
 // Importa le icone da Material-UI
 import {
@@ -126,10 +128,17 @@ export const adminRoutes = [
         icon: PersonIcon,
         showInMenu: false  // Non lo mostriamo nel menu laterale
     },
+  //  {
+  //      path: 'students/:studentId/tests',    // Aggiungi questa route
+  //      element: StudentTestManagement,
+  //      title: 'Test dello Studente',
+  //      icon: TestIcon,
+  //      showInMenu: false
+  //  },
     {
         path: 'students/:studentId/tests',    // Aggiungi questa route
-        element: StudentTestManagement,
-        title: 'Test dello Studente',
+        element: StudentTestsLayout,
+        title: 'Gestione Test Studente',
         icon: TestIcon,
         showInMenu: false
     },

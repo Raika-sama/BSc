@@ -360,7 +360,7 @@ const StudentList = () => {
                     }
                     
                     // Usiamo il path relativo, senza /admin/ perché siamo già nel contesto di /admin/*
-                    const path = `students/${studentId}/tests`;
+                    const path = `/admin/students/${studentId}/tests`;
                     console.log('Navigating to:', path);
                     
                     navigate(path, { 

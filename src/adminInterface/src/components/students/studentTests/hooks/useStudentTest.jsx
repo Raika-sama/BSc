@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useNotification } from '../../../context/NotificationContext';
-import { axiosInstance } from '../../../services/axiosConfig';
+import { useNotification } from '../../../../context/NotificationContext';
+import { axiosInstance } from '../../../../services/axiosConfig';
 
 export const useStudentTest = (studentId) => {
     const [loading, setLoading] = useState(false);

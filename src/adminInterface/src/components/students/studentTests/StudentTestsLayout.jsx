@@ -1,24 +1,33 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Paper, Typography, Breadcrumbs, Link, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CompletedTestsList from './components/CompletedTestsList';
 import TestResultsView from './components/TestResultsView';
 import { useStudentTest } from './hooks/useStudentTest';
+import axiosInstance from '../../../services/axiosConfig';
+import { useNotification } from '../../../context/NotificationContext';
+import TestLinkDialog from './components/TestLinkDialog'; // Importa il tuo componente
 
 const StudentTestsLayout = () => {
     const { studentId } = useParams();
     const navigate = useNavigate();
+    const { showNotification } = useNotification(); // Usa il custom hook per ottenere showNotification
     const {
         loading,
         error,
         completedTests,
         selectedTest,
         handleTestSelect,
-        formatDate
+        formatDate,
+        setCompletedTests,
+        setSelectedTest,
+        setTestLink,
+        setDialogOpen,
+        dialogOpen,
+        testLink
     } = useStudentTest(studentId);
 
-    // Monitoring effect for component mount and studentId validation
     useEffect(() => {
         if (!studentId || studentId === 'undefined') {
             showNotification('ID studente non valido', 'error');
@@ -27,7 +36,6 @@ const StudentTestsLayout = () => {
         }
     }, [studentId, navigate, showNotification]);
 
-    // Fetch completed tests effect
     useEffect(() => {
         const fetchTests = async () => {
             try {
@@ -49,7 +57,6 @@ const StudentTestsLayout = () => {
         }
     }, [studentId, showNotification]);
 
-    // Handle test creation
     const handleCreateTest = async () => {
         try {
             if (!studentId || studentId === 'undefined') {
@@ -132,11 +139,7 @@ const StudentTestsLayout = () => {
             </Box>
 
             {/* Test Link Dialog */}
-            <TestLinkDialog 
-                open={dialogOpen}
-                onClose={() => setDialogOpen(false)}
-                testLink={testLink}
-            />
+            <TestLinkDialog />
         </Box>
     );
 };
