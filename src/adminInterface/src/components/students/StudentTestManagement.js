@@ -31,17 +31,46 @@ const StudentTestManagement = () => {
     const [selectedTest, setSelectedTest] = useState(null);
     const [completedTests, setCompletedTests] = useState([]);
 
+     // Log diagnostici iniziali
+     useEffect(() => {
+        console.log('StudentTestManagement montato con:', {
+            studentId,
+            pathname: location.pathname,
+            search: location.search,
+            state: location.state
+        });
+
+        // Verifica validità studentId
+        if (!studentId || studentId === 'undefined') {
+            console.error('StudentId non valido:', studentId);
+            showNotification('ID studente non valido', 'error');
+            navigate('/admin/students');
+            return;
+        }
+    }, [studentId, location, navigate, showNotification]);
+
+
     // Carica i test completati
     useEffect(() => {
         const fetchCompletedTests = async () => {
+            console.log('Iniziando fetchCompletedTests per studentId:', studentId);
+
             try {
                 // Usa l'endpoint corretto del modulo CSI
+                console.log('Facendo chiamata API a:', `/tests/csi/results/student/${studentId}`);
                 const response = await axiosInstance.get(`/tests/csi/results/student/${studentId}`);
+                console.log('Risposta ricevuta:', response.data);
                 if (response.data && response.data.data) {
                     setCompletedTests(response.data.data);
                 }
             } catch (error) {
-                console.error('Errore nel caricamento dei test:', error);
+                console.error('Errore dettagliato nel caricamento dei test:', {
+                    error,
+                    response: error.response,
+                    studentId,
+                    url: `/tests/csi/results/student/${studentId}`
+                });
+                
                 showNotification(
                     'Errore nel caricamento dei test completati: ' + 
                     (error.response?.data?.message || error.message),
@@ -50,23 +79,34 @@ const StudentTestManagement = () => {
             }
         };
     
-        if (studentId) {
+        if (studentId && studentId !== 'undefined') {
             fetchCompletedTests();
         }
     }, [studentId, showNotification]);
 
     const handleCreateTest = async (testType) => {
+        console.log('handleCreateTest chiamato con:', { testType, studentId });
+        
         try {
-            if (!studentId) {
-                showNotification('ID studente mancante', 'error');
+            if (!studentId || studentId === 'undefined') {
+                console.error('Tentativo di creare test con studentId non valido:', studentId);
+                showNotification('ID studente mancante o non valido', 'error');
                 return;
             }
     
+            console.log('Inviando richiesta per generare link test:', {
+                studentId,
+                testType,
+                endpoint: '/tests/csi/generate-link'
+            });
+
             const response = await axiosInstance.post('/tests/csi/generate-link', {
-                studentId: studentId,
+                studentId,
                 testType,
             });
     
+            console.log('Risposta generazione link:', response.data);
+
             if (response.data && response.data.data?.token) {
                 const testUrl = `${window.location.origin}/test/csi/${response.data.data.token}`;
                 setTestLink(testUrl);
@@ -76,7 +116,13 @@ const StudentTestManagement = () => {
                 throw new Error('Token non ricevuto dal server');
             }
         } catch (error) {
-            console.error('Errore nella generazione del link:', error);
+            console.error('Errore dettagliato nella generazione del link:', {
+                error,
+                response: error.response,
+                studentId,
+                testType
+            });
+            
             showNotification(
                 `Errore nella generazione del link del test: ${
                     error.response?.data?.message || error.message
@@ -122,7 +168,7 @@ const StudentTestManagement = () => {
                     size="small"
                     variant="outlined"
                     startIcon={<ArrowBackIcon />}
-                    onClick={() => navigate('/students')}
+                    onClick={() => navigate('/admin/students')}
                 >
                     Torna alla lista
                 </Button>
@@ -154,7 +200,7 @@ const StudentTestManagement = () => {
             {/* Layout principale */}
             <Grid container spacing={2}>
                 {/* Lista test completati */}
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} md={3}>
                     <Paper sx={{ height: 'calc(100vh - 250px)', overflow: 'auto' }}>
                         <List sx={{ p: 0 }}>
                             <ListItem sx={{ backgroundColor: 'grey.100' }}>
@@ -199,7 +245,7 @@ const StudentTestManagement = () => {
                 </Grid>
 
                 {/* Area dettagli test */}
-                <Grid item xs={12} md={8}>
+                <Grid item xs={12} md={9}>
                     <TestDetailsView 
                         test={selectedTest}
                         formatDate={formatDate}

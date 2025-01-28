@@ -15,7 +15,7 @@ import Profile from '../components/profile/Profile'; // Aggiungi questo import
 import PersonalTest from '../components/profile/PersonalTest';  // Aggiungi questo import
 import SectionManagement from '../components/school/schoolComponents/SectionManagement';
 import AssignSchoolPage from '../components/students/AssignSchoolPage';
-
+import ApiExplorer from '../components/api-explorer/ApiExplorer';
 
 // Importa le icone da Material-UI
 import {
@@ -145,4 +145,10 @@ export const adminRoutes = [
         title: 'Test Personale',
         showInMenu: false
     },
+    {
+        path: 'api-explorer',  // senza /admin/ perché viene aggiunto automaticamente
+        element: ApiExplorer,     
+        title: 'Api Explorer',
+        showInMenu: true
+    }
 ];

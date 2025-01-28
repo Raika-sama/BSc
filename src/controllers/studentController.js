@@ -404,75 +404,70 @@ class StudentController extends BaseController {
         }
     }
     
-    async batchAssignToClass(req, res, next) {
-        try {
-            const { studentIds, classId, academicYear } = req.body;
-    
-            // 1. Validazione input
-            if (!studentIds?.length || !classId || !academicYear) {
-                throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
-                    'Dati mancanti per l\'assegnazione'
-                );
-            }
-    
-            logger.debug('Starting batch assignment:', {
-                studentCount: studentIds.length,
-                classId,
-                academicYear,
-                user: req.user?.id
-            });
-    
-            // 2. Verifica permessi
-            if (req.user.role !== 'admin') {
-                throw createError(
-                    ErrorTypes.AUTH.FORBIDDEN,
-                    'Non autorizzato ad assegnare studenti'
-                );
-            }
-    
-            // 3. Chiama il repository per l'assegnazione
-            const result = await this.repository.batchAssignToClass(
-                studentIds,
-                { classId, academicYear }
+// In studentController.js
+async batchAssignToClass(req, res, next) {
+    try {
+        const { studentIds, classId, academicYear } = req.body;
+
+        // 1. Validazione input
+        if (!studentIds?.length || !classId || !academicYear) {
+            throw createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'Dati mancanti per l\'assegnazione'
             );
-    
-            // 4. Log del successo
-            logger.info('Batch assignment completed:', {
-                modifiedCount: result.modifiedCount,
-                className: result.className,
-                user: req.user?.id
-            });
-    
-            // 5. Invia risposta
-            this.sendResponse(res, {
-                status: 'success',
-                message: `${result.modifiedCount} studenti assegnati alla classe ${result.className}`,
-                data: {
-                    modifiedCount: result.modifiedCount,
-                    className: result.className
-                }
-            });
-    
-        } catch (error) {
-            logger.error('Error in batch assigning students:', {
-                error,
-                user: req.user?.id
-            });
-    
-            // Se l'errore è già formattato (dal repository), lo passa direttamente
-            if (error.code) {
-                next(error);
-            } else {
-                // Altrimenti crea un nuovo errore formattato
-                next(createError(
-                    ErrorTypes.SYSTEM.OPERATION_FAILED,
-                    'Errore nell\'assegnazione degli studenti',
-                    { originalError: error.message }
-                ));
-            }
         }
+
+        logger.debug('Starting batch assignment:', {
+            studentCount: studentIds.length,
+            classId,
+            academicYear,
+            user: req.user?.id
+        });
+
+        // 2. Verifica permessi
+        if (req.user.role !== 'admin') {
+            throw createError(
+                ErrorTypes.AUTH.FORBIDDEN,
+                'Non autorizzato ad assegnare studenti'
+            );
+        }
+
+        // 3. Chiama il repository con il formato corretto
+        const result = await this.repository.batchAssignToClass(
+            studentIds,
+            {
+                classId,
+                academicYear
+            }
+        );
+
+        // 4. Log del successo
+        logger.info('Batch assignment completed:', {
+            modifiedCount: result.modifiedCount,
+            className: result.className,
+            user: req.user?.id
+        });
+
+        // 5. Invia risposta
+        this.sendResponse(res, {
+            status: 'success',
+            message: `${result.modifiedCount} studenti assegnati alla classe ${result.className}`,
+            data: result
+        });
+
+    } catch (error) {
+        logger.error('Error in batch assigning students:', {
+            error,
+            user: req.user?.id
+        });
+
+        next(createError(
+            error.code || ErrorTypes.SYSTEM.OPERATION_FAILED,
+            error.message || 'Errore nell\'assegnazione degli studenti',
+            { originalError: error.message }
+        ));
     }
+}
 
     // Aggiungi questo metodo alla classe StudentController
 

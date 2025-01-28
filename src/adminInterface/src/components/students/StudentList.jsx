@@ -351,63 +351,91 @@ const StudentList = () => {
             field: 'actions',
             headerName: 'Azioni',
             width: 160,
-            renderCell: (params) => (
-                <Box sx={{  
-                    display: 'flex', 
-                    gap: 1,
-                    justifyContent: 'center',
-                    width: '100%' 
+            renderCell: (params) => {
+                const handleTestClick = (student) => {
+                    const studentId = student._id || student.id;
+                    if (!studentId) {
+                        showNotification('ID studente non trovato', 'error');
+                        return;
+                    }
+                    
+                    // Usiamo il path relativo, senza /admin/ perché siamo già nel contesto di /admin/*
+                    const path = `students/${studentId}/tests`;
+                    console.log('Navigating to:', path);
+                    
+                    navigate(path, { 
+                        state: { studentData: student }
+                    });
+                };
+        
+                return (
+                    <Box sx={{  
+                        display: 'flex', 
+                        gap: 1,
+                        justifyContent: 'center',
+                        width: '100%' 
                     }}>
-                    <Tooltip title="Test">
-                        <IconButton
-                            size="small"
-                            onClick={() => navigate(`/admin/students/${params.row._id}/tests`)}
-                            sx={{ 
-                                p: '4px',
-                                '&:hover': { bgcolor: alpha('#1976d2', 0.1) }
-                            }}
-                        >
-                            <AssignmentIcon sx={{ fontSize: '1.1rem', color: 'primary.main' }} />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Visualizza">
-                        <IconButton
-                            size="small"
-                            onClick={() => handleViewDetails(params.row)}
-                            sx={{ 
-                                p: '4px',
-                                '&:hover': { bgcolor: alpha('#1976d2', 0.1) }
-                            }}
-                        >
-                            <VisibilityIcon sx={{ fontSize: '1.1rem', color: 'primary.main' }} />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Modifica">
-                        <IconButton
-                            size="small"
-                            onClick={() => handleEdit(params.row)}
-                            sx={{ 
-                                p: '4px',
-                                '&:hover': { bgcolor: alpha('#1976d2', 0.1) }
-                            }}
-                        >
-                            <EditIcon sx={{ fontSize: '1.1rem', color: 'primary.main' }} />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Elimina">
-                        <IconButton
-                            size="small"
-                            onClick={() => handleDeleteClick(params.row)}
-                            sx={{ 
-                                p: '4px',
-                                '&:hover': { bgcolor: alpha('#d32f2f', 0.1) }
-                            }}
-                        >
-                            <DeleteIcon sx={{ fontSize: '1.1rem', color: 'error.main' }} />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-            )
+                        <Tooltip title="Gestione Test">
+                            <IconButton
+                                size="small"
+                                onClick={() => handleTestClick(params.row)}
+                                sx={{ 
+                                    p: '4px',
+                                    '&:hover': { bgcolor: alpha('#1976d2', 0.1) },
+                                    // Disabilita il pulsante se lo studente è inattivo
+                                    '&.Mui-disabled': {
+                                        opacity: 0.5
+                                    }
+                                }}
+                                disabled={params.row.status === 'inactive'}
+                            >
+                                <AssignmentIcon 
+                                    sx={{ 
+                                        fontSize: '1.1rem', 
+                                        color: 'primary.main'
+                                    }} 
+                                />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Visualizza">
+                            <IconButton
+                                size="small"
+                                onClick={() => handleViewDetails(params.row)}
+                                sx={{ 
+                                    p: '4px',
+                                    '&:hover': { bgcolor: alpha('#1976d2', 0.1) }
+                                }}
+                            >
+                                <VisibilityIcon sx={{ fontSize: '1.1rem', color: 'primary.main' }} />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Modifica">
+                            <IconButton
+                                size="small"
+                                onClick={() => handleEdit(params.row)}
+                                sx={{ 
+                                    p: '4px',
+                                    '&:hover': { bgcolor: alpha('#1976d2', 0.1) }
+                                }}
+                            >
+                                <EditIcon sx={{ fontSize: '1.1rem', color: 'primary.main' }} />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Elimina">
+                            <IconButton
+                                size="small"
+                                onClick={() => handleDeleteClick(params.row)}
+                                sx={{ 
+                                    p: '4px',
+                                    '&:hover': { bgcolor: alpha('#d32f2f', 0.1) }
+                                }}
+                            >
+                                <DeleteIcon sx={{ fontSize: '1.1rem', color: 'error.main' }} />
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
+                );
+            }
         }
     ];
 

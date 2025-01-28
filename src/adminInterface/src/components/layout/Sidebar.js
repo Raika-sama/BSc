@@ -12,6 +12,7 @@ import {
     School as SchoolIcon,
     Class as ClassIcon,
     People as StudentsIcon,
+    Api as ApiIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -22,6 +23,7 @@ const menuItems = [
     { path: 'schools', title: 'Gestione Scuole', icon: <SchoolIcon /> },
     { path: 'classes', title: 'Gestione Classi', icon: <ClassIcon /> },
     { path: 'students', title: 'Gestione Studenti', icon: <StudentsIcon /> },
+    { path: 'api-explorer', title: 'API Explorer', icon: <ApiIcon /> },  // Aggiungi questa riga
 ];
 
 const Sidebar = ({ open, drawerWidth, onDrawerToggle }) => {

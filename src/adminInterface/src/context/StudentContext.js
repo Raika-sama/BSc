@@ -574,38 +574,39 @@ return normalized;
         try {
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
             
-            // Verifica che studentIds sia un array e non sia vuoto
+            // Validazione input
             if (!Array.isArray(studentIds) || studentIds.length === 0) {
                 throw new Error('Lista studenti non valida');
             }
     
-            // Verifica che classId e academicYear siano presenti
-            if (!classId || !academicYear) {
-                throw new Error('ID classe e anno accademico sono richiesti');
+            if (!classId) {
+                throw new Error('ID classe non valido');
             }
     
-            // IMPORTANTE: Invia solo gli ID degli studenti, non l'oggetto completo
-            const studentIdsArray = Array.isArray(studentIds) 
-                ? studentIds.map(id => typeof id === 'object' ? id.studentId : id)
-                : [];
-            
-            console.log('Payload being sent to backend:', {
-                studentIds: studentIdsArray,
+            if (!academicYear) {
+                throw new Error('Anno accademico non valido');
+            }
+    
+            // Debug log prima della chiamata
+            console.log('Sending batch assign request:', {
+                studentIds,
                 classId,
                 academicYear
             });
     
             const response = await axiosInstance.post('/students/batch-assign', {
-                studentIds: studentIdsArray,  // Invia solo array di ID
+                studentIds,  // Array di ID semplici
                 classId,
                 academicYear
             });
+    
+            console.log('Batch assign response:', response);
     
             if (response.data.status === 'success') {
                 dispatch({
                     type: STUDENT_ACTIONS.BATCH_ASSIGN_STUDENTS,
                     payload: {
-                        studentIds: studentIdsArray,
+                        studentIds,
                         classId,
                         modifiedCount: response.data.data.modifiedCount,
                         className: response.data.data.className
@@ -613,17 +614,15 @@ return normalized;
                 });
     
                 showNotification(
-                    `${response.data.data.modifiedCount} studenti assegnati alla classe ${response.data.data.className}`, 
+                    `${response.data.data.modifiedCount} studenti assegnati alla classe ${response.data.data.className}`,
                     'success'
                 );
                 
                 return response.data.data;
+            } else {
+                throw new Error(response.data.message || 'Errore nell\'assegnazione degli studenti');
             }
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || 
-                               error.message || 
-                               'Errore nell\'assegnazione degli studenti';
-            
             console.error('Error in batchAssignStudents:', {
                 error,
                 studentIds,
@@ -631,6 +630,10 @@ return normalized;
                 academicYear
             });
     
+            const errorMessage = error.response?.data?.error?.message || 
+                               error.message || 
+                               'Errore nell\'assegnazione degli studenti';
+                               
             dispatch({
                 type: STUDENT_ACTIONS.SET_ERROR,
                 payload: errorMessage
