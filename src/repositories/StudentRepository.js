@@ -22,106 +22,106 @@ class StudentRepository extends BaseRepository {
      * @returns {Promise<Array>} Lista degli studenti con relazioni popolate
      */
 
-    async findWithDetails(filters = {}, options = {}) {
-        try {
-            console.log('findWithDetails called with:', { filters, options });
-    
-            const pipeline = [
-                { $match: filters },
-                // Lookup per i test completati
-                {
-                    $lookup: {
-                        from: 'results',
-                        let: { studentId: '$_id' },
-                        pipeline: [
-                            {
-                                $match: {
-                                    $expr: {
-                                        $and: [
-                                            { $eq: ['$studentId', '$$studentId'] },
-                                            { $eq: ['$completato', true] }
-                                        ]
-                                    }
+async findWithDetails(filters = {}, options = {}) {
+    try {
+        console.log('findWithDetails called with:', { filters, options });
+
+        const pipeline = [
+            { $match: filters },
+            // Lookup per i test completati
+            {
+                $lookup: {
+                    from: 'results',
+                    let: { studentId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$studentId', '$$studentId'] },
+                                        { $eq: ['$completato', true] }
+                                    ]
                                 }
                             }
-                        ],
-                        as: 'tests'
-                    }
-                },
-                // Lookup per la scuola
-                {
-                    $lookup: {
-                        from: 'schools',
-                        localField: 'schoolId',
-                        foreignField: '_id',
-                        as: 'schoolData'
-                    }
-                },
-                // Lookup per la classe
-                {
-                    $lookup: {
-                        from: 'classes',
-                        localField: 'classId',
-                        foreignField: '_id',
-                        as: 'classData'
-                    }
-                },
-                // Lookup per il docente principale
-                {
-                    $lookup: {
-                        from: 'users',
-                        localField: 'mainTeacher',
-                        foreignField: '_id',
-                        as: 'mainTeacherData'
-                    }
-                },
-                // Aggiungi i campi calcolati
-                {
-                    $addFields: {
-                        testCount: { $size: '$tests' },
-                        schoolId: { $arrayElemAt: ['$schoolData', 0] },
-                        classId: { $arrayElemAt: ['$classData', 0] },
-                        mainTeacher: { $arrayElemAt: ['$mainTeacherData', 0] }
-                    }
-                },
-                // Rimuovi i campi temporanei
-                {
-                    $project: {
-                        tests: 0,
-                        schoolData: 0,
-                        classData: 0,
-                        mainTeacherData: 0
-                    }
+                        }
+                    ],
+                    as: 'tests'
                 }
-            ];
-    
-            // Aggiungi sort se specificato
-            if (options.sort) {
-                pipeline.push({ $sort: options.sort });
+            },
+            // Lookup per la scuola
+            {
+                $lookup: {
+                    from: 'schools',
+                    localField: 'schoolId',
+                    foreignField: '_id',
+                    as: 'schoolData'
+                }
+            },
+            // Lookup per la classe
+            {
+                $lookup: {
+                    from: 'classes',
+                    localField: 'classId',
+                    foreignField: '_id',
+                    as: 'classData'
+                }
+            },
+            // Lookup per il docente principale
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'mainTeacher',
+                    foreignField: '_id',
+                    as: 'mainTeacherData'
+                }
+            },
+            // Aggiungi i campi calcolati
+            {
+                $addFields: {
+                    testCount: { $size: '$tests' },
+                    schoolId: { $arrayElemAt: ['$schoolData', 0] },
+                    classId: { $arrayElemAt: ['$classData', 0] },
+                    mainTeacher: { $arrayElemAt: ['$mainTeacherData', 0] }
+                }
+            },
+            // Rimuovi i campi temporanei
+            {
+                $project: {
+                    tests: 0,
+                    schoolData: 0,
+                    classData: 0,
+                    mainTeacherData: 0
+                }
             }
-    
-            // Aggiungi skip e limit per la paginazione
-            if (options.skip) {
-                pipeline.push({ $skip: options.skip });
-            }
-            if (options.limit) {
-                pipeline.push({ $limit: options.limit });
-            }
-    
-            console.log('Executing aggregation pipeline:', JSON.stringify(pipeline, null, 2));
-    
-            const students = await this.model.aggregate(pipeline);
-            
-            console.log(`Found ${students.length} students`);
-            
-            return students;
-    
-        } catch (error) {
-            console.error('Error in findWithDetails:', error);
-            logger.error('Error in findWithDetails:', error);
-            throw error;
+        ];
+
+        // Aggiungi sort se specificato
+        if (options.sort) {
+            pipeline.push({ $sort: options.sort });
         }
+
+        // Aggiungi skip e limit per la paginazione
+        if (options.skip) {
+            pipeline.push({ $skip: options.skip });
+        }
+        if (options.limit) {
+            pipeline.push({ $limit: options.limit });
+        }
+
+        console.log('Executing aggregation pipeline:', JSON.stringify(pipeline, null, 2));
+
+        const students = await this.model.aggregate(pipeline);
+        
+        console.log(`Found ${students.length} students`);
+        
+        return students;
+
+    } catch (error) {
+        console.error('Error in findWithDetails:', error);
+        logger.error('Error in findWithDetails:', error);
+        throw error;
     }
+}
 
     
      /**
@@ -133,8 +133,8 @@ class StudentRepository extends BaseRepository {
      async findUnassignedStudents(schoolId, options = {}) {
         try {
             const query = {
-                schoolId,
-                needsClassAssignment: true,
+                schoolId: new mongoose.Types.ObjectId(schoolId),
+                classId: { $exists: false },  // Studenti senza classe
                 isActive: true
             };
     
@@ -146,9 +146,14 @@ class StudentRepository extends BaseRepository {
                 ];
             }
     
-            return await this.findWithDetails(query, {
-                sort: { createdAt: -1 }
+            console.log('Query for unassigned students:', query);
+    
+            const students = await this.findWithDetails(query, {
+                sort: { lastName: 1, firstName: 1 }
             });
+    
+            console.log(`Found ${students.length} unassigned students`);
+            return students;
         } catch (error) {
             logger.error('Error in findUnassignedStudents:', {
                 error,

@@ -552,51 +552,46 @@ return normalized;
 
     // Recupera studenti non assegnati
     const fetchUnassignedStudents = async (schoolId) => {
-    try {
-        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
-        
-        console.log('Fetching unassigned students for school:', schoolId);
-        
-        const response = await axiosInstance.get(`/students/unassigned/${schoolId}`);
-        
-        console.log('Unassigned students response:', response.data);
-
-        if (response.data.status === 'success') {
-            const students = response.data.data?.students || [];
+        try {
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
             
-            // Dispatch per aggiornare lo stato
+            console.log('Fetching unassigned students for school:', schoolId);
+            
+            const response = await axiosInstance.get(`/students/unassigned/${schoolId}`);
+            
+            console.log('Server response:', response.data);
+    
+            if (response.data.status === 'success') {
+                const students = response.data.data.students || [];
+                
+                // Normalizza i dati degli studenti
+                const normalizedStudents = students.map(student => ({
+                    ...student,
+                    id: student._id || student.id,  // Assicurati che ogni studente abbia un id
+                    fullName: `${student.firstName} ${student.lastName}`
+                }));
+                
+                dispatch({
+                    type: STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS,
+                    payload: normalizedStudents
+                });
+    
+                return normalizedStudents;
+            }
+        } catch (error) {
+            console.error('Error fetching unassigned students:', error);
+            const errorMessage = error.response?.data?.error?.message || 
+                               'Errore nel caricamento degli studenti non assegnati';
             dispatch({
-                type: STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS,
-                payload: students
+                type: STUDENT_ACTIONS.SET_ERROR,
+                payload: errorMessage
             });
-
-            // Normalizza i dati prima di restituirli
-            const normalizedStudents = students.map(student => normalizeStudent(student))
-                                             .filter(student => student !== null);
-            
-            return normalizedStudents; // Ritorna i dati normalizzati
-        } else {
-            throw new Error(response.data.message || 'Errore nel recupero degli studenti non assegnati');
+        } finally {
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: false });
         }
-    } catch (error) {
-        console.error('Error fetching unassigned students:', error);
-        const errorMessage = error.response?.data?.error?.message || 
-                           error.message || 
-                           'Errore nel caricamento degli studenti non assegnati';
         
-        dispatch({
-            type: STUDENT_ACTIONS.SET_ERROR,
-            payload: errorMessage
-        });
-        
-        showNotification(errorMessage, 'error');
-        
-        // Ritorna un array vuoto in caso di errore
         return [];
-    } finally {
-        // Non settiamo loading a false qui perché viene gestito dal reducer
-    }
-};
+    };
     
     // Assegnazione batch di studenti
     const batchAssignStudents = async (studentIds, classId, academicYear) => {
