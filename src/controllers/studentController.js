@@ -49,11 +49,23 @@ class StudentController extends BaseController {
             if (req.query.classId) filters.classId = req.query.classId;
             if (req.query.status) filters.status = req.query.status;
     
-            const includeTestCount = req.query.includeTestCount === 'true';
-            
-            const students = includeTestCount ? 
-                await this.repository.findWithTestCount(filters) :
-                await this.repository.findWithDetails(filters);
+            // Usiamo il modello Student direttamente per i populate
+            const query = this.model.find(filters)
+                .populate('schoolId', 'name schoolType')
+                .populate('classId', 'year section academicYear')
+                .populate('mainTeacher', 'firstName lastName email')
+                .populate('teachers', 'firstName lastName email')
+                .populate('testCount');
+    
+            // Applica paginazione se necessario
+            if (req.query.page && req.query.limit) {
+                const page = parseInt(req.query.page);
+                const limit = parseInt(req.query.limit);
+                const skip = (page - 1) * limit;
+                query.skip(skip).limit(limit);
+            }
+    
+            const students = await query.exec();
     
             this.sendResponse(res, { 
                 students,

@@ -22,41 +22,92 @@ class StudentRepository extends BaseRepository {
      * @returns {Promise<Array>} Lista degli studenti con relazioni popolate
      */
 
-    async findWithDetails(filters = {}, options = {}) {
+    async findWithTestCount(filters = {}) {
         try {
-            const query = this.model.find(filters)
-                .populate('schoolId', 'name schoolType')
-                .populate('classId', 'year section academicYear')
-                .populate('mainTeacher', 'firstName lastName email')
-                .populate('teachers', 'firstName lastName email');
+            logger.debug('Finding students with test count:', { filters });
     
-            // Applica ordinamento di default per studenti pending
-            if (filters.status === 'pending' && !options.sort) {
-                query.sort({ createdAt: -1 });
-            } else if (options.sort) {
-                query.sort(options.sort);
-            }
+            const pipeline = [
+                { $match: filters },
+                // Lookup per i test
+                {
+                    $lookup: {
+                        from: 'results',
+                        let: { studentId: '$_id' },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            { $eq: ['$studentId', '$$studentId'] },
+                                            { $eq: ['$completato', true] }
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        as: 'tests'
+                    }
+                },
+                // Lookup per la scuola
+                {
+                    $lookup: {
+                        from: 'schools',
+                        localField: 'schoolId',
+                        foreignField: '_id',
+                        as: 'schoolId'
+                    }
+                },
+                // Lookup per la classe
+                {
+                    $lookup: {
+                        from: 'classes',
+                        localField: 'classId',
+                        foreignField: '_id',
+                        as: 'classId'
+                    }
+                },
+                // Lookup per il docente principale
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'mainTeacher',
+                        foreignField: '_id',
+                        as: 'mainTeacher'
+                    }
+                },
+                // Lookup per gli altri docenti
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'teachers',
+                        foreignField: '_id',
+                        as: 'teachers'
+                    }
+                },
+                // Aggiunge i campi calcolati
+                {
+                    $addFields: {
+                        testCount: { $size: '$tests' },
+                        schoolId: { $arrayElemAt: ['$schoolId', 0] },
+                        classId: { $arrayElemAt: ['$classId', 0] },
+                        mainTeacher: { $arrayElemAt: ['$mainTeacher', 0] }
+                    }
+                },
+                // Rimuove l'array dei test
+                {
+                    $project: {
+                        tests: 0
+                    }
+                }
+            ];
     
-            if (options.limit) {
-                query.limit(options.limit);
-            }
-    
-            if (options.skip) {
-                query.skip(options.skip);
-            }
-    
-            return await query.exec();
+            return await this.model.aggregate(pipeline);
         } catch (error) {
-            logger.error('Error in findWithDetails:', {
-                error,
-                filters,
-                options
+            logger.error('Error in findWithTestCount:', {
+                error: error.message,
+                filters
             });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nel recupero degli studenti',
-                { originalError: error.message }
-            );
+            throw error;
         }
     }
 
@@ -836,11 +887,32 @@ async findWithTestCount(filters = {}) {
     try {
         logger.debug('Finding students with test count:', { filters });
 
+        // Verifichiamo prima se esistono dei test nel database
+        const Result = mongoose.model('Result');
+        const testCount = await Result.countDocuments({ completato: true });
+        logger.debug('Total completed tests in database:', { testCount });
+
+        // Log delle collezioni disponibili
+        const collections = await mongoose.connection.db.collections();
+        logger.debug('Available collections:', {
+            collections: collections.map(c => c.collectionName)
+        });
+
+        // Verifichiamo i test per uno studente specifico
+        if (testCount > 0) {
+            const sampleTest = await Result.findOne({ completato: true });
+            logger.debug('Sample test found:', {
+                testId: sampleTest._id,
+                studentId: sampleTest.studentId,
+                completato: sampleTest.completato
+            });
+        }
+
         const pipeline = [
             { $match: filters },
             {
                 $lookup: {
-                    from: 'tests',
+                    from: 'results',
                     let: { studentId: '$_id' },
                     pipeline: [
                         {
@@ -848,7 +920,7 @@ async findWithTestCount(filters = {}) {
                                 $expr: {
                                     $and: [
                                         { $eq: ['$studentId', '$$studentId'] },
-                                        { $eq: ['$status', 'completed'] } // Contiamo solo i test completati
+                                        { $eq: ['$completato', true] }
                                     ]
                                 }
                             }
@@ -858,72 +930,39 @@ async findWithTestCount(filters = {}) {
                 }
             },
             {
-                $lookup: {
-                    from: 'schools',
-                    localField: 'schoolId',
-                    foreignField: '_id',
-                    as: 'schoolId'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'classes',
-                    localField: 'classId',
-                    foreignField: '_id',
-                    as: 'classId'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'mainTeacher',
-                    foreignField: '_id',
-                    as: 'mainTeacher'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'teachers',
-                    foreignField: '_id',
-                    as: 'teachers'
-                }
-            },
-            {
                 $addFields: {
-                    testCount: { $size: '$tests' },
-                    schoolId: { $arrayElemAt: ['$schoolId', 0] },
-                    classId: { $arrayElemAt: ['$classId', 0] },
-                    mainTeacher: { $arrayElemAt: ['$mainTeacher', 0] }
+                    testCount: { $size: '$tests' }
                 }
-            },
-            {
-                $project: {
-                    tests: 0 // Rimuoviamo l'array dei test dal risultato
-                }
-            },
-            {
-                $sort: { lastName: 1, firstName: 1 }
             }
         ];
 
-        const students = await this.model.aggregate(pipeline);
+        // Log del pipeline
+        logger.debug('Aggregation pipeline:', JSON.stringify(pipeline, null, 2));
 
-        logger.debug(`Found ${students.length} students with test counts`);
+
+        const students = await this.model.aggregate(pipeline);
+         // Log dettagliato dei risultati
+         logger.debug('Aggregation results:', {
+            totalStudents: students.length,
+            studentsWithTests: students.filter(s => s.testCount > 0).length,
+            sampleStudents: students.slice(0,3).map(s => ({
+                studentId: s._id,
+                name: `${s.firstName} ${s.lastName}`,
+                testCount: s.testCount,
+                testsArray: s.tests
+            }))
+        });
         
         return students;
     } catch (error) {
         logger.error('Error in findWithTestCount:', {
             error: error.message,
-            filters
+            stack: error.stack
         });
-        throw createError(
-            ErrorTypes.DATABASE.QUERY_FAILED,
-            'Errore nel recupero degli studenti con conteggio test',
-            { originalError: error.message }
-        );
+        throw Error;
+       }
+    
     }
-}
 }
 
 module.exports = StudentRepository;

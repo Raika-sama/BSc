@@ -277,36 +277,20 @@ studentSchema.set('toJSON', {
 
 // Aggiungere il campo virtuale testCount
 studentSchema.virtual('testCount', {
-    ref: 'Test', // Nome del modello Test
+    ref: 'Result',  // Cambiato da 'Results' a 'Result' (nome esatto del modello)
     localField: '_id',
     foreignField: 'studentId',
-    count: true // Questo fa sì che venga restituito solo il conteggio
+    count: true
 });
 
 // Aggiungere un metodo statico per trovare studenti con il conteggio dei test
-studentSchema.statics.findWithTestCount = async function(filters = {}) {
-    return this.aggregate([
-        { $match: filters },
-        {
-            $lookup: {
-                from: 'tests', // Nome della collezione dei test
-                localField: '_id',
-                foreignField: 'studentId',
-                as: 'tests'
-            }
-        },
-        {
-            $addFields: {
-                testCount: { $size: '$tests' }
-            }
-        },
-        {
-            $project: {
-                tests: 0 // Rimuove l'array dei test dal risultato
-            }
-        }
-    ]);
-};
+studentSchema.pre(/^find/, function(next) {
+    this.populate({
+        path: 'testCount',
+        match: { completato: true }  // Contiamo solo i test completati
+    });
+    next();
+});
 
 // Assicuriamoci che quando popoliamo uno studente, includiamo anche il conteggio dei test
 studentSchema.pre(/^find/, function(next) {
