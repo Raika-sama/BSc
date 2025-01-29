@@ -563,21 +563,25 @@ return normalized;
             
             console.log('Server response:', response.data);
     
-            if (response.data.status === 'success' && response.data.data) {
-                const students = response.data.data.students || [];
+            if (response.data.status === 'success') {
+                const students = response.data.students || [];
                 
+                // Debug log per ogni studente
+                students.forEach(student => {
+                    console.log('Student details:', {
+                        id: student._id,
+                        name: `${student.firstName} ${student.lastName}`,
+                        hasClassId: !!student.classId,
+                        needsAssignment: student.needsClassAssignment
+                    });
+                });
+    
                 // Normalizza i dati degli studenti
                 const normalizedStudents = students.map(student => ({
                     ...student,
-                    id: student._id || student.id,  // Assicurati che ogni studente abbia un id
-                    fullName: `${student.firstName} ${student.lastName}`,
-                    schoolName: student.schoolId?.name || 'N/D',
-                    className: student.classId ? 
-                        `${student.classId.year}${student.classId.section}` : 
-                        'N/D'
+                    id: student._id || student.id,
+                    fullName: `${student.firstName} ${student.lastName}`
                 }));
-                
-                console.log('Normalized students:', normalizedStudents);
     
                 dispatch({
                     type: STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS,
@@ -586,19 +590,11 @@ return normalized;
     
                 return normalizedStudents;
             } else {
-                console.warn('Invalid response format:', response.data);
-                return [];
+                throw new Error('Formato risposta non valido dal server');
             }
         } catch (error) {
-            console.error('Error fetching unassigned students:', error);
-            const errorMessage = error.response?.data?.error?.message || 
-                               'Errore nel caricamento degli studenti non assegnati';
-            dispatch({
-                type: STUDENT_ACTIONS.SET_ERROR,
-                payload: errorMessage
-            });
-            showNotification(errorMessage, 'error');
-            return [];
+            console.error('Error in fetchUnassignedStudents:', error);
+            throw error;
         } finally {
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: false });
         }

@@ -35,42 +35,57 @@ const ClassPopulate = () => {
             try {
                 setLoading(true);
                 setError(null);
-    
+        
+                // 1. Verifica classId
+                console.log('Loading data for classId:', classId);
+        
+                // 2. Ottieni dettagli classe
                 const details = await getClassDetails(classId);
-                console.log('Class details received:', details);
-    
-                if (!isMounted) return;
-                
-                if (details) {
-                    setClassData(details);
-                    
-                    const schoolId = details.schoolId?._id || details.schoolId;
-                    console.log('School ID extracted:', schoolId);
-                    
-                    if (schoolId) {
-                        const students = await fetchUnassignedStudents(schoolId);
-                        console.log('Fetched unassigned students:', students);
-                        
-                        if (isMounted) {
-                            // Verifichiamo che ogni studente abbia un ID valido
-                            const validStudents = students.map(student => ({
-                                ...student,
-                                id: student._id  // Assicuriamoci che ogni studente abbia un id
-                            }));
-                            console.log('Processed students:', validStudents);
-                            setUnassignedStudents(validStudents);
-                        }
-                    }
+                console.log('Class details:', details);
+        
+                if (!details) {
+                    throw new Error('Impossibile recuperare i dettagli della classe');
                 }
+        
+                setClassData(details);
+        
+                // 3. Estrai schoolId
+                const schoolId = details.schoolId?._id || details.schoolId;
+                console.log('Extracted schoolId:', schoolId);
+        
+                if (!schoolId) {
+                    throw new Error('SchoolId non trovato nei dettagli della classe');
+                }
+        
+                // 4. Recupera studenti non assegnati
+                const students = await fetchUnassignedStudents(schoolId);
+                console.log('Unassigned students response:', students);
+        
+                if (!Array.isArray(students)) {
+                    console.error('Unexpected students data format:', students);
+                    throw new Error('Formato dati studenti non valido');
+                }
+        
+                // 5. Normalizza i dati degli studenti
+                const validStudents = students.map(student => {
+                    const normalizedStudent = {
+                        ...student,
+                        id: student._id || student.id, // Assicurati che ci sia sempre un ID
+                        firstName: student.firstName || '',
+                        lastName: student.lastName || '',
+                        email: student.email || '',
+                        gender: student.gender || ''
+                    };
+                    console.log('Normalized student:', normalizedStudent);
+                    return normalizedStudent;
+                });
+        
+                setUnassignedStudents(validStudents);
             } catch (err) {
-                if (isMounted) {
-                    console.error('Error loading data:', err);
-                    setError(err.message || 'Errore nel caricamento dei dati');
-                }
+                console.error('Error in loadData:', err);
+                setError(err.message || 'Errore nel caricamento dei dati');
             } finally {
-                if (isMounted) {
-                    setLoading(false);
-                }
+                setLoading(false);
             }
         };
     
@@ -248,8 +263,19 @@ const ClassPopulate = () => {
                     overflow: 'hidden'
                 }}
             >
+                {/* Debug Info */}
+                <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="textSecondary">
+                        Studenti non assegnati caricati: {unassignedStudents?.length || 0}
+                    </Typography>
+                    {unassignedStudents?.length === 0 && !loading && (
+                        <Alert severity="info" sx={{ mt: 1 }}>
+                            Non ci sono studenti da assegnare per questa classe
+                        </Alert>
+                    )}
+                </Box>
                 <DataGrid
-                    rows={unassignedStudents}
+                    rows={unassignedStudents || []}
                     columns={columns}
                     pageSize={10}
                     rowsPerPageOptions={[10, 25, 50]}
@@ -261,6 +287,15 @@ const ClassPopulate = () => {
                         setSelectedStudents(newSelectionModel);
                     }}
                     selectionModel={selectedStudents}
+                    components={{
+                        NoRowsOverlay: () => (
+                            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                                <Typography color="textSecondary">
+                                    {loading ? 'Caricamento...' : 'Nessuno studente non assegnato trovato'}
+                                </Typography>
+                            </Box>
+                        )
+                    }}
                     sx={{
                         border: 'none',
                         '& .MuiDataGrid-cell': {

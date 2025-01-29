@@ -132,113 +132,53 @@ async findWithDetails(filters = {}, options = {}) {
      */
      async findUnassignedStudents(schoolId, options = {}) {
         try {
-            const query = {
-                schoolId: new mongoose.Types.ObjectId(schoolId),
-                $or: [
-                    { classId: { $exists: false } },
-                    { classId: null }
-                ],
-                isActive: true
-            };
-    
-            // Aggiungi ricerca per nome se presente
-            if (options.name) {
-                query.$or = [
-                    { firstName: { $regex: options.name, $options: 'i' } },
-                    { lastName: { $regex: options.name, $options: 'i' } }
-                ];
-            }
-    
-            console.log('Query for unassigned students:', query);
-    
-            const pipeline = [
-                { $match: query },  // Usa l'intero oggetto query
-                // Lookup per i test completati
-                {
-                    $lookup: {
-                        from: 'results',
-                        let: { studentId: '$_id' },
-                        pipeline: [
-                            {
-                                $match: {
-                                    $expr: {
-                                        $and: [
-                                            { $eq: ['$studentId', '$$studentId'] },
-                                            { $eq: ['$completato', true] }
-                                        ]
-                                    }
-                                }
-                            }
-                        ],
-                        as: 'tests'
-                    }
-                },
-                // Lookup per la scuola
-                {
-                    $lookup: {
-                        from: 'schools',
-                        localField: 'schoolId',
-                        foreignField: '_id',
-                        as: 'schoolData'
-                    }
-                },
-                // Lookup per la classe
-                {
-                    $lookup: {
-                        from: 'classes',
-                        localField: 'classId',
-                        foreignField: '_id',
-                        as: 'classData'
-                    }
-                },
-                // Lookup per il docente principale
-                {
-                    $lookup: {
-                        from: 'users',
-                        localField: 'mainTeacher',
-                        foreignField: '_id',
-                        as: 'mainTeacherData'
-                    }
-                },
-                // Aggiungi i campi calcolati
-                {
-                    $addFields: {
-                        testCount: { $size: '$tests' },
-                        schoolId: { $arrayElemAt: ['$schoolData', 0] },
-                        classId: { $arrayElemAt: ['$classData', 0] },
-                        mainTeacher: { $arrayElemAt: ['$mainTeacherData', 0] }
-                    }
-                },
-                // Rimuovi i campi temporanei
-                {
-                    $project: {
-                        tests: 0,
-                        schoolData: 0,
-                        classData: 0,
-                        mainTeacherData: 0
-                    }
-                },
-                // Aggiungi il sort
-                {
-                    $sort: {
-                        lastName: 1,
-                        firstName: 1
-                    }
-                }
-            ];
-    
-            console.log('Executing aggregation pipeline:', JSON.stringify(pipeline, null, 2));
-    
-            const students = await this.model.aggregate(pipeline);
-            
-            console.log(`Found ${students.length} unassigned students`);
-            return students;
-    
-        } catch (error) {
-            logger.error('Error in findUnassignedStudents:', {
-                error,
+            logger.debug('Inizio ricerca studenti non assegnati:', {
                 schoolId,
                 options
+            });
+    
+            if (!mongoose.Types.ObjectId.isValid(schoolId)) {
+                throw new Error(`SchoolId non valido: ${schoolId}`);
+            }
+    
+            // 1. Prima verifichiamo tutti gli studenti nella scuola
+            const allStudents = await this.model.find({
+                schoolId: new mongoose.Types.ObjectId(schoolId),
+                isActive: true
+            }).lean();
+    
+            logger.debug('Studenti totali nella scuola:', {
+                total: allStudents.length,
+                conClassId: allStudents.filter(s => s.classId).length,
+                senzaClassId: allStudents.filter(s => !s.classId).length
+            });
+    
+            // 2. Ora facciamo la query specifica per gli studenti non assegnati
+            const unassignedStudents = await this.model.find({
+                schoolId: new mongoose.Types.ObjectId(schoolId),
+                isActive: true,
+                needsClassAssignment: true // Aggiungiamo questo campo
+            })
+            .select('firstName lastName email gender dateOfBirth')
+            .sort({ lastName: 1, firstName: 1 })
+            .lean();
+    
+            logger.debug('Studenti non assegnati trovati:', {
+                count: unassignedStudents.length,
+                students: unassignedStudents.map(s => ({
+                    id: s._id,
+                    name: `${s.firstName} ${s.lastName}`,
+                    hasClassId: !!s.classId
+                }))
+            });
+    
+            return unassignedStudents;
+    
+        } catch (error) {
+            logger.error('Errore in findUnassignedStudents:', {
+                error: error.message,
+                schoolId,
+                stack: error.stack
             });
             throw error;
         }
@@ -303,16 +243,31 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             );
         }
 
-        // 2. Verifica capacità della classe
-        const currentStudentsCount = classDoc.students?.length || 0;
-        if (currentStudentsCount + studentIds.length > classDoc.capacity) {
+        // 2. Verifica esistenza degli studenti e che siano assegnabili
+        const students = await this.model.find({
+            _id: { $in: studentIds },
+            schoolId: classDoc.schoolId,
+            needsClassAssignment: true,
+            classId: null // Verifica che non siano già assegnati
+        }).session(session);
+
+        if (students.length !== studentIds.length) {
             throw createError(
                 ErrorTypes.VALIDATION.BAD_REQUEST,
-                `Capacità classe superata. Capacità: ${classDoc.capacity}, Attuali: ${currentStudentsCount}, Da aggiungere: ${studentIds.length}`
+                'Alcuni studenti non sono validi o sono già assegnati'
             );
         }
 
-        // 3. Aggiorna gli studenti (non serve il campo 'teachers' qui)
+        // 3. Verifica capacità della classe
+        const currentStudentsCount = classDoc.students?.length || 0;
+        if (currentStudentsCount + students.length > classDoc.capacity) {
+            throw createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                `Capacità classe superata. Capacità: ${classDoc.capacity}, Attuali: ${currentStudentsCount}, Da aggiungere: ${students.length}`
+            );
+        }
+
+        // 4. Aggiorna gli studenti con tutti i campi necessari
         const updateResult = await this.model.updateMany(
             {
                 _id: { $in: studentIds },
@@ -326,13 +281,25 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                     needsClassAssignment: false,
                     currentYear: classDoc.year,
                     section: classDoc.section,
+                    mainTeacher: classDoc.mainTeacher,
+                    teachers: classDoc.teachers,
                     lastClassChangeDate: new Date()
+                },
+                $push: {
+                    classChangeHistory: {
+                        toClass: classId,
+                        toSection: classDoc.section,
+                        toYear: classDoc.year,
+                        date: new Date(),
+                        academicYear: academicYear,
+                        reason: 'Assegnazione a nuova classe'
+                    }
                 }
             },
             { session }
         );
 
-        // 4. Aggiorna la classe con il formato corretto degli studenti
+        // 5. Aggiorna la classe con il formato corretto degli studenti
         const newStudentRecords = studentIds.map(studentId => ({
             studentId: studentId,
             status: 'active',
@@ -349,18 +316,14 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             modifiedCount: updateResult.modifiedCount,
             className: `${classDoc.year}${classDoc.section}`
         };
+
     } catch (error) {
         await session.abortTransaction();
         logger.error('Error in batchAssignToClass:', {
-            errorMessage: error.message,
-            errorStack: error.stack,
+            error,
             studentIds,
             classId,
-            academicYear,
-            modelInfo: {
-                name: this.model?.modelName,
-                exists: !!this.model
-            }
+            academicYear
         });
         throw error;
     } finally {
