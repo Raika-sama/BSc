@@ -134,11 +134,14 @@ async findWithDetails(filters = {}, options = {}) {
         try {
             const query = {
                 schoolId: new mongoose.Types.ObjectId(schoolId),
-                classId: { $exists: false },  // Studenti senza classe
+                $or: [
+                    { classId: { $exists: false } },
+                    { classId: null }
+                ],
                 isActive: true
             };
     
-            // Se c'è un termine di ricerca per nome
+            // Aggiungi ricerca per nome se presente
             if (options.name) {
                 query.$or = [
                     { firstName: { $regex: options.name, $options: 'i' } },
@@ -148,12 +151,89 @@ async findWithDetails(filters = {}, options = {}) {
     
             console.log('Query for unassigned students:', query);
     
-            const students = await this.findWithDetails(query, {
-                sort: { lastName: 1, firstName: 1 }
-            });
+            const pipeline = [
+                { $match: query },  // Usa l'intero oggetto query
+                // Lookup per i test completati
+                {
+                    $lookup: {
+                        from: 'results',
+                        let: { studentId: '$_id' },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            { $eq: ['$studentId', '$$studentId'] },
+                                            { $eq: ['$completato', true] }
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        as: 'tests'
+                    }
+                },
+                // Lookup per la scuola
+                {
+                    $lookup: {
+                        from: 'schools',
+                        localField: 'schoolId',
+                        foreignField: '_id',
+                        as: 'schoolData'
+                    }
+                },
+                // Lookup per la classe
+                {
+                    $lookup: {
+                        from: 'classes',
+                        localField: 'classId',
+                        foreignField: '_id',
+                        as: 'classData'
+                    }
+                },
+                // Lookup per il docente principale
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'mainTeacher',
+                        foreignField: '_id',
+                        as: 'mainTeacherData'
+                    }
+                },
+                // Aggiungi i campi calcolati
+                {
+                    $addFields: {
+                        testCount: { $size: '$tests' },
+                        schoolId: { $arrayElemAt: ['$schoolData', 0] },
+                        classId: { $arrayElemAt: ['$classData', 0] },
+                        mainTeacher: { $arrayElemAt: ['$mainTeacherData', 0] }
+                    }
+                },
+                // Rimuovi i campi temporanei
+                {
+                    $project: {
+                        tests: 0,
+                        schoolData: 0,
+                        classData: 0,
+                        mainTeacherData: 0
+                    }
+                },
+                // Aggiungi il sort
+                {
+                    $sort: {
+                        lastName: 1,
+                        firstName: 1
+                    }
+                }
+            ];
     
+            console.log('Executing aggregation pipeline:', JSON.stringify(pipeline, null, 2));
+    
+            const students = await this.model.aggregate(pipeline);
+            
             console.log(`Found ${students.length} unassigned students`);
             return students;
+    
         } catch (error) {
             logger.error('Error in findUnassignedStudents:', {
                 error,

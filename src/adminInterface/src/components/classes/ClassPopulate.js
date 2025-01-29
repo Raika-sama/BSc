@@ -35,38 +35,42 @@ const ClassPopulate = () => {
             try {
                 setLoading(true);
                 setError(null);
-        
+    
                 const details = await getClassDetails(classId);
                 console.log('Class details received:', details);
-        
-                if (!details) {
-                    throw new Error('Dettagli classe non trovati');
-                }
+    
+                if (!isMounted) return;
                 
-                setClassData(details);
-                
-                const schoolId = details.schoolId?._id || details.schoolId;
-                console.log('School ID for unassigned students:', schoolId);
-                
-                if (schoolId) {
-                    const students = await fetchUnassignedStudents(schoolId);
-                    console.log('Unassigned students:', students);
+                if (details) {
+                    setClassData(details);
                     
-                    if (Array.isArray(students)) {
-                        setUnassignedStudents(students.map(student => ({
-                            ...student,
-                            id: student._id || student.id
-                        })));
-                    } else {
-                        console.error('Received invalid students data:', students);
-                        setUnassignedStudents([]);
+                    const schoolId = details.schoolId?._id || details.schoolId;
+                    console.log('School ID extracted:', schoolId);
+                    
+                    if (schoolId) {
+                        const students = await fetchUnassignedStudents(schoolId);
+                        console.log('Fetched unassigned students:', students);
+                        
+                        if (isMounted) {
+                            // Verifichiamo che ogni studente abbia un ID valido
+                            const validStudents = students.map(student => ({
+                                ...student,
+                                id: student._id  // Assicuriamoci che ogni studente abbia un id
+                            }));
+                            console.log('Processed students:', validStudents);
+                            setUnassignedStudents(validStudents);
+                        }
                     }
                 }
             } catch (err) {
-                console.error('Error loading data:', err);
-                setError(err.message || 'Errore nel caricamento dei dati');
+                if (isMounted) {
+                    console.error('Error loading data:', err);
+                    setError(err.message || 'Errore nel caricamento dei dati');
+                }
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
     
@@ -247,14 +251,13 @@ const ClassPopulate = () => {
                 <DataGrid
                     rows={unassignedStudents}
                     columns={columns}
-                    pageSize={25}
+                    pageSize={10}
                     rowsPerPageOptions={[10, 25, 50]}
                     checkboxSelection
                     disableSelectionOnClick
                     getRowId={getRowId}
                     onSelectionModelChange={(newSelectionModel) => {
-                        console.log('Selection changed:', newSelectionModel);
-                        console.log('Available students:', unassignedStudents);
+                        console.log('Selection Model Change:', newSelectionModel);
                         setSelectedStudents(newSelectionModel);
                     }}
                     selectionModel={selectedStudents}

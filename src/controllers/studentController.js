@@ -429,9 +429,15 @@ class StudentController extends BaseController {
                 { name: search }
             );
     
+            logger.debug(`Found ${students?.length || 0} unassigned students`);
+    
+            // Modifica qui: aggiungi status e data nella risposta
             this.sendResponse(res, { 
-                students,
-                count: students.length
+                status: 'success',
+                data: {
+                    students,
+                    count: students?.length || 0
+                }
             });
         } catch (error) {
             logger.error('Error getting unassigned students:', error);

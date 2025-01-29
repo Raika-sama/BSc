@@ -103,7 +103,8 @@ const initialState = {
     loading: false,
     error: null,
     selectedStudent: null,
-    totalStudents: 0
+    totalStudents: 0,
+    unassignedStudents: []  // Aggiungi questa riga
 };
 
 // Reducer
@@ -175,15 +176,16 @@ const studentReducer = (state, action) => {
                     null : state.selectedStudent
             };
 
-        case STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS:
-            const unassignedStudents = (action.payload || [])
-                .map(student => normalizeStudent(student))
-                .filter(student => student !== null);
-            return {
-                ...state,
-                students: unassignedStudents,
-                loading: false
-            };
+            case STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS:
+                const normalizedUnassignedStudents = (action.payload || [])
+                    .map(student => normalizeStudent(student))
+                    .filter(student => student !== null);
+                return {
+                    ...state,
+                    students: normalizedUnassignedStudents,
+                    unassignedStudents: normalizedUnassignedStudents,  // Aggiungi questa riga
+                    loading: false
+                };
 
         case STUDENT_ACTIONS.BATCH_ASSIGN_STUDENTS:
             return {
@@ -561,22 +563,31 @@ return normalized;
             
             console.log('Server response:', response.data);
     
-            if (response.data.status === 'success') {
+            if (response.data.status === 'success' && response.data.data) {
                 const students = response.data.data.students || [];
                 
                 // Normalizza i dati degli studenti
                 const normalizedStudents = students.map(student => ({
                     ...student,
                     id: student._id || student.id,  // Assicurati che ogni studente abbia un id
-                    fullName: `${student.firstName} ${student.lastName}`
+                    fullName: `${student.firstName} ${student.lastName}`,
+                    schoolName: student.schoolId?.name || 'N/D',
+                    className: student.classId ? 
+                        `${student.classId.year}${student.classId.section}` : 
+                        'N/D'
                 }));
                 
+                console.log('Normalized students:', normalizedStudents);
+    
                 dispatch({
                     type: STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS,
                     payload: normalizedStudents
                 });
     
                 return normalizedStudents;
+            } else {
+                console.warn('Invalid response format:', response.data);
+                return [];
             }
         } catch (error) {
             console.error('Error fetching unassigned students:', error);
@@ -586,11 +597,11 @@ return normalized;
                 type: STUDENT_ACTIONS.SET_ERROR,
                 payload: errorMessage
             });
+            showNotification(errorMessage, 'error');
+            return [];
         } finally {
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: false });
         }
-        
-        return [];
     };
     
     // Assegnazione batch di studenti
@@ -774,6 +785,7 @@ const batchAssignToSchool = async (studentIds, schoolId) => {
             ...state,
             students: state.students || [],
             totalStudents: state.totalStudents || 0,
+            unassignedStudents: state.unassignedStudents || [], // Aggiungi questa riga
             loading: state.loading || false,
             error: state.error || null,
             fetchStudents,
