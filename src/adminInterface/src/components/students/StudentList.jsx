@@ -58,7 +58,7 @@ const StudentList = () => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [formOpen, setFormOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(50);
     const [page, setPage] = useState(0);
     const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
     const [selectedStudentDetails, setSelectedStudentDetails] = useState(null);
@@ -610,7 +610,7 @@ const StudentList = () => {
                 page={page}
                 pageSize={pageSize}
                 rowBuffer={10}
-                rowsPerPageOptions={[10, 25, 50]}
+                rowsPerPageOptions={[10, 25, 50, 100]}
                 onPageChange={handlePageChange}
                 onPageSizeChange={handlePageSizeChange}
                 loading={loading}

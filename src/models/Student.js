@@ -284,19 +284,19 @@ studentSchema.virtual('testCount', {
 });
 
 // Aggiungere un metodo statico per trovare studenti con il conteggio dei test
-studentSchema.pre(/^find/, function(next) {
-    this.populate({
-        path: 'testCount',
-        match: { completato: true }  // Contiamo solo i test completati
-    });
-    next();
-});
+//studentSchema.pre(/^find/, function(next) {
+  //  this.populate({
+    //    path: 'testCount',
+      //  match: { completato: true }  // Contiamo solo i test completati
+    //});
+    //next();
+//});
 
 // Assicuriamoci che quando popoliamo uno studente, includiamo anche il conteggio dei test
-studentSchema.pre(/^find/, function(next) {
-    this.populate('testCount');
-    next();
-});
+//studentSchema.pre(/^find/, function(next) {
+  //  this.populate('testCount');
+  //  next();
+//});
 
 const Student = mongoose.model('Student', studentSchema);
 module.exports = Student;

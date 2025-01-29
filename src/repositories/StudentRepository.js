@@ -22,13 +22,13 @@ class StudentRepository extends BaseRepository {
      * @returns {Promise<Array>} Lista degli studenti con relazioni popolate
      */
 
-    async findWithTestCount(filters = {}) {
+    async findWithDetails(filters = {}, options = {}) {
         try {
-            logger.debug('Finding students with test count:', { filters });
+            console.log('findWithDetails called with:', { filters, options });
     
             const pipeline = [
                 { $match: filters },
-                // Lookup per i test
+                // Lookup per i test completati
                 {
                     $lookup: {
                         from: 'results',
@@ -54,7 +54,7 @@ class StudentRepository extends BaseRepository {
                         from: 'schools',
                         localField: 'schoolId',
                         foreignField: '_id',
-                        as: 'schoolId'
+                        as: 'schoolData'
                     }
                 },
                 // Lookup per la classe
@@ -63,7 +63,7 @@ class StudentRepository extends BaseRepository {
                         from: 'classes',
                         localField: 'classId',
                         foreignField: '_id',
-                        as: 'classId'
+                        as: 'classData'
                     }
                 },
                 // Lookup per il docente principale
@@ -72,41 +72,53 @@ class StudentRepository extends BaseRepository {
                         from: 'users',
                         localField: 'mainTeacher',
                         foreignField: '_id',
-                        as: 'mainTeacher'
+                        as: 'mainTeacherData'
                     }
                 },
-                // Lookup per gli altri docenti
-                {
-                    $lookup: {
-                        from: 'users',
-                        localField: 'teachers',
-                        foreignField: '_id',
-                        as: 'teachers'
-                    }
-                },
-                // Aggiunge i campi calcolati
+                // Aggiungi i campi calcolati
                 {
                     $addFields: {
                         testCount: { $size: '$tests' },
-                        schoolId: { $arrayElemAt: ['$schoolId', 0] },
-                        classId: { $arrayElemAt: ['$classId', 0] },
-                        mainTeacher: { $arrayElemAt: ['$mainTeacher', 0] }
+                        schoolId: { $arrayElemAt: ['$schoolData', 0] },
+                        classId: { $arrayElemAt: ['$classData', 0] },
+                        mainTeacher: { $arrayElemAt: ['$mainTeacherData', 0] }
                     }
                 },
-                // Rimuove l'array dei test
+                // Rimuovi i campi temporanei
                 {
                     $project: {
-                        tests: 0
+                        tests: 0,
+                        schoolData: 0,
+                        classData: 0,
+                        mainTeacherData: 0
                     }
                 }
             ];
     
-            return await this.model.aggregate(pipeline);
+            // Aggiungi sort se specificato
+            if (options.sort) {
+                pipeline.push({ $sort: options.sort });
+            }
+    
+            // Aggiungi skip e limit per la paginazione
+            if (options.skip) {
+                pipeline.push({ $skip: options.skip });
+            }
+            if (options.limit) {
+                pipeline.push({ $limit: options.limit });
+            }
+    
+            console.log('Executing aggregation pipeline:', JSON.stringify(pipeline, null, 2));
+    
+            const students = await this.model.aggregate(pipeline);
+            
+            console.log(`Found ${students.length} students`);
+            
+            return students;
+    
         } catch (error) {
-            logger.error('Error in findWithTestCount:', {
-                error: error.message,
-                filters
-            });
+            console.error('Error in findWithDetails:', error);
+            logger.error('Error in findWithDetails:', error);
             throw error;
         }
     }

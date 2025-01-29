@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react'; // Aggiungiamo useCallback
 import { motion } from 'framer-motion';
 import { 
     Box, 
@@ -35,6 +35,27 @@ export const FilterToolbar = ({
     // Carica le scuole quando il componente viene montato
     useEffect(() => {
         fetchSchools();
+    }, [fetchSchools]); // Aggiungiamo la dipendenza
+
+    // Ottimizziamo la generazione delle classi disponibili
+    const generateAvailableClasses = useCallback((selectedSchool) => {
+        if (!selectedSchool) return [];
+        
+        const classes = [];
+        for (let year = 1; year <= selectedSchool.numberOfYears; year++) {
+            selectedSchool.sections.forEach(section => {
+                classes.push({
+                    value: `${year}${section.name}`,
+                    year,
+                    section: section.name
+                });
+            });
+        }
+        return classes.sort((a, b) => 
+            a.year === b.year ? 
+                a.section.localeCompare(b.section) : 
+                a.year - b.year
+        );
     }, []);
 
     // Aggiorna le classi disponibili quando viene selezionata una scuola
@@ -42,20 +63,22 @@ export const FilterToolbar = ({
         if (schoolFilter) {
             const selectedSchool = schools.find(s => s._id === schoolFilter);
             if (selectedSchool) {
-                // Genera le classi basate sui dati della scuola
-                const classes = [];
-                for (let year = 1; year <= selectedSchool.numberOfYears; year++) {
-                    selectedSchool.sections.forEach(section => {
-                        classes.push(`${year}${section.name}`);
-                    });
-                }
+                const classes = generateAvailableClasses(selectedSchool);
                 setAvailableClasses(classes);
             }
         } else {
             setAvailableClasses([]);
             setClassFilter('');
         }
-    }, [schoolFilter, schools]);
+    }, [schoolFilter, schools, generateAvailableClasses, setClassFilter]);
+
+    // Ottimizziamo la gestione del search con Enter
+    const handleKeyPress = useCallback((e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSearch();
+        }
+    }, [handleSearch]);
 
     const statusOptions = [
         { value: '', label: 'Tutti gli stati' },
@@ -66,10 +89,18 @@ export const FilterToolbar = ({
         { value: 'graduated', label: 'Diplomati' }
     ];
 
+    // Gestiamo il cambio della scuola
+    const handleSchoolChange = (event) => {
+        const newSchoolId = event.target.value;
+        setSchoolFilter(newSchoolId);
+        setClassFilter(''); // Reset del filtro classe quando cambia la scuola
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
         >
             <Box sx={{
                 p: 2,
@@ -86,7 +117,7 @@ export const FilterToolbar = ({
                     size="small"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                    onKeyPress={handleKeyPress}
                     sx={{ 
                         minWidth: 250,
                         '& .MuiInputBase-root': { height: '40px' }
@@ -105,7 +136,7 @@ export const FilterToolbar = ({
                     label="Scuola"
                     size="small"
                     value={schoolFilter}
-                    onChange={(e) => setSchoolFilter(e.target.value)}
+                    onChange={handleSchoolChange}
                     sx={{ 
                         minWidth: 200,
                         '& .MuiInputBase-root': { height: '40px' }
@@ -131,9 +162,9 @@ export const FilterToolbar = ({
                     }}
                 >
                     <MenuItem value="">Tutte</MenuItem>
-                    {availableClasses.map(className => (
-                        <MenuItem key={className} value={className}>
-                            {className}
+                    {availableClasses.map(({ value, year, section }) => (
+                        <MenuItem key={value} value={value}>
+                            {value}
                         </MenuItem>
                     ))}
                 </TextField>

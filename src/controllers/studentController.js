@@ -3,6 +3,8 @@
 const BaseController = require('./baseController');
 const logger = require('../utils/errors/logger/logger');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+const mongoose = require('mongoose'); // Aggiungi questa riga all'inizio del file
+const Student = require('../models/Student'); // Aggiungi questa riga all'inizio del file
 
 class StudentController extends BaseController {
     constructor() {
@@ -20,7 +22,7 @@ class StudentController extends BaseController {
         this.batchAssignToSchool = this.batchAssignToSchool.bind(this);
         this.getUnassignedToSchoolStudents = this.getUnassignedToSchoolStudents.bind(this);
         this.createStudentWithClass = this.createStudentWithClass.bind(this); // Aggiungi questo
-
+        this.model = Student; // Aggiungi questa riga
     }
 
     /**
@@ -33,49 +35,94 @@ class StudentController extends BaseController {
                 query: req.query,
                 user: req.user?.id
             });
-    
+
             const filters = {};
             
             // Se l'utente è un teacher, mostra solo i suoi studenti
-            if (req.user.role === 'teacher') {
+            if (req.user?.role === 'teacher') {
                 filters.$or = [
                     { mainTeacher: req.user.id },
                     { teachers: req.user.id }
                 ];
             }
-    
+
             // Applica filtri aggiuntivi dalla query
-            if (req.query.schoolId) filters.schoolId = req.query.schoolId;
-            if (req.query.classId) filters.classId = req.query.classId;
-            if (req.query.status) filters.status = req.query.status;
-    
-            // Usiamo il modello Student direttamente per i populate
-            const query = this.model.find(filters)
-                .populate('schoolId', 'name schoolType')
-                .populate('classId', 'year section academicYear')
-                .populate('mainTeacher', 'firstName lastName email')
-                .populate('teachers', 'firstName lastName email')
-                .populate('testCount');
-    
-            // Applica paginazione se necessario
-            if (req.query.page && req.query.limit) {
-                const page = parseInt(req.query.page);
-                const limit = parseInt(req.query.limit);
-                const skip = (page - 1) * limit;
-                query.skip(skip).limit(limit);
+        if (req.query.schoolId) {
+            try {
+                filters.schoolId = new mongoose.Types.ObjectId(req.query.schoolId);
+            } catch (error) {
+                logger.warn('Invalid schoolId format:', req.query.schoolId);
             }
-    
-            const students = await query.exec();
-    
-            this.sendResponse(res, { 
-                students,
-                count: students.length
-            });
+        }
+
+        if (req.query.classId) {
+            try {
+                filters.classId = new mongoose.Types.ObjectId(req.query.classId);
+            } catch (error) {
+                logger.warn('Invalid classId format:', req.query.classId);
+            }
+        }
+
+        if (req.query.status) {
+            filters.status = req.query.status;
+        }
+
+        if (req.query.specialNeeds !== undefined) {
+            filters.specialNeeds = req.query.specialNeeds === 'true';
+        }
+
+        // Se c'è un termine di ricerca, aggiungi il filtro di ricerca
+        if (req.query.search) {
+            const searchRegex = new RegExp(req.query.search, 'i');
+            filters.$or = [
+                { firstName: searchRegex },
+                { lastName: searchRegex },
+                { email: searchRegex }
+            ];
+        }
+
+            // Calcola skip e limit per la paginazione
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 50;
+            const skip = (page - 1) * limit;
+
+            // Log per debug
+            console.log('Query filters:', filters);
+            console.log('Pagination:', { page, limit, skip });
+
+            try {
+                // Ottieni il conteggio totale
+                const total = await Student.countDocuments(filters);
+                
+                // Ottieni gli studenti con i dettagli
+                const students = await this.repository.findWithDetails(
+                    filters,
+                    {
+                        sort: { createdAt: -1 },
+                        skip,
+                        limit
+                    }
+                );
+
+                // Log per debug
+                console.log('Total students found:', total);
+                console.log('Students retrieved:', students.length);
+
+                this.sendResponse(res, { 
+                    students,
+                    count: total
+                });
+            } catch (error) {
+                console.error('Database operation error:', error);
+                throw error;
+            }
+
         } catch (error) {
             logger.error('Error in getAll students:', error);
             next(error);
         }
     }
+
 
     /**
      * Crea un nuovo studente
