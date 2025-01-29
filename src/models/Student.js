@@ -216,6 +216,8 @@ const studentSchema = new mongoose.Schema({
     collection: 'students'
 });
 
+
+
 // Indici per ottimizzare le query più comuni
 studentSchema.index({ schoolId: 1, currentYear: 1 });
 studentSchema.index({ classId: 1 });
@@ -271,6 +273,45 @@ studentSchema.set('toJSON', {
         delete ret._id;
         return ret;
     }
+});
+
+// Aggiungere il campo virtuale testCount
+studentSchema.virtual('testCount', {
+    ref: 'Test', // Nome del modello Test
+    localField: '_id',
+    foreignField: 'studentId',
+    count: true // Questo fa sì che venga restituito solo il conteggio
+});
+
+// Aggiungere un metodo statico per trovare studenti con il conteggio dei test
+studentSchema.statics.findWithTestCount = async function(filters = {}) {
+    return this.aggregate([
+        { $match: filters },
+        {
+            $lookup: {
+                from: 'tests', // Nome della collezione dei test
+                localField: '_id',
+                foreignField: 'studentId',
+                as: 'tests'
+            }
+        },
+        {
+            $addFields: {
+                testCount: { $size: '$tests' }
+            }
+        },
+        {
+            $project: {
+                tests: 0 // Rimuove l'array dei test dal risultato
+            }
+        }
+    ]);
+};
+
+// Assicuriamoci che quando popoliamo uno studente, includiamo anche il conteggio dei test
+studentSchema.pre(/^find/, function(next) {
+    this.populate('testCount');
+    next();
 });
 
 const Student = mongoose.model('Student', studentSchema);

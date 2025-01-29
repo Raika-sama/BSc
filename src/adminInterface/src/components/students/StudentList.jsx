@@ -1,5 +1,5 @@
 // src/components/StudentList/StudentList.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -37,6 +37,7 @@ import { StatCards } from './StatCards';
 import { FilterToolbar } from './FilterToolbar';
 import StudentForm from './StudentForm';
 import StudentBulkImportForm from './StudentBulkImportForm';
+import { debounce } from 'lodash'; // Aggiungi questa importazione
 import '../../styles.css';  // all'inizio del file
 
 
@@ -68,6 +69,8 @@ const StudentList = () => {
     const [classFilter, setClassFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [specialNeedsFilter, setSpecialNeedsFilter] = useState('');
+    const [filteredData, setFilteredData] = useState([]);
+    const [isFiltering, setIsFiltering] = useState(false);
 
  
     const loadStudents = async () => {
@@ -214,7 +217,14 @@ const StudentList = () => {
         return configs[status] || configs.pending;
     };
 
-    const columns = [
+    const debouncedSearch = useCallback(
+        debounce((searchValue) => {
+            handleSearch(searchValue);
+        }, 300),
+        []
+    );
+
+    const columns = useMemo(() => [
         {
             field: 'fullName',
             headerName: 'Nome Completo',
@@ -276,7 +286,7 @@ const StudentList = () => {
                         label={`${classInfo.year}${classInfo.section}`}
                         size="small"
                         sx={{
-                            minWidth: '60px', // Aggiunto per consistenza
+                            minWidth: '60px',
                             bgcolor: 'primary.light',
                             color: 'primary.contrastText',
                             fontSize: '0.75rem'
@@ -295,14 +305,14 @@ const StudentList = () => {
                 const status = params.value || 'pending';
                 const config = getStatusConfig(status);
                 const StatusIcon = config.icon;
-
+    
                 return (
                     <Chip
                         icon={<StatusIcon sx={{ fontSize: '1rem !important' }} />}
                         label={config.label}
                         size="small"
                         sx={{
-                            minWidth: '100px', // Aggiunto per consistenza
+                            minWidth: '100px',
                             bgcolor: config.bgColor,
                             color: config.color,
                             '& .MuiChip-icon': {
@@ -332,7 +342,7 @@ const StudentList = () => {
                         label={hasSpecialNeeds ? 'Presenti' : 'Nessuna'}
                         size="small"
                         sx={{
-                            minWidth: '120px', // Aggiunto per consistenza
+                            minWidth: '120px',
                             bgcolor: hasSpecialNeeds ? '#fff3e0' : '#e8f5e9',
                             color: hasSpecialNeeds ? '#ed6c02' : '#2e7d32',
                             '& .MuiChip-icon': {
@@ -348,97 +358,100 @@ const StudentList = () => {
             }
         },
         {
+            field: 'testCount',
+            headerName: 'Test Effettuati',
+            width: 130,
+            renderCell: (params) => {
+                const count = params.value || 0;
+                return (
+                    <Chip
+                        label={count}
+                        size="small"
+                        sx={{
+                            minWidth: '60px',
+                            bgcolor: count > 0 ? 'primary.light' : 'grey.200',
+                            color: count > 0 ? 'primary.contrastText' : 'text.secondary',
+                            '& .MuiChip-label': {
+                                px: 1,
+                                fontSize: '0.75rem'
+                            }
+                        }}
+                    />
+                );
+            }
+        },
+        {
             field: 'actions',
             headerName: 'Azioni',
             width: 160,
-            renderCell: (params) => {
-                const handleTestClick = (student) => {
-                    const studentId = student._id || student.id;
-                    if (!studentId) {
-                        showNotification('ID studente non trovato', 'error');
-                        return;
-                    }
-                    
-                    // Usiamo il path relativo, senza /admin/ perché siamo già nel contesto di /admin/*
-                    const path = `/admin/students/${studentId}/tests`;
-                    console.log('Navigating to:', path);
-                    
-                    navigate(path, { 
-                        state: { studentData: student }
-                    });
-                };
-        
-                return (
-                    <Box sx={{  
-                        display: 'flex', 
-                        gap: 1,
-                        justifyContent: 'center',
-                        width: '100%' 
-                    }}>
-                        <Tooltip title="Gestione Test">
-                            <IconButton
-                                size="small"
-                                onClick={() => handleTestClick(params.row)}
+            renderCell: (params) => (
+                <Box sx={{  
+                    display: 'flex', 
+                    gap: 1,
+                    justifyContent: 'center',
+                    width: '100%' 
+                }}>
+                    <Tooltip title="Gestione Test">
+                        <IconButton
+                            size="small"
+                            onClick={() => handleTestClick(params.row)}
+                            sx={{ 
+                                p: '4px',
+                                '&:hover': { bgcolor: alpha('#1976d2', 0.1) },
+                                '&.Mui-disabled': {
+                                    opacity: 0.5
+                                }
+                            }}
+                            disabled={params.row.status === 'inactive'}
+                        >
+                            <AssignmentIcon 
                                 sx={{ 
-                                    p: '4px',
-                                    '&:hover': { bgcolor: alpha('#1976d2', 0.1) },
-                                    // Disabilita il pulsante se lo studente è inattivo
-                                    '&.Mui-disabled': {
-                                        opacity: 0.5
-                                    }
-                                }}
-                                disabled={params.row.status === 'inactive'}
-                            >
-                                <AssignmentIcon 
-                                    sx={{ 
-                                        fontSize: '1.1rem', 
-                                        color: 'primary.main'
-                                    }} 
-                                />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Visualizza">
-                            <IconButton
-                                size="small"
-                                onClick={() => handleViewDetails(params.row)}
-                                sx={{ 
-                                    p: '4px',
-                                    '&:hover': { bgcolor: alpha('#1976d2', 0.1) }
-                                }}
-                            >
-                                <VisibilityIcon sx={{ fontSize: '1.1rem', color: 'primary.main' }} />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Modifica">
-                            <IconButton
-                                size="small"
-                                onClick={() => handleEdit(params.row)}
-                                sx={{ 
-                                    p: '4px',
-                                    '&:hover': { bgcolor: alpha('#1976d2', 0.1) }
-                                }}
-                            >
-                                <EditIcon sx={{ fontSize: '1.1rem', color: 'primary.main' }} />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Elimina">
-                            <IconButton
-                                size="small"
-                                onClick={() => handleDeleteClick(params.row)}
-                                sx={{ 
-                                    p: '4px',
-                                    '&:hover': { bgcolor: alpha('#d32f2f', 0.1) }
-                                }}
-                            >
-                                <DeleteIcon sx={{ fontSize: '1.1rem', color: 'error.main' }} />
-                            </IconButton>
-                        </Tooltip>
-                    </Box>
-                );
-            }
+                                    fontSize: '1.1rem', 
+                                    color: 'primary.main'
+                                }} 
+                            />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Visualizza">
+                        <IconButton
+                            size="small"
+                            onClick={() => handleViewDetails(params.row)}
+                            sx={{ 
+                                p: '4px',
+                                '&:hover': { bgcolor: alpha('#1976d2', 0.1) }
+                            }}
+                        >
+                            <VisibilityIcon sx={{ fontSize: '1.1rem', color: 'primary.main' }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Modifica">
+                        <IconButton
+                            size="small"
+                            onClick={() => handleEdit(params.row)}
+                            sx={{ 
+                                p: '4px',
+                                '&:hover': { bgcolor: alpha('#1976d2', 0.1) }
+                            }}
+                        >
+                            <EditIcon sx={{ fontSize: '1.1rem', color: 'primary.main' }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Elimina">
+                        <IconButton
+                            size="small"
+                            onClick={() => handleDeleteClick(params.row)}
+                            sx={{ 
+                                p: '4px',
+                                '&:hover': { bgcolor: alpha('#d32f2f', 0.1) }
+                            }}
+                        >
+                            <DeleteIcon sx={{ fontSize: '1.1rem', color: 'error.main' }} />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
+            )
         }
-    ];
-
+    ], [handleTestClick, handleViewDetails, handleEdit, handleDeleteClick, getStatusConfig]); // Aggiunte le dipendenze necessarie
 
     return (
         <motion.div
@@ -581,6 +594,7 @@ const StudentList = () => {
                 rowCount={totalStudents}
                 page={page}
                 pageSize={pageSize}
+                rowBuffer={10}
                 rowsPerPageOptions={[10, 25, 50]}
                 onPageChange={handlePageChange}
                 onPageSizeChange={handlePageSizeChange}

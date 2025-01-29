@@ -33,7 +33,7 @@ class StudentController extends BaseController {
                 query: req.query,
                 user: req.user?.id
             });
-
+    
             const filters = {};
             
             // Se l'utente è un teacher, mostra solo i suoi studenti
@@ -43,16 +43,21 @@ class StudentController extends BaseController {
                     { teachers: req.user.id }
                 ];
             }
-
+    
             // Applica filtri aggiuntivi dalla query
             if (req.query.schoolId) filters.schoolId = req.query.schoolId;
             if (req.query.classId) filters.classId = req.query.classId;
             if (req.query.status) filters.status = req.query.status;
-
-            const students = await this.repository.findWithDetails(filters, {
-                sort: { lastName: 1, firstName: 1 }
-            });
-
+    
+            // Verifica se richiedere il conteggio dei test
+            const includeTestCount = req.query.includeTestCount === 'true';
+    
+            const students = includeTestCount ? 
+                await this.repository.findWithTestCount(filters) :
+                await this.repository.findWithDetails(filters, {
+                    sort: { lastName: 1, firstName: 1 }
+                });
+    
             this.sendResponse(res, { 
                 students,
                 count: students.length

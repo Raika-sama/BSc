@@ -829,6 +829,101 @@ async createWithClass(studentData) {
             session.endSession();
         }
     }
+
+    // In StudentRepository.js, aggiungi questo nuovo metodo:
+
+async findWithTestCount(filters = {}) {
+    try {
+        logger.debug('Finding students with test count:', { filters });
+
+        const pipeline = [
+            { $match: filters },
+            {
+                $lookup: {
+                    from: 'tests',
+                    let: { studentId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$studentId', '$$studentId'] },
+                                        { $eq: ['$status', 'completed'] } // Contiamo solo i test completati
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'tests'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'schools',
+                    localField: 'schoolId',
+                    foreignField: '_id',
+                    as: 'schoolId'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'classes',
+                    localField: 'classId',
+                    foreignField: '_id',
+                    as: 'classId'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'mainTeacher',
+                    foreignField: '_id',
+                    as: 'mainTeacher'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'teachers',
+                    foreignField: '_id',
+                    as: 'teachers'
+                }
+            },
+            {
+                $addFields: {
+                    testCount: { $size: '$tests' },
+                    schoolId: { $arrayElemAt: ['$schoolId', 0] },
+                    classId: { $arrayElemAt: ['$classId', 0] },
+                    mainTeacher: { $arrayElemAt: ['$mainTeacher', 0] }
+                }
+            },
+            {
+                $project: {
+                    tests: 0 // Rimuoviamo l'array dei test dal risultato
+                }
+            },
+            {
+                $sort: { lastName: 1, firstName: 1 }
+            }
+        ];
+
+        const students = await this.model.aggregate(pipeline);
+
+        logger.debug(`Found ${students.length} students with test counts`);
+        
+        return students;
+    } catch (error) {
+        logger.error('Error in findWithTestCount:', {
+            error: error.message,
+            filters
+        });
+        throw createError(
+            ErrorTypes.DATABASE.QUERY_FAILED,
+            'Errore nel recupero degli studenti con conteggio test',
+            { originalError: error.message }
+        );
+    }
+}
 }
 
 module.exports = StudentRepository;

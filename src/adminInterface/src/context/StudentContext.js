@@ -225,7 +225,7 @@ export const StudentProvider = ({ children }) => {
     const { showNotification } = useNotification();
 
  // In StudentContext.js, nella funzione fetchStudents:
-const fetchStudents = async (filters = {}) => {
+ const fetchStudents = async (filters = {}) => {
     try {
         dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
         
@@ -235,6 +235,8 @@ const fetchStudents = async (filters = {}) => {
         // Aggiungi i parametri base
         queryParams.append('page', filters.page || 1);
         queryParams.append('limit', filters.limit || 10);
+        // Aggiungi il parametro per includere il conteggio dei test
+        queryParams.append('includeTestCount', 'true');
 
         // Aggiungi i filtri se presenti
         if (filters.search) queryParams.append('search', filters.search);
@@ -247,7 +249,7 @@ const fetchStudents = async (filters = {}) => {
         }
 
         console.log('Fetching students with params:', queryParams.toString());
-        const response = await axiosInstance.get(`/students?${queryParams}`);
+        const response = await axiosInstance.get(`/students/with-test-count?${queryParams}`);
 
         if (response.data.status === 'success') {
             dispatch({
@@ -275,8 +277,8 @@ const fetchStudents = async (filters = {}) => {
         try {
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
             
-            const response = await axiosInstance.get(`/students/${studentId}`);
-
+            const response = await axiosInstance.get(`/students/${studentId}?includeTestCount=true`);
+    
             if (response.data.status === 'success') {
                 dispatch({
                     type: STUDENT_ACTIONS.SET_SELECTED_STUDENT,
@@ -327,10 +329,13 @@ const fetchStudents = async (filters = {}) => {
             id: student.mainTeacher._id || student.mainTeacher.id,
             name: student.mainTeacher.name || student.mainTeacher.firstName + ' ' + student.mainTeacher.lastName || 'N/D',
             ...student.mainTeacher
+            
         } : null,        
         teachers: Array.isArray(student.teachers) ? 
         student.teachers.map(normalizeTeacher) : 
-            []
+            [],
+        testCount: student.testCount || 0
+
     };
 
 // Debugging
