@@ -49,14 +49,11 @@ class StudentController extends BaseController {
             if (req.query.classId) filters.classId = req.query.classId;
             if (req.query.status) filters.status = req.query.status;
     
-            // Verifica se richiedere il conteggio dei test
             const includeTestCount = req.query.includeTestCount === 'true';
-    
+            
             const students = includeTestCount ? 
                 await this.repository.findWithTestCount(filters) :
-                await this.repository.findWithDetails(filters, {
-                    sort: { lastName: 1, firstName: 1 }
-                });
+                await this.repository.findWithDetails(filters);
     
             this.sendResponse(res, { 
                 students,

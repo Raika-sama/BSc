@@ -235,7 +235,6 @@ export const StudentProvider = ({ children }) => {
         // Aggiungi i parametri base
         queryParams.append('page', filters.page || 1);
         queryParams.append('limit', filters.limit || 10);
-        // Aggiungi il parametro per includere il conteggio dei test
         queryParams.append('includeTestCount', 'true');
 
         // Aggiungi i filtri se presenti
@@ -249,7 +248,8 @@ export const StudentProvider = ({ children }) => {
         }
 
         console.log('Fetching students with params:', queryParams.toString());
-        const response = await axiosInstance.get(`/students/with-test-count?${queryParams}`);
+        // Modifica qui: rimuovi "with-test-count" dall'URL
+        const response = await axiosInstance.get(`/students?${queryParams}`);
 
         if (response.data.status === 'success') {
             dispatch({

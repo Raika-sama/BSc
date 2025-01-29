@@ -1,5 +1,5 @@
 // src/components/StudentList/StudentList.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -223,6 +223,21 @@ const StudentList = () => {
         }, 300),
         []
     );
+
+    const handleTestClick = (student) => {
+        const studentId = student._id || student.id;
+        if (!studentId) {
+            showNotification('ID studente non trovato', 'error');
+            return;
+        }
+        
+        const path = `/admin/students/${studentId}/tests`;
+        console.log('Navigating to:', path);
+        
+        navigate(path, { 
+            state: { studentData: student }
+        });
+    };
 
     const columns = useMemo(() => [
         {
