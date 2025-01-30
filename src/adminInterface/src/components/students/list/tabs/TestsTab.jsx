@@ -1,46 +1,63 @@
-import React from 'react';
-import { Box, Paper } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Paper, Button } from '@mui/material';
 import CompletedTestsList from '../../studentTests/components/CompletedTestsList';
 import TestResultsView from '../../studentTests/components/TestResultsView';
 import { useStudentTest } from '../../studentTests/hooks/useStudentTest';
 import TestLinkDialog from '../../TestLinkDialog';
+import { useNotification } from '../../../../context/NotificationContext';
+import { axiosInstance } from '../../../../services/axiosConfig'; // Nota: import nominale
 
 const TestsTab = ({ student }) => {
     const {
-        loading,
-        error,
         completedTests,
         selectedTest,
         handleTestSelect,
-        formatDate,
-        setCompletedTests,
-        setSelectedTest,
         dialogOpen,
         setDialogOpen,
         testLink,
         setTestLink
     } = useStudentTest(student._id);
+    
+    const { showNotification } = useNotification();
+    const [loading, setLoading] = useState(false);
 
     const handleCreateTest = async () => {
+        if (!student || !student._id) {
+            showNotification('ID studente non valido', 'error');
+            return;
+        }
+
         try {
-            const response = await axiosInstance.post('/tests/csi/generate-link', {
-                studentId: student._id,
-                testType: 'CSI',
+            setLoading(true);
+            console.log('Creating test for student:', student._id);
+            
+            // Modifichiamo l'endpoint per matchare quello del backend
+            const response = await axiosInstance.post(`/students/${student._id}/tests`, {
+                testType: 'CSI'
             });
 
-            if (response.data && response.data.data?.token) {
-                const testUrl = `${window.location.origin}/test/csi/${response.data.data.token}`;
-                setTestLink(testUrl);
+            console.log('Test creation response:', response.data);
+
+            if (response.data && response.data.data) {
+                const testId = response.data.data.testId;
+                const link = `${window.location.origin}/test/${testId}`;
+                console.log('Generated test link:', link);
+                
+                setTestLink(link);
                 setDialogOpen(true);
-                showNotification('Link del test generato con successo', 'success');
+                showNotification('Test CSI creato con successo', 'success');
+            } else {
+                throw new Error('Risposta del server non valida');
             }
         } catch (error) {
+            console.error('Error creating test:', error);
             showNotification(
-                `Errore nella generazione del link del test: ${
-                    error.response?.data?.message || error.message
-                }`,
+                'Errore nella creazione del test: ' + 
+                (error.response?.data?.message || error.message),
                 'error'
             );
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -56,7 +73,7 @@ const TestsTab = ({ student }) => {
             {/* Lista Test (Sidebar) */}
             <Paper 
                 sx={{ 
-                    width: '300px',
+                    width: '250px',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column'
@@ -67,6 +84,7 @@ const TestsTab = ({ student }) => {
                     selectedTest={selectedTest}
                     onTestSelect={handleTestSelect}
                     onCreateTest={handleCreateTest}
+                    loading={loading}
                 />
             </Paper>
 

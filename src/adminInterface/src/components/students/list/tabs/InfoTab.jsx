@@ -19,6 +19,8 @@ import { useStudent } from '../../../../context/StudentContext';
 import { useUser } from '../../../../context/UserContext';
 import { useNotification } from '../../../../context/NotificationContext';
 
+
+
 const InfoTab = ({ student, setStudent }) => {
     const { updateStudent } = useStudent();
     const { users, getUsers } = useUser();
@@ -40,6 +42,32 @@ const InfoTab = ({ student, setStudent }) => {
     });
     const [modified, setModified] = useState(false);
 
+    // Inizializza form con dati studente
+useEffect(() => {
+    if (student) {
+        console.log('[InfoTab] Initializing form with student data:', student);
+        console.log('[InfoTab] Current mainTeacher:', student.mainTeacher);
+
+        setFormData({
+            firstName: student.firstName || '',
+            lastName: student.lastName || '',
+            fiscalCode: student.fiscalCode || '',
+            gender: student.gender || '',
+            dateOfBirth: student.dateOfBirth ? student.dateOfBirth.split('T')[0] : '',
+            email: student.email || '',
+            parentEmail: student.parentEmail || '',
+            // Gestione più robusta del mainTeacher
+            mainTeacher: student.mainTeacher ? 
+                        (student.mainTeacher._id || student.mainTeacher.id || student.mainTeacher) : 
+                        '',
+            teachers: student.teachers?.map(t => t._id || t.id || t) || [],
+            specialNeeds: student.specialNeeds || false
+        });
+
+        console.log('[InfoTab] Form data initialized:', formData);
+    }
+}, [student]);
+
     // Carica utenti (docenti) se non presenti
     useEffect(() => {
         if (users.length === 0) {
@@ -47,23 +75,7 @@ const InfoTab = ({ student, setStudent }) => {
         }
     }, [users.length, getUsers]);
 
-    // Inizializza form con dati studente
-    useEffect(() => {
-        if (student) {
-            setFormData({
-                firstName: student.firstName || '',
-                lastName: student.lastName || '',
-                fiscalCode: student.fiscalCode || '',
-                gender: student.gender || '',
-                dateOfBirth: student.dateOfBirth ? student.dateOfBirth.split('T')[0] : '',
-                email: student.email || '',
-                parentEmail: student.parentEmail || '',
-                mainTeacher: student.mainTeacher?._id || '',
-                teachers: student.teachers?.map(t => t._id) || [],
-                specialNeeds: student.specialNeeds || false
-            });
-        }
-    }, [student]);
+    
 
     const handleChange = (e) => {
         const { name, value, checked } = e.target;
@@ -80,6 +92,14 @@ const InfoTab = ({ student, setStudent }) => {
             setFormData(prev => ({
                 ...prev,
                 teachers: Array.isArray(value) ? value : []
+            }));
+        }
+        // Gestione speciale per mainTeacher
+        else if (name === 'mainTeacher') {
+            console.log('[InfoTab] Updating mainTeacher:', value);
+            setFormData(prev => ({
+                ...prev,
+                mainTeacher: value // se è stringa vuota, rimane stringa vuota
             }));
         }
         else {
@@ -259,16 +279,23 @@ const InfoTab = ({ student, setStudent }) => {
                         <InputLabel>Docente Principale</InputLabel>
                         <Select
                             name="mainTeacher"
-                            value={formData.mainTeacher}
+                            value={formData.mainTeacher || ''}
                             onChange={handleChange}
                             label="Docente Principale"
                         >
                             <MenuItem value="">Nessuno</MenuItem>
-                            {users.map(user => (
-                                <MenuItem key={user._id} value={user._id}>
-                                    {`${user.firstName} ${user.lastName}`}
-                                </MenuItem>
-                            ))}
+                            {users.map(user => {
+                                console.log('[InfoTab] Rendering teacher option:', {
+                                    userId: user._id,
+                                    teacherId: user.id,
+                                    currentValue: formData.mainTeacher
+                                });
+                                return (
+                                    <MenuItem key={user._id} value={user._id || user.id}>
+                                        {`${user.firstName} ${user.lastName}`}
+                                    </MenuItem>
+                                );
+                            })}
                         </Select>
                     </FormControl>
                 </Grid>
