@@ -1,0 +1,285 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+    Box,
+    Paper,
+    Tabs,
+    Tab,
+    Typography,
+    Button,
+    CircularProgress,
+    Alert,
+    Chip,
+    Stack,
+    Breadcrumbs,
+    Link
+} from '@mui/material';
+import {
+    ArrowBack as ArrowBackIcon,
+    Person as PersonIcon,
+    Assessment as AssessmentIcon,
+    School as SchoolIcon,
+    History as HistoryIcon
+} from '@mui/icons-material';
+
+import { useStudent } from '../../../../context/StudentContext';
+import { useNotification } from '../../../../context/NotificationContext';
+
+// Importa i componenti delle tab
+import InfoTab from '../tabs/InfoTab';
+import TestsTab from '../tabs/TestsTab';
+import SchoolTab from '../tabs/SchoolTab';
+import HistoryTab from '../tabs/HistoryTab';
+
+// Componente TabPanel per gestire il contenuto delle tab
+const TabPanel = ({ children, value, index, ...other }) => (
+    <div
+        role="tabpanel"
+        hidden={value !== index}
+        id={`student-tabpanel-${index}`}
+        aria-labelledby={`student-tab-${index}`}
+        {...other}
+        style={{ height: '100%' }}
+    >
+        {value === index && (
+            <Box sx={{ height: '100%', p: 3 }}>
+                {children}
+            </Box>
+        )}
+    </div>
+);
+
+const getStatusConfig = (status) => {
+    const configs = {
+        active: { label: 'Attivo', color: 'success' },
+        pending: { label: 'In Attesa', color: 'warning' },
+        inactive: { label: 'Inattivo', color: 'error' },
+        transferred: { label: 'Trasferito', color: 'info' },
+        graduated: { label: 'Diplomato', color: 'primary' }
+    };
+    return configs[status] || configs.pending;
+};
+
+const StudentIndex = ({ initialTab = 'info' }) => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const { showNotification } = useNotification();
+    const { getStudentById, loading, error } = useStudent();
+
+    const [student, setStudent] = useState(null);
+    const [activeTab, setActiveTab] = useState(() => {
+        const tabMapping = {
+            'info': 0,
+            'tests': 1,
+            'school': 2,
+            'history': 3
+        };
+        return tabMapping[initialTab] || 0;
+    });
+    const [loadingStudent, setLoadingStudent] = useState(true);
+
+    useEffect(() => {
+        const loadStudent = async () => {
+            try {
+                setLoadingStudent(true);
+                const data = await getStudentById(id);
+                if (data) {
+                    setStudent(data);
+                } else {
+                    showNotification('Studente non trovato', 'error');
+                    navigate('/admin/students');
+                }
+            } catch (error) {
+                showNotification('Errore nel caricamento dello studente', 'error');
+                navigate('/admin/students');
+            } finally {
+                setLoadingStudent(false);
+            }
+        };
+
+        if (id) {
+            loadStudent();
+        }
+    }, [id]);
+
+    if (loadingStudent) {
+        return (
+            <Box 
+                sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                    height: '100vh' 
+                }}
+            >
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    if (error) {
+        return (
+            <Box sx={{ p: 3 }}>
+                <Alert severity="error">{error}</Alert>
+            </Box>
+        );
+    }
+
+    if (!student) return null;
+
+    const statusConfig = getStatusConfig(student.status);
+
+    return (
+        <Box sx={{ p: 3, minHeight: '100vh', bgcolor: '#f8f9fa' }}>
+            {/* Header */}
+            <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+                {/* Breadcrumbs */}
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+                    <Box>
+                        <Breadcrumbs sx={{ mb: 1 }}>
+                            <Link 
+                                component="button"
+                                variant="body2"
+                                onClick={() => navigate('/admin/students')}
+                                sx={{ cursor: 'pointer' }}
+                            >
+                                Studenti
+                            </Link>
+                            <Typography variant="body2" color="text.primary">
+                                Dettaglio Studente
+                            </Typography>
+                        </Breadcrumbs>
+                        
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            <Typography variant="h5" color="primary.main" sx={{ fontWeight: 600 }}>
+                                {`${student.firstName} ${student.lastName}`}
+                            </Typography>
+                            <Chip 
+                                label={statusConfig.label}
+                                color={statusConfig.color}
+                                size="small"
+                            />
+                        </Stack>
+                    </Box>
+
+                    <Button
+                        variant="outlined"
+                        startIcon={<ArrowBackIcon />}
+                        onClick={() => navigate('/admin/students')}
+                    >
+                        Torna alla lista
+                    </Button>
+                </Stack>
+
+                {/* Info Cards */}
+                <Stack 
+                    direction={{ xs: 'column', sm: 'row' }} 
+                    spacing={3} 
+                    sx={{ mt: 2 }}
+                >
+                    <Box>
+                        <Typography variant="body2" color="text.secondary">
+                            Email
+                        </Typography>
+                        <Typography variant="body1">
+                            {student.email}
+                        </Typography>
+                    </Box>
+
+                    <Box>
+                        <Typography variant="body2" color="text.secondary">
+                            Scuola
+                        </Typography>
+                        <Typography variant="body1">
+                            {student.schoolId?.name || 'Non assegnata'}
+                        </Typography>
+                    </Box>
+
+                    <Box>
+                        <Typography variant="body2" color="text.secondary">
+                            Classe
+                        </Typography>
+                        <Typography variant="body1">
+                            {student.classId ? 
+                                `${student.classId.year}${student.classId.section}` : 
+                                'Non assegnata'
+                            }
+                        </Typography>
+                    </Box>
+
+                    <Box>
+                        <Typography variant="body2" color="text.secondary">
+                            Test Completati
+                        </Typography>
+                        <Typography variant="body1">
+                            {student.testCount || 0}
+                        </Typography>
+                    </Box>
+                </Stack>
+            </Paper>
+
+            {/* Tabs and Content */}
+            <Paper sx={{ borderRadius: 2, minHeight: 'calc(100vh - 250px)' }}>
+                <Tabs 
+                    value={activeTab} 
+                    onChange={(e, newValue) => setActiveTab(newValue)}
+                    sx={{ 
+                        borderBottom: 1, 
+                        borderColor: 'divider',
+                        px: 2,
+                        bgcolor: 'background.paper' 
+                    }}
+                >
+                    <Tab 
+                        icon={<PersonIcon />} 
+                        label="Informazioni" 
+                        iconPosition="start"
+                    />
+                    <Tab 
+                        icon={<AssessmentIcon />} 
+                        label="Test" 
+                        iconPosition="start"
+                    />
+                    <Tab 
+                        icon={<SchoolIcon />} 
+                        label="Scuola e Classe" 
+                        iconPosition="start"
+                    />
+                    <Tab 
+                        icon={<HistoryIcon />} 
+                        label="Storico" 
+                        iconPosition="start"
+                    />
+                </Tabs>
+
+                <TabPanel value={activeTab} index={0}>
+                    <InfoTab 
+                        student={student}
+                        setStudent={setStudent}
+                    />
+                </TabPanel>
+
+                <TabPanel value={activeTab} index={1}>
+                    <TestsTab 
+                        student={student}
+                    />
+                </TabPanel>
+
+                <TabPanel value={activeTab} index={2}>
+                    <SchoolTab 
+                        student={student}
+                        setStudent={setStudent}
+                    />
+                </TabPanel>
+
+                <TabPanel value={activeTab} index={3}>
+                    <HistoryTab 
+                        student={student}
+                    />
+                </TabPanel>
+            </Paper>
+        </Box>
+    );
+};
+
+export default StudentIndex;

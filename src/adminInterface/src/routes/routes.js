@@ -10,14 +10,13 @@ import SchoolWizard from '../components/school/wizard/SchoolWizard';
 import UsersManagement from '../components/school/UsersManagement'; // Aggiungi questo import
 import StudentList from '../components/students/StudentList'; // Aggiungi questo import
 import ClassPopulate from '../components/classes/ClassPopulate';    // Aggiungi questo import
-import StudentTestManagement from '../components/students/StudentTestManagement'; // Aggiungi questo import
 import Profile from '../components/profile/Profile'; // Aggiungi questo import
 import PersonalTest from '../components/profile/PersonalTest';  // Aggiungi questo import
 import SectionManagement from '../components/school/schoolComponents/SectionManagement';
 import AssignSchoolPage from '../components/students/AssignSchoolPage';
 import ApiExplorer from '../components/api-explorer/ApiExplorer';
-import StudentTestsLayout from '../components/students/studentTests/StudentTestsLayout';
-
+//import StudentTestsLayout from '../components/students/studentTests/StudentTestsLayout';
+import StudentIndex from '../components/students/list/details/studentIndex';
 
 // Importa le icone da Material-UI
 import {
@@ -128,17 +127,18 @@ export const adminRoutes = [
         icon: PersonIcon,
         showInMenu: false  // Non lo mostriamo nel menu laterale
     },
-  //  {
-  //      path: 'students/:studentId/tests',    // Aggiungi questa route
-  //      element: StudentTestManagement,
-  //      title: 'Test dello Studente',
-  //      icon: TestIcon,
-  //      showInMenu: false
-  //  },
     {
-        path: 'students/:studentId/tests',    // Aggiungi questa route
-        element: StudentTestsLayout,
-        title: 'Gestione Test Studente',
+        path: 'students/:id',
+        element: StudentIndex,
+        title: 'Dettagli Studente',
+        icon: PersonIcon,
+        showInMenu: false
+    },
+  // 
+    {
+        path: 'students/:studentId/tests',
+        element: () => <StudentIndex initialTab="tests" />,
+        title: 'Test dello Studente',
         icon: TestIcon,
         showInMenu: false
     },

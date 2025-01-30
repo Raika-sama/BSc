@@ -31,92 +31,36 @@ class StudentController extends BaseController {
      */
     async getAll(req, res, next) {
         try {
-            logger.debug('Getting all students with filters:', { 
-                query: req.query,
-                user: req.user?.id
-            });
-
-            const filters = {};
-            
-            // Se l'utente è un teacher, mostra solo i suoi studenti
-            if (req.user?.role === 'teacher') {
-                filters.$or = [
-                    { mainTeacher: req.user.id },
-                    { teachers: req.user.id }
-                ];
-            }
-
-            // Applica filtri aggiuntivi dalla query
-        if (req.query.schoolId) {
-            try {
-                filters.schoolId = new mongoose.Types.ObjectId(req.query.schoolId);
-            } catch (error) {
-                logger.warn('Invalid schoolId format:', req.query.schoolId);
-            }
-        }
-
-        if (req.query.classId) {
-            try {
-                filters.classId = new mongoose.Types.ObjectId(req.query.classId);
-            } catch (error) {
-                logger.warn('Invalid classId format:', req.query.classId);
-            }
-        }
-
-        if (req.query.status) {
-            filters.status = req.query.status;
-        }
-
-        if (req.query.specialNeeds !== undefined) {
-            filters.specialNeeds = req.query.specialNeeds === 'true';
-        }
-
-        // Se c'è un termine di ricerca, aggiungi il filtro di ricerca
-        if (req.query.search) {
-            const searchRegex = new RegExp(req.query.search, 'i');
-            filters.$or = [
-                { firstName: searchRegex },
-                { lastName: searchRegex },
-                { email: searchRegex }
-            ];
-        }
-
-            // Calcola skip e limit per la paginazione
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 50;
             const skip = (page - 1) * limit;
-
-            // Log per debug
-            console.log('Query filters:', filters);
-            console.log('Pagination:', { page, limit, skip });
-
+    
+            const filters = this._buildFilters(req.query); // Metodo helper per costruire i filtri
+            
             try {
-                // Ottieni il conteggio totale
-                const total = await Student.countDocuments(filters);
-                
-                // Ottieni gli studenti con i dettagli
-                const students = await this.repository.findWithDetails(
-                    filters,
-                    {
-                        sort: { createdAt: -1 },
+                // Esegue in parallelo il conteggio totale e la query paginata
+                const [total, students] = await Promise.all([
+                    this.model.countDocuments(filters),
+                    this.repository.findWithDetails(filters, {
                         skip,
-                        limit
-                    }
-                );
-
-                // Log per debug
-                console.log('Total students found:', total);
-                console.log('Students retrieved:', students.length);
-
-                this.sendResponse(res, { 
+                        limit,
+                        sort: { createdAt: -1 }
+                    })
+                ]);
+    
+                this.sendResponse(res, {
                     students,
-                    count: total
+                    pagination: {
+                        page,
+                        limit,
+                        total,
+                        pages: Math.ceil(total / limit)
+                    }
                 });
             } catch (error) {
                 console.error('Database operation error:', error);
                 throw error;
             }
-
         } catch (error) {
             logger.error('Error in getAll students:', error);
             next(error);
