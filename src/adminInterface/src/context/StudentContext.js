@@ -138,11 +138,21 @@ const studentReducer = (state, action) => {
                 ...state,
                 error: null
             };
-        case STUDENT_ACTIONS.SET_SELECTED_STUDENT:
-            return {
-                ...state,
-                selectedStudent: normalizeStudent(action.payload)
-            };
+            case STUDENT_ACTIONS.SET_SELECTED_STUDENT:
+                const student = action.payload;
+                console.log('[StudentReducer] Setting selected student:', {
+                    original: student,
+                    id: student.id,
+                    _id: student._id
+                });
+                return {
+                    ...state,
+                    selectedStudent: {
+                        ...student,
+                        _id: student.id || student._id,
+                        id: student.id || student._id
+                    }
+                };
 
             case STUDENT_ACTIONS.ADD_STUDENT:
                 const normalizedNewStudent = normalizeStudent(action.payload);
@@ -308,25 +318,31 @@ export const StudentProvider = ({ children }) => {
     // Recupera un singolo studente per ID
     const getStudentById = async (studentId) => {
         try {
-            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+            console.log('[StudentContext] Getting student with ID:', studentId);
             
             const response = await axiosInstance.get(`/students/${studentId}?includeTestCount=true`);
+            console.log('[StudentContext] Backend response:', response.data);
     
             if (response.data.status === 'success') {
+                // Assicuriamoci che lo studente abbia sia id che _id
+                const student = response.data.data.student;
+                const normalizedStudent = {
+                    ...student,
+                    _id: student.id,  // Aggiungiamo _id se non presente
+                    id: student.id    // Manteniamo id
+                };
+    
+                console.log('[StudentContext] Normalized student:', normalizedStudent);
+                
                 dispatch({
                     type: STUDENT_ACTIONS.SET_SELECTED_STUDENT,
-                    payload: response.data.data.student
+                    payload: normalizedStudent
                 });
-                return response.data.data.student;
+                return normalizedStudent;
             }
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || 
-                               'Errore nel recupero dello studente';
-            dispatch({
-                type: STUDENT_ACTIONS.SET_ERROR,
-                payload: errorMessage
-            });
-            showNotification(errorMessage, 'error');
+            console.error('[StudentContext] Error getting student:', error);
+            throw error;
         }
     };
 
@@ -336,13 +352,19 @@ export const StudentProvider = ({ children }) => {
     if (!student) return null;
     
     // Debugging
-    console.log('Normalizing student:', student);
-    console.log('Original mainTeacher:', student.mainTeacher);
-
+    //console.log('Normalizing student:', student);
+    //console.log('Original mainTeacher:', student.mainTeacher);
+    
+    // Assicuriamoci di avere un ID valido
+    const studentId = student._id || student.id;
+    if (!studentId) {
+        console.warn('Student without ID:', student);
+        return null;
+    }
     const normalized = {
         ...student,
-        id: student._id || student.id,
-       _id: student._id || student.id, // Manteniamo anche _id per compatibilità
+        id: studentId,
+        _id: studentId,
 
        schoolId: typeof student.schoolId === 'object' ? student.schoolId : { _id: student.schoolId, name: 'N/D' },
        classId: typeof student.classId === 'object' ? student.classId : student.classId ? { _id: student.classId } : null,     
@@ -481,26 +503,70 @@ return normalized;
     // Aggiorna studente esistente
     const updateStudent = async (studentId, updateData) => {
         try {
-            console.log('Updating student:', { studentId, updateData });  // Aggiungi questo
+            console.log('[StudentContext] Starting update:', { studentId, updateData });
+
+            if (!studentId) {
+                const error = new Error('ID studente mancante');
+                error.code = 'MISSING_ID';
+                throw error;
+            }
+    
+            // Pulisci i dati prima dell'invio
+            const cleanedData = {
+                ...updateData,
+                mainTeacher: updateData.mainTeacher || null,  // Converti stringa vuota in null
+                teachers: Array.isArray(updateData.teachers) ? updateData.teachers.filter(Boolean) : [], // Rimuovi valori falsy
+                fiscalCode: updateData.fiscalCode || null,  // Converti stringa vuota in null
+                parentEmail: updateData.parentEmail || null  // Converti stringa vuota in null
+            };
+    
+            console.log('Updating student with cleaned data:', { 
+                studentId, 
+                originalData: updateData,
+                cleanedData 
+            });
+    
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
-            
-            const response = await axiosInstance.put(`/students/${studentId}`, updateData);
+            console.log('[StudentContext] Cleaned update data:', cleanedData);
+
+            const response = await axiosInstance.put(`/students/${studentId}`, cleanedData);
+            console.log('[StudentContext] Update response:', response.data);
 
             if (response.data.status === 'success') {
+                const updatedStudent = {
+                    ...response.data.data.student,
+                    _id: response.data.data.student.id,
+                    id: response.data.data.student.id
+                };
+    
+                console.log('[StudentContext] Normalized updated student:', updatedStudent);
+
+                
                 dispatch({
                     type: STUDENT_ACTIONS.UPDATE_STUDENT,
-                    payload: response.data.data.student
+                    payload: updatedStudent
                 });
+                
                 showNotification('Studente aggiornato con successo', 'success');
-                return response.data.data.student;
+                return updatedStudent;
             }
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || 
-                               'Errore nell\'aggiornamento dello studente';
+            console.error('Error in update student:', {
+                error: error.message,
+                studentId,
+                updateData
+            });
+            
+            const errorMessage = error.code === 'MISSING_ID' 
+                ? 'ID studente mancante'
+                : error.response?.data?.error?.message || 
+                  'Errore nell\'aggiornamento dello studente';
+                  
             dispatch({
                 type: STUDENT_ACTIONS.SET_ERROR,
                 payload: errorMessage
             });
+            
             showNotification(errorMessage, 'error');
             throw error;
         }

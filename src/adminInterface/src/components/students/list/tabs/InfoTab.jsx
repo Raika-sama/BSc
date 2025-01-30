@@ -117,29 +117,38 @@ const InfoTab = ({ student, setStudent }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        const errors = validateForm();
-        if (errors.length > 0) {
-            setError(errors.join(', '));
+        const studentId = student.id || student._id;
+        console.log('[InfoTab] Submitting update for student:', {
+            studentId,
+            student,
+            formData
+        });
+    
+        if (!studentId) {
+            setError('ID studente non valido');
             return;
         }
-
-        setLoading(true);
-        setError(null);
-
+    
         try {
-            const updatedStudent = await updateStudent(student._id, {
+            const updateData = {
                 ...formData,
-                dateOfBirth: new Date(formData.dateOfBirth).toISOString()
-            });
-
+                dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
+                mainTeacher: formData.mainTeacher || null,
+                teachers: formData.teachers || []
+            };
+    
+            console.log('[InfoTab] Update data being sent:', updateData);
+    
+            const updatedStudent = await updateStudent(studentId, updateData);
+            console.log('[InfoTab] Update successful:', updatedStudent);
+    
             setStudent(updatedStudent);
             setModified(false);
             showNotification('Studente aggiornato con successo', 'success');
         } catch (err) {
+            console.error('[InfoTab] Update failed:', err);
             setError(err.response?.data?.message || err.message);
             showNotification('Errore durante l\'aggiornamento', 'error');
-        } finally {
-            setLoading(false);
         }
     };
 

@@ -62,6 +62,7 @@ const getStatusConfig = (status) => {
 
 const StudentIndex = ({ initialTab = 'info' }) => {
     const { id } = useParams();
+    console.log('StudentIndex received ID:', id); // Debug log
     const navigate = useNavigate();
     const { showNotification } = useNotification();
     const { getStudentById, loading, error } = useStudent();
@@ -81,8 +82,12 @@ const StudentIndex = ({ initialTab = 'info' }) => {
     useEffect(() => {
         const loadStudent = async () => {
             try {
+                console.log('Loading student with ID:', id); // Debug log
+
                 setLoadingStudent(true);
                 const data = await getStudentById(id);
+                console.log('Loaded student data:', data); // Debug log
+
                 if (data) {
                     setStudent(data);
                 } else {
@@ -90,6 +95,7 @@ const StudentIndex = ({ initialTab = 'info' }) => {
                     navigate('/admin/students');
                 }
             } catch (error) {
+                console.error('Error loading student:', error);
                 showNotification('Errore nel caricamento dello studente', 'error');
                 navigate('/admin/students');
             } finally {
