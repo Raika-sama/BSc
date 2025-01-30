@@ -202,6 +202,11 @@ const ClassPopulate = () => {
         return id;
     };
 
+    console.log('Component state:', {
+        unassignedStudents,
+        loading,
+        error
+    });
  
     return (
         <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: '1200px', margin: '0 auto' }}>
@@ -274,47 +279,34 @@ const ClassPopulate = () => {
                         </Alert>
                     )}
                 </Box>
-                <DataGrid
-                    rows={unassignedStudents || []}
-                    columns={columns}
-                    pageSize={10}
-                    rowsPerPageOptions={[10, 25, 50]}
-                    checkboxSelection
-                    disableSelectionOnClick
-                    getRowId={getRowId}
-                    onSelectionModelChange={(newSelectionModel) => {
-                        console.log('Selection Model Change:', newSelectionModel);
-                        setSelectedStudents(newSelectionModel);
-                    }}
-                    selectionModel={selectedStudents}
-                    components={{
-                        NoRowsOverlay: () => (
-                            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                                <Typography color="textSecondary">
-                                    {loading ? 'Caricamento...' : 'Nessuno studente non assegnato trovato'}
-                                </Typography>
-                            </Box>
-                        )
-                    }}
-                    sx={{
-                        border: 'none',
-                        '& .MuiDataGrid-cell': {
-                            fontSize: '0.875rem',
-                            py: 1
-                        },
-                        '& .MuiDataGrid-columnHeaders': {
-                            backgroundColor: '#f5f5f5',
-                            fontSize: '0.875rem',
-                            fontWeight: 600
-                        },
-                        '& .MuiDataGrid-row:hover': {
-                            backgroundColor: '#f8f9fa'
-                        },
-                        '& .MuiCheckbox-root': {
-                            color: '#1976d2'
-                        }
-                    }}
-                />
+                    <DataGrid
+                        rows={unassignedStudents || []}
+                        columns={columns}
+                        pageSize={10}
+                        rowsPerPageOptions={[10, 25, 50]}
+                        checkboxSelection
+                        disableSelectionOnClick
+                        getRowId={(row) => {
+                            console.log('GetRowId called with:', row);
+                            return row._id || row.id;
+                        }}
+                        onSelectionModelChange={(newSelectionModel) => {
+                            console.log('Selection Model Change:', newSelectionModel);
+                            setSelectedStudents(newSelectionModel);
+                        }}
+                        selectionModel={selectedStudents}
+                        components={{
+                            NoRowsOverlay: () => (
+                                <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                                    <Typography color="textSecondary">
+                                        {loading ? 'Caricamento...' : 
+                                        unassignedStudents?.length === 0 ? 'Nessuno studente non assegnato trovato' :
+                                        'Nessun risultato'}
+                                    </Typography>
+                                </Box>
+                            )
+                        }}
+                    />
             </Paper>
 
             <Box sx={{ 

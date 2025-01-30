@@ -177,15 +177,22 @@ const studentReducer = (state, action) => {
             };
 
             case STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS:
-                const normalizedUnassignedStudents = (action.payload || [])
-                    .map(student => normalizeStudent(student))
-                    .filter(student => student !== null);
-                return {
-                    ...state,
-                    students: normalizedUnassignedStudents,
-                    unassignedStudents: normalizedUnassignedStudents,  // Aggiungi questa riga
-                    loading: false
-                };
+            const normalizedUnassignedStudents = (action.payload || [])
+                .map(student => ({
+                    ...student,
+                    id: student._id || student.id,
+                    firstName: student.firstName || '',
+                    lastName: student.lastName || '',
+                    email: student.email || '',
+                    gender: student.gender || ''
+                }))
+                .filter(student => student !== null);
+            
+            return {
+                ...state,
+                unassignedStudents: normalizedUnassignedStudents,
+                loading: false
+            };
 
         case STUDENT_ACTIONS.BATCH_ASSIGN_STUDENTS:
             return {
@@ -563,25 +570,24 @@ return normalized;
             
             console.log('Server response:', response.data);
     
-            if (response.data.status === 'success') {
-                const students = response.data.students || [];
+            // Modifica qui: accedi correttamente ai dati annidati
+            if (response.data?.data?.data?.students) {
+                const students = response.data.data.data.students;
                 
-                // Debug log per ogni studente
-                students.forEach(student => {
-                    console.log('Student details:', {
-                        id: student._id,
-                        name: `${student.firstName} ${student.lastName}`,
-                        hasClassId: !!student.classId,
-                        needsAssignment: student.needsClassAssignment
-                    });
-                });
+                console.log('Received students:', students);
     
                 // Normalizza i dati degli studenti
                 const normalizedStudents = students.map(student => ({
                     ...student,
                     id: student._id || student.id,
+                    firstName: student.firstName || '',
+                    lastName: student.lastName || '',
+                    email: student.email || '',
+                    gender: student.gender || '',
                     fullName: `${student.firstName} ${student.lastName}`
                 }));
+    
+                console.log('Normalized students:', normalizedStudents);
     
                 dispatch({
                     type: STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS,
@@ -590,6 +596,7 @@ return normalized;
     
                 return normalizedStudents;
             } else {
+                console.error('Struttura dati non valida:', response.data);
                 throw new Error('Formato risposta non valido dal server');
             }
         } catch (error) {

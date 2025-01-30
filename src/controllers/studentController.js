@@ -416,27 +416,22 @@ class StudentController extends BaseController {
     async getUnassignedStudents(req, res, next) {
         try {
             const { schoolId } = req.params;
-            const { search } = req.query;
-    
+            
             logger.debug('Getting unassigned students:', { 
                 schoolId, 
-                search,
                 user: req.user?.id
             });
     
-            const students = await this.repository.findUnassignedStudents(
-                schoolId,
-                { name: search }
-            );
+            const students = await this.repository.findUnassignedStudents(schoolId);
     
             logger.debug(`Found ${students?.length || 0} unassigned students`);
     
-            // Modifica qui: aggiungi status e data nella risposta
-            this.sendResponse(res, { 
+            // Struttura la risposta in modo consistente
+            this.sendResponse(res, {
                 status: 'success',
                 data: {
-                    students,
-                    count: students?.length || 0
+                    students: students,
+                    count: students.length
                 }
             });
         } catch (error) {
