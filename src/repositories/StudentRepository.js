@@ -805,16 +805,21 @@ async createWithClass(studentData) {
      * @returns {Promise<Object>} Studente aggiornato
      */
     async removeFromClass(studentId, reason = 'Rimozione dalla classe') {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+    
         try {
-            const student = await this.findById(studentId);
+            const student = await this.model.findById(studentId).session(session);
             if (!student) {
                 throw createError(
                     ErrorTypes.VALIDATION.NOT_FOUND,
                     'Studente non trovato'
                 );
             }
-
+    
+            // Se lo studente è assegnato a una classe
             if (student.classId) {
+                // 1. Aggiorna lo storico
                 student.classChangeHistory.push({
                     fromClass: student.classId,
                     toClass: null,
@@ -825,22 +830,42 @@ async createWithClass(studentData) {
                     date: new Date(),
                     reason: reason
                 });
+    
+                // 2. Rimuovi lo studente dall'array students della classe
+                await Class.updateOne(
+                    { _id: student.classId },
+                    { 
+                        $pull: { 
+                            students: { 
+                                studentId: student._id 
+                            } 
+                        } 
+                    }
+                ).session(session);
+    
+                // 3. Resetta i dati dello studente
+                student.classId = null;
+                student.section = null;
+                student.mainTeacher = null;
+                student.teachers = [];
+                student.needsClassAssignment = true;
+                student.lastClassChangeDate = new Date();
+    
+                await student.save({ session });
             }
-
-            student.classId = null;
-            student.section = null;
-            student.mainTeacher = null;
-            student.teachers = [];
-            student.needsClassAssignment = true;
-            student.lastClassChangeDate = new Date();
-
-            return await student.save();
+    
+            await session.commitTransaction();
+            return student;
+    
         } catch (error) {
+            await session.abortTransaction();
             logger.error('Error in removeFromClass:', {
                 error,
                 studentId
             });
             throw error;
+        } finally {
+            session.endSession();
         }
     }
 

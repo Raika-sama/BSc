@@ -8,7 +8,6 @@ import {
     ToggleButtonGroup,
     ToggleButton,
     Divider,
-    alpha,
 } from '@mui/material';
 import {
     School as SchoolIcon,
@@ -18,54 +17,175 @@ import {
     Assignment as AssignmentIcon,
 } from '@mui/icons-material';
 
-const EventTypeIcons = {
-    school: SchoolIcon,
-    class: ClassIcon,
-    edit: EditIcon,
-    test: AssignmentIcon,
-    status: PersonIcon,
+// Costanti
+const EVENT_TYPES = {
+    ALL: 'all',
+    CLASS: 'class',
+    TEST: 'test',
+    STATUS: 'status'
 };
 
-const EventColors = {
-    school: 'primary',
-    class: 'info',
-    edit: 'secondary',
-    test: 'success',
-    status: 'warning',
+const EVENT_CONFIG = {
+    [EVENT_TYPES.STATUS]: {
+        icon: PersonIcon,
+        color: 'warning',
+    },
+    [EVENT_TYPES.CLASS]: {
+        icon: ClassIcon,
+        color: 'info',
+    },
+    [EVENT_TYPES.TEST]: {
+        icon: AssignmentIcon,
+        color: 'success',
+    },
 };
 
-const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString('it-IT', {
+// Componenti
+const EventIcon = ({ type, size = 40 }) => {
+    const config = EVENT_CONFIG[type];
+    const Icon = config?.icon || PersonIcon;
+
+    return (
+        <Box
+            sx={{
+                width: size,
+                height: size,
+                borderRadius: '50%',
+                backgroundColor: theme => theme.palette[config?.color || 'grey'].main,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                zIndex: 1,
+            }}
+        >
+            <Icon />
+        </Box>
+    );
+};
+
+const FilterSection = ({ filter, onFilterChange }) => (
+    <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+            Storico Eventi
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Cronologia di tutte le modifiche e gli eventi relativi allo studente
+        </Typography>
+
+        <ToggleButtonGroup
+            value={filter}
+            exclusive
+            onChange={onFilterChange}
+            aria-label="filtro eventi"
+            size="small"
+        >
+            <ToggleButton value={EVENT_TYPES.ALL}>Tutti</ToggleButton>
+            <ToggleButton value={EVENT_TYPES.CLASS}>Cambi Classe</ToggleButton>
+            <ToggleButton value={EVENT_TYPES.TEST}>Test</ToggleButton>
+            <ToggleButton value={EVENT_TYPES.STATUS}>Stato</ToggleButton>
+        </ToggleButtonGroup>
+    </Paper>
+);
+
+const EventDetails = ({ event }) => (
+    <Stack spacing={1}>
+        <Typography variant="subtitle2">{event.title}</Typography>
+        <Typography variant="body2" color="text.secondary">
+            {event.description}
+        </Typography>
+        {event.details && (
+            <Box>
+                <Divider sx={{ my: 1 }} />
+                <Stack direction="row" spacing={1}>
+                    {event.details.academicYear && (
+                        <Chip 
+                            label={`A.S. ${event.details.academicYear}`}
+                            size="small"
+                            color={EVENT_CONFIG[event.type]?.color || 'default'}
+                            variant="outlined"
+                        />
+                    )}
+                    {event.details.reason && (
+                        <Typography variant="caption" color="text.secondary">
+                            {event.details.reason}
+                        </Typography>
+                    )}
+                </Stack>
+            </Box>
+        )}
+    </Stack>
+);
+
+const TimelineEvent = ({ event, isLast }) => {
+    const formattedDate = new Date(event.date).toLocaleString('it-IT', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
     });
+
+    return (
+        <Box sx={{ display: 'flex', gap: 2, position: 'relative' }}>
+            <Box sx={{ width: '150px', textAlign: 'right' }}>
+                <Typography variant="body2" color="text.secondary">
+                    {formattedDate}
+                </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                <EventIcon type={event.type} />
+                {!isLast && (
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: 40,
+                            width: 2,
+                            height: 'calc(100% + 24px)',
+                            bgcolor: 'divider',
+                        }}
+                    />
+                )}
+            </Box>
+
+            <Box sx={{ flex: 1 }}>
+                <Paper
+                    elevation={0}
+                    sx={{
+                        p: 2,
+                        bgcolor: theme => `${theme.palette[EVENT_CONFIG[event.type]?.color || 'grey'].main}10`,
+                        border: 1,
+                        borderColor: theme => `${theme.palette[EVENT_CONFIG[event.type]?.color || 'grey'].main}20`,
+                        borderRadius: 1
+                    }}
+                >
+                    <EventDetails event={event} />
+                </Paper>
+            </Box>
+        </Box>
+    );
 };
 
 const HistoryTab = ({ student }) => {
-    const [filter, setFilter] = useState('all');
+    const [filter, setFilter] = useState(EVENT_TYPES.ALL);
 
-    // Organizziamo tutti gli eventi in ordine cronologico
     const events = useMemo(() => {
         const allEvents = [];
 
-        // Aggiungi evento creazione
+        // Evento creazione
         allEvents.push({
-            type: 'status',
+            type: EVENT_TYPES.STATUS,
             date: student.createdAt,
             title: 'Studente Creato',
-            description: 'Registrazione iniziale nel sistema',
-            icon: PersonIcon,
-            color: EventColors.status
+            description: 'Registrazione iniziale nel sistema'
         });
 
-        // Aggiungi cambi classe
+        // Eventi cambio classe
         if (student.classChangeHistory) {
             student.classChangeHistory.forEach(change => {
                 allEvents.push({
-                    type: 'class',
+                    type: EVENT_TYPES.CLASS,
                     date: change.date,
                     title: 'Cambio Classe',
                     description: change.fromClass ? 
@@ -74,37 +194,33 @@ const HistoryTab = ({ student }) => {
                     details: {
                         reason: change.reason,
                         academicYear: change.academicYear
-                    },
-                    icon: ClassIcon,
-                    color: EventColors.class
+                    }
                 });
             });
         }
 
-        // Aggiungi eventi test
+        // Eventi test
         if (student.tests) {
             student.tests.forEach(test => {
                 allEvents.push({
-                    type: 'test',
+                    type: EVENT_TYPES.TEST,
                     date: test.dataCompletamento,
                     title: 'Test Completato',
-                    description: `Test ${test.tipo} completato`,
-                    icon: AssignmentIcon,
-                    color: EventColors.test
+                    description: `Test ${test.tipo} completato`
                 });
             });
         }
 
-        // Ordina per data decrescente
         return allEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
     }, [student]);
 
     const filteredEvents = useMemo(() => {
-        if (filter === 'all') return events;
-        return events.filter(event => event.type === filter);
+        return filter === EVENT_TYPES.ALL
+            ? events
+            : events.filter(event => event.type === filter);
     }, [events, filter]);
 
-    const handleFilterChange = (event, newFilter) => {
+    const handleFilterChange = (_, newFilter) => {
         if (newFilter !== null) {
             setFilter(newFilter);
         }
@@ -112,150 +228,20 @@ const HistoryTab = ({ student }) => {
 
     return (
         <Box>
-            {/* Header e Filtri */}
-            <Paper sx={{ p: 3, mb: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                    Storico Eventi
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    Cronologia di tutte le modifiche e gli eventi relativi allo studente
-                </Typography>
-
-                <ToggleButtonGroup
-                    value={filter}
-                    exclusive
-                    onChange={handleFilterChange}
-                    aria-label="text alignment"
-                    size="small"
-                >
-                    <ToggleButton value="all" aria-label="all">
-                        Tutti
-                    </ToggleButton>
-                    <ToggleButton value="class" aria-label="class changes">
-                        Cambi Classe
-                    </ToggleButton>
-                    <ToggleButton value="test" aria-label="tests">
-                        Test
-                    </ToggleButton>
-                    <ToggleButton value="status" aria-label="status">
-                        Stato
-                    </ToggleButton>
-                </ToggleButtonGroup>
-            </Paper>
-
-            {/* Timeline modificata */}
+            <FilterSection filter={filter} onFilterChange={handleFilterChange} />
+            
             <Paper sx={{ p: 3 }}>
-                <Stack spacing={3}>
-                    {filteredEvents.map((event, index) => {
-                        const Icon = event.icon;
-                        return (
-                            <Box
-                                key={index}
-                                sx={{
-                                    display: 'flex',
-                                    gap: 2,
-                                    position: 'relative',
-                                }}
-                            >
-                                {/* Data */}
-                                <Box sx={{ width: '150px', textAlign: 'right' }}>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {formatDate(event.date)}
-                                    </Typography>
-                                </Box>
-
-                                {/* Linea verticale con icona */}
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        position: 'relative',
-                                    }}
-                                >
-                                    <Box
-                                        sx={{
-                                            width: 40,
-                                            height: 40,
-                                            borderRadius: '50%',
-                                            backgroundColor: theme => theme.palette[event.color].main,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: 'white',
-                                            zIndex: 1,
-                                        }}
-                                    >
-                                        <Icon />
-                                    </Box>
-                                    {index < filteredEvents.length - 1 && (
-                                        <Box
-                                            sx={{
-                                                position: 'absolute',
-                                                top: 40,
-                                                width: 2,
-                                                height: 'calc(100% + 24px)',
-                                                bgcolor: 'divider',
-                                            }}
-                                        />
-                                    )}
-                                </Box>
-
-                                {/* Contenuto */}
-                                <Box sx={{ flex: 1 }}>
-                                    <Paper
-                                        elevation={0}
-                                        sx={{
-                                            p: 2,
-                                            bgcolor: alpha(theme => 
-                                                theme.palette[event.color].main, 0.05
-                                            ),
-                                            border: 1,
-                                            borderColor: alpha(theme => 
-                                                theme.palette[event.color].main, 0.1
-                                            ),
-                                            borderRadius: 1
-                                        }}
-                                    >
-                                        <Stack spacing={1}>
-                                            <Typography variant="subtitle2">
-                                                {event.title}
-                                            </Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                {event.description}
-                                            </Typography>
-                                            {event.details && (
-                                                <Box>
-                                                    <Divider sx={{ my: 1 }} />
-                                                    <Stack direction="row" spacing={1}>
-                                                        {event.details.academicYear && (
-                                                            <Chip 
-                                                                label={`A.S. ${event.details.academicYear}`}
-                                                                size="small"
-                                                                color={event.color}
-                                                                variant="outlined"
-                                                            />
-                                                        )}
-                                                        {event.details.reason && (
-                                                            <Typography 
-                                                                variant="caption" 
-                                                                color="text.secondary"
-                                                            >
-                                                                {event.details.reason}
-                                                            </Typography>
-                                                        )}
-                                                    </Stack>
-                                                </Box>
-                                            )}
-                                        </Stack>
-                                    </Paper>
-                                </Box>
-                            </Box>
-                        );
-                    })}
-                </Stack>
-
-                {filteredEvents.length === 0 && (
+                {filteredEvents.length > 0 ? (
+                    <Stack spacing={3}>
+                        {filteredEvents.map((event, index) => (
+                            <TimelineEvent 
+                                key={`${event.type}-${event.date}-${index}`}
+                                event={event}
+                                isLast={index === filteredEvents.length - 1}
+                            />
+                        ))}
+                    </Stack>
+                ) : (
                     <Box sx={{ textAlign: 'center', py: 4 }}>
                         <Typography color="text.secondary">
                             Nessun evento trovato per i filtri selezionati

@@ -23,7 +23,7 @@ const menuItems = [
     { path: 'schools', title: 'Gestione Scuole', icon: <SchoolIcon /> },
     { path: 'classes', title: 'Gestione Classi', icon: <ClassIcon /> },
     { path: 'students', title: 'Gestione Studenti', icon: <StudentsIcon /> },
-    { path: 'api-explorer', title: 'API Explorer', icon: <ApiIcon /> },  // Aggiungi questa riga
+    { path: 'api-explorer', title: 'API Explorer', icon: <ApiIcon /> },
 ];
 
 const Sidebar = ({ open, drawerWidth, onDrawerToggle }) => {
@@ -45,17 +45,20 @@ const Sidebar = ({ open, drawerWidth, onDrawerToggle }) => {
                 '& .MuiDrawer-paper': {
                     width: drawerWidth,
                     boxSizing: 'border-box',
-                    bgcolor: '#fafafa',
-                    borderRight: '1px solid #e0e0e0',
+                    bgcolor: 'background.paper',
+                    borderRight: '1px solid rgba(100, 181, 246, 0.12)',
                     mt: 8,
-                    color: '#37474f',
-                    boxShadow: '2px 0 4px rgba(0,0,0,0.05)',
+                    color: 'sidebar.text',
+                    boxShadow: '2px 0 8px rgba(100, 181, 246, 0.08)',
                     transition: theme =>
-                        theme.transitions.create(['transform'], {
-                            easing: theme.transitions.easing.sharp,
-                            duration: theme.transitions.duration.leavingScreen,
+                        theme.transitions.create(['transform', 'box-shadow'], {
+                            easing: theme.transitions.easing.easeInOut,
+                            duration: theme.transitions.duration.standard,
                         }),
                     transform: open ? 'none' : `translateX(-${drawerWidth}px)`,
+                    '&:hover': {
+                        boxShadow: '2px 0 12px rgba(100, 181, 246, 0.12)',
+                    }
                 }
             }}
         >
@@ -71,7 +74,10 @@ const Sidebar = ({ open, drawerWidth, onDrawerToggle }) => {
                             <motion.div key={item.path}>
                                 <ListItem
                                     component={motion.button}
-                                    whileHover={{ scale: 1.02, backgroundColor: '#e8f5e9' }}
+                                    whileHover={{ 
+                                        scale: 1.02, 
+                                        transition: { duration: 0.2 } 
+                                    }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={() => handleNavigation(item.path)}
                                     selected={isSelected}
@@ -81,27 +87,40 @@ const Sidebar = ({ open, drawerWidth, onDrawerToggle }) => {
                                         textAlign: 'left',
                                         py: 1,
                                         my: 0.25,
+                                        mx: 1,
                                         backgroundColor: 'transparent',
                                         borderRadius: 1,
                                         transition: 'all 0.3s ease',
                                         '&:hover': {
+                                            backgroundColor: 'sidebar.hover',
                                             '& .MuiListItemIcon-root': {
-                                                color: '#2e7d32',
+                                                color: 'primary.main',
                                                 transform: 'scale(1.1)',
+                                            },
+                                            '& .MuiListItemText-primary': {
+                                                color: 'primary.main',
                                             }
                                         },
                                         '&.Mui-selected': {
-                                            backgroundColor: '#c8e6c9',
+                                            backgroundColor: 'sidebar.selected',
                                             '& .MuiListItemIcon-root': {
-                                                color: '#2e7d32',
+                                                color: 'primary.main',
+                                            },
+                                            '& .MuiListItemText-primary': {
+                                                color: 'primary.dark',
+                                                fontWeight: 500,
+                                            },
+                                            '&:hover': {
+                                                backgroundColor: 'sidebar.selected',
                                             }
                                         }
                                     }}
                                 >
                                     <ListItemIcon sx={{
-                                        color: '#37474f',
+                                        color: isSelected ? 'primary.main' : 'text.secondary',
                                         minWidth: 35,
-                                        transition: 'all 0.3s ease'
+                                        transition: 'all 0.3s ease',
+                                        marginRight: 1
                                     }}>
                                         {item.icon}
                                     </ListItemIcon>
@@ -111,6 +130,8 @@ const Sidebar = ({ open, drawerWidth, onDrawerToggle }) => {
                                             '& .MuiTypography-root': {
                                                 fontSize: '0.9rem',
                                                 fontWeight: isSelected ? 500 : 400,
+                                                color: isSelected ? 'primary.dark' : 'text.primary',
+                                                transition: 'all 0.3s ease',
                                             }
                                         }}
                                     />

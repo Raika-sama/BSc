@@ -135,6 +135,34 @@ _buildFilters(query) {
     return filters;
 }
 
+// In StudentController.js
+async getById(req, res, next) {
+    try {
+        const { id } = req.params;
+        
+        const student = await Student.findById(id)
+            .populate({
+                path: 'schoolId',
+                select: 'name schoolType institutionType region province'
+            })
+            .populate({
+                path: 'classId',
+                select: 'year section academicYear'
+            });
+
+        if (!student) {
+            throw createError(
+                ErrorTypes.VALIDATION.NOT_FOUND,
+                'Studente non trovato'
+            );
+        }
+
+        this.sendResponse(res, { student });
+    } catch (error) {
+        next(error);
+    }
+}
+
 
     /**
      * Crea un nuovo studente

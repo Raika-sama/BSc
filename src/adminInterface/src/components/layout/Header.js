@@ -1,25 +1,22 @@
-// Header.js
-import React, { useState } from 'react'; // Aggiungi useState
+import React, { useState } from 'react';
 import {
     AppBar,
     Toolbar,
     Typography,
     IconButton,
     Box,
-    Button,
-    Menu,        // Aggiungi questi
-    MenuItem,    // nuovi
-    Divider,     // componenti
-    Avatar,      // di MUI
+    Menu,
+    MenuItem,
+    Divider,
+    Avatar,
 } from '@mui/material';
 import {
     Menu as MenuIcon,
-    AccountCircle as AccountCircleIcon,
     Person as PersonIcon,
     Assignment as AssignmentIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom'; // Aggiungi useNavigate
+import { useNavigate } from 'react-router-dom';
 
 const Header = ({ open, drawerWidth, onDrawerToggle }) => {
     const { user, logout } = useAuth();
@@ -54,10 +51,11 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
             position="fixed"
             sx={{
                 width: '100%',
-                backgroundColor: '#2e7d32',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                backgroundColor: 'primary.main',
+                backgroundImage: 'linear-gradient(to right, #64B5F6, #42A5F5)',
+                boxShadow: '0 2px 8px rgba(100, 181, 246, 0.2)',
                 zIndex: (theme) => theme.zIndex.drawer + 1,
-                transition: 'all 300ms ease-in-out',
+                transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
             }}
         >
             <Toolbar>
@@ -69,8 +67,10 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                     sx={{ 
                         mr: 2,
                         '&:hover': {
-                            backgroundColor: 'rgba(255,255,255,0.1)'
-                        }
+                            backgroundColor: 'rgba(255,255,255,0.15)',
+                            transform: 'scale(1.05)',
+                        },
+                        transition: 'all 0.2s ease-in-out'
                     }}
                 >
                     <MenuIcon />
@@ -81,10 +81,11 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                     component="div" 
                     sx={{ 
                         flexGrow: 1,
-                        fontWeight: 500
+                        fontWeight: 500,
+                        letterSpacing: '0.5px'
                     }}
                 >
-                    Admin Dashboard
+                    BRAIN SCANNER
                 </Typography>
                 <Box sx={{ 
                     display: 'flex', 
@@ -97,8 +98,10 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                         color="inherit"
                         sx={{
                             '&:hover': {
-                                backgroundColor: 'rgba(255,255,255,0.1)'
-                            }
+                                backgroundColor: 'rgba(255,255,255,0.15)',
+                                transform: 'scale(1.05)',
+                            },
+                            transition: 'all 0.2s ease-in-out'
                         }}
                     >
                         <Avatar 
@@ -106,7 +109,9 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                                 width: 32, 
                                 height: 32, 
                                 bgcolor: 'primary.dark',
-                                fontSize: '1rem'
+                                fontSize: '1rem',
+                                fontWeight: 500,
+                                border: '2px solid rgba(255,255,255,0.8)'
                             }}
                         >
                             {user?.firstName?.[0]}{user?.lastName?.[0]}
@@ -126,24 +131,48 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                         }}
                         open={Boolean(anchorEl)}
                         onClose={handleClose}
+                        PaperProps={{
+                            sx: {
+                                mt: 1,
+                                boxShadow: '0 4px 12px rgba(100, 181, 246, 0.15)',
+                                '& .MuiMenuItem-root': {
+                                    px: 2,
+                                    py: 1,
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(100, 181, 246, 0.08)',
+                                    },
+                                },
+                            },
+                        }}
                     >
                         <Box sx={{ px: 2, py: 1 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                            <Typography variant="subtitle1" sx={{ 
+                                fontWeight: 500,
+                                color: 'primary.dark'
+                            }}>
                                 {user?.firstName} {user?.lastName}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                                 {user?.email}
                             </Typography>
                         </Box>
-                        <Divider />
+                        <Divider sx={{ my: 1 }} />
                         <MenuItem onClick={handleProfile}>
-                            <PersonIcon sx={{ mr: 1 }} /> Profilo
+                            <PersonIcon sx={{ mr: 1, color: 'primary.main' }} /> Profilo
                         </MenuItem>
                         <MenuItem onClick={handlePersonalTest}>
-                            <AssignmentIcon sx={{ mr: 1 }} /> Test Personale
+                            <AssignmentIcon sx={{ mr: 1, color: 'primary.main' }} /> Test Personale
                         </MenuItem>
-                        <Divider />
-                        <MenuItem onClick={handleLogout}>
+                        <Divider sx={{ my: 1 }} />
+                        <MenuItem 
+                            onClick={handleLogout}
+                            sx={{ 
+                                color: 'error.main',
+                                '&:hover': {
+                                    backgroundColor: 'error.lighter',
+                                }
+                            }}
+                        >
                             Logout
                         </MenuItem>
                     </Menu>

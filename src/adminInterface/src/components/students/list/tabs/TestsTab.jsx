@@ -26,31 +26,43 @@ const TestsTab = ({ student }) => {
             showNotification('ID studente non valido', 'error');
             return;
         }
-
+    
         try {
             setLoading(true);
-            console.log('Creating test for student:', student._id);
+            console.log('Creating CSI test for student:', student._id);
             
-            // Modifichiamo l'endpoint per matchare quello del backend
-            const response = await axiosInstance.post(`/students/${student._id}/tests`, {
+            // Usa l'endpoint corretto
+            const response = await axiosInstance.post('/tests/csi/generate-link', {
+                studentId: student._id,
                 testType: 'CSI'
             });
-
+    
             console.log('Test creation response:', response.data);
-
-            if (response.data && response.data.data) {
-                const testId = response.data.data.testId;
-                const link = `${window.location.origin}/test/${testId}`;
-                console.log('Generated test link:', link);
+    
+            if (response.data && response.data.data && response.data.data.token) {
+                // Costruisci l'URL usando il token ricevuto
+                const testUrl = `${window.location.origin}/test/csi/${response.data.data.token}`;
+                console.log('Generated test URL:', testUrl);
                 
-                setTestLink(link);
+                setTestLink(testUrl);
                 setDialogOpen(true);
                 showNotification('Test CSI creato con successo', 'success');
             } else {
                 throw new Error('Risposta del server non valida');
             }
         } catch (error) {
-            console.error('Error creating test:', error);
+            console.error('Error details:', {
+                message: error.message,
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                config: {
+                    url: error.config?.url,
+                    method: error.config?.method,
+                    baseURL: error.config?.baseURL,
+                    headers: error.config?.headers
+                }
+            });
             showNotification(
                 'Errore nella creazione del test: ' + 
                 (error.response?.data?.message || error.message),

@@ -25,35 +25,39 @@ import {
 import { useSchool } from '../../../../context/SchoolContext';
 import { useStudent } from '../../../../context/StudentContext';
 import { useNotification } from '../../../../context/NotificationContext';
+import { axiosInstance } from '../../../../services/axiosConfig';
 
 const SchoolTab = ({ student, setStudent }) => {
     const { schools, loading: schoolsLoading, fetchSchools } = useSchool();
     const { updateStudent } = useStudent();
     const { showNotification } = useNotification();
 
-    const [selectedSchool, setSelectedSchool] = useState(student?.schoolId?._id || '');
-    const [selectedClass, setSelectedClass] = useState(student?.classId?._id || '');
+    const [selectedSchool, setSelectedSchool] = useState('');
+    const [selectedClass, setSelectedClass] = useState('');
     const [availableClasses, setAvailableClasses] = useState([]);
     const [loading, setLoading] = useState(false);
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
 
-    // Carica scuole all'avvio
+    useEffect(() => {
+        if (student) {
+            setSelectedSchool(student.schoolId?._id || '');
+            setSelectedClass(student.classId?._id || '');
+        }
+    }, [student]);
+
     useEffect(() => {
         if (schools.length === 0) {
             fetchSchools();
         }
     }, [schools.length, fetchSchools]);
 
-    // Aggiorna classi disponibili quando cambia la scuola
     useEffect(() => {
         if (selectedSchool) {
             const school = schools.find(s => s._id === selectedSchool);
             if (school) {
-                // Qui dovresti fare una chiamata API per ottenere le classi della scuola
-                // Per ora simuliamo con dati statici
                 const classes = school.classes || [];
-                setAvailableClasses(classes);
+                setAvailableClasses(classes.filter(c => c.isActive));
             }
         } else {
             setAvailableClasses([]);
@@ -65,10 +69,14 @@ const SchoolTab = ({ student, setStudent }) => {
         const newSchoolId = event.target.value;
         if (newSchoolId !== selectedSchool) {
             setSelectedSchool(newSchoolId);
-            setSelectedClass(''); // Reset classe quando cambia scuola
+            setSelectedClass('');
             setConfirmAction({
                 type: 'school',
-                data: { schoolId: newSchoolId }
+                data: { 
+                    schoolId: newSchoolId,
+                    classId: null,
+                    needsClassAssignment: true
+                }
             });
             setConfirmDialogOpen(true);
         }
@@ -80,7 +88,11 @@ const SchoolTab = ({ student, setStudent }) => {
             setSelectedClass(newClassId);
             setConfirmAction({
                 type: 'class',
-                data: { classId: newClassId }
+                action: newClassId === '' ? 'remove' : 'assign',
+                data: { 
+                    classId: newClassId,
+                    needsClassAssignment: newClassId === ''
+                }
             });
             setConfirmDialogOpen(true);
         }
@@ -89,23 +101,44 @@ const SchoolTab = ({ student, setStudent }) => {
     const handleConfirm = async () => {
         setLoading(true);
         try {
-            const updateData = {
-                ...confirmAction.data,
-                needsClassAssignment: confirmAction.type === 'school'
-            };
+            let updatedStudent;
 
-            const updatedStudent = await updateStudent(student._id, updateData);
-            setStudent(updatedStudent);
-            showNotification(
-                `${confirmAction.type === 'school' ? 'Scuola' : 'Classe'} aggiornata con successo`,
-                'success'
-            );
+            if (confirmAction.type === 'school') {
+                updatedStudent = await updateStudent(student._id, {
+                    schoolId: confirmAction.data.schoolId,
+                    classId: null,
+                    needsClassAssignment: true
+                });
+            } else if (confirmAction.type === 'class') {
+                const response = await axiosInstance.post(
+                    confirmAction.action === 'remove' 
+                        ? `/students/${student._id}/remove-from-class`
+                        : `/students/${student._id}/assign-class`,
+                    confirmAction.action === 'remove'
+                        ? { reason: 'Rimozione manuale dalla classe' }
+                        : { classId: confirmAction.data.classId }
+                );
+
+                if (response.data.status === 'success') {
+                    updatedStudent = response.data.data.student;
+                }
+            }
+
+            if (updatedStudent) {
+                setStudent(updatedStudent);
+                const actionText = confirmAction.type === 'school' 
+                    ? 'Scuola'
+                    : confirmAction.action === 'remove'
+                        ? 'Rimozione dalla classe'
+                        : 'Classe';
+                showNotification(`${actionText} aggiornata con successo`, 'success');
+            }
         } catch (error) {
+            console.error('Error updating student:', error);
             showNotification(
                 `Errore durante l'aggiornamento: ${error.message}`,
                 'error'
             );
-            // Reset selezioni in caso di errore
             setSelectedSchool(student?.schoolId?._id || '');
             setSelectedClass(student?.classId?._id || '');
         } finally {
@@ -117,7 +150,6 @@ const SchoolTab = ({ student, setStudent }) => {
 
     return (
         <Box>
-            {/* Header section */}
             <Box sx={{ mb: 4 }}>
                 <Typography variant="h6" gutterBottom>
                     Gestione Scuola e Classe
@@ -127,7 +159,6 @@ const SchoolTab = ({ student, setStudent }) => {
                 </Typography>
             </Box>
 
-            {/* Current status */}
             <Paper sx={{ p: 3, mb: 4 }}>
                 <Stack spacing={3}>
                     <Box>
@@ -136,9 +167,19 @@ const SchoolTab = ({ student, setStudent }) => {
                         </Typography>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <SchoolIcon color={student?.schoolId ? "primary" : "disabled"} />
-                            <Typography>
-                                {student?.schoolId?.name || 'Nessuna scuola assegnata'}
-                            </Typography>
+                            <Box>
+                                <Typography>
+                                    {student?.schoolId?.name || 'Nessuna scuola assegnata'}
+                                </Typography>
+                                {student?.schoolId && (
+                                    <Typography variant="body2" color="text.secondary">
+                                        {student.schoolId.schoolType === 'middle_school' ? 
+                                            'Scuola Media' : 'Scuola Superiore'}
+                                        {student.schoolId.institutionType !== 'none' && 
+                                            ` - ${student.schoolId.institutionType}`}
+                                    </Typography>
+                                )}
+                            </Box>
                             {student?.needsClassAssignment && (
                                 <Chip
                                     icon={<WarningIcon />}
@@ -156,18 +197,27 @@ const SchoolTab = ({ student, setStudent }) => {
                         </Typography>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <CalendarIcon color={student?.classId ? "primary" : "disabled"} />
-                            <Typography>
-                                {student?.classId ? 
-                                    `${student.classId.year}${student.classId.section}` : 
-                                    'Nessuna classe assegnata'
-                                }
-                            </Typography>
+                            <Box>
+                                {student?.classId ? (
+                                    <>
+                                        <Typography>
+                                            {`${student.classId.year}${student.classId.section}`}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            Anno Accademico: {student.classId.academicYear}
+                                        </Typography>
+                                    </>
+                                ) : (
+                                    <Typography>
+                                        Nessuna classe assegnata
+                                    </Typography>
+                                )}
+                            </Box>
                         </Stack>
                     </Box>
                 </Stack>
             </Paper>
 
-            {/* Change section */}
             <Paper sx={{ p: 3 }}>
                 <Typography variant="subtitle1" gutterBottom>
                     Modifica Assegnazione
@@ -199,14 +249,14 @@ const SchoolTab = ({ student, setStudent }) => {
                             value={selectedClass}
                             onChange={handleClassChange}
                             label="Classe"
-                            disabled={!selectedSchool || loading || availableClasses.length === 0}
+                            disabled={!selectedSchool || loading}
                         >
                             <MenuItem value="">
                                 <em>Nessuna classe</em>
                             </MenuItem>
                             {availableClasses.map((classInfo) => (
                                 <MenuItem key={classInfo._id} value={classInfo._id}>
-                                    {`${classInfo.year}${classInfo.section}`}
+                                    {`${classInfo.year}${classInfo.section} - ${classInfo.academicYear || 'Anno corrente'}`}
                                 </MenuItem>
                             ))}
                         </Select>
@@ -220,7 +270,6 @@ const SchoolTab = ({ student, setStudent }) => {
                 </Stack>
             </Paper>
 
-            {/* Confirm Dialog */}
             <Dialog 
                 open={confirmDialogOpen}
                 onClose={() => setConfirmDialogOpen(false)}
@@ -232,7 +281,9 @@ const SchoolTab = ({ student, setStudent }) => {
                     <Typography>
                         {confirmAction?.type === 'school' 
                             ? 'Sei sicuro di voler cambiare la scuola? Questa azione rimuoverà anche l\'assegnazione alla classe attuale.'
-                            : 'Sei sicuro di voler cambiare la classe?'
+                            : confirmAction?.action === 'remove'
+                                ? 'Sei sicuro di voler rimuovere lo studente dalla classe attuale?'
+                                : 'Sei sicuro di voler cambiare la classe?'
                         }
                     </Typography>
                 </DialogContent>

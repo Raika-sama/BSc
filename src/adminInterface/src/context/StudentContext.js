@@ -366,8 +366,20 @@ export const StudentProvider = ({ children }) => {
         id: studentId,
         _id: studentId,
 
-       schoolId: typeof student.schoolId === 'object' ? student.schoolId : { _id: student.schoolId, name: 'N/D' },
-       classId: typeof student.classId === 'object' ? student.classId : student.classId ? { _id: student.classId } : null,     
+        schoolId: student.schoolId ? {
+            _id: student.schoolId._id,
+            name: student.schoolId.name,
+            schoolType: student.schoolId.schoolType,
+            institutionType: student.schoolId.institutionType,
+            region: student.schoolId.region,
+            province: student.schoolId.province
+        } : null,
+        classId: student.classId ? {
+            _id: student.classId._id,
+            year: student.classId.year,
+            section: student.classId.section,
+            academicYear: student.classId.academicYear
+        } : null,
        lastName: student.lastName || '',
         firstName: student.firstName || '',
         fiscalCode: student.fiscalCode || '',
