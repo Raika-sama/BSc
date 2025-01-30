@@ -35,10 +35,31 @@ class StudentController extends BaseController {
             const limit = parseInt(req.query.limit) || 50;
             const skip = (page - 1) * limit;
     
-            const filters = this._buildFilters(req.query); // Metodo helper per costruire i filtri
+            // Costruzione filtri base
+            const filters = {};
             
+            // Aggiungi filtri specifici
+            if (req.query.specialNeeds !== undefined) {
+                filters.specialNeeds = req.query.specialNeeds === 'true';
+            }
+            if (req.query.schoolId) {
+                filters.schoolId = req.query.schoolId;
+            }
+            if (req.query.status) {
+                filters.status = req.query.status;
+            }
+            if (req.query.search) {
+                filters.$or = [
+                    { firstName: { $regex: req.query.search, $options: 'i' } },
+                    { lastName: { $regex: req.query.search, $options: 'i' } },
+                    { email: { $regex: req.query.search, $options: 'i' } }
+                ];
+            }
+    
+            // Log dei filtri per debug
+            logger.debug('Filtri applicati:', filters);
+    
             try {
-                // Esegue in parallelo il conteggio totale e la query paginata
                 const [total, students] = await Promise.all([
                     this.model.countDocuments(filters),
                     this.repository.findWithDetails(filters, {
@@ -47,6 +68,13 @@ class StudentController extends BaseController {
                         sort: { createdAt: -1 }
                     })
                 ]);
+    
+                logger.debug('Query results:', {
+                    totalCount: total,
+                    retrievedCount: students.length,
+                    page,
+                    limit
+                });
     
                 this.sendResponse(res, {
                     students,
@@ -58,7 +86,10 @@ class StudentController extends BaseController {
                     }
                 });
             } catch (error) {
-                console.error('Database operation error:', error);
+                logger.error('Database operation error:', {
+                    error: error.message,
+                    stack: error.stack
+                });
                 throw error;
             }
         } catch (error) {
@@ -66,6 +97,43 @@ class StudentController extends BaseController {
             next(error);
         }
     }
+
+    // In StudentController, aggiungi questo metodo
+_buildFilters(query) {
+    const filters = {};
+
+    // Filtri base
+    if (query.search) {
+        filters.$or = [
+            { firstName: { $regex: query.search, $options: 'i' } },
+            { lastName: { $regex: query.search, $options: 'i' } },
+            { email: { $regex: query.search, $options: 'i' } }
+        ];
+    }
+
+    // Filtro per scuola
+    if (query.schoolId) {
+        filters.schoolId = new mongoose.Types.ObjectId(query.schoolId);
+    }
+
+    // Filtro per stato
+    if (query.status) {
+        filters.status = query.status;
+    }
+
+    // Filtro per bisogni speciali
+    if (query.specialNeeds !== undefined) {
+        filters.specialNeeds = query.specialNeeds === 'true';
+    }
+
+    // Filtro per classe (year e section)
+    if (query.year && query.section) {
+        filters['classId.year'] = parseInt(query.year);
+        filters['classId.section'] = query.section;
+    }
+
+    return filters;
+}
 
 
     /**

@@ -24,6 +24,10 @@ class StudentRepository extends BaseRepository {
 
     async findWithDetails(filters = {}, options = {}) {
         try {
+            logger.debug('Starting findWithDetails with:', {
+                filters,
+                options
+            });
             const pipeline = [
                 { $match: filters },
                 // Lookup ottimizzato per i test
@@ -74,16 +78,23 @@ class StudentRepository extends BaseRepository {
                         as: 'classDetails'
                     }
                 },
-                // Ottimizzazione dei campi restituiti
+                 // Modifica dell'addFields per gestire meglio il conteggio
                 {
                     $addFields: {
-                        testCount: { $ifNull: [{ $arrayElemAt: ['$testStats.total', 0] }, 0] },
+                        testCount: {
+                            $cond: {
+                                if: { $eq: [{ $size: '$testStats' }, 0] },
+                                then: 0,
+                                else: { $arrayElemAt: ['$testStats.total', 0] }
+                            }
+                        },
                         mainTeacher: { $arrayElemAt: ['$mainTeacherDetails', 0] },
                         schoolId: { $arrayElemAt: ['$schoolDetails', 0] },
                         classId: { $arrayElemAt: ['$classDetails', 0] }
                     }
                 },
-                // Proiezione ottimizzata
+                // Proiezione ottimizzata - CORRETTA
+                // Modifica solo la parte della proiezione nel metodo findWithDetails
                 {
                     $project: {
                         _id: 1,
@@ -93,18 +104,20 @@ class StudentRepository extends BaseRepository {
                         status: 1,
                         specialNeeds: 1,
                         testCount: 1,
-                        'mainTeacher._id': 1,
-                        'mainTeacher.firstName': 1,
-                        'mainTeacher.lastName': 1,
-                        'schoolId._id': 1,
-                        'schoolId.name': 1,
-                        'classId._id': 1,
-                        'classId.year': 1,
-                        'classId.section': 1,
-                        testStats: 0,
-                        mainTeacherDetails: 0,
-                        schoolDetails: 0,
-                        classDetails: 0
+                        mainTeacher: {
+                            _id: 1,
+                            firstName: 1,
+                            lastName: 1
+                        },
+                        schoolId: {
+                            _id: 1,
+                            name: 1
+                        },
+                        classId: {
+                            _id: 1,
+                            year: 1,
+                            section: 1
+                        }
                     }
                 }
             ];
@@ -121,10 +134,26 @@ class StudentRepository extends BaseRepository {
                 pipeline.push({ $limit: options.limit });
             }
     
+            logger.debug('Executing aggregation with pipeline:', JSON.stringify(pipeline, null, 2));
+
             const students = await this.model.aggregate(pipeline);
+            logger.debug('Aggregation results:', {
+                count: students.length,
+                sampleStudent: students[0] ? {
+                    id: students[0]._id,
+                    hasTestCount: 'testCount' in students[0],
+                    hasMainTeacher: 'mainTeacher' in students[0]
+                } : null
+            });
+
             return students;
         } catch (error) {
-            logger.error('Error in findWithDetails:', error);
+                logger.error('Error in findWithDetails:', {
+                error: error.message,
+                stack: error.stack,
+                filters,
+                options
+            });
             throw error;
         }
     }

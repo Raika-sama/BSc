@@ -67,8 +67,12 @@ const StudentList = () => {
                 search: searchTerm.trim(),
                 schoolId: schoolFilter,
                 status: statusFilter,
-                specialNeeds: specialNeedsFilter === 'true'
             };
+
+            // Aggiungi specialNeeds al filtro solo se è stato effettivamente selezionato
+            if (specialNeedsFilter !== '') {  // o null, dipende dal valore iniziale che usi
+                filters.specialNeeds = specialNeedsFilter === 'true';
+            }
 
             if (classFilter) {
                 const year = parseInt(classFilter.match(/^\d+/)[0]);
@@ -137,7 +141,7 @@ const StudentList = () => {
         {
             field: 'schoolName',
             headerName: 'Scuola',
-            width: 200,
+            width: 250,
             valueGetter: (params) => params.row.schoolId?.name || 'N/D'
         },
         {
@@ -178,6 +182,36 @@ const StudentList = () => {
                         label={config.label}
                         size="small"
                         sx={{ color: config.color }}
+                    />
+                );
+            }
+        },
+        {
+            field: 'mainTeacher',
+            headerName: 'Docente Principale',
+            width: 180,
+            renderCell: (params) => {
+                const teacher = params.row.mainTeacher;
+                return teacher ? 
+                    `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() || 'N/D' 
+                    : 'N/D';
+            }
+        },
+        {
+            field: 'testCount',
+            headerName: 'Test Completati',
+            width: 130,
+            type: 'number',
+            renderCell: (params) => {
+                const count = params.row.testCount || 0;
+                return (
+                    <Chip
+                        label={count}
+                        size="small"
+                        sx={{
+                            bgcolor: count > 0 ? 'success.light' : 'grey.300',
+                            color: count > 0 ? 'success.contrastText' : 'text.primary'
+                        }}
                     />
                 );
             }
