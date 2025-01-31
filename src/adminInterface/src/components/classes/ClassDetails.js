@@ -264,6 +264,12 @@ const StudentDetailsDialog = ({ open, onClose, student }) => {
     );
 };
 
+// Questa va prima del return, dove hai le altre funzioni helper
+const canPopulateClass = (classData) => {
+    return classData.isActive && 
+           (classData.status === 'active' || classData.status === 'planned');
+};
+
 console.log("Students data:", classData.students);
 
     return (
@@ -308,15 +314,24 @@ console.log("Students data:", classData.students);
                         >
                             Indietro
                         </Button>
-                        <Button
-                            variant="contained"
-                            startIcon={<GroupAddIcon />}
-                            onClick={() => navigate(`/admin/classes/${classId}/populate`)}
-                            sx={{ mr: 1 }}
-                            size="small"
-                        >
-                            Popola
-                        </Button>
+                        <Tooltip title={
+                            !canPopulateClass(classData)
+                                ? "La classe deve essere attiva per poter essere popolata"
+                                : "Aggiungi studenti alla classe"
+                        }>
+                            <span>
+                                <Button
+                                    variant="contained"
+                                    startIcon={<GroupAddIcon />}
+                                    onClick={() => navigate(`/admin/classes/${classId}/populate`)}
+                                    disabled={!canPopulateClass(classData)}
+                                    sx={{ mr: 1 }}
+                                    size="small"
+                                >
+                                    Popola
+                                </Button>
+                            </span>
+                        </Tooltip>
                         <Button
                             variant="contained"
                             startIcon={<QuizIcon />}
