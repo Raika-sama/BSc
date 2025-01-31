@@ -7,6 +7,15 @@ import authService from '../services/authService';
 
 const AuthContext = createContext(null);
 
+// Aggiungiamo l'hook useAuth
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth deve essere usato all\'interno di un AuthProvider');
+    }
+    return context;
+};
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -19,6 +28,7 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         checkAuth();
     }, []);
+
 
     const checkAuth = async () => {
         try {

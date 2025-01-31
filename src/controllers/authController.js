@@ -64,46 +64,80 @@ class AuthController extends BaseController {
     /**
      * Login utente
      */
-    login = async (req, res) => {
+    login = async (req, res, next) => {
         try {
-            logger.debug('Login attempt', { 
-                email: req.body.email,
-                ip: req.ip,
-                userAgent: req.headers['user-agent']
-            });
-
             const { email, password } = req.body;
-
-            if (!email || !password) {
-                throw createError(
-                    ErrorTypes.VALIDATION.MISSING_FIELDS,
-                    'Email e password sono richiesti'
-                );
+            console.log('Login attempt:', { email });
+    
+            // Aggiungiamo il +password per includere il campo password nella query
+            const user = await User.findOne({ email })
+                .select('+password')
+                .lean(); // Aggiungiamo lean() per prestazioni migliori
+    
+            console.log('User found:', { 
+                userId: user?._id,
+                hasPassword: !!user?.password 
+            });
+    
+            if (!user) {
+                return next(createError(
+                    ErrorTypes.AUTH.USER_NOT_FOUND,
+                    'Utente non trovato'
+                ));
             }
-
-            const metadata = {
-                ipAddress: req.ip,
-                userAgent: req.headers['user-agent']
-            };
-
-            const { user, accessToken, refreshToken } = 
-                await this.authService.login(email, password, metadata);
-
-            // Imposta cookie sicuri
-            this.setTokenCookies(res, accessToken, refreshToken);
-
-            logger.info('Login successful', { 
-                userId: user._id
+    
+            // Verifica password
+            const isMatch = await bcrypt.compare(password, user.password);
+            console.log('Password match:', { isMatch });
+    
+            if (!isMatch) {
+                return next(createError(
+                    ErrorTypes.AUTH.INVALID_CREDENTIALS,
+                    'Credenziali non valide'
+                ));
+            }
+    
+            // Genera token
+            const token = jwt.sign(
+                { id: user._id },
+                process.env.JWT_SECRET,
+                { expiresIn: process.env.JWT_EXPIRES_IN }
+            );
+    
+            // Genera refresh token
+            const refreshToken = jwt.sign(
+                { id: user._id },
+                process.env.JWT_REFRESH_SECRET,
+                { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN }
+            );
+    
+            // Rimuovi la password dal risultato
+            delete user.password;
+    
+            // Aggiorna lastLogin
+            await User.findByIdAndUpdate(user._id, {
+                $set: {
+                    lastLogin: new Date(),
+                    loginAttempts: 0
+                }
             });
-
-            this.sendResponse(res, {
+    
+            res.status(200).json({
                 status: 'success',
-                user,
-                accessToken
+                data: {
+                    user,
+                    token,
+                    refreshToken
+                }
             });
+    
         } catch (error) {
-            logger.error('Login failed', { error });
-            this.handleError(res, error);
+            console.error('Login error details:', error);
+            next(createError(
+                ErrorTypes.AUTH.LOGIN_FAILED,
+                'Errore durante il login',
+                { originalError: error }
+            ));
         }
     }
 

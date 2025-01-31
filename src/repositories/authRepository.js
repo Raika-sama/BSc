@@ -10,6 +10,22 @@ class AuthRepository {
         this.RESET_TOKEN_EXPIRES = 3600000; // 1 ora in millisecondi
     }
 
+//necessarie per il login:
+    async findByEmail(email) {
+        return await this.User.findOne({ email })
+            .select('+password')
+            .lean();
+    }
+
+    async updateLoginInfo(userId) {
+        return await this.User.findByIdAndUpdate(userId, {
+            $set: {
+                lastLogin: new Date(),
+                loginAttempts: 0
+            }
+        });
+    }
+
     /**
  * Aggiorna la password dell'utente
  */

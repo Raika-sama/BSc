@@ -99,60 +99,60 @@ class AuthService {
      */
     async login(email, password, metadata) {
         try {
-            const user = await this.userRepository.findByEmail(email, true);
-            
+            logger.debug('Authentication attempt', { email });
+
+            // Usa il repository per trovare l'utente
+            const user = await this.authRepository.findByEmail(email);
+
             if (!user) {
                 throw createError(
-                    ErrorTypes.AUTH.INVALID_CREDENTIALS,
-                    'Credenziali non valide'
-                );
-            }
-
-            // Verifica se l'account è bloccato
-            if (user.isLocked()) {
-                const timeLeft = (user.lockUntil - Date.now()) / 1000 / 60;
-                throw createError(
-                    ErrorTypes.AUTH.ACCOUNT_LOCKED,
-                    `Account bloccato. Riprova tra ${Math.round(timeLeft)} minuti`
+                    ErrorTypes.AUTH.USER_NOT_FOUND,
+                    'Utente non trovato'
                 );
             }
 
             // Verifica password
-            const isValid = await user.verifyPassword(password);
-            if (!isValid) {
-                await this.handleFailedLogin(user);
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
                 throw createError(
                     ErrorTypes.AUTH.INVALID_CREDENTIALS,
                     'Credenziali non valide'
                 );
             }
 
-            // Reset tentativi di login falliti
-            if (user.loginAttempts > 0) {
-                user.loginAttempts = 0;
-                user.lockUntil = null;
-            }
-
             // Genera tokens
-            const tokens = this.generateTokens(user);
+            const accessToken = jwt.sign(
+                { id: user._id },
+                process.env.JWT_SECRET,
+                { expiresIn: process.env.JWT_EXPIRES_IN }
+            );
 
-            // Aggiorna ultimo accesso
-            user.lastLogin = new Date();
-            await user.save();
+            const refreshToken = jwt.sign(
+                { id: user._id },
+                process.env.JWT_REFRESH_SECRET,
+                { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN }
+            );
 
-            // Crea sessione
-            await this.createSession(user, tokens.refreshToken, metadata);
+            // Aggiorna lastLogin e crea sessione
+            await this.authRepository.updateLoginInfo(user._id);
+            await this.sessionService.createSession(user._id, {
+                token: refreshToken,
+                ...metadata
+            });
+
+            // Rimuovi password dal risultato
+            delete user.password;
 
             return {
-                user: this.sanitizeUser(user),
-                ...tokens
+                user,
+                accessToken,
+                refreshToken
             };
         } catch (error) {
-            logger.error('Login error', { error, email });
+            logger.error('Login error:', error);
             throw error;
         }
     }
-
     /**
      * Gestisce tentativi di login falliti
      * @param {Object} user - Utente che ha fallito il login

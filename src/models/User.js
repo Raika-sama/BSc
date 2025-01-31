@@ -60,12 +60,12 @@ const userSchema = new mongoose.Schema({
         required: true,
         minlength: 8,
         select: false,
-        validate: {
+        /*validate: {
             validator: function(v) {
                 return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(v);
             },
             message: 'La password deve contenere almeno 8 caratteri, una maiuscola, una minuscola, un numero e un carattere speciale'
-        }
+        }*/
     },
     role: {
         type: String,
@@ -110,7 +110,8 @@ const userSchema = new mongoose.Schema({
     }],
     passwordResetToken: String,
     passwordResetExpires: Date,
-    sessionTokens: [sessionTokenSchema]
+    sessionTokens: [sessionTokenSchema],
+    default: []
 }, {
     timestamps: true
 });
@@ -128,6 +129,12 @@ userSchema.methods.addSessionToken = function(tokenData) {
     if (!this.sessionTokens) {
         this.sessionTokens = [];
     }
+    
+    // Log per debug
+    console.log('Adding session token:', {
+        userId: this._id,
+        tokenData: { ...tokenData, token: '***' }
+    });
     
     // Rimuovi sessioni scadute
     this.sessionTokens = this.sessionTokens.filter(session => 

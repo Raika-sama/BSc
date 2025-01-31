@@ -33,3 +33,17 @@
 {"code":"AUTH_004","level":"error","message":"Account disattivato","metadata":{},"status":401,"timestamp":"2025-01-31T19:41:21.615Z"}
 {"level":"error","message":"Login error:","timestamp":"2025-01-31T20:02:58.148Z"}
 {"error":{},"level":"error","message":"Unhandled Auth Route Error","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-31T20:02:58.149Z"}
+{"email":"riccardonicolilb@gmail.com","error":{},"level":"error","message":"Login error","timestamp":"2025-01-31T22:13:21.082Z"}
+{"error":{},"level":"error","message":"Login failed","timestamp":"2025-01-31T22:13:21.083Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-31T22:13:21.084Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-31T22:13:21.085Z"}
+{"email":"riccardonicolilb@gmail.com","error":{},"level":"error","message":"Login error","timestamp":"2025-01-31T22:17:33.067Z"}
+{"error":{},"level":"error","message":"Login failed","timestamp":"2025-01-31T22:17:33.067Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-31T22:17:33.068Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-31T22:17:33.069Z"}
+{"email":"riccardonicolilb@gmail.com","error":{},"level":"error","message":"Login error","timestamp":"2025-01-31T22:20:02.980Z"}
+{"error":{},"level":"error","message":"Login failed","timestamp":"2025-01-31T22:20:02.981Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-31T22:20:02.983Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-31T22:20:02.984Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-31T22:23:06.044Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-31T22:25:47.086Z"}
