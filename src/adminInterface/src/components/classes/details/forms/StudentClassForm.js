@@ -16,8 +16,8 @@ import {
     FormControlLabel,
     Switch
 } from '@mui/material';
-import { useStudent } from '../../context/StudentContext';
-import { useNotification } from '../../context/NotificationContext';
+import { useStudent } from '../../../../context/StudentContext';
+import { useNotification } from '../../../../context/NotificationContext';
 
 const StudentClassForm = ({ open, onClose, classData }) => {
     const { createStudentWithClass } = useStudent();

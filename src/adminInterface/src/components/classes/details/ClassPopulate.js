@@ -9,8 +9,8 @@ import {
     Chip
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useStudent } from '../../context/StudentContext';
-import { useClass } from '../../context/ClassContext';
+import { useStudent } from '../../../context/StudentContext';
+import { useClass } from '../../../context/ClassContext';
 import { DataGrid } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';

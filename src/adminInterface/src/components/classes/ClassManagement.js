@@ -29,8 +29,8 @@ import {
     CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { StatCards } from './StatCards';
-import { FilterToolbar } from './FilterToolbar';
+import { StatCards } from './classcomponents/StatCards';
+import { FilterToolbar } from './classcomponents/FilterToolbar';
 
 const ClassManagement = () => {
     const [tabValue, setTabValue] = useState(0);

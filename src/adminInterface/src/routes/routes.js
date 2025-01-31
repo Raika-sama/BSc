@@ -4,12 +4,12 @@ import UserManagement from '../components/users/UserManagement';
 import SchoolManagement from '../components/school/SchoolManagement';
 import SchoolDetails from '../components/school/SchoolDetails';
 import ClassManagement from '../components/classes/ClassManagement';    // Importa la pagina delle classi
-import ClassDetails from '../components/classes/ClassDetails';    // Nuovo componente
+import ClassDetails from '../components/classes/details/ClassDetails';    // Nuovo componente
 import ClassTests from '../components/classes/ClassTests';        // Nuovo componente
 import SchoolWizard from '../components/school/wizard/SchoolWizard';
 import UsersManagement from '../components/school/UsersManagement'; // Aggiungi questo import
 import StudentList from '../components/students/StudentList'; // Aggiungi questo import
-import ClassPopulate from '../components/classes/ClassPopulate';    // Aggiungi questo import
+import ClassPopulate from '../components/classes/details/ClassPopulate';    // Aggiungi questo import
 import Profile from '../components/profile/Profile'; // Aggiungi questo import
 import PersonalTest from '../components/profile/PersonalTest';  // Aggiungi questo import
 import SectionManagement from '../components/school/schoolComponents/SectionManagement';

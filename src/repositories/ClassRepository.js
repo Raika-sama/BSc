@@ -677,6 +677,50 @@ async findWithDetails(id) {
             }
         }
 
+        async removeStudentsFromClass(classId, studentIds) {
+            const session = await mongoose.startSession();
+            session.startTransaction();
+        
+            try {
+                // Aggiorna la classe rimuovendo gli studenti
+                const classDoc = await this.model.findByIdAndUpdate(
+                    classId,
+                    {
+                        $pull: {
+                            students: {
+                                studentId: { $in: studentIds }
+                            }
+                        }
+                    },
+                    { session, new: true }
+                );
+        
+                // Aggiorna gli studenti
+                await mongoose.model('Student').updateMany(
+                    { _id: { $in: studentIds } },
+                    {
+                        $set: {
+                            classId: null,
+                            section: null,
+                            status: 'inactive',
+                            mainTeacher: null,
+                            teachers: [],
+                            needsClassAssignment: true
+                        }
+                    },
+                    { session }
+                );
+        
+                await session.commitTransaction();
+                return classDoc;
+            } catch (error) {
+                await session.abortTransaction();
+                throw error;
+            } finally {
+                session.endSession();
+            }
+        }
+
 }
 
 module.exports = ClassRepository;

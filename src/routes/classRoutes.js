@@ -56,6 +56,12 @@ const { protect, restrictTo } = require('../middleware/authMiddleware');
         classController.addStudents.bind(classController)
     );
 
+    // Aggiungi questa route dopo la route /:classId/students
+    router.post('/:classId/remove-students',
+        restrictTo('admin', 'teacher'),  
+        classController.removeStudentsFromClass.bind(classController)
+    );
+
     // Aggiungi questa nuova route PRIMA delle route base CRUD
     // Route per setup iniziale classi (dopo creazione scuola)
     router.post('/initial-setup',

@@ -522,6 +522,39 @@ async getById(req, res, next) {
     }
 }
 
+async removeStudentsFromClass(req, res, next) {
+    const { classId } = req.params;
+    const { studentIds } = req.body;
+
+    try {
+        if (!Array.isArray(studentIds) || studentIds.length === 0) {
+            return next(createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'Lista studenti non valida'
+            ));
+        }
+
+        const updatedClass = await this.repository.removeStudentsFromClass(
+            classId, 
+            studentIds
+        );
+
+        logger.info('Studenti rimossi dalla classe', {
+            classId,
+            studentCount: studentIds.length
+        });
+
+        this.sendResponse(res, { class: updatedClass });
+    } catch (error) {
+        logger.error('Errore nella rimozione studenti', {
+            error: error.message,
+            classId,
+            studentIds
+        });
+        next(error);
+    }
+}
+
 }
 
 module.exports = new ClassController();

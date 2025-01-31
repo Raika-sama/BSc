@@ -266,6 +266,30 @@ export const ClassProvider = ({ children }) => {
         }
     };
 
+    const removeStudentsFromClass = async (classId, studentIds) => {
+        try {
+            dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
+            const response = await axiosInstance.post(`/classes/${classId}/remove-students`, {
+                studentIds
+            });
+
+            if (response.data.status === 'success') {
+                return response.data.class;
+            } else {
+                throw new Error(response.data.message || 'Errore nella rimozione degli studenti');
+            }
+        } catch (error) {
+            dispatch({ 
+                type: CLASS_ACTIONS.SET_ERROR, 
+                payload: error.response?.data?.message || error.message 
+            });
+            throw error;
+        } finally {
+            dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: false });
+        }
+    };
+
+
 
     return (
         <ClassContext.Provider value={{
@@ -277,6 +301,7 @@ export const ClassProvider = ({ children }) => {
             updateClass,
             deleteClass,
             getClassDetails,  // Aggiungi questa
+            removeStudentsFromClass,
             dispatch
         }}>
             {children}
