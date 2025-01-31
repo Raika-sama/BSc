@@ -4,23 +4,54 @@
  * @file index.js
  * @description Export centralizzato dei controllers
  * @author Raika-sama
- * @date 2025-01-05
+ * @date 2025-01-31
  */
 
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
-const authController = require('./authController');
-const schoolController = require('./schoolController');
-const userController = require('./userController');
-const classController = require('./classController');
-const studentController = require('./studentController');
-const testController = require('./testController');
+// Import delle classi Controller
+const AuthController = require('./AuthController');
+const UserController = require('./UserController');
+const SchoolController = require('./SchoolController');
+const ClassController = require('./ClassController');
+const StudentController = require('./studentController');
+const TestController = require('./TestController');
 
-// Definizione dei metodi richiesti per controller specifici
+// Import dei servizi
+const AuthService = require('../services/AuthService');
+const UserService = require('../services/UserService');
+const SessionService = require('../services/SessionService');
+
+// Import dei repository
+const UserRepository = require('../repositories/UserRepository');
+const AuthRepository = require('../repositories/authRepository');
+
+// Import dei models
+const { User } = require('../models');
+
+// Inizializzazione repositories
+const userRepository = new UserRepository(User);
+const authRepository = new AuthRepository(User);
+
+// Inizializzazione servizi
+const sessionService = new SessionService(userRepository);
+const authService = new AuthService(authRepository, sessionService);
+const userService = new UserService(userRepository, authService, sessionService);
+
+// Inizializzazione controllers
+const controllers = {
+    auth: new AuthController(authService, userService, sessionService),
+    user: new UserController(userService, sessionService),
+    school: new SchoolController(),
+    class: new ClassController(),
+    student: new StudentController(),
+    test: new TestController()
+};
+
+// Il resto del tuo codice di validazione rimane identico
 const requiredMethods = {
     'auth': ['register', 'login', 'logout', 'getMe', 'forgotPassword', 'resetPassword', 'updatePassword'],
-    // Per gli altri controller, verifichiamo solo che esistano senza specificare i metodi richiesti
     'school': [],
     'user': [],
     'class': [],
@@ -28,14 +59,6 @@ const requiredMethods = {
     'test': []
 };
 
-const controllers = {
-    auth: authController,
-    school: schoolController,
-    user: userController,
-    class: classController,
-    student: studentController,
-    test: testController
-};
 
 // Validazione dei controller
 try {

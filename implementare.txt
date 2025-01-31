@@ -1,0 +1,203 @@
+Ecco il piano dettagliato delle modifiche da implementare:
+
+1. Creazione Servizi (Priorità ALTA)
+JavaScript
+// 1.1 AuthService
+- implementare gestione token JWT
+- gestire refresh token
+- gestire blocco account
+- gestire tentativi di login
+
+// 1.2 SessionService
+- gestire sessionTokens
+- implementare pulizia sessioni scadute
+- gestire limite sessioni attive
+- tracciare attività sessione
+
+// 1.3 UserService
+- centralizzare logica business
+- gestire permessi
+- gestire aggiornamento profilo
+2. Refactoring Repository (Priorità ALTA)
+JavaScript
+// 2.1 Separare AuthRepository
+- spostare metodi di autenticazione
+- implementare gestione token
+- gestire reset password
+
+// 2.2 Ottimizzare UserRepository
+- mantenere solo operazioni CRUD
+- migliorare gestione errori
+- implementare soft delete
+3. Ottimizzazione Controllers (Priorità MEDIA)
+JavaScript
+// 3.1 AuthController
+- login/logout
+- refresh token
+- gestione password
+- validazione token
+
+// 3.2 UserController
+- operazioni CRUD
+- gestione profilo
+- gestione permessi
+4. Middleware e Sicurezza (Priorità ALTA)
+JavaScript
+// 4.1 AuthMiddleware
+- ottimizzare verifica token
+- implementare rate limiting
+- gestire blacklist token
+- logging migliorato
+
+// 4.2 PermissionMiddleware
+- verifica ruoli
+- verifica permessi specifici
+- controlli contestuali
+5. Model Updates (Priorità MEDIA)
+JavaScript
+// 5.1 User Model
+- ottimizzare schema sessionTokens
+- aggiungere indici performance
+- migliorare validazioni
+
+// 5.2 UserAudit Model
+- espandere tracking
+- ottimizzare schema
+- implementare retention policy
+6. Error Handling (Priorità MEDIA)
+JavaScript
+// 6.1 Errori Centralizzati
+- definire tipi errore specifici
+- implementare handling consistente
+- migliorare messaggi errore
+
+// 6.2 Validazione
+- implementare middleware validazione
+- centralizzare regole validazione
+- gestire errori validazione
+Piano di Implementazione:
+Fase 1 - Servizi e Repository (Settimana 1-2)
+
+Creare nuovi servizi
+Refactoring repository
+Test unitari
+Fase 2 - Controllers e Middleware (Settimana 2-3)
+
+Ottimizzare controllers
+Aggiornare middleware
+Test integrazione
+Fase 3 - Models e Validazione (Settimana 3-4)
+
+Aggiornare models
+Implementare validazioni
+Migrazione dati se necessario
+Fase 4 - Testing e Documentazione (Settimana 4)
+
+Test end-to-end
+Documentazione API
+Performance testing
+Priorità per Inizio Implementazione:
+Creazione AuthService e SessionService
+
+Fondamentale per gestione token e sessioni
+Base per altre modifiche
+Separazione Repository
+
+Migliora organizzazione codice
+Facilita testing
+Aggiornamento Middleware
+
+Migliora sicurezza
+Implementa rate limiting
+
+
+
+_____________________________FATTO_________________
+
+ L'AuthService si occupa di:
+
+Generazione e verifica dei token JWT
+Gestione login/logout
+Gestione tentativi di accesso falliti
+Gestione sessioni
+Blacklist token
+
+Il SessionService si occupa di:
+
+Gestione completa del ciclo di vita delle sessioni:
+Creazione nuove sessioni
+Validazione sessioni esistenti
+Rimozione sessioni (singole o multiple)
+Pulizia automatica delle sessioni scadute
+Limitazione del numero di sessioni attive per utente
+Tracciamento dettagliato dell'attività delle sessioni
+Caratteristiche chiave:
+
+Mantiene un limite configurabile di sessioni per utente
+Implementa una strategia "FIFO" per la gestione delle sessioni quando si raggiunge il limite
+Fornisce metodi per la gestione granulare delle sessioni
+Include un sistema automatico di pulizia delle sessioni scadute
+
+Il UserService si occupa di:
+
+Gestione completa del ciclo di vita degli utenti:
+Creazione e registrazione
+Aggiornamento profilo
+Gestione password e cronologia password
+Eliminazione account
+Gestione stati utente (active, inactive, suspended)
+Gestione permessi
+Sicurezza:
+Hashing password
+Prevenzione riutilizzo password recenti
+Sanitizzazione dati utente
+Caratteristiche chiave:
+
+Integrazione con AuthService e SessionService
+Gestione avanzata delle password con storico
+Sistema di permessi flessibile
+Logging completo delle operazioni
+Gestione stati utente con effetti correlati (es. terminazione sessioni)
+I tre servizi (AuthService, SessionService, UserService) lavorano insieme per fornire una gestione completa e sicura degli utenti e delle loro sessioni. 
+
+I repository sono ora separati con responsabilità chiare:
+
+AuthRepository:
+
+Gestione credenziali e autenticazione
+Gestione token di reset password
+Tracking degli accessi
+Sicurezza delle password
+UserRepository:
+
+Operazioni CRUD pure
+Soft delete implementato
+Ricerca avanzata con filtri e paginazione
+Gestione errori migliorata e consistente
+Entrambi i repository:
+
+Utilizzano logging dettagliato
+Implementano gestione errori standardizzata
+Seguono il principio di responsabilità singola
+
+I controller sono ora ottimizzati con:
+
+AuthController:
+
+Gestione completa autenticazione
+Gestione sicura dei token tramite cookies
+Reset e cambio password
+Refresh token implementato
+UserController:
+
+Operazioni CRUD pulite
+Gestione profilo utente
+Gestione permessi
+Paginazione e filtri per le liste
+Entrambi i controller:
+
+Logging dettagliato
+Gestione errori consistente
+Separazione chiara delle responsabilità
+Integrazione con i servizi
+Risposte standardizzate

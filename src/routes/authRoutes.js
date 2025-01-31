@@ -2,13 +2,14 @@
  * @file authRoutes.js
  * @description Router per la gestione dell'autenticazione
  * @author Raika-sama
- * @date 2025-01-05
+ * @date 2025-01-31
  */
 
 const express = require('express');
 const router = express.Router();
 const { auth: authController } = require('../controllers');
-const { protect, restrictTo } = require('../middleware/authMiddleware');const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+const { protect, loginLimiter } = require('../middleware/authMiddleware');
+const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
 /**
@@ -48,6 +49,7 @@ router.post('/register',
 );
 
 router.post('/login', 
+    loginLimiter,
     asyncHandler(authController.login.bind(authController))
 );
 
@@ -72,7 +74,7 @@ router.get('/verify', protect, asyncHandler(async (req, res) => {
                 valid: true,
                 user: {
                     id: req.user._id,
-                    schoolId: req.user.schoolId || null,  // Gestiamo il caso null
+                    schoolId: req.user.schoolId || null,
                     role: req.user.role,
                     tokenExpiresAt: new Date(req.user.tokenExp * 1000).toISOString()
                 }
@@ -102,6 +104,10 @@ router.get('/me',
     asyncHandler(authController.getMe.bind(authController))
 );
 
+router.post('/refresh-token',
+    asyncHandler(authController.refreshToken.bind(authController))
+);
+
 router.put('/update-password', 
     asyncHandler(authController.updatePassword.bind(authController))
 );
@@ -109,8 +115,6 @@ router.put('/update-password',
 router.post('/logout', 
     asyncHandler(authController.logout.bind(authController))
 );
-
-
 
 // Error handler specifico per le route di autenticazione
 router.use((err, req, res, next) => {

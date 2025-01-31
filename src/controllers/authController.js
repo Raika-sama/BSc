@@ -1,479 +1,243 @@
-/**
- * @file authController.js
- * @description Controller per la gestione dell'autenticazione
- */
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+// src/controllers/AuthController.js
+const BaseController = require('./baseController');
+const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
-const config = require('../config/config');
-const { user: UserRepository } = require('../repositories');
-const UserAudit = require('../models/UserAudit');
 
-class AuthController {
-    constructor() {
-        this.repository = UserRepository;
-        
-        // Binding dei metodi
-        this.login = this.login.bind(this);
-        this.register = this.register.bind(this);
-        this.logout = this.logout.bind(this);
-        this.getMe = this.getMe.bind(this);
-        this.forgotPassword = this.forgotPassword.bind(this);
-        this.resetPassword = this.resetPassword.bind(this);
-        this.updatePassword = this.updatePassword.bind(this);
+class AuthController extends BaseController {
+    constructor(authService, userService, sessionService) {
+        super();
+        this.authService = authService;
+        this.userService = userService;
+        this.sessionService = sessionService;
     }
 
     /**
-     * Genera il token JWT
-     * @private
+     * Login utente
      */
-    _createToken(userId) {
-        const token = jwt.sign(
-            { id: userId },
-            config.jwt.secret,
-            { expiresIn: config.jwt.expiresIn }
-        );
-
-        // Calcola la data di scadenza del token
-        const decoded = jwt.decode(token);
-        const expiresAt = new Date(decoded.exp * 1000);
-
-        return { token, expiresAt };
-    }
-
-    /**
-     * Invia il token nella risposta
-     * @private
-     */
-    async _sendTokenResponse(user, statusCode, res, req) {
+    async login(req, res) {
         try {
-            const { token, expiresAt } = this._createToken(user._id);
-
-            logger.debug('Token generation successful', { 
-                userId: user._id,
-                tokenLength: token.length,
-                expiresAt
-            });
-
-            // Crea la sessione token
-            const sessionToken = {
-                token,
-                createdAt: new Date(),
-                lastUsedAt: new Date(),
-                userAgent: req.headers['user-agent'],
-                ipAddress: req.ip,
-                expiresAt
-            };
-
-            // Usa il nuovo metodo addSessionToken
-            user.addSessionToken(sessionToken);
-            await user.save({ validateBeforeSave: false });
-
-            // Filtriamo i dati sensibili per la risposta
-            const userResponse = {
-                id: user._id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
-                role: user.role,
-                permissions: user.permissions,
-                schoolId: user.schoolId
-            };
-
-            logger.info('Login successful', {
-                userId: user._id,
-                role: user.role,
-                ip: req.ip
-            });
-
-            res.status(statusCode).json({
-                status: 'success',
-                token,
-                expiresAt,
-                data: { user: userResponse }
-            });
-        } catch (error) {
-            logger.error('Error in _sendTokenResponse', {
-                error: error.message,
-                stack: error.stack,
-                userId: user._id
-            });
-            throw error;
-        }
-    }
-
-
-    /**
-     * Registrazione nuovo utente
-     * @public
-     */
-    async register(req, res, next) {
-        try {
-            const { email, password, firstName, lastName, role } = req.body;
-            logger.debug('Registering new user:', { email, firstName, lastName, role });
-    
-            if (!email || !password || !firstName || !lastName || !role) {
-                logger.warn('Missing required fields for user registration');
-                throw createError(
-                    ErrorTypes.VALIDATION.MISSING_FIELD,
-                    'Dati utente incompleti'
-                );
-            }
-    
-            // Verifica esistenza email
-            const existingUser = await this.repository.findByEmail(email);
-            if (existingUser) {
-                logger.warn('Email already exists:', email);
-                throw createError(
-                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
-                    'Email già registrata'
-                );
-            }
-    
-            const user = await this.repository.create({
-                email,
-                password,
-                role,
-                firstName,
-                lastName,
-                status: 'active'
-            });
-    
-            logger.info('New user registered successfully:', { userId: user._id });
-            
-            // Audit trail
-            await UserAudit.create({
-                userId: user._id,
-                action: 'user_created',
-                performedBy: req.user?.id || user._id,
-                ipAddress: req.ip,
+            logger.debug('Login attempt', { 
+                email: req.body.email,
+                ip: req.ip,
                 userAgent: req.headers['user-agent']
             });
 
-            await this._sendTokenResponse(user, 201, res, req); // Aggiunto await e req
-        } catch (error) {
-            next(error);
-        }
-    }
+            const { email, password } = req.body;
 
-    /**
-     * Login utente
-     * @public
-     */
-/**
-     * Login utente
-     * @public
-     */
-async login(req, res, next) {
-    try {
-        const { email, password } = req.body;
-        logger.debug('Login attempt', { 
-            email,
-            ip: req.ip,
-            userAgent: req.headers['user-agent']
-        });
-
-        if (!email || !password) {
-            throw createError(
-                ErrorTypes.VALIDATION.MISSING_FIELD,
-                'Inserire email e password'
-            );
-        }
-
-        const user = await User.findOne({ email }).select('+password');
-        if (!user) {
-            throw createError(
-                ErrorTypes.AUTH.INVALID_CREDENTIALS,
-                'Credenziali non valide'
-            );
-        }
-
-        // Verifica se l'account è bloccato
-        if (user.isLocked()) {
-            throw createError(
-                ErrorTypes.AUTH.ACCOUNT_LOCKED,
-                'Account temporaneamente bloccato'
-            );
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            user.loginAttempts += 1;
-            
-            // Blocca l'account dopo 5 tentativi falliti
-            if (user.loginAttempts >= 5) {
-                user.lockUntil = new Date(Date.now() + 30 * 60 * 1000); // 30 minuti
-                logger.warn('Account locked due to multiple failed attempts', {
-                    userId: user._id,
-                    lockUntil: user.lockUntil
-                });
+            if (!email || !password) {
+                throw createError(
+                    ErrorTypes.VALIDATION.MISSING_FIELDS,
+                    'Email e password sono richiesti'
+                );
             }
-            
-            await user.save({ validateBeforeSave: false });
-            
-            throw createError(
-                ErrorTypes.AUTH.INVALID_CREDENTIALS,
-                'Credenziali non valide'
-            );
+
+            const metadata = {
+                ipAddress: req.ip,
+                userAgent: req.headers['user-agent']
+            };
+
+            const { user, accessToken, refreshToken } = 
+                await this.authService.login(email, password, metadata);
+
+            // Imposta cookie sicuri
+            this.setTokenCookies(res, accessToken, refreshToken);
+
+            logger.info('Login successful', { 
+                userId: user._id
+            });
+
+            this.sendResponse(res, {
+                status: 'success',
+                user,
+                accessToken
+            });
+        } catch (error) {
+            logger.error('Login failed', { error });
+            this.handleError(res, error);
         }
-
-        // Reset login attempts on successful login
-        user.loginAttempts = 0;
-        user.lockUntil = null;
-        user.lastLogin = new Date();
-        await user.save({ validateBeforeSave: false });
-
-        await UserAudit.create({
-            userId: user._id,
-            action: 'login',
-            performedBy: user._id,
-            ipAddress: req.ip,
-            userAgent: req.headers['user-agent']
-        });
-
-        await this._sendTokenResponse(user, 200, res, req);
-    } catch (error) {
-        logger.error('Login error:', error);
-        next(error);
     }
-}
-
 
     /**
      * Logout utente
-     * @public
      */
-    async logout(req, res, next) {
+    async logout(req, res) {
         try {
-            if (req.user) {
-                const token = req.headers.authorization?.split(' ')[1];
-                
-                if (token) {
-                    const user = await User.findById(req.user.id);
-                    if (user) {
-                        // Usa il nuovo metodo removeSessionToken
-                        user.removeSessionToken(token);
-                        await user.save({ validateBeforeSave: false });
-                    }
-                }
+            const refreshToken = req.cookies['refresh-token'];
 
-                await UserAudit.create({
-                    userId: req.user.id,
-                    action: 'logout',
-                    performedBy: req.user.id,
-                    ipAddress: req.ip,
-                    userAgent: req.headers['user-agent']
-                });
+            if (refreshToken) {
+                await this.authService.logout(refreshToken);
+                await this.sessionService.removeSession(req.user.id, refreshToken);
             }
 
-            logger.info('User logged out successfully:', { 
-                userId: req.user?.id,
-                ip: req.ip
+            // Rimuovi cookie
+            this.clearTokenCookies(res);
+
+            logger.info('Logout successful', { 
+                userId: req.user.id 
             });
 
-            res.status(200).json({
+            this.sendResponse(res, {
                 status: 'success',
-                data: null
+                message: 'Logout effettuato con successo'
             });
         } catch (error) {
-            logger.error('Logout error:', error);
-            next(error);
+            logger.error('Logout failed', { error });
+            this.handleError(res, error);
+        }
+    }
+
+    /**
+     * Refresh del token di accesso
+     */
+    async refreshToken(req, res) {
+        try {
+            const refreshToken = req.cookies['refresh-token'];
+
+            if (!refreshToken) {
+                throw createError(
+                    ErrorTypes.AUTH.NO_TOKEN,
+                    'Token di refresh non trovato'
+                );
+            }
+
+            const { user, accessToken, newRefreshToken } = 
+                await this.authService.refreshTokens(refreshToken);
+
+            // Aggiorna cookie
+            this.setTokenCookies(res, accessToken, newRefreshToken);
+
+            logger.info('Token refreshed', { 
+                userId: user._id 
+            });
+
+            this.sendResponse(res, {
+                status: 'success',
+                accessToken
+            });
+        } catch (error) {
+            logger.error('Token refresh failed', { error });
+            this.handleError(res, error);
         }
     }
 
     /**
      * Richiesta reset password
-     * @public
      */
-    async forgotPassword(req, res, next) {
+    async forgotPassword(req, res) {
         try {
-            const user = await this.repository.findOne({ email: req.body.email });
+            const { email } = req.body;
 
-            if (!user) {
+            if (!email) {
                 throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Non esiste un utente con questa email'
+                    ErrorTypes.VALIDATION.MISSING_FIELDS,
+                    'Email richiesta'
                 );
             }
 
-            // Genera token reset
-            const resetToken = user.getResetPasswordToken();
-            await user.save({ validateBeforeSave: false });
+            await this.authService.requestPasswordReset(email);
 
-            // Audit trail
-            await UserAudit.create({
-                userId: user._id,
-                action: 'password_reset_requested',
-                performedBy: user._id,
-                ipAddress: req.ip,
-                userAgent: req.headers['user-agent']
-            });
+            logger.info('Password reset requested', { email });
 
-            // Per ora, restituisci il token direttamente (solo in development)
-            res.status(200).json({
+            this.sendResponse(res, {
                 status: 'success',
-                message: 'Token generato',
-                ...(config.env === 'development' && { resetToken })
+                message: 'Email di reset inviata con successo'
             });
         } catch (error) {
-            logger.error('Password reset request error:', error);
-            next(error);
+            logger.error('Password reset request failed', { error });
+            this.handleError(res, error);
         }
     }
 
     /**
      * Reset password
-     * @public
      */
-    async resetPassword(req, res, next) {
+    async resetPassword(req, res) {
         try {
-            const resetPasswordToken = crypto
-                .createHash('sha256')
-                .update(req.params.token)
-                .digest('hex');
+            const { token, password } = req.body;
 
-            const user = await this.repository.findOne({
-                resetPasswordToken,
-                resetPasswordExpire: { $gt: Date.now() }
-            });
-
-            if (!user) {
+            if (!token || !password) {
                 throw createError(
-                    ErrorTypes.AUTH.TOKEN_INVALID,
-                    'Token non valido o scaduto'
+                    ErrorTypes.VALIDATION.MISSING_FIELDS,
+                    'Token e nuova password richiesti'
                 );
             }
 
-            // Salva vecchia password nella history
-            user.passwordHistory = user.passwordHistory || [];
-            user.passwordHistory.push({
-                password: user.password,
-                changedAt: new Date()
-            });
+            await this.authService.resetPassword(token, password);
 
-            // Limita la history a 5 password
-            if (user.passwordHistory.length > 5) {
-                user.passwordHistory.shift();
-            }
+            logger.info('Password reset successful');
 
-            user.password = req.body.password;
-            user.resetPasswordToken = undefined;
-            user.resetPasswordExpire = undefined;
-            await user.save();
-
-            // Audit trail
-            await UserAudit.create({
-                userId: user._id,
-                action: 'password_reset_completed',
-                performedBy: user._id,
-                ipAddress: req.ip,
-                userAgent: req.headers['user-agent']
-            });
-
-            logger.info('Password reset completed:', { userId: user._id });
-            this._sendTokenResponse(user, 200, res);
-        } catch (error) {
-            logger.error('Password reset error:', error);
-            next(error);
-        }
-    }
-
-    /**
-     * Aggiorna password
-     * @public
-     */
-    async updatePassword(req, res, next) {
-        try {
-            const user = await this.repository.findById(req.user.id).select('+password');
-    
-            if (!(await user.comparePassword(req.body.currentPassword))) {
-                throw createError(
-                    ErrorTypes.AUTH.INVALID_CREDENTIALS,
-                    'Password corrente non valida'
-                );
-            }
-
-            // Salva vecchia password nella history
-            user.passwordHistory = user.passwordHistory || [];
-            user.passwordHistory.push({
-                password: user.password,
-                changedAt: new Date()
-            });
-
-            // Limita la history a 5 password
-            if (user.passwordHistory.length > 5) {
-                user.passwordHistory.shift();
-            }
-    
-            user.password = req.body.newPassword;
-            await user.save();
-
-            // Audit trail
-            await UserAudit.create({
-                userId: user._id,
-                action: 'password_changed',
-                performedBy: req.user.id,
-                ipAddress: req.ip,
-                userAgent: req.headers['user-agent']
-            });
-    
-            logger.info('Password updated successfully:', { userId: user._id });
-            await this._sendTokenResponse(user, 200, res, req); // Aggiunto await e req
-        } catch (error) {
-            logger.error('Password update error:', error);
-            next(error);
-        }
-    }
-
-    /**
-     * Ottieni utente corrente
-     * @public
-     */
-    async getMe(req, res, next) {
-        try {
-            logger.debug('GetMe - Request user:', { 
-                userId: req.user.id, 
-                user_Id: req.user._id 
-            });
-
-            const user = await this.repository.findById(req.user._id || req.user.id);
-
-            if (!user) {
-                logger.error('User not found in database', {
-                    requestedId: req.user.id,
-                    requested_Id: req.user._id
-                });
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Utente non trovato'
-                );
-            }
-
-            logger.info('User profile retrieved successfully:', {
-                userId: user._id,
-                email: user.email
-            });
-
-            res.status(200).json({
+            this.sendResponse(res, {
                 status: 'success',
-                data: { 
-                    user: {
-                        id: user._id,
-                        firstName: user.firstName,
-                        lastName: user.lastName,
-                        email: user.email,
-                        role: user.role,
-                        permissions: user.permissions,
-                        schoolId: user.schoolId
-                    }
-                }
+                message: 'Password aggiornata con successo'
             });
         } catch (error) {
-            logger.error('Get user profile error:', error);
-            next(error);
+            logger.error('Password reset failed', { error });
+            this.handleError(res, error);
         }
+    }
+
+    /**
+     * Cambio password
+     */
+    async changePassword(req, res) {
+        try {
+            const { currentPassword, newPassword } = req.body;
+            const userId = req.user.id;
+
+            if (!currentPassword || !newPassword) {
+                throw createError(
+                    ErrorTypes.VALIDATION.MISSING_FIELDS,
+                    'Password corrente e nuova password richieste'
+                );
+            }
+
+            await this.authService.changePassword(
+                userId, 
+                currentPassword, 
+                newPassword
+            );
+
+            // Invalida tutte le sessioni esistenti
+            await this.sessionService.removeAllSessions(userId);
+
+            logger.info('Password changed', { userId });
+
+            this.sendResponse(res, {
+                status: 'success',
+                message: 'Password cambiata con successo'
+            });
+        } catch (error) {
+            logger.error('Password change failed', { error });
+            this.handleError(res, error);
+        }
+    }
+
+    /**
+     * Utility per impostare i cookie dei token
+     */
+    setTokenCookies(res, accessToken, refreshToken) {
+        res.cookie('access-token', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000 // 15 minuti
+        });
+
+        res.cookie('refresh-token', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 giorni
+        });
+    }
+
+    /**
+     * Utility per rimuovere i cookie dei token
+     */
+    clearTokenCookies(res) {
+        res.clearCookie('access-token');
+        res.clearCookie('refresh-token');
     }
 }
 
-module.exports = new AuthController();
+module.exports = AuthController;

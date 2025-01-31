@@ -1,266 +1,125 @@
+// src/middleware/authMiddleware.js
+const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
-const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
-const { user: UserRepository } = require('../repositories');
-const UserAudit = require('../models/UserAudit');
 
-/**
- * Middleware di protezione delle route
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @param {Function} next - Next middleware function
- */
-const protect = async (req, res, next) => {
-    try {
-        // 1. Log iniziale della richiesta
-        logger.debug('⭐ PROTECT MIDDLEWARE START', {
-            path: req.path,
-            method: req.method,
-            headers: req.headers,
-            cookies: req.cookies
+// Rate Limiter per tentativi di login
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minuti
+    max: 5, // limite di 5 tentativi
+    message: 'Troppi tentativi di login. Riprova più tardi.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+        logger.warn('Rate limit exceeded', {
+            ip: req.ip,
+            path: req.path
         });
-
-        // 2. Verifica token
-        let token;
-        const authHeader = req.headers.authorization;
-        logger.debug('🔍 Examining Authorization Header', {
-            hasAuthHeader: !!authHeader,
-            headerValue: authHeader,
-            startsWith: authHeader?.startsWith('Bearer ')
-        });
-        
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            token = authHeader.split(' ')[1];
-            logger.debug('📝 Token extracted from header', { 
-                token: token?.substring(0, 20) + '...' 
-            });
-        } else {
-            logger.warn('❌ No valid Bearer token found in request');
-            throw createError(
-                ErrorTypes.AUTH.NO_TOKEN,
-                'Token di autenticazione mancante o non valido'
-            );
-        }
-
-        // 3. Decodifica e verifica token
-        logger.debug('🔑 Attempting to verify token');
-        const decoded = jwt.verify(token, config.jwt.secret);
-        logger.debug('✅ Token verified successfully', {
-            decoded: {
-                id: decoded.id,
-                exp: new Date(decoded.exp * 1000),
-                iat: new Date(decoded.iat * 1000),
-                timeUntilExpiration: ((decoded.exp * 1000) - Date.now()) / 1000 / 60 + ' minutes'
+        res.status(429).json({
+            status: 'error',
+            error: {
+                code: 'RATE_LIMIT_EXCEEDED',
+                message: 'Troppi tentativi. Riprova più tardi.'
             }
         });
-
-        // 4. Ricerca utente
-        logger.debug('👤 Looking up user', { userId: decoded.id });
-        const user = await UserRepository.findById(decoded.id);
-        logger.debug('👤 User lookup result', {
-            found: !!user,
-            userData: user ? {
-                id: user._id,
-                email: user.email,
-                role: user.role,
-                isActive: user.isActive,
-                status: user.status,
-                hasSchoolId: !!user.schoolId,
-                schoolId: user.schoolId?.toString()
-            } : 'null'
-        });
-
-        if (!user) {
-            logger.warn('❌ User not found in database', { userId: decoded.id });
-            throw createError(
-                ErrorTypes.AUTH.USER_NOT_FOUND,
-                'Utente non trovato'
-            );
-        }
-
-        // 5. Verifica status utente
-        if (user.status !== 'active') {
-            logger.warn('❌ User account not active', { 
-                userId: user._id,
-                status: user.status
-            });
-            throw createError(
-                ErrorTypes.AUTH.UNAUTHORIZED,
-                'Account non attivo'
-            );
-        }
-
-        // 6. Verifica lock utente
-        if (user.lockUntil && user.lockUntil > Date.now()) {
-            logger.warn('❌ User account locked', { 
-                userId: user._id,
-                lockUntil: user.lockUntil
-            });
-            throw createError(
-                ErrorTypes.AUTH.ACCOUNT_LOCKED,
-                'Account temporaneamente bloccato'
-            );
-        }
-
-        // 7. Setup user in request con informazioni complete
-        const userForRequest = {
-            id: user._id.toString(),
-            _id: user._id,
-            schoolId: user.schoolId?.toString() || null,
-            role: user.role,
-            permissions: user.permissions || [],
-            tokenExp: decoded.exp
-        };
-
-        logger.debug('📋 Setting user in request', {
-            userForRequest,
-            originalUser: {
-                id: user._id,
-                role: user.role,
-                schoolId: user.schoolId
-            }
-        });
-
-        req.user = userForRequest;
-
-        // 8. Audit trail
-        await UserAudit.create({
-            userId: user._id,
-            action: 'api_access',
-            performedBy: user._id,
-            changes: {
-                endpoint: req.originalUrl,
-                method: req.method
-            },
-            ipAddress: req.ip,
-            userAgent: req.headers['user-agent']
-        }).catch(err => {
-            logger.error('Failed to create audit trail', { error: err });
-        });
-
-        logger.info('✨ Authentication successful', {
-            userId: user._id,
-            role: user.role,
-            hasSchool: !!user.schoolId,
-            tokenExpiresIn: ((decoded.exp * 1000) - Date.now()) / 1000 / 60 + ' minutes'
-        });
-
-        next();
-    } catch (error) {
-        logger.error('🔥 Authentication Error', {
-            errorType: error.name,
-            errorMessage: error.message,
-            errorCode: error.code,
-            stack: error.stack,
-            tokenInfo: error.expiredAt ? {
-                expiredAt: error.expiredAt,
-                now: new Date()
-            } : undefined
-        });
-
-        // Gestione specifica degli errori JWT
-        if (error.name === 'JsonWebTokenError') {
-            return next(createError(
-                ErrorTypes.AUTH.INVALID_TOKEN,
-                'Token non valido'
-            ));
-        }
-
-        if (error.name === 'TokenExpiredError') {
-            return next(createError(
-                ErrorTypes.AUTH.TOKEN_EXPIRED,
-                'Sessione scaduta, effettua nuovamente il login'
-            ));
-        }
-
-        next(error);
     }
-};
+});
 
-/**
- * Middleware per la restrizione degli accessi basata sui ruoli
- * @param {...String} roles - Ruoli autorizzati
- */
-const restrictTo = (...roles) => {
-    return (req, res, next) => {
-        logger.debug('🔒 Checking role restriction', {
-            userRole: req.user?.role,
-            requiredRoles: roles
-        });
+class AuthMiddleware {
+    constructor(authService, sessionService) {
+        this.authService = authService;
+        this.sessionService = sessionService;
+        this.tokenBlacklist = new Set(); // In produzione usare Redis
+    }
 
-        if (!req.user) {
-            logger.warn('❌ No user found in request');
-            return next(createError(
-                ErrorTypes.AUTH.NO_AUTH,
-                'Autenticazione richiesta'
-            ));
-        }
+    /**
+     * Middleware di protezione route
+     */
+    protect = async (req, res, next) => {
+        try {
+            const token = this.extractToken(req);
+            
+            if (!token) {
+                throw createError(
+                    ErrorTypes.AUTH.NO_TOKEN,
+                    'Autenticazione richiesta'
+                );
+            }
 
-        if (!roles.includes(req.user.role)) {
-            logger.warn('❌ Unauthorized role access attempt', {
-                userId: req.user.id,
-                userRole: req.user.role,
-                requiredRoles: roles
+            // Verifica blacklist
+            if (this.tokenBlacklist.has(token)) {
+                throw createError(
+                    ErrorTypes.AUTH.TOKEN_BLACKLISTED,
+                    'Token non più valido'
+                );
+            }
+
+            // Verifica e decodifica token
+            const decoded = await this.authService.verifyToken(token);
+
+            // Verifica sessione
+            const session = await this.sessionService.validateSession(
+                decoded.sessionId
+            );
+
+            // Aggiorna lastUsedAt della sessione
+            await this.sessionService.updateSessionUsage(decoded.sessionId);
+
+            // Aggiungi user al request
+            req.user = {
+                id: decoded.id,
+                role: decoded.role,
+                permissions: decoded.permissions,
+                sessionId: decoded.sessionId
+            };
+
+            logger.debug('Authentication successful', {
+                userId: decoded.id,
+                path: req.path
             });
-            return next(createError(
-                ErrorTypes.AUTH.FORBIDDEN,
-                'Non hai i permessi per questa azione'
-            ));
-        }
 
-        logger.debug('✅ Role check passed', {
-            userRole: req.user.role,
-            requiredRoles: roles
-        });
-
-        next();
-    };
-};
-
-/**
- * Middleware per la verifica dei permessi specifici
- * @param {String} permission - Permesso richiesto
- */
-const hasPermission = (permission) => {
-    return (req, res, next) => {
-        logger.debug('🔒 Checking specific permission', {
-            userId: req.user?.id,
-            requiredPermission: permission,
-            userPermissions: req.user?.permissions
-        });
-
-        if (!req.user) {
-            logger.warn('❌ No user found in request');
-            return next(createError(
-                ErrorTypes.AUTH.NO_AUTH,
-                'Autenticazione richiesta'
-            ));
-        }
-
-        if (!req.user.permissions?.includes(permission)) {
-            logger.warn('❌ Permission denied', {
-                userId: req.user.id,
-                requiredPermission: permission,
-                userPermissions: req.user.permissions
+            next();
+        } catch (error) {
+            logger.error('Authentication failed', {
+                error,
+                path: req.path,
+                ip: req.ip
             });
-            return next(createError(
-                ErrorTypes.AUTH.FORBIDDEN,
-                'Permesso mancante'
-            ));
+            next(error);
+        }
+    };
+
+    /**
+     * Estrae token dalla request
+     */
+    extractToken = (req) => {
+        if (req.cookies && req.cookies['access-token']) {
+            return req.cookies['access-token'];
         }
 
-        logger.debug('✅ Permission check passed', {
-            permission,
-            userId: req.user.id
-        });
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            return authHeader.split(' ')[1];
+        }
 
-        next();
+        return null;
     };
-};
+
+    /**
+     * Aggiunge token alla blacklist
+     */
+    blacklistToken = (token) => {
+        this.tokenBlacklist.add(token);
+        // In produzione, impostare TTL basato sulla scadenza del token
+        setTimeout(() => {
+            this.tokenBlacklist.delete(token);
+        }, 24 * 60 * 60 * 1000); // 24 ore
+    };
+}
 
 module.exports = {
-    protect,
-    restrictTo,
-    hasPermission
+    AuthMiddleware,
+    loginLimiter
 };

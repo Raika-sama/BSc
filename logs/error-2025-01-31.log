@@ -31,3 +31,5 @@
 {"error":{},"level":"error","message":"Unhandled Auth Route Error","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-31T19:37:24.329Z"}
 {"code":"AUTH_004","level":"error","message":"Account disattivato","metadata":{},"status":401,"timestamp":"2025-01-31T19:39:30.196Z"}
 {"code":"AUTH_004","level":"error","message":"Account disattivato","metadata":{},"status":401,"timestamp":"2025-01-31T19:41:21.615Z"}
+{"level":"error","message":"Login error:","timestamp":"2025-01-31T20:02:58.148Z"}
+{"error":{},"level":"error","message":"Unhandled Auth Route Error","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-31T20:02:58.149Z"}
