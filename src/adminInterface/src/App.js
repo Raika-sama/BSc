@@ -9,12 +9,13 @@ import { ClassProvider } from './context/ClassContext';
 import { StudentProvider } from './context/StudentContext';
 import setupAxiosInterceptors from './services/axiosConfig';
 import MainLayout from './components/layout/MainLayout';
-import Login from './components/Login';
+import Login from './components/home/Login';
 import Unauthorized from './components/Unauthorized';
 import PrivateRoute from './routes/PrivateRoute';
 import { adminRoutes } from './routes/routes';
 import PublicCSI from './components/engines/CSI/publicCSI';
 import { CircularProgress, Box } from '@mui/material';
+import HomePage from './components/home/HomePage';
 
 import './styles.css';
 
@@ -46,11 +47,13 @@ function App() {
                                     <Suspense fallback={<LoadingFallback />}>
                                         <Routes>
                                             {/* Public routes */}
-                                            <Route path="/login" element={<Login />} />
+                                            <Route path="/" element={<HomePage />} /> {/* Nuova root route */}
+                                            {/* Public routes */}
+                                            <Route path="/" element={<HomePage />} /> {/* Nuova root route */}
                                             <Route path="/unauthorized" element={<Unauthorized />} />
-                                            <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
                                             <Route path="/test/csi/:token" element={<PublicCSI />} />
-
+                                            <Route path="/unauthorized" element={<Unauthorized />} />
+                                            <Route path="/test/csi/:token" element={<PublicCSI />} />
                                             {/* Protected admin routes */}
                                             <Route
                                                 path="/admin/*"

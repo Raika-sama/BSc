@@ -424,39 +424,101 @@ async deactivateSection(req, res) {
 /**
  * Riattiva una sezione precedentemente disattivata
  */
-async reactivateSection(req, res) {
+async reactivateSection(schoolId, sectionName) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-        const { schoolId, sectionName } = req.params;
+        logger.debug('Riattivazione sezione:', { schoolId, sectionName });
 
-        logger.debug('Richiesta riattivazione sezione:', {
+        // 1. Recupera la scuola con il manager
+        const school = await this.model.findById(schoolId)
+            .populate('manager')  // Aggiungiamo populate del manager
+            .session(session);
+        
+        if (!school) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            );
+        }
+
+        // 2. Trova la sezione
+        const section = school.sections.find(s => s.name === sectionName);
+        
+        if (!section) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Sezione non trovata'
+            );
+        }
+
+        // 3. Modifica la sezione
+        section.isActive = true;
+        section.deactivatedAt = undefined;
+
+        // 4. Trova e riattiva tutte le classi della sezione
+        const classesToReactivate = await Class.find({
+            schoolId,
+            section: sectionName,
+            isActive: false
+        }).session(session);
+
+        logger.debug('Classi da riattivare trovate:', {
+            count: classesToReactivate.length,
+            classi: classesToReactivate.map(c => ({
+                id: c._id,
+                year: c.year,
+                section: c.section
+            }))
+        });
+
+        // 5. Aggiorna le classi con il mainTeacher
+        for (const classDoc of classesToReactivate) {
+            classDoc.isActive = true;
+            classDoc.status = 'planned';
+            classDoc.deactivatedAt = undefined;
+            classDoc.updatedAt = new Date();
+            
+            // Logica del mainTeacher
+            if (classDoc.previousMainTeacher) {
+                classDoc.mainTeacher = classDoc.previousMainTeacher;
+            } else {
+                classDoc.mainTeacher = school.manager._id;
+            }
+            
+            await classDoc.save({ session });
+        }
+
+        // 6. Salva le modifiche alla scuola
+        const updatedSchool = await school.save({ session });
+
+        await session.commitTransaction();
+        
+        logger.info('Sezione e classi riattivate con successo:', {
             schoolId,
             sectionName,
-            userId: req.user._id
+            classesReactivated: classesToReactivate.length,
+            usingManagerAsTeacher: classesToReactivate.some(c => 
+                c.mainTeacher.toString() === school.manager._id.toString()
+            )
         });
 
-        const { school, classesReactivated } = await this.repository.reactivateSection(
-            schoolId, 
-            sectionName
-        );
-
-        logger.info('Sezione riattivata con successo:', {
-            schoolId,
-            sectionName,
-            classesReactivated
-        });
-
-        this.sendResponse(res, {
-            message: 'Sezione riattivata con successo',
-            school,
-            classesReactivated
-        });
+        return {
+            school: updatedSchool,
+            classesReactivated: classesToReactivate.length
+        };
 
     } catch (error) {
-        logger.error('Errore nella riattivazione della sezione:', {
-            error: error.message,
-            stack: error.stack
+        await session.abortTransaction();
+        logger.error('Errore durante la riattivazione della sezione:', {
+            error,
+            schoolId,
+            sectionName
         });
-        this.sendError(res, error);
+        throw error;
+    } finally {
+        session.endSession();
     }
 }
 

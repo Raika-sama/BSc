@@ -389,10 +389,12 @@ const getSectionStudents = async (schoolId, sectionName) => {
                 // Aggiorniamo selectedSchool con i nuovi dati
                 setSelectedSchool(school);
     
-                showNotification(
-                    `Sezione ${sectionName} riattivata con successo. ${classesReactivated} classi riattivate.`,
-                    'success'
-                );
+                // Notifica più informativa
+                const message = classesReactivated > 0 
+                    ? `Sezione ${sectionName} riattivata con successo. ${classesReactivated} classi riattivate. Il docente principale precedente è stato ripristinato dove disponibile.`
+                    : `Sezione ${sectionName} riattivata con successo`;
+    
+                showNotification(message, 'success');
                 return response.data.data;
             }
         } catch (error) {

@@ -672,6 +672,7 @@ async findWithDetails(id) {
         
                 // 2. Aggiorna lo stato delle classi
                 for (const classDoc of classes) {
+                    classDoc.previousMainTeacher = classDoc.mainTeacher;
                     // Resetta tutti i campi
                     classDoc.isActive = false;
                     classDoc.status = 'archived';

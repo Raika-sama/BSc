@@ -46,6 +46,10 @@ const ClassPopulate = () => {
                 if (!details) {
                     throw new Error('Impossibile recuperare i dettagli della classe');
                 }
+                 // Assicuriamoci che i dati dei docenti siano completi
+                if (!details.mainTeacher || !details.mainTeacher._id) {
+                    console.warn('Warning: mainTeacher data incomplete');
+                }
         
                 setClassData(details);
         

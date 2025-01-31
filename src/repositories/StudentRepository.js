@@ -302,10 +302,10 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
     session.startTransaction();
 
     try {
-        // 1. Verifica esistenza e dettagli della classe
+        // 1. Verifica esistenza e dettagli della classe con populate più specifico
         const classDoc = await Class.findById(classId)
-            .populate('mainTeacher')
-            .populate('teachers')
+            .populate('mainTeacher', '_id firstName lastName email')  // Specifichiamo i campi
+            .populate('teachers', '_id firstName lastName email')     // Specifichiamo i campi
             .session(session);
 
         if (!classDoc) {
@@ -313,6 +313,11 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                 ErrorTypes.VALIDATION.NOT_FOUND,
                 'Classe non trovata'
             );
+        }
+
+        // Verifica presenza docente principale
+        if (!classDoc.mainTeacher?._id) {
+            logger.warn('MainTeacher not found for class:', { classId });
         }
 
         // 2. Verifica studenti e che siano assegnabili
@@ -332,7 +337,11 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             );
         }
 
-        // 4. Aggiorna gli studenti con mainTeacher della classe
+        // Prepara i dati dei docenti verificando la loro validità
+        const teacherIds = classDoc.teachers?.filter(t => t?._id).map(t => t._id) || [];
+        const mainTeacherId = classDoc.mainTeacher?._id;
+
+        // 4. Aggiorna gli studenti
         const updateResult = await this.model.updateMany(
             {
                 _id: { $in: studentIds },
@@ -346,8 +355,8 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                     needsClassAssignment: false,
                     currentYear: classDoc.year,
                     section: classDoc.section,
-                    mainTeacher: classDoc.mainTeacher?._id, // Aggiungiamo il mainTeacher dalla classe
-                    teachers: classDoc.teachers?.map(t => t._id) || [],
+                    mainTeacher: mainTeacherId,        // Usiamo l'ID validato
+                    teachers: teacherIds,              // Usiamo gli ID validati
                     lastClassChangeDate: new Date()
                 },
                 $push: {
@@ -361,9 +370,8 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                         date: new Date(),
                         academicYear: academicYear,
                         reason: 'Assegnazione a nuova classe',
-                        // Aggiungiamo informazioni sui docenti nel record storico
-                        mainTeacher: classDoc.mainTeacher?._id,
-                        teachers: classDoc.teachers?.map(t => t._id) || []
+                        mainTeacher: mainTeacherId,    // Usiamo l'ID validato
+                        teachers: teacherIds           // Usiamo gli ID validati
                     }
                 }
             },
@@ -375,11 +383,18 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             studentId: studentId,
             status: 'active',
             joinedAt: new Date(),
-            mainTeacher: classDoc.mainTeacher?._id // Aggiungiamo anche qui il mainTeacher
+            mainTeacher: mainTeacherId    // Usiamo l'ID validato
         }));
 
         classDoc.students.push(...newStudentRecords);
         await classDoc.save({ session });
+
+        // Log del risultato per debug
+        logger.debug('Assignment completed:', {
+            studentsAssigned: updateResult.modifiedCount,
+            mainTeacher: mainTeacherId,
+            teachersCount: teacherIds.length
+        });
 
         await session.commitTransaction();
         
