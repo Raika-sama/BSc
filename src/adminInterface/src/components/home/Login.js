@@ -1,6 +1,5 @@
-// src/components/home/Login.js
 import React, { useState } from 'react';
-import { TextField, Button, Typography, Box, CircularProgress } from '@mui/material';
+import { TextField, Button, Typography, Box, CircularProgress, Alert } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,45 +8,42 @@ const Login = ({ onSuccessfulLogin, isModal = false }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [attempts, setAttempts] = useState(0);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+  // In Login.js
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setError('');
+  setIsLoading(true);
 
-    try {
-      const userData = await login(email, password);
-      console.log('Login response:', userData); // Per debug
-      
-      if (isModal && onSuccessfulLogin) {
-        onSuccessfulLogin();
-      }
-      navigate('/admin/dashboard');
-    } catch (error) {
-      console.error('Login error details:', error); // Per debug
-      setError(
-        error.response?.data?.error?.message || 
-        error.response?.data?.message || 
-        'Email o password non validi'
-      );
-    } finally {
-      setIsLoading(false);
-    }
+  const credentials = {
+      email: email,
+      password: password
   };
+
+  try {
+      const success = await login(credentials);
+      if (success) {
+          navigate('/admin/dashboard');
+      }
+  } catch (error) {
+      setError(error.response?.data?.error?.message || 'Errore durante il login');
+  } finally {
+      setIsLoading(false);
+  }
+};
 
   return (
     <Box sx={{ p: isModal ? 4 : 0 }}>
-      <Box 
-        sx={{
-          width: '100%',
-          backgroundColor: 'background.paper',
-          borderRadius: 2,
-          boxShadow: isModal ? 0 : 3,
-          p: 4,
-        }}
-      >
+      <Box sx={{
+        width: '100%',
+        backgroundColor: 'background.paper',
+        borderRadius: 2,
+        boxShadow: isModal ? 0 : 3,
+        p: 4,
+      }}>
         <Typography 
           variant="h4" 
           component="h1" 
@@ -57,6 +53,12 @@ const Login = ({ onSuccessfulLogin, isModal = false }) => {
         >
           Admin Login
         </Typography>
+
+        {attempts >= 3 && !error.includes('bloccato') && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Attenzione: troppi tentativi falliti potrebbero bloccare l'account
+          </Alert>
+        )}
 
         <form onSubmit={handleLogin} style={{ width: '100%' }}>
           <TextField
@@ -86,14 +88,12 @@ const Login = ({ onSuccessfulLogin, isModal = false }) => {
           />
 
           {error && (
-            <Typography 
-              color="error" 
-              variant="body2" 
-              align="center"
+            <Alert 
+              severity="error" 
               sx={{ mb: 2 }}
             >
               {error}
-            </Typography>
+            </Alert>
           )}
 
           <Button

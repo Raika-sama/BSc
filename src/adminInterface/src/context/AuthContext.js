@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { axiosInstance } from '../services/axiosConfig';
 import { useNavigate } from 'react-router-dom';
+import { useNotification } from './NotificationContext';
 
 const AuthContext = createContext(null);
 
@@ -9,10 +10,23 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [permissions, setPermissions] = useState([]);
+    const [userStatus, setUserStatus] = useState(null);
+    const [token, setToken] = useState(localStorage.getItem('token') || null);
+    const { showNotification } = useNotification();
 
     useEffect(() => {
         checkAuth();
     }, []);
+
+    // Aggiungi queste funzioni
+const checkPermission = (permission) => {
+    return permissions?.includes(permission) || false;
+};
+
+const isAccountActive = () => {
+    return userStatus === 'active';
+};
 
     const checkAuth = async () => {
         try {
@@ -43,40 +57,26 @@ export const AuthProvider = ({ children }) => {
         setError('Sessione scaduta');
     };
 
-    const login = async (email, password) => {
-        try {
-            setError(null);
-            const response = await axiosInstance.post('/auth/login', {
-                email,
-                password
-            });
-
-            if (response.data.status === 'success') {
-                const userData = {
-                    ...response.data.data.user,
-                    token: response.data.token
-                };
-                
-                console.log('Login successful, user data:', userData);
-                localStorage.setItem('user', JSON.stringify(userData));
-                setUser(userData);
-                
-                // Configura l'header Authorization per le richieste successive
-                axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`;
-                
-                return userData;
-            }
-            
-            throw new Error('Login fallito');
-        } catch (err) {
-            console.error('Login error:', err);
-            const errorMessage = err.response?.data?.error?.message || 
-                               err.response?.data?.message || 
-                               'Errore durante il login';
-            setError(errorMessage);
-            throw new Error(errorMessage);
+    // In AuthContext.js
+const login = async ({email, password}) => {
+    try {
+        const response = await axiosInstance.post('/auth/login', {
+            email,
+            password
+        });
+        
+        if (response.data.status === 'success') {
+            const userData = response.data.data.user;
+            localStorage.setItem('user', JSON.stringify({...userData, token: response.data.token}));
+            setUser(userData);
+            return true;
         }
-    };
+        return false;
+    } catch (error) {
+        showNotification(error.response?.data?.error?.message || 'Errore durante il login', 'error');
+        throw error;
+    }
+};
 
     const logout = async () => {
         try {
@@ -106,15 +106,17 @@ export const AuthProvider = ({ children }) => {
         setError(null);
     };
 
+    // Aggiungi al value object
     const value = {
         user,
-        loading,
-        error,
+        token,
+        isAuthenticated: !!token,
         login,
         logout,
-        updateUser,
-        clearError,
-        isAuthenticated: !!user,
+        permissions,
+        checkPermission,
+        isAccountActive,
+        userStatus
     };
 
     if (loading) {

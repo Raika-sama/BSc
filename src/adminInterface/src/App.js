@@ -38,8 +38,9 @@ setupAxiosInterceptors();
 function App() {
     return (
         <Router>
-            <AuthProvider>
-                <NotificationProvider>
+
+            <NotificationProvider>
+                <AuthProvider>
                     <UserProvider>
                         <SchoolProvider>
                             <ClassProvider>
@@ -90,8 +91,8 @@ function App() {
                             </ClassProvider>
                         </SchoolProvider>
                     </UserProvider>
-                </NotificationProvider>
-            </AuthProvider>
+                </AuthProvider>
+            </NotificationProvider>
         </Router>
     );
 }

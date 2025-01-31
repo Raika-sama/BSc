@@ -8,7 +8,7 @@ const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const config = require('../config/config');
 const { user: UserRepository } = require('../repositories');
-// TO DO const { sendResetPasswordEmail } = require('../services/emailService');
+const UserAudit = require('../models/UserAudit');
 
 class AuthController {
     constructor() {
@@ -47,24 +47,34 @@ class AuthController {
             Date.now() + (config.jwt.cookieExpiresIn || 24) * 60 * 60 * 1000
         );
 
-        // Opzioni cookie
         const cookieOptions = {
             expires: cookieExpires,
             httpOnly: true,
             secure: config.env === 'production'
         };
-        // Log per debug
+
         logger.debug('Cookie options', { 
             cookieExpiresIn: config.jwt.cookieExpiresIn,
             cookieExpires: cookieExpires
         });
+
+        // Filtriamo i dati sensibili per la risposta
+        const userResponse = {
+            id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role,
+            permissions: user.permissions,
+            schoolId: user.schoolId
+        };
 
         res.status(statusCode)
             .cookie('token', token, cookieOptions)
             .json({
                 status: 'success',
                 token,
-                data: { user }
+                data: { user: userResponse }
             });
     }
 
@@ -72,29 +82,27 @@ class AuthController {
      * Registrazione nuovo utente
      * @public
      */
-    async register(req, res) {
+    async register(req, res, next) {
         try {
             const { email, password, firstName, lastName, role } = req.body;
             logger.debug('Registering new user:', { email, firstName, lastName, role });
     
             if (!email || !password || !firstName || !lastName || !role) {
                 logger.warn('Missing required fields for user registration');
-                return this.sendError(res, {
-                    statusCode: 400,
-                    message: 'Dati utente incompleti',
-                    code: 'VALIDATION_ERROR'
-                });
+                throw createError(
+                    ErrorTypes.VALIDATION.MISSING_FIELD,
+                    'Dati utente incompleti'
+                );
             }
     
-            // Verifica se l'email esiste già
+            // Verifica esistenza email
             const existingUser = await this.repository.findByEmail(email);
             if (existingUser) {
                 logger.warn('Email already exists:', email);
-                return this.sendError(res, {
-                    statusCode: 400,
-                    message: 'Email già registrata',
-                    code: 'DUPLICATE_EMAIL'
-                });
+                throw createError(
+                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
+                    'Email già registrata'
+                );
             }
     
             const user = await this.repository.create({
@@ -102,24 +110,24 @@ class AuthController {
                 password,
                 role,
                 firstName,
-                lastName
+                lastName,
+                status: 'active'
             });
     
             logger.info('New user registered successfully:', { userId: user._id });
             
-            // Rimuovi la password dalla risposta
-            const userResponse = user.toObject();
-            delete userResponse.password;
-    
-            return this.sendResponse(res, { 
-                status: 'success',
-                data: {
-                    user: userResponse
-                }
-            }, 201);
+            // Audit trail
+            await UserAudit.create({
+                userId: user._id,
+                action: 'user_created',
+                performedBy: req.user?.id || user._id,
+                ipAddress: req.ip,
+                userAgent: req.headers['user-agent']
+            });
+
+            this._sendTokenResponse(user, 201, res);
         } catch (error) {
-            logger.error('Error in user registration:', error);
-            return this.sendError(res, error);
+            next(error);
         }
     }
 
@@ -130,6 +138,7 @@ class AuthController {
     async login(req, res, next) {
         try {
             const { email, password } = req.body;
+            logger.debug('Login body:', { email, password: '***' });  // Debug
     
             if (!email || !password) {
                 throw createError(
@@ -139,9 +148,16 @@ class AuthController {
             }
     
             const user = await this.repository.verifyCredentials(email, password);
+            if (!user) {
+                throw createError(
+                    ErrorTypes.AUTH.INVALID_CREDENTIALS,
+                    'Credenziali non valide'
+                );
+            }
+    
             this._sendTokenResponse(user, 200, res);
         } catch (error) {
-            logger.error('Errore durante il login', { error });
+            logger.error('Login error:', error);
             next(error);
         }
     }
@@ -150,16 +166,34 @@ class AuthController {
      * Logout utente
      * @public
      */
-    async logout(req, res) {
-        res.cookie('token', 'none', {
-            expires: new Date(Date.now() + 10 * 1000),
-            httpOnly: true
-        });
+    async logout(req, res, next) {
+        try {
+            // Audit trail
+            if (req.user) {
+                await UserAudit.create({
+                    userId: req.user.id,
+                    action: 'logout',
+                    performedBy: req.user.id,
+                    ipAddress: req.ip,
+                    userAgent: req.headers['user-agent']
+                });
+            }
 
-        res.status(200).json({
-            status: 'success',
-            data: null
-        });
+            res.cookie('token', 'none', {
+                expires: new Date(Date.now() + 10 * 1000),
+                httpOnly: true
+            });
+
+            logger.info('User logged out successfully:', { userId: req.user?.id });
+
+            res.status(200).json({
+                status: 'success',
+                data: null
+            });
+        } catch (error) {
+            logger.error('Logout error:', error);
+            next(error);
+        }
     }
 
     /**
@@ -181,6 +215,15 @@ class AuthController {
             const resetToken = user.getResetPasswordToken();
             await user.save({ validateBeforeSave: false });
 
+            // Audit trail
+            await UserAudit.create({
+                userId: user._id,
+                action: 'password_reset_requested',
+                performedBy: user._id,
+                ipAddress: req.ip,
+                userAgent: req.headers['user-agent']
+            });
+
             // Per ora, restituisci il token direttamente (solo in development)
             res.status(200).json({
                 status: 'success',
@@ -188,7 +231,7 @@ class AuthController {
                 ...(config.env === 'development' && { resetToken })
             });
         } catch (error) {
-            logger.error('Errore nella procedura di reset password', { error });
+            logger.error('Password reset request error:', error);
             next(error);
         }
     }
@@ -199,7 +242,6 @@ class AuthController {
      */
     async resetPassword(req, res, next) {
         try {
-            // Genera hash token
             const resetPasswordToken = crypto
                 .createHash('sha256')
                 .update(req.params.token)
@@ -217,16 +259,36 @@ class AuthController {
                 );
             }
 
-            // Set nuova password
+            // Salva vecchia password nella history
+            user.passwordHistory = user.passwordHistory || [];
+            user.passwordHistory.push({
+                password: user.password,
+                changedAt: new Date()
+            });
+
+            // Limita la history a 5 password
+            if (user.passwordHistory.length > 5) {
+                user.passwordHistory.shift();
+            }
+
             user.password = req.body.password;
             user.resetPasswordToken = undefined;
             user.resetPasswordExpire = undefined;
             await user.save();
 
-            logger.info('Password resettata con successo', { userId: user._id });
+            // Audit trail
+            await UserAudit.create({
+                userId: user._id,
+                action: 'password_reset_completed',
+                performedBy: user._id,
+                ipAddress: req.ip,
+                userAgent: req.headers['user-agent']
+            });
+
+            logger.info('Password reset completed:', { userId: user._id });
             this._sendTokenResponse(user, 200, res);
         } catch (error) {
-            logger.error('Errore nel reset della password', { error });
+            logger.error('Password reset error:', error);
             next(error);
         }
     }
@@ -237,58 +299,72 @@ class AuthController {
      */
     async updatePassword(req, res, next) {
         try {
-            const user = await this.repository.findOne(
-                { _id: req.user.id },
-                { select: '+password' }
-            );
+            const user = await this.repository.findById(req.user.id).select('+password');
     
-            // Usa comparePassword invece di matchPassword
             if (!(await user.comparePassword(req.body.currentPassword))) {
                 throw createError(
                     ErrorTypes.AUTH.INVALID_CREDENTIALS,
                     'Password corrente non valida'
                 );
             }
+
+            // Salva vecchia password nella history
+            user.passwordHistory = user.passwordHistory || [];
+            user.passwordHistory.push({
+                password: user.password,
+                changedAt: new Date()
+            });
+
+            // Limita la history a 5 password
+            if (user.passwordHistory.length > 5) {
+                user.passwordHistory.shift();
+            }
     
             user.password = req.body.newPassword;
             await user.save();
+
+            // Audit trail
+            await UserAudit.create({
+                userId: user._id,
+                action: 'password_changed',
+                performedBy: req.user.id,
+                ipAddress: req.ip,
+                userAgent: req.headers['user-agent']
+            });
     
-            logger.info('Password aggiornata con successo', { userId: user._id });
+            logger.info('Password updated successfully:', { userId: user._id });
             this._sendTokenResponse(user, 200, res);
         } catch (error) {
-            logger.error('Errore nell\'aggiornamento della password', { error });
+            logger.error('Password update error:', error);
             next(error);
         }
     }
 
     /**
- * Ottieni utente corrente
- * @public
- */
+     * Ottieni utente corrente
+     * @public
+     */
     async getMe(req, res, next) {
         try {
-            // Log per debug
             logger.debug('GetMe - Request user:', { 
                 userId: req.user.id, 
                 user_Id: req.user._id 
             });
 
-            // Usa sia id che _id per essere sicuri
             const user = await this.repository.findById(req.user._id || req.user.id);
 
             if (!user) {
-                logger.error('Utente non trovato nel database', {
+                logger.error('User not found in database', {
                     requestedId: req.user.id,
                     requested_Id: req.user._id
                 });
-                return res.status(404).json({
-                    status: 'error',
-                    code: 'RES_001',
-                    message: 'User non trovato'
-                });
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente non trovato'
+                );
             }
 
-            logger.info('Utente trovato con successo', {
+            logger.info('User profile retrieved successfully:', {
                 userId: user._id,
                 email: user.email
             });
@@ -302,19 +378,16 @@ class AuthController {
                         lastName: user.lastName,
                         email: user.email,
                         role: user.role,
+                        permissions: user.permissions,
                         schoolId: user.schoolId
                     }
                 }
             });
         } catch (error) {
-            logger.error('Errore nel recupero del profilo utente', { 
-                error: error.message,
-                stack: error.stack 
-            });
+            logger.error('Get user profile error:', error);
             next(error);
         }
     }
 }
 
-// Esporta una singola istanza
 module.exports = new AuthController();

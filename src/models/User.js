@@ -1,8 +1,5 @@
-// src/models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const logger = require('../utils/errors/logger/logger'); // Assicurati che il path sia corretto
-const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
     firstName: {
@@ -32,80 +29,108 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         minlength: 8,
-        select: false  // Aggiungi questa riga
+        select: false,
+        validate: {
+            validator: function(v) {
+                return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(v);
+            },
+            message: 'La password deve contenere almeno 8 caratteri, una maiuscola, una minuscola, un numero e un carattere speciale'
+        }
     },
     role: {
         type: String,
-        enum: ['teacher', 'admin'],
+        enum: ['teacher', 'admin', 'manager'],
         required: true
     },
+    permissions: [{
+        type: String,
+        enum: [
+            'users:read', 'users:write',
+            'schools:read', 'schools:write',
+            'classes:read', 'classes:write',
+            'tests:read', 'tests:write',
+            'results:read', 'results:write'
+        ]
+    }],
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'School',
-        required: false // per ora lo rendiamo opzionale
+        required: function() {
+            return this.role === 'teacher' || this.role === 'manager';
+        }
     },
-    isActive: {
-        type: Boolean,
-        default: true
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'suspended'],
+        default: 'active'
     },
     lastLogin: Date,
+    loginAttempts: {
+        type: Number,
+        default: 0
+    },
+    lockUntil: Date,
+    passwordHistory: [{
+        password: String,
+        changedAt: Date
+    }],
     passwordResetToken: String,
-    passwordResetExpires: Date
+    passwordResetExpires: Date,
+    sessionTokens: [{
+        token: String,
+        createdAt: Date,
+        lastUsedAt: Date,
+        userAgent: String,
+        ipAddress: String
+    }]
 }, {
     timestamps: true
 });
 
-// Pre-save hook per hashare la password
+// Middleware per audit automatico
 userSchema.pre('save', async function(next) {
-    // Procedi solo se la password è stata modificata
-    if (!this.isModified('password')) return next();
+    if (this.isNew) return next(); // Skip per nuovi utenti
     
-    try {
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        this.password = await bcrypt.hash(this.password, salt);
-        next();
-    } catch (error) {
-        next(error);
+    const changes = this.modifiedPaths().reduce((acc, path) => {
+      acc[path] = {
+        old: this._original ? this._original[path] : undefined,
+        new: this[path]
+      };
+      return acc;
+    }, {});
+  
+    if (Object.keys(changes).length > 0) {
+      await mongoose.model('UserAudit').create({
+        userId: this._id,
+        action: 'updated',
+        performedBy: this._performedBy || this._id, // _performedBy settato dal controller
+        changes
+      });
     }
-});
-
-    // Metodo per confrontare le password
-    userSchema.methods.comparePassword = async function(candidatePassword) {
-        try {
-            console.log('Password stored:', this.password);
-            console.log('Password received:', candidatePassword);
-            
-            const isMatch = await bcrypt.compare(candidatePassword, this.password);
-            console.log('Password match:', isMatch);
-            
-            return isMatch;
-        } catch (error) {
-            console.error('Error comparing passwords:', error);
-            return false;
-        }
-    };
-
-    // Metodo per generare token reset password
-    userSchema.methods.getResetPasswordToken = function() {
-        // Generate token
-        const resetToken = crypto.randomBytes(20).toString('hex');
-
-        // Hash token e imposta sul campo resetPasswordToken
-        this.passwordResetToken = crypto
-            .createHash('sha256')
-            .update(resetToken)
-            .digest('hex');
-
-        // Imposta la scadenza
-        this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minuti
-
-        return resetToken;
-    };
-
-// Indici
+    
+    next();
+  });
+  
+  // Helper per tracciare chi fa le modifiche
+  userSchema.methods.setPerformer = function(userId) {
+    this._performedBy = userId;
+    return this;
+  };
+  
+  // Metodo per ottenere la history
+  userSchema.methods.getAuditHistory = async function() {
+    return mongoose.model('UserAudit')
+      .find({ userId: this._id })
+      .sort('-createdAt')
+      .populate('performedBy', 'firstName lastName email');
+  };
+  
+// Indexes
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
+userSchema.index({ schoolId: 1 });
+userSchema.index({ status: 1 });
 
-const User = mongoose.model('User', userSchema);
-module.exports = User;
+// Methods and middleware...
+
+module.exports = mongoose.model('User', userSchema);

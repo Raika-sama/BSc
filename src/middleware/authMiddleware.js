@@ -1,9 +1,9 @@
-// src/middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const { user: UserRepository } = require('../repositories');
+const UserAudit = require('../models/UserAudit');
 
 /**
  * Middleware di protezione delle route
@@ -69,6 +69,7 @@ const protect = async (req, res, next) => {
                 email: user.email,
                 role: user.role,
                 isActive: user.isActive,
+                status: user.status,
                 hasSchoolId: !!user.schoolId,
                 schoolId: user.schoolId?.toString()
             } : 'null'
@@ -82,12 +83,37 @@ const protect = async (req, res, next) => {
             );
         }
 
-        // 5. Setup user in request
+        // 5. Verifica status utente
+        if (user.status !== 'active') {
+            logger.warn('❌ User account not active', { 
+                userId: user._id,
+                status: user.status
+            });
+            throw createError(
+                ErrorTypes.AUTH.UNAUTHORIZED,
+                'Account non attivo'
+            );
+        }
+
+        // 6. Verifica lock utente
+        if (user.lockUntil && user.lockUntil > Date.now()) {
+            logger.warn('❌ User account locked', { 
+                userId: user._id,
+                lockUntil: user.lockUntil
+            });
+            throw createError(
+                ErrorTypes.AUTH.ACCOUNT_LOCKED,
+                'Account temporaneamente bloccato'
+            );
+        }
+
+        // 7. Setup user in request
         const userForRequest = {
             id: user._id.toString(),
             _id: user._id,
             schoolId: user.schoolId?.toString() || null,
             role: user.role,
+            permissions: user.permissions || [],
             tokenExp: decoded.exp
         };
 
@@ -102,7 +128,23 @@ const protect = async (req, res, next) => {
 
         req.user = userForRequest;
 
-        // 6. Log finale successo
+        // 8. Audit trail
+        await UserAudit.create({
+            userId: user._id,
+            action: 'api_access',
+            performedBy: user._id,
+            changes: {
+                endpoint: req.originalUrl,
+                method: req.method
+            },
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        }).catch(err => {
+            logger.error('Failed to create audit trail', { error: err });
+            // Non blocchiamo l'esecuzione se fallisce l'audit
+        });
+
+        // 9. Log finale successo
         logger.info('✨ Authentication successful', {
             userId: user._id,
             role: user.role,
@@ -112,7 +154,7 @@ const protect = async (req, res, next) => {
 
         next();
     } catch (error) {
-        // 7. Gestione errori dettagliata
+        // 10. Gestione errori dettagliata
         logger.error('🔥 Authentication Error', {
             errorType: error.name,
             errorMessage: error.message,
@@ -163,13 +205,20 @@ const protect = async (req, res, next) => {
         });
     }
 };
+
 /**
  * Middleware per la restrizione degli accessi basata sui ruoli
  * @param {...String} roles - Ruoli autorizzati
  */
 const restrictTo = (...roles) => {
     return (req, res, next) => {
+        logger.debug('🔒 Checking role restriction', {
+            userRole: req.user?.role,
+            requiredRoles: roles
+        });
+
         if (!req.user) {
+            logger.warn('❌ No user found in request');
             return next(createError(
                 ErrorTypes.AUTH.NO_AUTH,
                 'Autenticazione richiesta'
@@ -177,16 +226,69 @@ const restrictTo = (...roles) => {
         }
 
         if (!roles.includes(req.user.role)) {
+            logger.warn('❌ Unauthorized role access attempt', {
+                userId: req.user.id,
+                userRole: req.user.role,
+                requiredRoles: roles
+            });
             return next(createError(
                 ErrorTypes.AUTH.FORBIDDEN,
                 'Non hai i permessi per questa azione'
             ));
         }
+
+        logger.debug('✅ Role check passed', {
+            userRole: req.user.role,
+            requiredRoles: roles
+        });
+
+        next();
+    };
+};
+
+/**
+ * Middleware per la verifica dei permessi specifici
+ * @param {String} permission - Permesso richiesto
+ */
+const hasPermission = (permission) => {
+    return (req, res, next) => {
+        logger.debug('🔒 Checking specific permission', {
+            userId: req.user?.id,
+            requiredPermission: permission,
+            userPermissions: req.user?.permissions
+        });
+
+        if (!req.user) {
+            logger.warn('❌ No user found in request');
+            return next(createError(
+                ErrorTypes.AUTH.NO_AUTH,
+                'Autenticazione richiesta'
+            ));
+        }
+
+        if (!req.user.permissions?.includes(permission)) {
+            logger.warn('❌ Permission denied', {
+                userId: req.user.id,
+                requiredPermission: permission,
+                userPermissions: req.user.permissions
+            });
+            return next(createError(
+                ErrorTypes.AUTH.FORBIDDEN,
+                'Permesso mancante'
+            ));
+        }
+
+        logger.debug('✅ Permission check passed', {
+            permission,
+            userId: req.user.id
+        });
+
         next();
     };
 };
 
 module.exports = {
     protect,
-    restrictTo
+    restrictTo,
+    hasPermission
 };
