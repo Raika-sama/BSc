@@ -511,57 +511,106 @@ class SchoolRepository extends BaseRepository {
         session.startTransaction();
     
         try {
-            // 1. Recupera la scuola
-            const school = await this.model.findById(schoolId).session(session);
+            logger.debug('Repository: Inizio reactivateSection', { 
+                schoolId, 
+                sectionName 
+            });
+    
+            // 1. Recupera la scuola con il manager
+            const school = await this.model.findById(schoolId)
+                .populate('manager')
+                .session(session);
+    
             if (!school) {
-                throw createError(ErrorTypes.RESOURCE.NOT_FOUND, 'Scuola non trovata');
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
             }
     
-            // 2. Trova e aggiorna la sezione
+            // 2. Trova e valida la sezione
             const section = school.sections.find(s => s.name === sectionName);
             if (!section) {
-                throw createError(ErrorTypes.RESOURCE.NOT_FOUND, 'Sezione non trovata');
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Sezione non trovata'
+                );
             }
     
+            // 3. Aggiorna lo stato della sezione
             section.isActive = true;
             section.deactivatedAt = undefined;
     
-            // 3. Trova le classi da riattivare
+            // 4. Trova le classi da riattivare
             const classesToReactivate = await Class.find({
                 schoolId,
                 section: sectionName,
                 isActive: false
             }).session(session);
     
-            // 4. Riattiva ogni classe
+            logger.debug('Classi da riattivare trovate:', {
+                count: classesToReactivate.length,
+                classi: classesToReactivate.map(c => ({
+                    id: c._id,
+                    year: c.year,
+                    section: c.section,
+                    hasPreviousMainTeacher: !!c.previousMainTeacher
+                }))
+            });
+    
+            // 5. Aggiorna ogni classe
             for (const classDoc of classesToReactivate) {
-                // Ripristina il mainTeacher precedente se disponibile
+                // Gestione mainTeacher
                 if (classDoc.previousMainTeacher) {
                     classDoc.mainTeacher = classDoc.previousMainTeacher;
+                    classDoc.previousMainTeacher = undefined;
                 } else {
                     // Se non c'è un mainTeacher precedente, usa il manager della scuola
-                    classDoc.mainTeacher = school.manager;
+                    classDoc.mainTeacher = school.manager._id;
                 }
-                
+    
+                // Aggiorna gli altri campi della classe
                 classDoc.isActive = true;
                 classDoc.status = 'planned';
                 classDoc.deactivatedAt = undefined;
                 classDoc.updatedAt = new Date();
-                
+    
                 await classDoc.save({ session });
             }
     
-            // 5. Salva le modifiche alla scuola
+            // 6. Salva le modifiche alla scuola
             const updatedSchool = await school.save({ session });
+    
             await session.commitTransaction();
+    
+            logger.info('Sezione e classi riattivate con successo:', {
+                schoolId,
+                sectionName,
+                classesReactivated: classesToReactivate.length,
+                classesWithPreviousTeacher: classesToReactivate.filter(c => c.previousMainTeacher).length,
+                classesWithManagerAsTeacher: classesToReactivate.filter(c => 
+                    c.mainTeacher.toString() === school.manager._id.toString()
+                ).length
+            });
     
             return {
                 school: updatedSchool,
                 classesReactivated: classesToReactivate.length
             };
+    
         } catch (error) {
             await session.abortTransaction();
-            throw error;
+            logger.error('Errore nella riattivazione della sezione:', {
+                error: error.message,
+                stack: error.stack,
+                schoolId,
+                sectionName
+            });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nella riattivazione della sezione',
+                { originalError: error.message }
+            );
         } finally {
             session.endSession();
         }

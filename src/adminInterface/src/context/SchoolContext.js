@@ -380,19 +380,22 @@ const getSectionStudents = async (schoolId, sectionName) => {
             console.log('Reactivating section:', { schoolId, sectionName });
     
             const response = await axiosInstance.post(
-                `/schools/${schoolId}/sections/${sectionName}/reactivate`
+                `schools/${schoolId}/sections/${sectionName}/reactivate`
             );
     
             if (response.data.status === 'success') {
                 const { school, classesReactivated } = response.data.data;
                 
-                // Aggiorniamo selectedSchool con i nuovi dati
+                // Aggiorna lo stato della scuola
                 setSelectedSchool(school);
     
-                // Notifica più informativa
-                const message = classesReactivated > 0 
-                    ? `Sezione ${sectionName} riattivata con successo. ${classesReactivated} classi riattivate. Il docente principale precedente è stato ripristinato dove disponibile.`
-                    : `Sezione ${sectionName} riattivata con successo`;
+                // Costruisci messaggio di notifica in base al risultato
+                let message;
+                if (classesReactivated > 0) {
+                    message = `Sezione ${sectionName} riattivata con successo. ${classesReactivated} classi riattivate.`;
+                } else {
+                    message = `Sezione ${sectionName} riattivata con successo.`;
+                }
     
                 showNotification(message, 'success');
                 return response.data.data;
@@ -400,7 +403,7 @@ const getSectionStudents = async (schoolId, sectionName) => {
         } catch (error) {
             console.error('Error in reactivateSection:', error);
             const errorMessage = error.response?.data?.error?.message || 
-                            'Errore nella riattivazione della sezione';
+                               'Errore nella riattivazione della sezione';
             setError(errorMessage);
             showNotification(errorMessage, 'error');
             throw error;

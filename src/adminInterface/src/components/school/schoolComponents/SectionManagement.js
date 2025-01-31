@@ -1,7 +1,6 @@
-// SectionManagement.js
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
-import { useSchool } from '../../../context/SchoolContext';
+import { useSchool } from '../../../context/SchoolContext';  // Aggiungi questo import
 import SectionManagementHeader from './SectionManagementHeader';
 import SectionStats from './SectionStats';
 import SectionList from './SectionList';
@@ -17,11 +16,10 @@ const SectionManagement = () => {
         error
     } = useSchool();
 
+
     const [showInactive, setShowInactive] = useState(true);
     const [selectedSection, setSelectedSection] = useState(null);
     const [isDeactivationDialogOpen, setIsDeactivationDialogOpen] = useState(false);
-
-    const sections = selectedSchool?.sections || [];
 
     const handleDeactivateClick = (section) => {
         const fullSection = selectedSchool.sections.find(s => s.name === section.name);
@@ -73,10 +71,13 @@ const SectionManagement = () => {
                 onToggleInactive={(e) => setShowInactive(e.target.checked)}
             />
             
-            <SectionStats sections={sections} />
+            <SectionStats sections={selectedSchool?.sections || []} />
             
             <SectionList
-                sections={showInactive ? sections : sections.filter(s => s.isActive)}
+                sections={showInactive ? 
+                    selectedSchool?.sections || [] : 
+                    (selectedSchool?.sections || []).filter(s => s.isActive)
+                }
                 showInactive={showInactive}
                 onDeactivate={handleDeactivateClick}
                 onReactivate={handleReactivate}

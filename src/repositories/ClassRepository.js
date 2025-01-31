@@ -278,26 +278,7 @@ async findWithDetails(id) {
         }
     }
 
-    async addStudents(classId, studentIds) {
-        try {
-            const classData = await this.findById(classId);
-            const newStudents = studentIds.filter(id => 
-                !classData.students.includes(id)
-            );
-            
-            if (newStudents.length) {
-                classData.students.push(...newStudents);
-                await classData.save();
-            }
-            return classData;
-        } catch (error) {
-            logger.error('Errore nell\'aggiunta degli studenti', { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nell\'aggiunta degli studenti'
-            );
-        }
-    }
+
 
     async removeStudent(classId, studentId) {
         try {
