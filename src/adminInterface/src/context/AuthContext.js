@@ -58,25 +58,36 @@ const isAccountActive = () => {
     };
 
     // In AuthContext.js
-const login = async ({email, password}) => {
-    try {
-        const response = await axiosInstance.post('/auth/login', {
-            email,
-            password
-        });
-        
-        if (response.data.status === 'success') {
-            const userData = response.data.data.user;
-            localStorage.setItem('user', JSON.stringify({...userData, token: response.data.token}));
-            setUser(userData);
-            return true;
+    const login = async ({email, password}) => {
+        try {
+            const response = await axiosInstance.post('/auth/login', {
+                email,
+                password
+            });
+            
+            if (response.data.status === 'success') {
+                const { token, data: { user } } = response.data;
+                
+                // Imposta il token
+                setToken(token);
+                localStorage.setItem('token', token);
+                
+                // Imposta l'utente
+                const userData = { ...user };
+                localStorage.setItem('user', JSON.stringify(userData));
+                setUser(userData);
+                
+                // Imposta il token nell'header di axios
+                axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                
+                return true;
+            }
+            return false;
+        } catch (error) {
+            showNotification(error.response?.data?.error?.message || 'Errore durante il login', 'error');
+            throw error;
         }
-        return false;
-    } catch (error) {
-        showNotification(error.response?.data?.error?.message || 'Errore durante il login', 'error');
-        throw error;
-    }
-};
+    };
 
     const logout = async () => {
         try {

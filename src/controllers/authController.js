@@ -29,54 +29,80 @@ class AuthController {
      * @private
      */
     _createToken(userId) {
-        return jwt.sign(
+        const token = jwt.sign(
             { id: userId },
             config.jwt.secret,
             { expiresIn: config.jwt.expiresIn }
         );
+
+        // Calcola la data di scadenza del token
+        const decoded = jwt.decode(token);
+        const expiresAt = new Date(decoded.exp * 1000);
+
+        return { token, expiresAt };
     }
 
     /**
      * Invia il token nella risposta
      * @private
      */
-    _sendTokenResponse(user, statusCode, res) {
-        const token = this._createToken(user._id);
+    async _sendTokenResponse(user, statusCode, res, req) {
+        try {
+            const { token, expiresAt } = this._createToken(user._id);
 
-        const cookieExpires = new Date(
-            Date.now() + (config.jwt.cookieExpiresIn || 24) * 60 * 60 * 1000
-        );
+            logger.debug('Token generation successful', { 
+                userId: user._id,
+                tokenLength: token.length,
+                expiresAt
+            });
 
-        const cookieOptions = {
-            expires: cookieExpires,
-            httpOnly: true,
-            secure: config.env === 'production'
-        };
+            // Crea la sessione token
+            const sessionToken = {
+                token,
+                createdAt: new Date(),
+                lastUsedAt: new Date(),
+                userAgent: req.headers['user-agent'],
+                ipAddress: req.ip,
+                expiresAt
+            };
 
-        logger.debug('Cookie options', { 
-            cookieExpiresIn: config.jwt.cookieExpiresIn,
-            cookieExpires: cookieExpires
-        });
+            // Usa il nuovo metodo addSessionToken
+            user.addSessionToken(sessionToken);
+            await user.save({ validateBeforeSave: false });
 
-        // Filtriamo i dati sensibili per la risposta
-        const userResponse = {
-            id: user._id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            role: user.role,
-            permissions: user.permissions,
-            schoolId: user.schoolId
-        };
+            // Filtriamo i dati sensibili per la risposta
+            const userResponse = {
+                id: user._id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                role: user.role,
+                permissions: user.permissions,
+                schoolId: user.schoolId
+            };
 
-        res.status(statusCode)
-            .cookie('token', token, cookieOptions)
-            .json({
+            logger.info('Login successful', {
+                userId: user._id,
+                role: user.role,
+                ip: req.ip
+            });
+
+            res.status(statusCode).json({
                 status: 'success',
                 token,
+                expiresAt,
                 data: { user: userResponse }
             });
+        } catch (error) {
+            logger.error('Error in _sendTokenResponse', {
+                error: error.message,
+                stack: error.stack,
+                userId: user._id
+            });
+            throw error;
+        }
     }
+
 
     /**
      * Registrazione nuovo utente
@@ -125,7 +151,7 @@ class AuthController {
                 userAgent: req.headers['user-agent']
             });
 
-            this._sendTokenResponse(user, 201, res);
+            await this._sendTokenResponse(user, 201, res, req); // Aggiunto await e req
         } catch (error) {
             next(error);
         }
@@ -135,32 +161,84 @@ class AuthController {
      * Login utente
      * @public
      */
-    async login(req, res, next) {
-        try {
-            const { email, password } = req.body;
-            logger.debug('Login body:', { email, password: '***' });  // Debug
-    
-            if (!email || !password) {
-                throw createError(
-                    ErrorTypes.VALIDATION.MISSING_FIELD,
-                    'Inserire email e password'
-                );
-            }
-    
-            const user = await this.repository.verifyCredentials(email, password);
-            if (!user) {
-                throw createError(
-                    ErrorTypes.AUTH.INVALID_CREDENTIALS,
-                    'Credenziali non valide'
-                );
-            }
-    
-            this._sendTokenResponse(user, 200, res);
-        } catch (error) {
-            logger.error('Login error:', error);
-            next(error);
+/**
+     * Login utente
+     * @public
+     */
+async login(req, res, next) {
+    try {
+        const { email, password } = req.body;
+        logger.debug('Login attempt', { 
+            email,
+            ip: req.ip,
+            userAgent: req.headers['user-agent']
+        });
+
+        if (!email || !password) {
+            throw createError(
+                ErrorTypes.VALIDATION.MISSING_FIELD,
+                'Inserire email e password'
+            );
         }
+
+        const user = await User.findOne({ email }).select('+password');
+        if (!user) {
+            throw createError(
+                ErrorTypes.AUTH.INVALID_CREDENTIALS,
+                'Credenziali non valide'
+            );
+        }
+
+        // Verifica se l'account è bloccato
+        if (user.isLocked()) {
+            throw createError(
+                ErrorTypes.AUTH.ACCOUNT_LOCKED,
+                'Account temporaneamente bloccato'
+            );
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            user.loginAttempts += 1;
+            
+            // Blocca l'account dopo 5 tentativi falliti
+            if (user.loginAttempts >= 5) {
+                user.lockUntil = new Date(Date.now() + 30 * 60 * 1000); // 30 minuti
+                logger.warn('Account locked due to multiple failed attempts', {
+                    userId: user._id,
+                    lockUntil: user.lockUntil
+                });
+            }
+            
+            await user.save({ validateBeforeSave: false });
+            
+            throw createError(
+                ErrorTypes.AUTH.INVALID_CREDENTIALS,
+                'Credenziali non valide'
+            );
+        }
+
+        // Reset login attempts on successful login
+        user.loginAttempts = 0;
+        user.lockUntil = null;
+        user.lastLogin = new Date();
+        await user.save({ validateBeforeSave: false });
+
+        await UserAudit.create({
+            userId: user._id,
+            action: 'login',
+            performedBy: user._id,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
+
+        await this._sendTokenResponse(user, 200, res, req);
+    } catch (error) {
+        logger.error('Login error:', error);
+        next(error);
     }
+}
+
 
     /**
      * Logout utente
@@ -168,8 +246,18 @@ class AuthController {
      */
     async logout(req, res, next) {
         try {
-            // Audit trail
             if (req.user) {
+                const token = req.headers.authorization?.split(' ')[1];
+                
+                if (token) {
+                    const user = await User.findById(req.user.id);
+                    if (user) {
+                        // Usa il nuovo metodo removeSessionToken
+                        user.removeSessionToken(token);
+                        await user.save({ validateBeforeSave: false });
+                    }
+                }
+
                 await UserAudit.create({
                     userId: req.user.id,
                     action: 'logout',
@@ -179,12 +267,10 @@ class AuthController {
                 });
             }
 
-            res.cookie('token', 'none', {
-                expires: new Date(Date.now() + 10 * 1000),
-                httpOnly: true
+            logger.info('User logged out successfully:', { 
+                userId: req.user?.id,
+                ip: req.ip
             });
-
-            logger.info('User logged out successfully:', { userId: req.user?.id });
 
             res.status(200).json({
                 status: 'success',
@@ -333,7 +419,7 @@ class AuthController {
             });
     
             logger.info('Password updated successfully:', { userId: user._id });
-            this._sendTokenResponse(user, 200, res);
+            await this._sendTokenResponse(user, 200, res, req); // Aggiunto await e req
         } catch (error) {
             logger.error('Password update error:', error);
             next(error);

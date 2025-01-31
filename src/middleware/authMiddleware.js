@@ -27,23 +27,19 @@ const protect = async (req, res, next) => {
         logger.debug('🔍 Examining Authorization Header', {
             hasAuthHeader: !!authHeader,
             headerValue: authHeader,
-            startsWith: authHeader?.startsWith('Bearer '),
-            hasCookieToken: !!req.cookies?.token
+            startsWith: authHeader?.startsWith('Bearer ')
         });
         
         if (authHeader && authHeader.startsWith('Bearer ')) {
             token = authHeader.split(' ')[1];
-            logger.debug('📝 Token extracted from header', { token: token?.substring(0, 20) + '...' });
-        } else if (req.cookies?.token) {
-            token = req.cookies.token;
-            logger.debug('📝 Token extracted from cookies', { token: token?.substring(0, 20) + '...' });
-        }
-
-        if (!token) {
-            logger.warn('❌ No token found in request');
+            logger.debug('📝 Token extracted from header', { 
+                token: token?.substring(0, 20) + '...' 
+            });
+        } else {
+            logger.warn('❌ No valid Bearer token found in request');
             throw createError(
                 ErrorTypes.AUTH.NO_TOKEN,
-                'Token di autenticazione mancante'
+                'Token di autenticazione mancante o non valido'
             );
         }
 
@@ -107,7 +103,7 @@ const protect = async (req, res, next) => {
             );
         }
 
-        // 7. Setup user in request
+        // 7. Setup user in request con informazioni complete
         const userForRequest = {
             id: user._id.toString(),
             _id: user._id,
@@ -141,10 +137,8 @@ const protect = async (req, res, next) => {
             userAgent: req.headers['user-agent']
         }).catch(err => {
             logger.error('Failed to create audit trail', { error: err });
-            // Non blocchiamo l'esecuzione se fallisce l'audit
         });
 
-        // 9. Log finale successo
         logger.info('✨ Authentication successful', {
             userId: user._id,
             role: user.role,
@@ -154,7 +148,6 @@ const protect = async (req, res, next) => {
 
         next();
     } catch (error) {
-        // 10. Gestione errori dettagliata
         logger.error('🔥 Authentication Error', {
             errorType: error.name,
             errorMessage: error.message,
@@ -166,43 +159,22 @@ const protect = async (req, res, next) => {
             } : undefined
         });
 
+        // Gestione specifica degli errori JWT
         if (error.name === 'JsonWebTokenError') {
-            logger.debug('🔑 JWT Validation Failed', { 
-                error: error.message,
-                type: 'invalid_token'
-            });
-            return res.status(401).json({
-                status: 'error',
-                error: {
-                    message: 'Token non valido',
-                    code: 'AUTH_INVALID_TOKEN'
-                }
-            });
+            return next(createError(
+                ErrorTypes.AUTH.INVALID_TOKEN,
+                'Token non valido'
+            ));
         }
 
         if (error.name === 'TokenExpiredError') {
-            logger.debug('🔑 JWT Expired', { 
-                expiredAt: error.expiredAt,
-                type: 'token_expired'
-            });
-            return res.status(401).json({
-                status: 'error',
-                error: {
-                    message: 'Sessione scaduta, effettua nuovamente il login',
-                    code: 'AUTH_TOKEN_EXPIRED'
-                }
-            });
+            return next(createError(
+                ErrorTypes.AUTH.TOKEN_EXPIRED,
+                'Sessione scaduta, effettua nuovamente il login'
+            ));
         }
 
-        const statusCode = error.statusCode || 401;
-        res.status(statusCode).json({
-            status: 'error',
-            error: {
-                message: error.message,
-                code: error.code || 'AUTH_ERROR',
-                type: error.name
-            }
-        });
+        next(error);
     }
 };
 

@@ -1,6 +1,36 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+const sessionTokenSchema = new mongoose.Schema({
+    token: {
+        type: String,
+        required: [true, 'Token is required'],
+        unique: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+        required: true
+    },
+    lastUsedAt: {
+        type: Date,
+        default: Date.now,
+        required: true
+    },
+    userAgent: {
+        type: String,
+        required: true
+    },
+    ipAddress: {
+        type: String,
+        required: true
+    },
+    expiresAt: {
+        type: Date,
+        required: true
+    }
+}, { _id: true });
+
 const userSchema = new mongoose.Schema({
     firstName: {
         type: String,
@@ -67,70 +97,112 @@ const userSchema = new mongoose.Schema({
     lastLogin: Date,
     loginAttempts: {
         type: Number,
-        default: 0
+        default: 0,
+        min: 0
     },
     lockUntil: Date,
     passwordHistory: [{
         password: String,
-        changedAt: Date
+        changedAt: {
+            type: Date,
+            default: Date.now
+        }
     }],
     passwordResetToken: String,
     passwordResetExpires: Date,
-    sessionTokens: [{
-        token: String,
-        createdAt: Date,
-        lastUsedAt: Date,
-        userAgent: String,
-        ipAddress: String
-    }]
+    sessionTokens: [sessionTokenSchema]
 }, {
     timestamps: true
 });
 
-// Middleware per audit automatico
-userSchema.pre('save', async function(next) {
-    if (this.isNew) return next(); // Skip per nuovi utenti
-    
-    const changes = this.modifiedPaths().reduce((acc, path) => {
-      acc[path] = {
-        old: this._original ? this._original[path] : undefined,
-        new: this[path]
-      };
-      return acc;
-    }, {});
-  
-    if (Object.keys(changes).length > 0) {
-      await mongoose.model('UserAudit').create({
-        userId: this._id,
-        action: 'updated',
-        performedBy: this._performedBy || this._id, // _performedBy settato dal controller
-        changes
-      });
-    }
-    
-    next();
-  });
-  
-  // Helper per tracciare chi fa le modifiche
-  userSchema.methods.setPerformer = function(userId) {
-    this._performedBy = userId;
-    return this;
-  };
-  
-  // Metodo per ottenere la history
-  userSchema.methods.getAuditHistory = async function() {
-    return mongoose.model('UserAudit')
-      .find({ userId: this._id })
-      .sort('-createdAt')
-      .populate('performedBy', 'firstName lastName email');
-  };
-  
 // Indexes
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
 userSchema.index({ schoolId: 1 });
 userSchema.index({ status: 1 });
+userSchema.index({ 'sessionTokens.token': 1 });
+userSchema.index({ 'sessionTokens.expiresAt': 1 });
 
-// Methods and middleware...
+// Metodi di utilità per la gestione delle sessioni
+userSchema.methods.addSessionToken = function(tokenData) {
+    if (!this.sessionTokens) {
+        this.sessionTokens = [];
+    }
+    
+    // Rimuovi sessioni scadute
+    this.sessionTokens = this.sessionTokens.filter(session => 
+        session.expiresAt > new Date()
+    );
+
+    // Limita il numero di sessioni attive
+    if (this.sessionTokens.length >= 5) {
+        // Rimuovi la sessione più vecchia
+        this.sessionTokens.sort((a, b) => a.lastUsedAt - b.lastUsedAt);
+        this.sessionTokens.shift();
+    }
+
+    this.sessionTokens.push(tokenData);
+    return this;
+};
+
+userSchema.methods.removeSessionToken = function(token) {
+    if (!this.sessionTokens) return this;
+    
+    this.sessionTokens = this.sessionTokens.filter(
+        session => session.token !== token
+    );
+    return this;
+};
+
+userSchema.methods.updateSessionLastUsed = function(token) {
+    const session = this.sessionTokens?.find(s => s.token === token);
+    if (session) {
+        session.lastUsedAt = new Date();
+    }
+    return this;
+};
+
+// Middleware per audit automatico
+userSchema.pre('save', async function(next) {
+    if (this.isNew) return next();
+    
+    const changes = this.modifiedPaths().reduce((acc, path) => {
+        acc[path] = {
+            old: this._original ? this._original[path] : undefined,
+            new: this[path]
+        };
+        return acc;
+    }, {});
+    
+    if (Object.keys(changes).length > 0) {
+        await mongoose.model('UserAudit').create({
+            userId: this._id,
+            action: 'updated',
+            performedBy: this._performedBy || this._id,
+            changes
+        });
+    }
+    
+    next();
+});
+
+// Helper per tracciare chi fa le modifiche
+userSchema.methods.setPerformer = function(userId) {
+    this._performedBy = userId;
+    return this;
+};
+
+// Metodo per ottenere la history
+userSchema.methods.getAuditHistory = async function() {
+    return mongoose.model('UserAudit')
+        .find({ userId: this._id })
+        .sort('-createdAt')
+        .populate('performedBy', 'firstName lastName email');
+};
+
+// Metodo per verificare se l'account è bloccato
+userSchema.methods.isLocked = function() {
+    return this.lockUntil && this.lockUntil > Date.now();
+};
 
 module.exports = mongoose.model('User', userSchema);
