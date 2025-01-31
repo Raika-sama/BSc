@@ -53,17 +53,34 @@ const SchoolTab = ({ student, setStudent }) => {
     }, [schools.length, fetchSchools]);
 
     useEffect(() => {
-        if (selectedSchool) {
-            const school = schools.find(s => s._id === selectedSchool);
-            if (school) {
-                const classes = school.classes || [];
-                setAvailableClasses(classes.filter(c => c.isActive));
+        const loadClasses = async () => {
+            if (selectedSchool) {
+                try {
+                    // Carica direttamente le classi dalla scuola
+                    const response = await axiosInstance.get(`/schools/${selectedSchool}`);
+                    if (response.data.status === 'success') {
+                        const school = response.data.data.school;
+                        const activeClasses = (school.classes || [])
+                            .filter(c => c.isActive)
+                            .sort((a, b) => {
+                                if (a.year !== b.year) return a.year - b.year;
+                                return a.section.localeCompare(b.section);
+                            });
+                        setAvailableClasses(activeClasses);
+                    }
+                } catch (error) {
+                    console.error('Error loading classes:', error);
+                    showNotification('Errore nel caricamento delle classi', 'error');
+                    setAvailableClasses([]);
+                }
+            } else {
+                setAvailableClasses([]);
             }
-        } else {
-            setAvailableClasses([]);
             setSelectedClass('');
-        }
-    }, [selectedSchool, schools]);
+        };
+    
+        loadClasses();
+    }, [selectedSchool, showNotification]);
 
     const handleSchoolChange = (event) => {
         const newSchoolId = event.target.value;
@@ -254,12 +271,24 @@ const SchoolTab = ({ student, setStudent }) => {
                             <MenuItem value="">
                                 <em>Nessuna classe</em>
                             </MenuItem>
-                            {availableClasses.map((classInfo) => (
-                                <MenuItem key={classInfo._id} value={classInfo._id}>
-                                    {`${classInfo.year}${classInfo.section} - ${classInfo.academicYear || 'Anno corrente'}`}
+                            {availableClasses.length > 0 ? (
+                                availableClasses.map((classInfo) => (
+                                    <MenuItem 
+                                        key={classInfo._id} 
+                                        value={classInfo._id}
+                                    >
+                                        {`${classInfo.year}${classInfo.section} - ${
+                                            classInfo.academicYear || 'Anno corrente'
+                                        } (${classInfo.students?.length || 0}/${classInfo.capacity || '?'} studenti)`}
+                                    </MenuItem>
+                                ))
+                            ) : selectedSchool ? (
+                                <MenuItem disabled>
+                                    <em>Nessuna classe disponibile in questa scuola</em>
                                 </MenuItem>
-                            ))}
+                            ) : null}
                         </Select>
+                        
                     </FormControl>
 
                     {!selectedSchool && (
