@@ -12,33 +12,37 @@ export const UserProvider = ({ children }) => {
     const [totalUsers, setTotalUsers] = useState(0); // Aggiunto per la paginazione
     const { showNotification } = useNotification();
 
-    const getUsers = async (page = 1, limit = 10, search = '') => {
+    const getUsers = async (filters = {}) => {
+        const { page = 1, limit = 10, search = '', sort = '-createdAt' } = filters;
+        
         setLoading(true);
         try {
             const response = await axiosInstance.get('/users', {
-                params: { page, limit, search }
+                params: { page, limit, search, sort }
             });
             
             if (response.data.status === 'success') {
                 setUsers(response.data.data.users);
                 setTotalUsers(response.data.data.total);
                 setError(null);
+                return response.data.data;
             }
         } catch (error) {
             const errorMessage = error.response?.data?.error?.message || 'Errore nel caricamento degli utenti';
             setError(errorMessage);
             showNotification(errorMessage, 'error');
+            throw error;
         } finally {
             setLoading(false);
         }
     };
 
+
     const createUser = async (userData) => {
         try {
-            // Validazione dati utente secondo lo schema mongoose
-            if (!userData.firstName?.trim() || !userData.lastName?.trim() || 
-                !userData.email?.trim() || !userData.password || !userData.role) {
-                throw new Error('Dati utente incompleti');
+            const validationErrors = validateUserData(userData, true);
+            if (validationErrors) {
+                throw new Error('Validation Error', { cause: validationErrors });
             }
 
             const response = await axiosInstance.post('/users', userData);
@@ -49,6 +53,10 @@ export const UserProvider = ({ children }) => {
                 return response.data.data.user;
             }
         } catch (error) {
+            if (error.message === 'Validation Error') {
+                showNotification('Dati utente non validi', 'error');
+                throw error.cause;
+            }
             const errorMessage = error.response?.data?.error?.message || 'Errore nella creazione dell\'utente';
             showNotification(errorMessage, 'error');
             throw error;
@@ -57,6 +65,11 @@ export const UserProvider = ({ children }) => {
 
     const updateUser = async (userId, userData) => {
         try {
+            const validationErrors = validateUserData(userData);
+            if (validationErrors) {
+                throw new Error('Validation Error', { cause: validationErrors });
+            }
+
             const response = await axiosInstance.put(`/users/${userId}`, userData);
             
             if (response.data.status === 'success') {
@@ -67,11 +80,16 @@ export const UserProvider = ({ children }) => {
                 return response.data.data.user;
             }
         } catch (error) {
+            if (error.message === 'Validation Error') {
+                showNotification('Dati utente non validi', 'error');
+                throw error.cause;
+            }
             const errorMessage = error.response?.data?.error?.message || 'Errore nell\'aggiornamento dell\'utente';
             showNotification(errorMessage, 'error');
             throw error;
         }
     };
+
 
     const deleteUser = async (userId) => {
         try {

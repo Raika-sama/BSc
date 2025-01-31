@@ -1,15 +1,21 @@
+/**
+ * @file studentRoutes.js
+ * @description Router per la gestione degli studenti
+ * @author Raika-sama
+ * @date 2025-01-31 22:04:45
+ */
+
 const express = require('express');
 const router = express.Router();
 const { student: studentController } = require('../controllers');
 const studentBulkImportController = require('../controllers/studentBulkImportController');
-
 const { protect, restrictTo } = require('../middleware/authMiddleware');
 const studentValidation = require('../middleware/studentValidation');
-const logger = require('../utils/errors/logger/logger');
-const { ErrorTypes, createError } = require('../utils/errors/errorTypes');  // Aggiusta il percorso in base alla tua struttura
 const { uploadExcel, handleMulterError } = require('../middleware/upload/uploadMiddleware');
+const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+const logger = require('../utils/errors/logger/logger');
 
-// Middleware di logging
+// 1. Middleware di logging globale
 router.use((req, res, next) => {
     logger.debug('Student route called:', {
         path: req.path,
@@ -20,76 +26,69 @@ router.use((req, res, next) => {
     next();
 });
 
-// Protezione route
+// 2. Protezione globale
 router.use(protect);
 
-// Route di ricerca (con validazione)
+// 3. Route di ricerca e accesso
 router.get('/search', 
     studentValidation.validateSearch,
     studentController.searchStudents
 );
 
-// Route per docenti
 router.get('/my-students', 
     restrictTo('teacher', 'admin'),
     studentController.getMyStudents
 );
 
-
+// 4. Route di importazione bulk (solo admin)
 router.get('/template', 
     restrictTo('admin'),
-    (req, res, next) => {
-        // Bypass del middleware base del controller
-        studentBulkImportController.generateTemplate(req, res, next);
-    }
+    studentBulkImportController.generateTemplate
 );
 
-// Qui aggiungeremo multer più tardi
 router.post('/bulk-import', 
     restrictTo('admin'),
-    uploadExcel,    // Aggiungi il middleware di upload
-    handleMulterError,  // Gestione errori upload
+    uploadExcel,
+    handleMulterError,
     studentBulkImportController.bulkImport.bind(studentBulkImportController)
 );
 
-
-// Route per classe specifica
+// 5. Route per gestione classi
 router.get('/class/:classId',
     restrictTo('teacher', 'admin'),
     studentController.getStudentsByClass
 );
 
-// Aggiungere questa rotta prima delle route base CRUD
+// 6. Route per studenti non assegnati
 router.get('/unassigned-to-school',
     restrictTo('admin'),
     studentController.getUnassignedToSchoolStudents
 );
 
-// Nuove route CRUD per gestione studenti non assegnati
-    router.get('/unassigned/:schoolId',
-        restrictTo('admin'),
-        studentController.getUnassignedStudents
-        );
+router.get('/unassigned/:schoolId',
+    restrictTo('admin'),
+    studentController.getUnassignedStudents
+);
 
-    router.post('/batch-assign',
-        restrictTo('admin'),
+// 7. Route per assegnazioni batch
+router.post('/batch-assign',
+    restrictTo('admin'),
     studentValidation.validateBatchAssignment,
     studentController.batchAssignToClass
-    );
+);
 
-    router.post('/batch-assign-to-school',
-        restrictTo('admin'),
-        studentController.batchAssignToSchool
-    );
+router.post('/batch-assign-to-school',
+    restrictTo('admin'),
+    studentController.batchAssignToSchool
+);
 
-    router.post('/with-class', 
-        protect,  // Usa protect invece di authenticate
-        restrictTo('admin'),
-        studentValidation.validateCreate, 
-        studentController.createStudentWithClass
-    );
+router.post('/with-class', 
+    restrictTo('admin'),
+    studentValidation.validateCreate, 
+    studentController.createStudentWithClass
+);
 
-// Route base CRUD con validazioni
+// 8. Route CRUD base
 router.route('/')
     .get(
         restrictTo('teacher', 'admin'),
@@ -116,7 +115,7 @@ router.route('/:id')
         studentController.delete
     );
 
-// Route per gestione classe con validazioni
+// 9. Route per gestione classe singola
 router.post('/:studentId/assign-class',
     restrictTo('admin'),
     studentValidation.validateClassAssignment,
@@ -128,7 +127,7 @@ router.post('/:studentId/remove-from-class',
     studentController.removeFromClass
 );
 
-// Gestione errori
+// 10. Gestione errori centralizzata
 router.use((err, req, res, next) => {
     logger.error('Student route error:', {
         error: err.message,
@@ -138,25 +137,20 @@ router.use((err, req, res, next) => {
         userId: req.user?.id
     });
 
-    // Gestione errori di validazione
-    if (err.code) {
-        // Gestione errori con codice
-        if (err.code === ErrorTypes.VALIDATION.BAD_REQUEST.code) {
-            console.log("Struttura errore:", JSON.stringify(err, null, 2));
+    // Gestione errori di validazione con codice
+    if (err.code && err.code === ErrorTypes.VALIDATION.BAD_REQUEST.code) {
+        return res.status(400).json({
+            status: 'error',
+            error: {
+                code: err.code,
+                message: err.message,
+                details: err.metadata?.details
+            }
+        });
+    }
 
-            return res.status(400).json({
-                status: 'error',
-                error: {
-                    code: err.code,
-                    message: err.message,
-                    details: err.metadata?.details
-                }
-            });
-        }
-    } else if (err.message) {
-        // Gestione errori senza codice ma con messaggio
-        console.log("Struttura errore:", JSON.stringify(err, null, 2));
-
+    // Gestione errori con solo messaggio
+    if (err.message && !err.code) {
         return res.status(400).json({
             status: 'error',
             error: {
@@ -167,43 +161,39 @@ router.use((err, req, res, next) => {
     }
 
     // Altri errori
+    const finalError = err.code ? err : createError(ErrorTypes.SYSTEM.GENERIC_ERROR, 'Errore sconosciuto');
     const statusCode = err.statusCode || 500;
-
-    // Controlla se err ha la proprietà code
-    if (!err.code) {
-        // Se err.code non esiste, usa l'errore generico
-        err = createError(ErrorTypes.SYSTEM.GENERIC_ERROR, 'Errore sconosciuto');
-    }
 
     res.status(statusCode).json({
         status: 'error',
         error: {
-            code: err.code, 
-            message: err.message 
+            code: finalError.code,
+            message: finalError.message,
+            ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
         }
     });
 });
 
 module.exports = router;
 
-/* 
-Riepilogo Routes:
-
-GET    /api/v1/students                    - Lista studenti (teacher/admin)
-POST   /api/v1/students                    - Crea studente (admin)
-GET    /api/v1/students/:id                - Dettaglio studente (teacher/admin)
-PUT    /api/v1/students/:id                - Modifica studente (admin)
-DELETE /api/v1/students/:id                - Elimina studente (admin)
-GET    /api/v1/students/search             - Ricerca studenti (teacher/admin)
-GET    /api/v1/students/my-students        - Studenti del docente (teacher/admin)
-GET    /api/v1/students/class/:id          - Studenti per classe (teacher/admin)
-POST   /api/v1/students/:id/assign-class   - Assegna a classe (admin)
-POST   /api/v1/students/:id/remove-from-class - Rimuove da classe (admin)
-GET    /api/v1/students/unassigned/:schoolId - Lista studenti non assegnati (admin) [NUOVO]
-POST   /api/v1/students/batch-assign       - Assegnazione multipla a classe (admin) [NUOVO]
-
-Controllo Accessi:
-- Admin: accesso completo
-- Teacher: solo lettura e propri studenti
-- Altri: nessun accesso
-*/
+/**
+ * @summary Documentazione delle Route
+ * 
+ * GET    /api/v1/students                    - Lista studenti (teacher/admin)
+ * POST   /api/v1/students                    - Crea studente (admin)
+ * GET    /api/v1/students/:id                - Dettaglio studente (teacher/admin)
+ * PUT    /api/v1/students/:id                - Modifica studente (admin)
+ * DELETE /api/v1/students/:id                - Elimina studente (admin)
+ * GET    /api/v1/students/search             - Ricerca studenti (teacher/admin)
+ * GET    /api/v1/students/my-students        - Studenti del docente (teacher/admin)
+ * GET    /api/v1/students/class/:id          - Studenti per classe (teacher/admin)
+ * POST   /api/v1/students/:id/assign-class   - Assegna a classe (admin)
+ * POST   /api/v1/students/:id/remove-from-class - Rimuove da classe (admin)
+ * GET    /api/v1/students/unassigned/:schoolId - Lista studenti non assegnati (admin)
+ * POST   /api/v1/students/batch-assign       - Assegnazione multipla a classe (admin)
+ * 
+ * Controllo Accessi:
+ * - Admin: accesso completo
+ * - Teacher: solo lettura e propri studenti
+ * - Altri: nessun accesso
+ */

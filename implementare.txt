@@ -201,3 +201,19 @@ Gestione errori consistente
 Separazione chiara delle responsabilità
 Integrazione con i servizi
 Risposte standardizzate
+
+PermissionMiddleware:
+
+Verifica ruoli granulare
+Sistema permessi avanzato
+Controlli contestuali per scenari specifici
+Logging completo delle decisioni di autorizzazione
+Supporto per gerarchie di permessi
+Caratteristiche chiave:
+
+Sicurezza rafforzata con rate limiting
+Gestione token più robusta
+Logging dettagliato per debugging e audit
+Controlli contestuali flessibili
+Separazione chiara tra autenticazione e autorizzazione
+

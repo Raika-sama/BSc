@@ -1,23 +1,35 @@
-// src/routes/PrivateRoute.js:
-
-import React from 'react';
+// src/routes/PrivateRoute.js
+import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import authService from '../services/authService';
 
 const PrivateRoute = ({ children }) => {
     const { user, loading } = useAuth();
     const location = useLocation();
+    const [isVerified, setIsVerified] = useState(false);
+    const [verifying, setVerifying] = useState(true);
 
-    if (loading) {
-        return <div>Loading...</div>; // Potresti usare un componente Loader più sofisticato
+    useEffect(() => {
+        const verifyAuth = async () => {
+            if (user) {
+                const isValid = await authService.verifyToken();
+                setIsVerified(isValid);
+            }
+            setVerifying(false);
+        };
+
+        verifyAuth();
+    }, [user]);
+
+    if (loading || verifying) {
+        return <div>Loading...</div>;
     }
 
-    if (!user) {
-        // Redirect to login page with the return url
+    if (!user || !isVerified) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    // Se l'utente non è admin, reindirizza
     if (user.role !== 'admin') {
         return <Navigate to="/unauthorized" replace />;
     }

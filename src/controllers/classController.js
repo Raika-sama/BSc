@@ -9,10 +9,21 @@ const { Class, School } = require('../models'); // Aggiunto School all'import
 
 
 class ClassController extends BaseController {
-    constructor() {
-        super(ClassRepository, 'class');
-        this.School = School; // Aggiungi questa riga
+    constructor(classRepository, schoolRepository) {
+        super(classRepository);
+        this.repository = classRepository;
+        this.School = schoolRepository;  // invece di School direttamente
 
+        // Binding dei metodi
+        this.create = this.create.bind(this);
+        this.getBySchool = this.getBySchool.bind(this);
+        this.addStudents = this.addStudents.bind(this);
+        this.getAll = this.getAll.bind(this);
+        this.handleYearTransition = this.handleYearTransition.bind(this);
+        this.createInitialClasses = this.createInitialClasses.bind(this);
+        this.getMyClasses = this.getMyClasses.bind(this);
+        this.getById = this.getById.bind(this);
+        this.removeStudentsFromClass = this.removeStudentsFromClass.bind(this);
     }
 
  /**
@@ -557,4 +568,4 @@ async removeStudentsFromClass(req, res, next) {
 
 }
 
-module.exports = new ClassController();
+module.exports = ClassController;

@@ -2,7 +2,7 @@
  * @file authRoutes.js
  * @description Router per la gestione dell'autenticazione
  * @author Raika-sama
- * @date 2025-01-31
+ * @date 2025-01-31 22:05:42
  */
 
 const express = require('express');
@@ -13,28 +13,11 @@ const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
 /**
- * Middleware per il logging delle richieste di autenticazione
- */
-router.use((req, res, next) => {
-    const routeInfo = {
-        method: req.method,
-        path: req.originalUrl,
-        ip: req.ip,
-        userAgent: req.get('user-agent'),
-        timestamp: new Date().toISOString()
-    };
-
-    logger.info('Auth Route Called', routeInfo);
-    next();
-});
-
-/**
  * Wrapper per gestione errori asincrona
- * @param {Function} fn - Function handler della route
  */
 const asyncHandler = (fn) => (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch((error) => {
-        logger.error('Route Error Handler', {
+        logger.error('Auth Route Error:', {
             error,
             path: req.originalUrl,
             method: req.method
@@ -43,10 +26,22 @@ const asyncHandler = (fn) => (req, res, next) => {
     });
 };
 
-// Routes pubbliche
-router.post('/register', 
-    asyncHandler(authController.register.bind(authController))
-);
+// 1. Middleware di logging per tutte le route di auth
+router.use((req, res, next) => {
+    logger.info('Auth Route Called:', {
+        method: req.method,
+        path: req.originalUrl,
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+        timestamp: new Date().toISOString()
+    });
+    next();
+});
+
+// 2. Route pubbliche (non protette)
+//router.post('/register', 
+//    asyncHandler(authController.register.bind(authController))
+//);
 
 router.post('/login', 
     loginLimiter,
@@ -61,12 +56,11 @@ router.put('/reset-password/:token',
     asyncHandler(authController.resetPassword.bind(authController))
 );
 
-// Rotta per verificare il token
-router.get('/verify', protect, asyncHandler(async (req, res) => {
-    try {
-        logger.info('Verifica token in corso per utente:', {
-            userId: req.user._id
-        });
+// 3. Verifica token
+router.get('/verify', 
+    protect, 
+    asyncHandler(async (req, res) => {
+        logger.info('Token verification:', { userId: req.user._id });
 
         res.status(200).json({
             status: 'success',
@@ -80,26 +74,12 @@ router.get('/verify', protect, asyncHandler(async (req, res) => {
                 }
             }
         });
-    } catch (error) {
-        logger.error('Errore nella verifica del token:', {
-            error: error.message,
-            stack: error.stack
-        });
+    })
+);
 
-        res.status(500).json({
-            status: 'error',
-            error: {
-                message: 'Errore nella verifica del token',
-                code: 'AUTH_VERIFY_ERROR'
-            }
-        });
-    }
-}));
-
-// Middleware di protezione per le route autenticate
+// 4. Route protette (richiedono autenticazione)
 router.use(protect);
 
-// Routes protette
 router.get('/me', 
     asyncHandler(authController.getMe.bind(authController))
 );
@@ -116,8 +96,15 @@ router.post('/logout',
     asyncHandler(authController.logout.bind(authController))
 );
 
-// Error handler specifico per le route di autenticazione
+// 5. Gestione errori centralizzata
 router.use((err, req, res, next) => {
+    logger.error('Auth Error:', {
+        error: err,
+        path: req.originalUrl,
+        method: req.method,
+        ip: req.ip
+    });
+
     if (err.code && err.status) {
         // Errori già formattati
         return res.status(err.status).json({
@@ -126,13 +113,6 @@ router.use((err, req, res, next) => {
             message: err.message
         });
     }
-
-    // Log errori non gestiti
-    logger.error('Unhandled Auth Route Error', {
-        error: err,
-        path: req.originalUrl,
-        method: req.method
-    });
 
     // Converti in errore standard
     const standardError = createError(
@@ -144,8 +124,29 @@ router.use((err, req, res, next) => {
     res.status(standardError.status).json({
         status: 'error',
         code: standardError.code,
-        message: standardError.message
+        message: standardError.message,
+        ...(process.env.NODE_ENV === 'development' && { 
+            stack: err.stack,
+            originalError: err.message 
+        })
     });
 });
 
 module.exports = router;
+
+/**
+ * @summary Documentazione delle Route
+ * 
+ * Route Pubbliche:
+ * POST   /auth/register          - Registrazione nuovo utente
+ * POST   /auth/login            - Login utente
+ * POST   /auth/forgot-password  - Richiesta reset password
+ * PUT    /auth/reset-password   - Reset password con token
+ * GET    /auth/verify           - Verifica token
+ * 
+ * Route Protette:
+ * GET    /auth/me               - Profilo utente corrente
+ * POST   /auth/refresh-token    - Rinnovo token
+ * PUT    /auth/update-password  - Aggiornamento password
+ * POST   /auth/logout           - Logout utente
+ */

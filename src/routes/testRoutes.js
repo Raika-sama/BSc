@@ -4,7 +4,8 @@ const router = express.Router();
 const { test: testController } = require('../controllers');
 const { protect } = require('../middleware/authMiddleware');
 
-router.use(protect); // Tutte le rotte dei test sono protette
+// Applica il middleware protect a tutte le route
+router.use(protect); // Non cambia perché stiamo usando lo stesso middleware
 
 router.get('/', testController.getAll.bind(testController));
 router.get('/:id', testController.getById.bind(testController));

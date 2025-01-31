@@ -5,8 +5,14 @@ const { test: TestRepository } = require('../repositories');
 const logger = require('../utils/errors/logger/logger');
 
 class TestController extends BaseController {
-    constructor() {
-        super(TestRepository, 'test');
+    constructor(testRepository) {
+        super(testRepository);
+        this.repository = testRepository;
+
+        // Binding dei metodi
+        this.startTest = this.startTest.bind(this);
+        this.submitTest = this.submitTest.bind(this);
+        this.getTestStats = this.getTestStats.bind(this);
     }
 
     /**
@@ -68,4 +74,4 @@ class TestController extends BaseController {
     }
 }
 
-module.exports = new TestController();
+module.exports = TestController;

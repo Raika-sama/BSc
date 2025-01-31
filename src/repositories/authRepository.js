@@ -11,6 +11,103 @@ class AuthRepository {
     }
 
     /**
+ * Aggiorna la password dell'utente
+ */
+async updatePassword(req, res) {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.user.id;
+
+        logger.debug('Password update request', { 
+            userId,
+            ip: req.ip
+        });
+
+        if (!currentPassword || !newPassword) {
+            throw createError(
+                ErrorTypes.VALIDATION.MISSING_FIELDS,
+                'Password corrente e nuova password richieste'
+            );
+        }
+
+        // Verifica la password corrente prima di procedere
+        const user = await this.userService.verifyPassword(userId, currentPassword);
+
+        // Aggiorna la password
+        await this.authService.updatePassword(userId, newPassword);
+
+        // Invalida tutte le sessioni esistenti per sicurezza
+        await this.sessionService.removeAllSessions(userId);
+
+        // Rimuovi i cookie attuali
+        this.clearTokenCookies(res);
+
+        logger.info('Password updated successfully', { userId });
+
+        this.sendResponse(res, {
+            status: 'success',
+            message: 'Password aggiornata con successo. Effettua nuovamente il login.'
+        });
+    } catch (error) {
+        logger.error('Password update failed', { 
+            error,
+            userId: req.user?.id 
+        });
+        this.handleError(res, error);
+    }
+}
+
+/**
+ * Ottiene i dati dell'utente autenticato
+ */
+async getMe(req, res) {
+    try {
+        logger.debug('Getting authenticated user data', { 
+            userId: req.user?.id 
+        });
+
+        if (!req.user) {
+            throw createError(
+                ErrorTypes.AUTH.UNAUTHORIZED,
+                'Utente non autenticato'
+            );
+        }
+
+        // Recupera i dati aggiornati dell'utente con le sessioni attive
+        const [user, activeSessions] = await Promise.all([
+            this.userService.getUserById(req.user.id),
+            this.sessionService.getActiveSessions(req.user.id)
+        ]);
+
+        if (!user) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Utente non trovato'
+            );
+        }
+
+        logger.debug('User data retrieved successfully', { 
+            userId: user._id,
+            sessionCount: activeSessions.length
+        });
+
+        this.sendResponse(res, {
+            status: 'success',
+            data: {
+                user,
+                sessions: {
+                    active: activeSessions.length,
+                    current: req.sessionId
+                }
+            }
+        });
+    } catch (error) {
+        logger.error('Error getting user data', { error });
+        this.handleError(res, error);
+    }
+}
+
+    /**
      * Verifica credenziali utente
      * @param {string} email - Email utente
      * @param {string} password - Password da verificare

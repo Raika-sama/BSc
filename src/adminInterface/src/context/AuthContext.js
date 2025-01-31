@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { axiosInstance } from '../services/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from './NotificationContext';
+import authService from '../services/authService';
 
 const AuthContext = createContext(null);
 
@@ -12,34 +13,27 @@ export const AuthProvider = ({ children }) => {
     const [error, setError] = useState(null);
     const [permissions, setPermissions] = useState([]);
     const [userStatus, setUserStatus] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('token') || null);
+    const [sessionData, setSessionData] = useState(null);
     const { showNotification } = useNotification();
 
     useEffect(() => {
         checkAuth();
     }, []);
 
-    // Aggiungi queste funzioni
-const checkPermission = (permission) => {
-    return permissions?.includes(permission) || false;
-};
-
-const isAccountActive = () => {
-    return userStatus === 'active';
-};
-
     const checkAuth = async () => {
         try {
             setLoading(true);
-            const storedUser = localStorage.getItem('user');
+            const currentUser = authService.getCurrentUser();
             
-            if (storedUser) {
-                const userData = JSON.parse(storedUser);
+            if (currentUser?.token) {
                 // Verifica il token con il backend
                 const response = await axiosInstance.get('/auth/verify');
                 
                 if (response.data.status === 'success') {
-                    setUser(userData);
+                    setUser(response.data.data.user);
+                    setUserStatus(response.data.data.user.status);
+                    setPermissions(response.data.data.user.permissions || []);
+                    setSessionData(response.data.data.session);
                 } else {
                     handleAuthError();
                 }
@@ -52,33 +46,27 @@ const isAccountActive = () => {
     };
 
     const handleAuthError = () => {
-        localStorage.removeItem('user');
+        authService.logout();
         setUser(null);
+        setSessionData(null);
         setError('Sessione scaduta');
     };
 
-    // In AuthContext.js
     const login = async ({email, password}) => {
         try {
-            const response = await axiosInstance.post('/auth/login', {
-                email,
-                password
-            });
+            const response = await authService.login(email, password);
             
-            if (response.data.status === 'success') {
-                const { token, data: { user } } = response.data;
+            if (response.status === 'success') {
+                const { user, token, refreshToken } = response.data;
                 
-                // Imposta il token
-                setToken(token);
-                localStorage.setItem('token', token);
-                
-                // Imposta l'utente
-                const userData = { ...user };
-                localStorage.setItem('user', JSON.stringify(userData));
-                setUser(userData);
-                
-                // Imposta il token nell'header di axios
-                axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                setUser(user);
+                setUserStatus(user.status);
+                setPermissions(user.permissions || []);
+                setSessionData({
+                    token,
+                    refreshToken,
+                    expiresAt: user.tokenExpiresAt
+                });
                 
                 return true;
             }
@@ -91,83 +79,80 @@ const isAccountActive = () => {
 
     const logout = async () => {
         try {
-            await axiosInstance.post('/auth/logout');
+            await authService.logout();
+            setUser(null);
+            setSessionData(null);
+            setPermissions([]);
+            setUserStatus(null);
+            setError(null);
         } catch (err) {
             console.error('Logout error:', err);
-        } finally {
-            // Rimuovi l'header Authorization
-            delete axiosInstance.defaults.headers.common['Authorization'];
-            localStorage.removeItem('user');
-            setUser(null);
-            setError(null);
+            showNotification('Errore durante il logout', 'error');
+        }
+    };
+
+    const refreshSession = async () => {
+        try {
+            if (!sessionData?.refreshToken) return false;
+            
+            const response = await axiosInstance.post('/auth/refresh-token', {
+                refreshToken: sessionData.refreshToken
+            });
+
+            if (response.data.status === 'success') {
+                const { token, refreshToken } = response.data.data;
+                setSessionData(prev => ({
+                    ...prev,
+                    token,
+                    refreshToken
+                }));
+                return true;
+            }
+            return false;
+        } catch (error) {
+            handleAuthError();
+            return false;
         }
     };
 
     const updateUser = (userData) => {
         try {
-            const currentUser = { ...user, ...userData };
-            localStorage.setItem('user', JSON.stringify(currentUser));
-            setUser(currentUser);
+            const updatedUser = { ...user, ...userData };
+            setUser(updatedUser);
+            authService.updateUserInStorage(updatedUser);
         } catch (err) {
             console.error('Error updating user:', err);
+            showNotification('Errore nell\'aggiornamento dei dati utente', 'error');
         }
     };
 
-    const clearError = () => {
-        setError(null);
+    const checkPermission = (permission) => {
+        return permissions?.includes(permission) || user?.role === 'admin' || false;
     };
 
-    // Aggiungi al value object
+    const isAccountActive = () => {
+        return userStatus === 'active';
+    };
+
     const value = {
         user,
-        token,
-        isAuthenticated: !!token,
+        loading,
+        error,
+        isAuthenticated: !!sessionData?.token,
+        permissions,
+        sessionData,
         login,
         logout,
-        permissions,
+        refreshSession,
+        updateUser,
         checkPermission,
         isAccountActive,
         userStatus
     };
-
-    if (loading) {
-        return (
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                height: '100vh' 
-            }}>
-                Caricamento...
-            </div>
-        );
-    }
 
     return (
         <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );
-};
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-};
-
-// Hook personalizzato per la protezione delle rotte
-export const useRequireAuth = (redirectUrl = '/login') => {
-    const auth = useAuth();
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        if (!auth.loading && !auth.isAuthenticated) {
-            navigate(redirectUrl);
-        }
-    }, [auth.loading, auth.isAuthenticated, navigate, redirectUrl]);
-
-    return auth;
 };

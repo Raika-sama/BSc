@@ -17,22 +17,28 @@ const StudentRepository = require('./StudentRepository');
 const TestRepository = require('./TestRepository');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
+const models = require('../models');
 
-// Prima creiamo le istanze dei repository che non hanno dipendenze
-const classRepository = new ClassRepository();
-const studentRepository = new StudentRepository();
+// Creiamo le istanze dei repository passando i models corrispondenti
+const classRepository = new ClassRepository(models.Class);
+const studentRepository = new StudentRepository(models.Student);
+const userRepository = new UserRepository(models.User);
+const testRepository = new TestRepository(models.Test);
 
-// Poi creiamo il repository della scuola iniettando le dipendenze
-const schoolRepository = new SchoolRepository(classRepository, studentRepository);
+// Creiamo il repository della scuola iniettando le dipendenze
+const schoolRepository = new SchoolRepository(
+    models.School,
+    classRepository, 
+    studentRepository
+);
 
 const repositories = {
     school: schoolRepository,
     class: classRepository,
     student: studentRepository,
-    user: new UserRepository(),
-    test: new TestRepository()
+    user: userRepository,
+    test: testRepository
 };
-
 // Dopo l'inizializzazione dei repository
 logger.debug('Repository initialization check:', {
     hasSchoolRepo: !!repositories.school,

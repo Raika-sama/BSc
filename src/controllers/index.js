@@ -11,7 +11,7 @@ const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
 // Import delle classi Controller
-const AuthController = require('./AuthController');
+const AuthController = require('./authController');
 const UserController = require('./UserController');
 const SchoolController = require('./SchoolController');
 const ClassController = require('./ClassController');
@@ -26,6 +26,7 @@ const SessionService = require('../services/SessionService');
 // Import dei repository
 const UserRepository = require('../repositories/UserRepository');
 const AuthRepository = require('../repositories/authRepository');
+const repositories = require('../repositories');
 
 // Import dei models
 const { User } = require('../models');
@@ -43,15 +44,14 @@ const userService = new UserService(userRepository, authService, sessionService)
 const controllers = {
     auth: new AuthController(authService, userService, sessionService),
     user: new UserController(userService, sessionService),
-    school: new SchoolController(),
-    class: new ClassController(),
-    student: new StudentController(),
-    test: new TestController()
+    school: new SchoolController(repositories.school, repositories.class, repositories.student),
+    class: new ClassController(repositories.class, repositories.school),
+    student: new StudentController(repositories.student),
+    test: new TestController(repositories.test)
 };
 
-// Il resto del tuo codice di validazione rimane identico
 const requiredMethods = {
-    'auth': ['register', 'login', 'logout', 'getMe', 'forgotPassword', 'resetPassword', 'updatePassword'],
+    'auth': ['login', 'logout', 'getMe', 'forgotPassword', 'resetPassword', 'updatePassword'],
     'school': [],
     'user': [],
     'class': [],
@@ -59,6 +59,12 @@ const requiredMethods = {
     'test': []
 };
 
+// Funzione helper per verificare se un metodo esiste
+const methodExists = (obj, method) => {
+    return typeof obj[method] === 'function' || 
+           (obj[method] && {}.toString.call(obj[method]) === '[object Function]') ||
+           (obj[method] && {}.toString.call(obj[method]) === '[object AsyncFunction]');
+};
 
 // Validazione dei controller
 try {
@@ -75,11 +81,13 @@ try {
         // Verifica metodi specifici solo per i controller che li richiedono
         if (requiredMethods[name] && requiredMethods[name].length > 0) {
             requiredMethods[name].forEach(method => {
-                if (typeof controller[method] !== 'function') {
+                if (!methodExists(controller, method)) {
                     logger.error(`Metodo ${method} mancante nel controller ${name}`, {
                         controller: name,
                         method: method,
-                        availableMethods: Object.keys(controller)
+                        availableMethods: Object.getOwnPropertyNames(Object.getPrototypeOf(controller))
+                            .concat(Object.keys(controller))
+                            .filter(key => methodExists(controller, key))
                     });
                     throw createError(
                         ErrorTypes.SYSTEM.INTERNAL_ERROR,
@@ -92,7 +100,9 @@ try {
         // Log dei metodi disponibili per ogni controller
         logger.debug(`Metodi disponibili per ${name} controller:`, {
             controller: name,
-            methods: Object.keys(controller).filter(key => typeof controller[key] === 'function')
+            methods: Object.getOwnPropertyNames(Object.getPrototypeOf(controller))
+                .concat(Object.keys(controller))
+                .filter(key => methodExists(controller, key))
         });
     });
 

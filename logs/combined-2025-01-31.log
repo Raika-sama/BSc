@@ -1222,3 +1222,23 @@
 {"level":"error","message":"Login error:","timestamp":"2025-01-31T20:02:58.148Z"}
 {"error":{},"level":"error","message":"Unhandled Auth Route Error","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-01-31T20:02:58.149Z"}
 {"duration":"9ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1738353778143_fwp7qsa0w","responseSize":"91 Bytes","statusCode":500,"timestamp":"2025-01-31T20:02:58.152Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-31T22:08:08.781Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-31T22:08:08.782Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-31T22:08:08.783Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-31T22:08:08.784Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-31T22:08:08.785Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","class","student","user","test"],"timestamp":"2025-01-31T22:08:08.786Z"}
+{"controllers":["auth","user","school","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-31T22:08:08.798Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-01-31T22:08:09.097Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-01-31T22:08:09.663Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-01-31T22:08:09.678Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-01-31T22:08:09.679Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-01-31T22:08:39.951Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-01-31T22:08:39.952Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-01-31T22:08:39.953Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-01-31T22:08:39.954Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-01-31T22:08:39.954Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["school","class","student","user","test"],"timestamp":"2025-01-31T22:08:39.955Z"}
+{"controllers":["auth","user","school","class","student","test"],"level":"info","message":"Controllers caricati con successo","timestamp":"2025-01-31T22:08:39.967Z"}
+{"level":"info","message":"Routes caricate:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-01-31T22:08:40.206Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-01-31T22:08:40.572Z"}

@@ -7,22 +7,22 @@ const mongoose = require('mongoose'); // Aggiungi questa riga all'inizio del fil
 const Student = require('../models/Student'); // Aggiungi questa riga all'inizio del file
 
 class StudentController extends BaseController {
-    constructor() {
-        const { student: studentRepository } = require('../repositories');
-        super(studentRepository, 'student');
-        
+    constructor(studentRepository) {
+        super(studentRepository);
+        this.repository = studentRepository;
+        this.model = Student;
+
         // Binding dei metodi
         this.getStudentsByClass = this.getStudentsByClass.bind(this);
         this.getMyStudents = this.getMyStudents.bind(this);
         this.assignToClass = this.assignToClass.bind(this);
         this.removeFromClass = this.removeFromClass.bind(this);
         this.searchStudents = this.searchStudents.bind(this);
-        this.getUnassignedStudents = this.getUnassignedStudents.bind(this); // Aggiungi questa riga
-        this.batchAssignToClass = this.batchAssignToClass.bind(this); // Aggiungi questo!
+        this.getUnassignedStudents = this.getUnassignedStudents.bind(this);
+        this.batchAssignToClass = this.batchAssignToClass.bind(this);
         this.batchAssignToSchool = this.batchAssignToSchool.bind(this);
         this.getUnassignedToSchoolStudents = this.getUnassignedToSchoolStudents.bind(this);
-        this.createStudentWithClass = this.createStudentWithClass.bind(this); // Aggiungi questo
-        this.model = Student; // Aggiungi questa riga
+        this.createStudentWithClass = this.createStudentWithClass.bind(this);
     }
 
     /**
@@ -641,7 +641,7 @@ console.log('Attempting to assign students:', {
 }
 }
 
-module.exports = new StudentController();
+module.exports = StudentController;
 
 
 

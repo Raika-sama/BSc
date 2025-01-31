@@ -1,7 +1,7 @@
 // src/middleware/authMiddleware.js
 const rateLimit = require('express-rate-limit');
-const jwt = require('jsonwebtoken');
-const config = require('../config/config');
+const authService = require('../services/AuthService');
+const sessionService = require('../services/SessionService');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
@@ -119,7 +119,21 @@ class AuthMiddleware {
     };
 }
 
+// Crea singleton con i servizi
+const authMiddlewareInstance = new AuthMiddleware(authService, sessionService);
+
+// Esporta tutto ciò che serve
 module.exports = {
-    AuthMiddleware,
-    loginLimiter
+    AuthMiddleware,            // Classe per test e estensioni future
+    loginLimiter,             // Rate limiter per login
+    protect: authMiddlewareInstance.protect.bind(authMiddlewareInstance), // Middleware di protezione
+    restrictTo: (...roles) => (req, res, next) => {
+        if (!req.user) {
+            return next(createError(ErrorTypes.AUTH.NO_USER, 'User not found'));
+        }
+        if (!roles.includes(req.user.role)) {
+            return next(createError(ErrorTypes.AUTH.FORBIDDEN, 'Not authorized'));
+        }
+        next();
+    }
 };

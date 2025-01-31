@@ -2,20 +2,18 @@
  * @file userRoutes.js
  * @description Router per la gestione degli utenti
  * @author Raika-sama
- * @date 2025-01-31
+ * @date 2025-01-31 22:07:07
  */
 
 const express = require('express');
 const router = express.Router();
 const { user: userController } = require('../controllers');
-const { protect } = require('../middleware/authMiddleware');
-const { PermissionMiddleware } = require('../middleware/permissionMiddleware');
+const { protect, restrictTo } = require('../middleware/authMiddleware');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
 /**
  * Wrapper per gestione errori asincrona
- * @param {Function} fn - Function handler della route
  */
 const asyncHandler = (fn) => (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch((error) => {
@@ -33,7 +31,7 @@ logger.debug('User Controller loaded:', {
     controllerMethods: userController ? Object.keys(userController) : 'Controller not found'
 });
 
-// Middleware di protezione
+// Middleware di protezione globale
 router.use(protect);
 
 // Rotte profilo utente
@@ -45,19 +43,11 @@ router.put('/me',
     asyncHandler(userController.updateProfile.bind(userController))
 );
 
-router.put('/update-password', 
-    asyncHandler(userController.updatePassword.bind(userController))
-);
-
 // Rotte gestione utenti (admin/manager only)
-router.use(permissionMiddleware.checkRole('admin', 'manager'));
+router.use(restrictTo('admin', 'manager'));
 
-router.post('/', 
-    asyncHandler(userController.create.bind(userController))
-);
-
-router.get('/', 
-    asyncHandler(async (req, res) => {
+router.route('/')
+    .get(asyncHandler(async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const search = req.query.search || '';
@@ -77,22 +67,15 @@ router.get('/',
                 limit
             }
         });
-    })
-);
+    }))
+    .post(asyncHandler(userController.create.bind(userController)));
 
-router.get('/:id', 
-    asyncHandler(userController.getById.bind(userController))
-);
+router.route('/:id')
+    .get(asyncHandler(userController.getById.bind(userController)))
+    .put(asyncHandler(userController.update.bind(userController)))
+    .delete(asyncHandler(userController.delete.bind(userController)));
 
-router.put('/:id', 
-    asyncHandler(userController.update.bind(userController))
-);
-
-router.delete('/:id', 
-    asyncHandler(userController.delete.bind(userController))
-);
-
-// Error handler
+// Gestione errori centralizzata
 router.use((err, req, res, next) => {
     logger.error('User Route Error:', {
         error: err,
@@ -109,7 +92,8 @@ router.use((err, req, res, next) => {
     res.status(standardError.status).json({
         status: 'error',
         code: standardError.code,
-        message: standardError.message
+        message: standardError.message,
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
 

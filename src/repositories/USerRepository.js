@@ -13,10 +13,13 @@ class UserRepository extends BaseRepository {
      * @param {string} email - Email utente
      * @param {boolean} includePassword - Include campo password
      */
-    async findByEmail(email) {
+    async findByEmail(email, includePassword = false) {
         try {
-            const user = await this.model.findOne({ email });
-            return user;
+            const query = this.model.findOne({ email });
+            if (includePassword) {
+                query.select('+password');
+            }
+            return await query;
         } catch (error) {
             logger.error('Error finding user by email', { error, email });
             throw createError(

@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
+const ms = require('ms');
 
 class AuthService {
     constructor(userRepository) {
@@ -214,6 +215,14 @@ class AuthService {
             logger.error('Logout error', { error });
             throw error;
         }
+    }
+
+    async updatePassword(userId, currentPassword, newPassword) {
+        // Verifica la password corrente
+        const user = await this.authRepository.verifyCredentials(user.email, currentPassword);
+        
+        // Se la verifica passa, aggiorna la password
+        return this.authRepository.updatePassword(userId, newPassword);
     }
 
     /**

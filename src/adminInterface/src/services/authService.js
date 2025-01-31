@@ -9,10 +9,15 @@ const authService = {
                 password 
             });
             
-            if (response.data.token) {
-                localStorage.setItem('user', JSON.stringify(response.data));
+            if (response.data.data.token) {
+                const userData = {
+                    ...response.data.data.user,
+                    token: response.data.data.token,
+                    refreshToken: response.data.data.refreshToken
+                };
+                localStorage.setItem('user', JSON.stringify(userData));
             }
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error('Login error:', error);
             throw error;
@@ -21,7 +26,12 @@ const authService = {
 
     logout: async () => {
         try {
-            await axiosInstance.post('/auth/logout');
+            const user = authService.getCurrentUser();
+            if (user?.refreshToken) {
+                await axiosInstance.post('/auth/logout', {
+                    refreshToken: user.refreshToken
+                });
+            }
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
@@ -39,9 +49,21 @@ const authService = {
         }
     },
 
-    isAuthenticated: () => {
+    verifyToken: async () => {
+        try {
+            const response = await axiosInstance.get('/auth/verify');
+            return response.data.data.valid;
+        } catch (error) {
+            console.error('Token verification error:', error);
+            return false;
+        }
+    },
+
+    isAuthenticated: async () => {
         const user = authService.getCurrentUser();
-        return !!user && !!user.token;
+        if (!user || !user.token) return false;
+        
+        return await authService.verifyToken();
     },
 
     updateUserInStorage: (userData) => {

@@ -1,7 +1,7 @@
 // src/adminInterface/src/services/axiosConfig.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/v1';  // Questo è corretto perché combacia con app.js
+const API_URL = 'http://localhost:5000/api/v1';
 
 export const axiosInstance = axios.create({
     baseURL: API_URL,
@@ -26,11 +26,40 @@ const setupAxiosInterceptors = () => {
 
     axiosInstance.interceptors.response.use(
         (response) => response,
-        (error) => {
-            if (error.response?.status === 401) {
-                localStorage.removeItem('user');
-                window.location.href = '/login';
+        async (error) => {
+            const originalRequest = error.config;
+
+            // Se il token è scaduto e non abbiamo già tentato il refresh
+            if (error.response?.status === 401 && !originalRequest._retry) {
+                originalRequest._retry = true;
+
+                try {
+                    // Tenta il refresh del token
+                    const user = JSON.parse(localStorage.getItem('user'));
+                    const response = await axiosInstance.post('/auth/refresh-token', {
+                        refreshToken: user.refreshToken
+                    });
+
+                    if (response.data.token) {
+                        // Aggiorna il token nello storage
+                        localStorage.setItem('user', JSON.stringify({
+                            ...user,
+                            token: response.data.token,
+                            refreshToken: response.data.refreshToken
+                        }));
+
+                        // Riprova la richiesta originale con il nuovo token
+                        originalRequest.headers.Authorization = `Bearer ${response.data.token}`;
+                        return axios(originalRequest);
+                    }
+                } catch (refreshError) {
+                    // Se il refresh fallisce, logout
+                    localStorage.removeItem('user');
+                    window.location.href = '/login';
+                    return Promise.reject(refreshError);
+                }
             }
+
             return Promise.reject(error);
         }
     );

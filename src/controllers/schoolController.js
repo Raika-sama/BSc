@@ -15,6 +15,10 @@ const { School, Class } = require('../models');  // Aggiungi Class qui
 class SchoolController extends BaseController {
     constructor() {
         super(schoolRepository);
+        this.repository = schoolRepository;
+        this.classRepository = classRepository;
+        this.studentRepository = studentRepository;
+
         // Binding dei metodi
         this.create = this.create.bind(this);
         this.sendError = this.sendError.bind(this);
@@ -23,9 +27,6 @@ class SchoolController extends BaseController {
         this.getByType = this.getByType.bind(this);
         this.getMySchool = this.getMySchool.bind(this);
         this.setupInitialConfiguration = this.setupInitialConfiguration.bind(this);
-        this.classRepository = classRepository;
-        this.studentRepository = studentRepository;  // Aggiungi questa riga
-
     }
 
     // Aggiungi questi metodi di utility
@@ -602,4 +603,4 @@ async getSectionStudents(req, res) {
     
 }
 
-module.exports = new SchoolController();
+module.exports = SchoolController;  // CORRETTO
