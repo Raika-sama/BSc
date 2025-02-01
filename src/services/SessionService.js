@@ -24,18 +24,23 @@ class SessionService {
             logger.debug('Creating session with data:', {
                 userId: user?._id,
                 hasMetadata: !!metadata,
-                metadataFields: metadata ? Object.keys(metadata) : []
+                metadataFields: metadata ? Object.keys(metadata) : [],
+                isMongooseModel: user?.constructor?.modelName === 'User'
             });
     
             // Validazione input
             if (!user || !user._id) {
                 throw new Error('Invalid user object');
             }
-            if (!token) {
-                throw new Error('Token is required');
-            }
-            if (!metadata || !metadata.userAgent || !metadata.ipAddress) {
-                throw new Error('Invalid metadata');
+    
+            // Se l'utente non è un modello mongoose completo, lo recuperiamo
+            if (typeof user.addSessionToken !== 'function') {
+                user = await this.userRepository.findById(user._id)
+                    .select('+sessionTokens');
+                
+                if (!user) {
+                    throw new Error('User not found');
+                }
             }
     
             const sessionData = {
@@ -47,8 +52,16 @@ class SessionService {
                 lastUsedAt: new Date()
             };
     
-            // Aggiungi la sessione all'utente
-            await user.addSessionToken(sessionData);
+            // Aggiungiamo la sessione manualmente se il metodo non esiste
+            if (typeof user.addSessionToken !== 'function') {
+                if (!Array.isArray(user.sessionTokens)) {
+                    user.sessionTokens = [];
+                }
+                user.sessionTokens.push(sessionData);
+            } else {
+                await user.addSessionToken(sessionData);
+            }
+    
             await user.save();
     
             logger.info('Session created successfully', {
