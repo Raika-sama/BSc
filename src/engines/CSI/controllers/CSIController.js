@@ -7,7 +7,20 @@ const logger = require('../../../utils/errors/logger/logger');
 const crypto = require('crypto');
 
 class CSIController {
-    constructor() {
+    constructor(dependencies) {
+        if (!dependencies) {
+            throw new Error('Dependencies object is required');
+        }
+        
+        const { testRepository, studentRepository, classRepository, schoolRepository, userService } = dependencies;
+        
+        // Salva le dependencies
+        this.testRepository = testRepository;
+        this.studentRepository = studentRepository;
+        this.classRepository = classRepository;
+        this.schoolRepository = schoolRepository;
+        this.userService = userService;
+
         // Inizializza l'engine con i modelli corretti
         this.engine = new CSIEngine(Test, Result);
     }
@@ -323,7 +336,104 @@ getStudentResults = async (req, res) => {
             });
         }
     };
+
+    // Aggiungi questi metodi alla classe CSIController
+
+    /**
+     * Recupera tutti i test
+     */
+    getAll = async (req, res) => {
+        logger.debug('getAll called');
+        res.status(501).json({
+            status: 'error',
+            message: 'Not implemented yet'
+        });
+    };
+
+    /**
+     * Inizializza un nuovo test
+     */
+    initTest = async (req, res) => {
+        logger.debug('initTest called');
+        res.status(501).json({
+            status: 'error',
+            message: 'Not implemented yet'
+        });
+    };
+
+    /**
+     * Recupera un test per ID
+     */
+    getById = async (req, res) => {
+        const { testId } = req.params;
+        logger.debug('getById called', { testId });
+        res.status(501).json({
+            status: 'error',
+            message: 'Not implemented yet'
+        });
+    };
+
+    /**
+     * Recupera il risultato di un test
+     */
+    getResult = async (req, res) => {
+        const { testId } = req.params;
+        logger.debug('getResult called', { testId });
+        res.status(501).json({
+            status: 'error',
+            message: 'Not implemented yet'
+        });
+    };
+
+    /**
+     * Recupera statistiche per classe
+     */
+    getClassStats = async (req, res) => {
+        const { classId } = req.params;
+        logger.debug('getClassStats called', { classId });
+        res.status(501).json({
+            status: 'error',
+            message: 'Not implemented yet'
+        });
+    };
+
+    /**
+     * Recupera statistiche per scuola
+     */
+    getSchoolStats = async (req, res) => {
+        const { schoolId } = req.params;
+        logger.debug('getSchoolStats called', { schoolId });
+        res.status(501).json({
+            status: 'error',
+            message: 'Not implemented yet'
+        });
+    };
+
+    /**
+     * Verifica disponibilità test
+     */
+    validateTestAvailability = async (req, res) => {
+        const { testId } = req.params;
+        logger.debug('validateTestAvailability called', { testId });
+        res.status(501).json({
+            status: 'error',
+            message: 'Not implemented yet'
+        });
+    };
+
+    /**
+     * Genera report PDF
+     */
+    generatePDFReport = async (req, res) => {
+        const { testId } = req.params;
+        logger.debug('generatePDFReport called', { testId });
+        res.status(501).json({
+            status: 'error',
+            message: 'Not implemented yet'
+        });
+    };
+    
 }
 
-// Esporta una singola istanza del controller
-module.exports = new CSIController();
+// Esporta la classe
+module.exports = CSIController;

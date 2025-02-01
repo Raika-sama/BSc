@@ -1,53 +1,50 @@
 // src/controllers/index.js
 
-/**
- * @file index.js
- * @description Export centralizzato dei controllers
- * @author Raika-sama
- * @date 2025-01-31
- */
-
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
-
-// Import delle classi Controller
-const AuthController = require('./authController');
-const UserController = require('./UserController');
-const SchoolController = require('./SchoolController');
-const ClassController = require('./ClassController');
-const StudentController = require('./studentController');
-const TestController = require('./TestController');
-
-// Import dei servizi
-const AuthService = require('../services/AuthService');
-const UserService = require('../services/UserService');
-const SessionService = require('../services/SessionService');
-
-// Import dei repository
-const UserRepository = require('../repositories/UserRepository');
-const AuthRepository = require('../repositories/authRepository');
-const repositories = require('../repositories');
 
 // Import dei models
 const { User } = require('../models');
 
-// Inizializzazione repositories
-const userRepository = new UserRepository(User);
-const authRepository = new AuthRepository(User);
+// Import dei Services
+const SessionService = require('../services/SessionService');
+const AuthService = require('../services/AuthService');
+const UserService = require('../services/UserService');
 
-// Inizializzazione servizi
+// Import dei Controller
+const AuthController = require('./authController');
+const UserController = require('./userController');
+const SchoolController = require('./schoolController');
+const ClassController = require('./classController');
+const StudentController = require('./studentController');
+const TestController = require('./testController');
+
+
+
+// Utilizziamo i repositories già istanziati
+// Import dei repositories
+const { 
+    authRepository, 
+    userRepository,
+    classRepository,
+    schoolRepository,
+    studentRepository,
+    testRepository 
+} = require('../repositories');
+
+// Inizializzazione servizi con tutte le dipendenze necessarie
 const sessionService = new SessionService(userRepository);
-const authService = new AuthService(authRepository, sessionService);
+const authService = new AuthService(authRepository, sessionService, userRepository);
 const userService = new UserService(userRepository, authService, sessionService);
 
-// Inizializzazione controllers
+// Inizializzazione controllers con le dipendenze corrette
 const controllers = {
     auth: new AuthController(authService, userService, sessionService),
     user: new UserController(userService, sessionService),
-    school: new SchoolController(repositories.school, repositories.class, repositories.student),
-    class: new ClassController(repositories.class, repositories.school),
-    student: new StudentController(repositories.student),
-    test: new TestController(repositories.test)
+    school: new SchoolController(schoolRepository, userService),
+    class: new ClassController(classRepository, schoolRepository, userService),
+    student: new StudentController(studentRepository, classRepository, schoolRepository),
+    test: new TestController(testRepository, studentRepository, classRepository)
 };
 
 const requiredMethods = {

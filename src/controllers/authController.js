@@ -239,7 +239,7 @@ class AuthController extends BaseController {
                 );
             }
     
-            // Usa l'authService che internamente usa l'authRepository
+            // Usa l'authService che internamente gestisce la verifica della password corrente
             await this.authService.updatePassword(userId, currentPassword, newPassword);
     
             // Invalida tutte le sessioni esistenti per sicurezza

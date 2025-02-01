@@ -1,12 +1,17 @@
 // src/routes/authRoutes.js
+// src/routes/authRoutes.js
 const express = require('express');
-const { protect, loginLimiter } = require('../middleware/authMiddleware');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
-const createAuthRouter = ({ authController }) => {
-    const router = express.Router();
+const createAuthRouter = ({ authController, authMiddleware }) => {
+    if (!authController) throw new Error('AuthController is required');
+    if (!authMiddleware) throw new Error('AuthMiddleware is required');
 
+    const router = express.Router();
+    const { protect, loginLimiter } = authMiddleware;
+
+    // Utility per gestione async
     const asyncHandler = (fn) => (req, res, next) => {
         Promise.resolve(fn(req, res, next)).catch((error) => {
             logger.error('Auth Route Error:', {
@@ -47,16 +52,18 @@ const createAuthRouter = ({ authController }) => {
     router.get('/verify', 
         protect,
         asyncHandler(async (req, res) => {
-            logger.info('Token verification:', { userId: req.user._id });
+            logger.info('Token verification:', { userId: req.user.id });
             res.status(200).json({
                 status: 'success',
                 data: {
                     valid: true,
                     user: {
-                        id: req.user._id,
+                        id: req.user.id,
                         schoolId: req.user.schoolId || null,
                         role: req.user.role,
-                        tokenExpiresAt: new Date(req.user.tokenExp * 1000).toISOString()
+                        tokenExpiresAt: req.user.tokenExp ? 
+                            new Date(req.user.tokenExp * 1000).toISOString() : 
+                            null
                     }
                 }
             });

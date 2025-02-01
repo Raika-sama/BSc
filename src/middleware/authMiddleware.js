@@ -1,7 +1,5 @@
 // src/middleware/authMiddleware.js
 const rateLimit = require('express-rate-limit');
-const authService = require('../services/AuthService');
-const sessionService = require('../services/SessionService');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
@@ -29,15 +27,17 @@ const loginLimiter = rateLimit({
 
 class AuthMiddleware {
     constructor(authService, sessionService) {
+        if (!authService) throw new Error('AuthService is required');
+        if (!sessionService) throw new Error('SessionService is required');
+        
         this.authService = authService;
         this.sessionService = sessionService;
-        this.tokenBlacklist = new Set(); // In produzione usare Redis
+        this.tokenBlacklist = new Set();
     }
-
-    /**
+    /*
      * Middleware di protezione route
      */
-    protect = async (req, res, next) => {
+     protect = async (req, res, next) => {
         try {
             const token = this.extractToken(req);
             
@@ -60,12 +60,9 @@ class AuthMiddleware {
             const decoded = await this.authService.verifyToken(token);
 
             // Verifica sessione
-            const session = await this.sessionService.validateSession(
+            const { user, session } = await this.sessionService.validateSession(
                 decoded.sessionId
             );
-
-            // Aggiorna lastUsedAt della sessione
-            await this.sessionService.updateSessionUsage(decoded.sessionId);
 
             // Aggiungi user al request
             req.user = {
@@ -120,20 +117,22 @@ class AuthMiddleware {
 }
 
 // Crea singleton con i servizi
-const authMiddlewareInstance = new AuthMiddleware(authService, sessionService);
-
-// Esporta tutto ciò che serve
-module.exports = {
-    AuthMiddleware,            // Classe per test e estensioni future
-    loginLimiter,             // Rate limiter per login
-    protect: authMiddlewareInstance.protect.bind(authMiddlewareInstance), // Middleware di protezione
-    restrictTo: (...roles) => (req, res, next) => {
-        if (!req.user) {
-            return next(createError(ErrorTypes.AUTH.NO_USER, 'User not found'));
+// Factory function
+const createAuthMiddleware = (authService, sessionService) => {
+    const middleware = new AuthMiddleware(authService, sessionService);
+    return {
+        loginLimiter,
+        protect: middleware.protect.bind(middleware),
+        restrictTo: (...roles) => (req, res, next) => {
+            if (!req.user) {
+                return next(createError(ErrorTypes.AUTH.NO_USER, 'User not found'));
+            }
+            if (!roles.includes(req.user.role)) {
+                return next(createError(ErrorTypes.AUTH.FORBIDDEN, 'Not authorized'));
+            }
+            next();
         }
-        if (!roles.includes(req.user.role)) {
-            return next(createError(ErrorTypes.AUTH.FORBIDDEN, 'Not authorized'));
-        }
-        next();
-    }
+    };
 };
+
+module.exports = createAuthMiddleware;

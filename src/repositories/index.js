@@ -15,6 +15,7 @@ const UserRepository = require('./UserRepository');
 const ClassRepository = require('./ClassRepository');
 const StudentRepository = require('./StudentRepository');
 const TestRepository = require('./TestRepository');
+const AuthRepository = require('./AuthRepository');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const models = require('../models');
@@ -24,6 +25,7 @@ const classRepository = new ClassRepository(models.Class);
 const studentRepository = new StudentRepository(models.Student);
 const userRepository = new UserRepository(models.User);
 const testRepository = new TestRepository(models.Test);
+const authRepository = new AuthRepository(models.User);
 
 // Creiamo il repository della scuola iniettando le dipendenze
 const schoolRepository = new SchoolRepository(
@@ -33,10 +35,20 @@ const schoolRepository = new SchoolRepository(
 );
 
 const repositories = {
-    school: schoolRepository,
-    class: classRepository,
-    student: studentRepository,
+    // Nomi per destrutturazione esplicita
+    authRepository,
+    userRepository,
+    classRepository,
+    schoolRepository,
+    studentRepository,
+    testRepository,
+    
+    // Nomi brevi per retrocompatibilità
+    auth: authRepository,
     user: userRepository,
+    class: classRepository,
+    school: schoolRepository,
+    student: studentRepository,
     test: testRepository
 };
 // Dopo l'inizializzazione dei repository

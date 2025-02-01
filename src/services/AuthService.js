@@ -7,9 +7,14 @@ const logger = require('../utils/errors/logger/logger');
 const ms = require('ms');
 
 class AuthService {
-    constructor(authRepository, sessionService) {
+    constructor(authRepository, sessionService, userRepository) {
+        if (!authRepository) throw new Error('AuthRepository is required');
+        if (!sessionService) throw new Error('SessionService is required');
+        if (!userRepository) throw new Error('UserRepository is required');
+        
         this.authRepository = authRepository;
         this.sessionService = sessionService;
+        this.userRepository = userRepository;
         this.tokenBlacklist = new Set();
     
         // Configurazione token
@@ -103,7 +108,7 @@ class AuthService {
     async login(email, password, metadata) {
         try {
             logger.debug('Authentication attempt', { email });
-
+    
             // Verifica credenziali
             const user = await this.authRepository.findByEmail(email);
             if (!user) {
@@ -112,7 +117,7 @@ class AuthService {
                     'Utente non trovato'
                 );
             }
-
+    
             // Verifica se l'account è bloccato
             if (user.lockUntil && user.lockUntil > Date.now()) {
                 throw createError(
@@ -120,7 +125,7 @@ class AuthService {
                     'Account temporaneamente bloccato. Riprova più tardi.'
                 );
             }
-
+    
             // Verifica password
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) {
@@ -130,33 +135,34 @@ class AuthService {
                     'Credenziali non valide'
                 );
             }
-
+    
             // Genera tokens
             const { accessToken, refreshToken } = this.generateTokens(user);
-
-            // Crea sessione e aggiorna info login
-            await Promise.all([
-                this.sessionService.createSession(user._id, {
-                    token: refreshToken,
-                    ...metadata
-                }),
-                this.authRepository.updateLoginInfo(user._id)
-            ]);
-
+    
+            // Crea sessione con i metadati corretti
+            await this.sessionService.createSession(user, refreshToken, {
+                userAgent: metadata.userAgent,
+                ipAddress: metadata.ipAddress,
+                expiresIn: this.REFRESH_TOKEN_EXPIRES_IN
+            });
+    
+            // Aggiorna info login
+            await this.authRepository.updateLoginInfo(user._id);
+    
             // Sanitizza l'utente per la risposta
             const sanitizedUser = this.sanitizeUser(user);
-
+    
             logger.info('Login successful', { 
                 userId: user._id,
                 metadata 
             });
-
+    
             return {
                 user: sanitizedUser,
                 accessToken,
                 refreshToken
             };
-
+    
         } catch (error) {
             logger.error('Login error:', {
                 error: error.message,
@@ -165,6 +171,7 @@ class AuthService {
             throw error;
         }
     }
+    
     /**
      * Gestisce tentativi di login falliti
      * @param {Object} user - Utente che ha fallito il login

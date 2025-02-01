@@ -12,33 +12,36 @@ const logger = require('./utils/errors/logger/logger');
 const User = require('./models/User');
 
 // Import Repositories
-const AuthRepository = require('./repositories/authRepository');
+const AuthRepository = require('./repositories/AuthRepository');
+const UserRepository = require('./repositories/UserRepository');
+const TestRepository = require('./repositories/TestRepository');
+const ClassRepository = require('./repositories/ClassRepository');
+const SchoolRepository = require('./repositories/SchoolRepository');
+const StudentRepository = require('./repositories/StudentRepository');
 
 // Import Services
-const AuthService = require('./services/AuthService');
 const SessionService = require('./services/SessionService');
+const AuthService = require('./services/AuthService');
 const UserService = require('./services/UserService');
 
 // Import Controllers
 const AuthController = require('./controllers/authController');
+const CSIController = require('./engines/CSI/controllers/CSIController');
+const UserController = require('./controllers/userController');
+const SchoolController = require('./controllers/schoolController');
+const ClassController = require('./controllers/classController');
+const StudentController = require('./controllers/studentController');
+const TestController = require('./controllers/testController');
 
 // Import Routes
 const routes = require('./routes');
-const { publicRoutes: csiPublicRoutes, protectedRoutes: csiProtectedRoutes } = require('./engines/CSI/routes/csi.routes');
+const createCSIRoutes = require('./engines/CSI/routes/csi.routes');
+
+// Import del middleware di auth
+const createAuthMiddleware = require('./middleware/authMiddleware');
 
 // Inizializza express
 const app = express();
-
-// Inizializza Repositories
-const authRepository = new AuthRepository(User);
-
-// Inizializza Services
-const sessionService = new SessionService(User);
-const userService = new UserService(User);
-const authService = new AuthService(authRepository, sessionService);
-
-// Inizializza Controllers
-const authController = new AuthController(authService, userService, sessionService);
 
 // Middleware di base - DEVONO VENIRE PRIMA DELLE ROUTES
 app.use(helmet());
@@ -52,6 +55,39 @@ app.use(cookieParser());
 
 // Logging
 app.use(requestLogger);
+
+// Inizializza Repositories
+const authRepository = new AuthRepository(User);
+const userRepository = new UserRepository(User);
+const testRepository = new TestRepository(User);
+const classRepository = new ClassRepository(User);
+const schoolRepository = new SchoolRepository(User);
+const studentRepository = new StudentRepository(User);
+
+// Inizializza Services (ordine corretto per evitare dipendenze circolari)
+const sessionService = new SessionService(userRepository);
+const authService = new AuthService(authRepository, sessionService, userRepository);  // Aggiunto userRepository
+const userService = new UserService(userRepository, authService, sessionService);
+
+// Inizializza il middleware di autenticazione
+const authMiddleware = createAuthMiddleware(authService, sessionService);
+
+// Inizializza Controllers
+const authController = new AuthController(authService, userService, sessionService);
+const userController = new UserController(userService, authService);
+const schoolController = new SchoolController(schoolRepository, userService);
+const classController = new ClassController(classRepository, schoolRepository, userService);
+const studentController = new StudentController(studentRepository, classRepository, schoolRepository);
+const testController = new TestController(testRepository, studentRepository, classRepository);
+
+// Inizializza CSI Controller
+const csiController = new CSIController({
+    testRepository,
+    studentRepository,
+    classRepository,
+    schoolRepository,
+    userService
+});
 
 // Debug middleware in development
 if (config.env === 'development') {
@@ -69,27 +105,43 @@ if (config.env === 'development') {
     });
 }
 
-// Passa le istanze inizializzate alle routes
-const initializeRoutes = (dependencies) => {
-    // Routes pubbliche CSI (devono venire prima delle routes protette)
-    app.use('/api/v1/tests/csi/public', csiPublicRoutes);
-
-    // Routes protette CSI
-    app.use('/api/v1/tests/csi', csiProtectedRoutes);
-
-    // Altre routes con dipendenze iniettate
-    app.use('/api/v1', routes(dependencies));
-};
-
-// Inizializza le routes con le dipendenze
-initializeRoutes({
+// Crea oggetto con tutte le dipendenze
+const dependencies = {
+    // Controllers
     authController,
+    userController,
+    schoolController,
+    classController,
+    studentController,
+    testController,
+    csiController,
+    // Services
     authService,
     userService,
-    sessionService
+    sessionService,
+    // Middleware
+    authMiddleware,
+    // Repositories
+    userRepository,
+    classRepository,
+    schoolRepository,
+    studentRepository,
+    testRepository
+};
+
+// Inizializza le routes
+const csiRoutes = createCSIRoutes({ 
+    authMiddleware, 
+    csiController 
 });
+// Route pubbliche CSI
+app.use('/api/v1/tests/csi/public', csiRoutes.publicRoutes);
 
+// Route protette CSI
+app.use('/api/v1/tests/csi', csiRoutes.protectedRoutes);
 
+// Altre routes con dipendenze iniettate
+app.use('/api/v1', routes(dependencies));
 
 // Gestione errori
 app.use(errorLogger);

@@ -1,96 +1,65 @@
 // src/engines/CSI/routes/csi.routes.js
 const express = require('express');
-const { protect } = require('../../../middleware/authMiddleware');
-const CSIController = require('../controllers/CSIController');
+const logger = require('../../../utils/errors/logger/logger');
 
-// Router per le route pubbliche (accesso via token)
-const publicRouter = express.Router();
+const createCSIRoutes = ({ authMiddleware, csiController }) => {
+    if (!authMiddleware) throw new Error('authMiddleware is required');
+    if (!csiController) throw new Error('csiController is required');
 
-// Router per le route protette (accesso admin/insegnanti)
-const protectedRouter = express.Router();
+    const { protect } = authMiddleware;
+    
+    // Router per le route pubbliche (accesso via token)
+    const publicRouter = express.Router();
 
-// Middleware di protezione per tutte le route protette
-protectedRouter.use(protect);
+    // Router per le route protette (accesso admin/insegnanti)
+    const protectedRouter = express.Router();
 
-// PUBLIC ROUTES (accesso via token)
-if (CSIController.verifyTestToken) {
-    publicRouter.get('/verify/:token', CSIController.verifyTestToken);
-}
+    // Middleware di protezione per tutte le route protette
+    protectedRouter.use(protect);
 
-if (CSIController.startTestWithToken) {
-    publicRouter.post('/start/:token', CSIController.startTestWithToken);
-}
+    // PUBLIC ROUTES (accesso via token)
+    publicRouter.get('/verify/:token', csiController.verifyTestToken);
+    publicRouter.post('/start/:token', csiController.startTestWithToken);
+    publicRouter.post('/:token/answer', csiController.submitAnswer);
+    publicRouter.post('/:token/complete', csiController.completeTest);
 
-if (CSIController.submitAnswer) {
-    publicRouter.post('/:token/answer', CSIController.submitAnswer);
-}
+    // PROTECTED ROUTES (richiede autenticazione)
+    protectedRouter.get('/', csiController.getAll);
+    protectedRouter.post('/init', csiController.initTest);
+    protectedRouter.get('/:testId', csiController.getById);
+    protectedRouter.get('/:testId/result', csiController.getResult);
+    protectedRouter.get('/stats/class/:classId', csiController.getClassStats);
+    protectedRouter.get('/stats/school/:schoolId', csiController.getSchoolStats);
+    protectedRouter.get('/validate/:testId', csiController.validateTestAvailability);
+    protectedRouter.post('/:testId/report', csiController.generatePDFReport);
+    protectedRouter.post('/generate-link', csiController.generateTestLink);
+    protectedRouter.get('/results/student/:studentId', csiController.getStudentResults);
 
-if (CSIController.completeTest) {
-    publicRouter.post('/:token/complete', CSIController.completeTest);
-}
+    // Gestione errori
+    const errorHandler = (err, req, res, next) => {
+        logger.error('CSI route error:', {
+            error: err.message,
+            stack: err.stack,
+            path: req.path,
+            method: req.method
+        });
 
-// PROTECTED ROUTES (richiede autenticazione)
-if (CSIController.getAll) {
-    protectedRouter.get('/', CSIController.getAll);
-}
+        res.status(err.statusCode || 500).json({
+            status: 'error',
+            error: {
+                message: err.message,
+                code: err.code || 'INTERNAL_SERVER_ERROR'
+            }
+        });
+    };
 
-if (CSIController.initTest) {
-    protectedRouter.post('/init', CSIController.initTest);
-}
+    publicRouter.use(errorHandler);
+    protectedRouter.use(errorHandler);
 
-if (CSIController.getById) {
-    protectedRouter.get('/:testId', CSIController.getById);
-}
-
-if (CSIController.getResult) {
-    protectedRouter.get('/:testId/result', CSIController.getResult);
-}
-
-if (CSIController.getClassStats) {
-    protectedRouter.get('/stats/class/:classId', CSIController.getClassStats);
-}
-
-if (CSIController.getSchoolStats) {
-    protectedRouter.get('/stats/school/:schoolId', CSIController.getSchoolStats);
-}
-
-if (CSIController.validateTestAvailability) {
-    protectedRouter.get('/validate/:testId', CSIController.validateTestAvailability);
-}
-
-if (CSIController.generatePDFReport) {
-    protectedRouter.post('/:testId/report', CSIController.generatePDFReport);
-}
-
-if (CSIController.generateTestLink) {
-    protectedRouter.post('/generate-link', CSIController.generateTestLink);
-}
-
-if (CSIController.getStudentResults) {
-    protectedRouter.get('/results/student/:studentId', CSIController.getStudentResults);
-}
-
-const errorHandler = (err, req, res, next) => {
-    logger.error('CSI route error:', {
-        error: err.message,
-        stack: err.stack,
-        path: req.path,
-        method: req.method
-    });
-
-    res.status(err.statusCode || 500).json({
-        status: 'error',
-        error: {
-            message: err.message,
-            code: err.code || 'INTERNAL_SERVER_ERROR'
-        }
-    });
+    return {
+        publicRoutes: publicRouter,
+        protectedRoutes: protectedRouter
+    };
 };
 
-publicRouter.use(errorHandler);
-protectedRouter.use(errorHandler);
-
-module.exports = {
-    publicRoutes: publicRouter,
-    protectedRoutes: protectedRouter
-};
+module.exports = createCSIRoutes;
