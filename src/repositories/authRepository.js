@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 
 class AuthRepository {
     constructor(userModel) {
-        this.userModel = userModel;
+        this.Model = userModel;
         this.RESET_TOKEN_EXPIRES = 3600000; // 1 ora in millisecondi
     }
 

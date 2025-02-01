@@ -19,6 +19,11 @@ const AuthRepository = require('./AuthRepository');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const models = require('../models');
+console.log('Models debug:', {
+    hasUser: !!models.User,
+    userModel: models.User ? Object.keys(models.User) : null,
+    modelNames: Object.keys(models)
+});
 
 // Creiamo le istanze dei repository passando i models corrispondenti
 const classRepository = new ClassRepository(models.Class);
@@ -54,8 +59,8 @@ const repositories = {
 // Dopo l'inizializzazione dei repository
 logger.debug('Repository initialization check:', {
     hasSchoolRepo: !!repositories.school,
-    schoolRepoHasClassRepo: !!repositories.school.classRepository,
-    schoolRepoHasStudentRepo: !!repositories.school.studentRepository
+    schoolRepoHasClassRepo: !!repositories.school.ClassRepository,
+    schoolRepoHasStudentRepo: !!repositories.school.StudentRepository
 });
 
 /**
