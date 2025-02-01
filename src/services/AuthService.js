@@ -1,17 +1,20 @@
 // src/services/AuthService.js
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const config = require('../config/config');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const ms = require('ms');
 
 class AuthService {
-    constructor(userRepository) {
-        this.userRepository = userRepository;
-        this.tokenBlacklist = new Set(); // In produzione usare Redis
-        
+    constructor(authRepository, sessionService) {
+        this.authRepository = authRepository;
+        this.sessionService = sessionService;
+        this.tokenBlacklist = new Set();
+    
         // Configurazione token
         this.JWT_SECRET = config.jwt.secret;
+        this.JWT_REFRESH_SECRET = config.jwt.refreshSecret;
         this.JWT_EXPIRES_IN = config.jwt.expiresIn || '1h';
         this.REFRESH_TOKEN_EXPIRES_IN = config.jwt.refreshExpiresIn || '7d';
         this.MAX_LOGIN_ATTEMPTS = 5;
@@ -39,24 +42,24 @@ class AuthService {
             // Refresh Token
             const refreshToken = jwt.sign(
                 { id: user._id },
-                this.JWT_SECRET,
+                this.JWT_REFRESH_SECRET,
                 { expiresIn: this.REFRESH_TOKEN_EXPIRES_IN }
             );
 
             logger.debug('Tokens generated successfully', {
-                userId: user._id,
-                tokenType: 'JWT'
+                userId: user._id
             });
 
             return { accessToken, refreshToken };
         } catch (error) {
-            logger.error('Error generating tokens', { error });
+            logger.error('Token generation error:', error);
             throw createError(
                 ErrorTypes.AUTH.TOKEN_GENERATION_FAILED,
                 'Errore nella generazione dei token'
             );
         }
     }
+
 
     /**
      * Verifica un token JWT
@@ -101,9 +104,8 @@ class AuthService {
         try {
             logger.debug('Authentication attempt', { email });
 
-            // Usa il repository per trovare l'utente
+            // Verifica credenziali
             const user = await this.authRepository.findByEmail(email);
-
             if (!user) {
                 throw createError(
                     ErrorTypes.AUTH.USER_NOT_FOUND,
@@ -111,9 +113,18 @@ class AuthService {
                 );
             }
 
+            // Verifica se l'account è bloccato
+            if (user.lockUntil && user.lockUntil > Date.now()) {
+                throw createError(
+                    ErrorTypes.AUTH.ACCOUNT_LOCKED,
+                    'Account temporaneamente bloccato. Riprova più tardi.'
+                );
+            }
+
             // Verifica password
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) {
+                await this.handleFailedLogin(user);
                 throw createError(
                     ErrorTypes.AUTH.INVALID_CREDENTIALS,
                     'Credenziali non valide'
@@ -121,35 +132,36 @@ class AuthService {
             }
 
             // Genera tokens
-            const accessToken = jwt.sign(
-                { id: user._id },
-                process.env.JWT_SECRET,
-                { expiresIn: process.env.JWT_EXPIRES_IN }
-            );
+            const { accessToken, refreshToken } = this.generateTokens(user);
 
-            const refreshToken = jwt.sign(
-                { id: user._id },
-                process.env.JWT_REFRESH_SECRET,
-                { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN }
-            );
+            // Crea sessione e aggiorna info login
+            await Promise.all([
+                this.sessionService.createSession(user._id, {
+                    token: refreshToken,
+                    ...metadata
+                }),
+                this.authRepository.updateLoginInfo(user._id)
+            ]);
 
-            // Aggiorna lastLogin e crea sessione
-            await this.authRepository.updateLoginInfo(user._id);
-            await this.sessionService.createSession(user._id, {
-                token: refreshToken,
-                ...metadata
+            // Sanitizza l'utente per la risposta
+            const sanitizedUser = this.sanitizeUser(user);
+
+            logger.info('Login successful', { 
+                userId: user._id,
+                metadata 
             });
 
-            // Rimuovi password dal risultato
-            delete user.password;
-
             return {
-                user,
+                user: sanitizedUser,
                 accessToken,
                 refreshToken
             };
+
         } catch (error) {
-            logger.error('Login error:', error);
+            logger.error('Login error:', {
+                error: error.message,
+                email
+            });
             throw error;
         }
     }
@@ -230,7 +242,17 @@ class AuthService {
      * @param {Object} user - Utente da sanitizzare
      */
     sanitizeUser(user) {
-        const { password, passwordResetToken, passwordResetExpires, ...safeUser } = user.toObject();
+        if (!user) return null;
+        
+        const sanitized = user.toObject ? user.toObject() : { ...user };
+        const { 
+            password, 
+            passwordResetToken, 
+            passwordResetExpires,
+            sessionTokens,
+            ...safeUser 
+        } = sanitized;
+        
         return safeUser;
     }
 }

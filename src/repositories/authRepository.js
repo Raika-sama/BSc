@@ -10,68 +10,111 @@ class AuthRepository {
         this.RESET_TOKEN_EXPIRES = 3600000; // 1 ora in millisecondi
     }
 
-//necessarie per il login:
-    async findByEmail(email) {
-        return await this.User.findOne({ email })
+    /**
+     * Trova un utente per ID
+     */
+    async findById(userId) {
+        try {
+            return await this.userModel.findById(userId).lean();
+        } catch (error) {
+            logger.error('Error finding user by id', { error, userId });
+            throw error;
+        }
+    }
+
+  /**
+     * Trova un utente per email
+     */
+  async findByEmail(email) {
+    try {
+        return await this.userModel.findOne({ email })
             .select('+password')
             .lean();
-    }
-
-    async updateLoginInfo(userId) {
-        return await this.User.findByIdAndUpdate(userId, {
-            $set: {
-                lastLogin: new Date(),
-                loginAttempts: 0
-            }
-        });
-    }
-
-    /**
- * Aggiorna la password dell'utente
- */
-async updatePassword(req, res) {
-    try {
-        const { currentPassword, newPassword } = req.body;
-        const userId = req.user.id;
-
-        logger.debug('Password update request', { 
-            userId,
-            ip: req.ip
-        });
-
-        if (!currentPassword || !newPassword) {
-            throw createError(
-                ErrorTypes.VALIDATION.MISSING_FIELDS,
-                'Password corrente e nuova password richieste'
-            );
-        }
-
-        // Verifica la password corrente prima di procedere
-        const user = await this.userService.verifyPassword(userId, currentPassword);
-
-        // Aggiorna la password
-        await this.authService.updatePassword(userId, newPassword);
-
-        // Invalida tutte le sessioni esistenti per sicurezza
-        await this.sessionService.removeAllSessions(userId);
-
-        // Rimuovi i cookie attuali
-        this.clearTokenCookies(res);
-
-        logger.info('Password updated successfully', { userId });
-
-        this.sendResponse(res, {
-            status: 'success',
-            message: 'Password aggiornata con successo. Effettua nuovamente il login.'
-        });
     } catch (error) {
-        logger.error('Password update failed', { 
-            error,
-            userId: req.user?.id 
-        });
-        this.handleError(res, error);
+        logger.error('Error finding user by email', { error, email });
+        throw error;
     }
 }
+
+   /**
+     * Aggiorna le informazioni di login
+     */
+    async updateLoginInfo(userId) {
+        try {
+            return await this.userModel.findByIdAndUpdate(userId, {
+                $set: {
+                    lastLogin: new Date(),
+                    loginAttempts: 0,
+                    lockUntil: null
+                }
+            }, { new: true });
+        } catch (error) {
+            logger.error('Error updating login info', { error, userId });
+            throw error;
+        }
+    }
+
+
+    /**
+     * Incrementa i tentativi di login falliti
+     */
+    async incrementLoginAttempts(userId, maxAttempts, lockTime) {
+        try {
+            const user = await this.userModel.findById(userId);
+            if (!user) return null;
+
+            user.loginAttempts += 1;
+            
+            if (user.loginAttempts >= maxAttempts) {
+                user.lockUntil = Date.now() + lockTime;
+            }
+
+            return await user.save();
+        } catch (error) {
+            logger.error('Error incrementing login attempts', { error, userId });
+            throw error;
+        }
+    }
+
+
+    /**
+     * Aggiorna la password di un utente
+     */
+    async updatePassword(userId, hashedPassword) {
+        try {
+            const user = await this.userModel.findById(userId);
+            if (!user) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente non trovato'
+                );
+            }
+
+            // Aggiungi vecchia password alla cronologia
+            if (!user.passwordHistory) {
+                user.passwordHistory = [];
+            }
+            user.passwordHistory.unshift({
+                password: user.password,
+                changedAt: new Date()
+            });
+
+            // Mantieni solo le ultime 5 password
+            if (user.passwordHistory.length > 5) {
+                user.passwordHistory = user.passwordHistory.slice(0, 5);
+            }
+
+            // Aggiorna la password
+            user.password = hashedPassword;
+            await user.save();
+
+            logger.info('Password updated successfully', { userId });
+            return user;
+        } catch (error) {
+            logger.error('Error updating password', { error, userId });
+            throw error;
+        }
+    }
 
 /**
  * Ottiene i dati dell'utente autenticato
@@ -128,6 +171,9 @@ async getMe(req, res) {
      * @param {string} email - Email utente
      * @param {string} password - Password da verificare
      */
+    /**
+     * Verifica le credenziali dell'utente
+     */
     async verifyCredentials(email, password) {
         try {
             const user = await this.userModel
@@ -156,42 +202,37 @@ async getMe(req, res) {
         }
     }
 
+
     /**
      * Crea token per reset password
      * @param {string} email - Email utente
      */
-    async createPasswordResetToken(email) {
-        try {
-            const user = await this.userModel.findOne({ email });
-            if (!user) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Utente non trovato'
-                );
-            }
-
-            const resetToken = crypto.randomBytes(32).toString('hex');
-            user.passwordResetToken = crypto
-                .createHash('sha256')
-                .update(resetToken)
-                .digest('hex');
-            
-            user.passwordResetExpires = Date.now() + this.RESET_TOKEN_EXPIRES;
-            await user.save({ validateBeforeSave: false });
-
-            logger.info('Password reset token created', { 
-                userId: user._id 
-            });
-
-            return {
-                user,
-                resetToken
-            };
-        } catch (error) {
-            logger.error('Error creating password reset token', { error });
-            throw error;
+async createPasswordResetToken(email) {
+    try {
+        const user = await this.userModel.findOne({ email });
+        if (!user) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Utente non trovato'
+            );
         }
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        user.passwordResetToken = crypto
+            .createHash('sha256')
+            .update(resetToken)
+            .digest('hex');
+        
+        user.passwordResetExpires = Date.now() + this.RESET_TOKEN_EXPIRES;
+        await user.save({ validateBeforeSave: false });
+
+        return { user, resetToken };
+    } catch (error) {
+        logger.error('Error creating password reset token', { error });
+        throw error;
     }
+}
+
 
     /**
      * Verifica token di reset password

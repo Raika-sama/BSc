@@ -1,49 +1,51 @@
+// src/routes/index.js
 const express = require('express');
-const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const authRoutes = require('./authRoutes');
-const classRoutes = require('./classRoutes');
-const schoolRoutes = require('./schoolRoutes');
-const userRoutes = require('./userRoutes');
-const studentRoutes = require('./studentRoutes');
-const testRoutes = require('./testRoutes');
-const csiRoutes = require('../engines/CSI/routes/csi.routes');
-
 const logger = require('../utils/errors/logger/logger');
 
+// Factory function per creare il router con le dipendenze
+const createRouter = (dependencies) => {
+    const router = express.Router();
+    
+    // Importa le route con le dipendenze
+    const authRoutes = require('./authRoutes')(dependencies);
+    const classRoutes = require('./classRoutes')(dependencies);
+    const schoolRoutes = require('./schoolRoutes')(dependencies);
+    const userRoutes = require('./userRoutes')(dependencies);
+    const studentRoutes = require('./studentRoutes')(dependencies);
+    const testRoutes = require('./testRoutes')(dependencies);
+    const csiRoutes = require('../engines/CSI/routes/csi.routes')(dependencies);
 
-// Middleware di protezione per tutte le altre route
-router.use((req, res, next) => {
-    logger.debug('Request details at router level:', {
-        path: req.path,
-        method: req.method,
-        auth: req.headers.authorization ? 'Present' : 'Missing'
+    // Middleware di logging
+    router.use((req, res, next) => {
+        logger.debug('Request details at router level:', {
+            path: req.path,
+            method: req.method,
+            auth: req.headers.authorization ? 'Present' : 'Missing'
+        });
+        next();
     });
-    next();
-});
 
-// Route pubbliche (non richiedono autenticazione)
-router.use('/auth', authRoutes);
+    // Route pubbliche
+    router.use('/auth', authRoutes);
+    router.use('/tests/csi/public', csiRoutes.publicRoutes);
 
-// Route pubbliche per accesso ai test via token
-router.use('/tests/csi/public', csiRoutes.publicRoutes);
+    // Route protette
+    router.use(['/classes', '/schools', '/users', '/students', '/tests'], protect);
+    
+    router.use('/classes', classRoutes);
+    router.use('/schools', schoolRoutes);
+    router.use('/users', userRoutes);
+    router.use('/students', studentRoutes);
+    router.use('/tests', testRoutes);
+    router.use('/tests/csi', csiRoutes.protectedRoutes);
 
+    logger.info('Routes caricate:', {
+        public: ['/auth', '/tests/csi/public'],
+        protected: ['/classes', '/schools', '/users', '/students', '/tests']
+    });
 
-// Applica il middleware di protezione a tutte le route eccetto /auth
-router.use(['/classes', '/schools', '/users', '/students', '/tests'], protect);
+    return router;
+};
 
-// Monta le route protette
-router.use('/classes', classRoutes);
-router.use('/schools', schoolRoutes);
-router.use('/users', userRoutes);
-router.use('/students', studentRoutes);
-router.use('/tests', testRoutes);
-router.use('/tests/csi', csiRoutes.protectedRoutes);  // Mount CSI protected routes
-
-// Log delle route registrate
-logger.info('Routes caricate:', {
-    public: ['/auth', '/tests/csi/public'],
-    protected: ['/classes', '/schools', '/users', '/students', '/tests']
-});
-
-module.exports = router;
+module.exports = createRouter;

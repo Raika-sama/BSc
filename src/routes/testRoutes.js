@@ -1,16 +1,25 @@
 // src/routes/testRoutes.js
 const express = require('express');
-const router = express.Router();
-const { test: testController } = require('../controllers');
 const { protect } = require('../middleware/authMiddleware');
+const logger = require('../utils/errors/logger/logger');
 
-// Applica il middleware protect a tutte le route
-router.use(protect); // Non cambia perché stiamo usando lo stesso middleware
+const createTestRouter = ({ testController }) => {
+    const router = express.Router();
 
-router.get('/', testController.getAll.bind(testController));
-router.get('/:id', testController.getById.bind(testController));
-router.get('/:testId/stats', testController.getTestStats.bind(testController));
-router.post('/', testController.startTest.bind(testController));
-router.post('/:testId/submit', testController.submitTest.bind(testController));
+    // Middleware di protezione globale
+    router.use(protect);
 
-module.exports = router;
+    const asyncHandler = (fn) => (req, res, next) => {
+        Promise.resolve(fn(req, res, next)).catch(next);
+    };
+
+    router.get('/', asyncHandler(testController.getAll.bind(testController)));
+    router.get('/:id', asyncHandler(testController.getById.bind(testController)));
+    router.get('/:testId/stats', asyncHandler(testController.getTestStats.bind(testController)));
+    router.post('/', asyncHandler(testController.startTest.bind(testController)));
+    router.post('/:testId/submit', asyncHandler(testController.submitTest.bind(testController)));
+
+    return router;
+};
+
+module.exports = createTestRouter;

@@ -67,72 +67,31 @@ class AuthController extends BaseController {
     login = async (req, res, next) => {
         try {
             const { email, password } = req.body;
-            console.log('Login attempt:', { email });
+            logger.debug('Login attempt:', { email });
     
-            // Aggiungiamo il +password per includere il campo password nella query
-            const user = await User.findOne({ email })
-                .select('+password')
-                .lean(); // Aggiungiamo lean() per prestazioni migliori
-    
-            console.log('User found:', { 
-                userId: user?._id,
-                hasPassword: !!user?.password 
-            });
-    
-            if (!user) {
-                return next(createError(
-                    ErrorTypes.AUTH.USER_NOT_FOUND,
-                    'Utente non trovato'
-                ));
-            }
-    
-            // Verifica password
-            const isMatch = await bcrypt.compare(password, user.password);
-            console.log('Password match:', { isMatch });
-    
-            if (!isMatch) {
-                return next(createError(
-                    ErrorTypes.AUTH.INVALID_CREDENTIALS,
-                    'Credenziali non valide'
-                ));
-            }
-    
-            // Genera token
-            const token = jwt.sign(
-                { id: user._id },
-                process.env.JWT_SECRET,
-                { expiresIn: process.env.JWT_EXPIRES_IN }
-            );
-    
-            // Genera refresh token
-            const refreshToken = jwt.sign(
-                { id: user._id },
-                process.env.JWT_REFRESH_SECRET,
-                { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN }
-            );
-    
-            // Rimuovi la password dal risultato
-            delete user.password;
-    
-            // Aggiorna lastLogin
-            await User.findByIdAndUpdate(user._id, {
-                $set: {
-                    lastLogin: new Date(),
-                    loginAttempts: 0
+            const { user, accessToken, refreshToken } = await this.authService.login(
+                email, 
+                password, 
+                {
+                    ipAddress: req.ip,
+                    userAgent: req.headers['user-agent']
                 }
-            });
+            );
+    
+            // Imposta i cookie
+            this.setTokenCookies(res, accessToken, refreshToken);
     
             res.status(200).json({
                 status: 'success',
                 data: {
                     user,
-                    token,
+                    accessToken,
                     refreshToken
                 }
             });
     
         } catch (error) {
-            console.error('Login error details:', error);
+            logger.error('Login error details:', error);
             next(createError(
                 ErrorTypes.AUTH.LOGIN_FAILED,
                 'Errore durante il login',
