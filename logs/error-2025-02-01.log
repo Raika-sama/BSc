@@ -1,0 +1,16 @@
+{"level":"error","message":"Token generation error:","timestamp":"2025-02-01T10:44:48.095Z"}
+{"email":"riccardonicolilb@gmail.com","error":"Errore nella generazione dei token","level":"error","message":"Login error:","timestamp":"2025-02-01T10:44:48.097Z"}
+{"level":"error","message":"Errore nella generazione dei token","metadata":{},"timestamp":"2025-02-01T10:44:48.099Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{"message":"Errore nella generazione dei token","metadata":{}}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-01T10:44:48.101Z"}
+{"error":{},"level":"error","message":"Error creating session","timestamp":"2025-02-01T10:53:29.926Z"}
+{"email":"riccardonicolilb@gmail.com","error":"Cannot read properties of undefined (reading 'CREATION_FAILED')","level":"error","message":"Login error:","timestamp":"2025-02-01T10:53:29.927Z"}
+{"level":"error","message":"Login error details:","timestamp":"2025-02-01T10:53:29.927Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-01T10:53:29.928Z"}
+{"error":{},"level":"error","message":"Error creating session","timestamp":"2025-02-01T10:59:05.222Z"}
+{"email":"riccardonicolilb@gmail.com","error":"Errore nella creazione della sessione","level":"error","message":"Login error:","timestamp":"2025-02-01T10:59:05.223Z"}
+{"code":"SESSION_001","level":"error","message":"Errore nella creazione della sessione","metadata":{},"status":500,"timestamp":"2025-02-01T10:59:05.224Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{"code":"SESSION_001","message":"Errore nella creazione della sessione","metadata":{},"status":500}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-01T10:59:05.226Z"}
+{"error":"user.addSessionToken is not a function","level":"error","message":"Session creation error:","stack":"TypeError: user.addSessionToken is not a function\n    at SessionService.createSession (C:\\Users\\ricca\\Desktop\\BSc\\src\\services\\SessionService.js:51:24)\n    at AuthService.login (C:\\Users\\ricca\\Desktop\\BSc\\src\\services\\AuthService.js:151:39)\n    at async AuthController.login (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\authController.js:72:57)","timestamp":"2025-02-01T11:14:16.075Z","userData":{"hasSessionTokens":true,"id":"677bfe44f6789c907c9f3766"}}
+{"email":"riccardonicolilb@gmail.com","error":"Errore nella creazione della sessione","level":"error","message":"Login error:","timestamp":"2025-02-01T11:14:16.076Z"}
+{"code":"SESSION_001","level":"error","message":"Errore nella creazione della sessione","metadata":{"originalError":"user.addSessionToken is not a function"},"status":500,"timestamp":"2025-02-01T11:14:16.076Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{"code":"SESSION_001","message":"Errore nella creazione della sessione","metadata":{"originalError":"user.addSessionToken is not a function"},"status":500}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-01T11:14:16.077Z"}

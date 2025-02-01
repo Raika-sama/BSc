@@ -139,13 +139,22 @@ class AuthService {
             // Genera tokens
             const { accessToken, refreshToken } = this.generateTokens(user);
     
+            // Modifica qui: aggiungi il console.log per debug
+    console.log('Session creation data:', {
+        hasUser: !!user,
+        metadata: {
+            ...metadata,
+            expiresIn: this.REFRESH_TOKEN_EXPIRES_IN
+        }
+    });
             // Crea sessione con i metadati corretti
             await this.sessionService.createSession(user, refreshToken, {
                 userAgent: metadata.userAgent,
                 ipAddress: metadata.ipAddress,
-                expiresIn: this.REFRESH_TOKEN_EXPIRES_IN
+                expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
+                token: refreshToken  // Aggiungi questo
             });
-    
+        
             // Aggiorna info login
             await this.authRepository.updateLoginInfo(user._id);
     
@@ -166,7 +175,9 @@ class AuthService {
         } catch (error) {
             logger.error('Login error:', {
                 error: error.message,
-                email
+                email,
+                stack: error.stack  // Aggiungi lo stack trace
+
             });
             throw error;
         }

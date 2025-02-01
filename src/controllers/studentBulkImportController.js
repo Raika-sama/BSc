@@ -8,8 +8,10 @@ const logger = require('../utils/errors/logger/logger');
 const XLSX = require('xlsx');
 
 class StudentBulkImportController extends BaseController {
-    constructor() {
+    constructor(studentBulkImportRepository) {
         super(studentBulkImportRepository);
+        if (!studentBulkImportRepository) throw new Error('StudentBulkImportRepository is required');
+        this.repository = studentBulkImportRepository;
     }
 
     /**
@@ -152,4 +154,4 @@ class StudentBulkImportController extends BaseController {
     }
 }
 
-module.exports = new StudentBulkImportController();
+module.exports = StudentBulkImportController;

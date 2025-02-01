@@ -1,70 +1,144 @@
-// src/routes/userRoutes.js
+/**
+ * @file userRoutes.js
+ * @description Router per la gestione degli utenti
+ * @author Raika-sama
+ * @date 2025-02-01 10:24:52
+ */
+
 const express = require('express');
-const { protect, restrictTo } = require('../middleware/authMiddleware');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
-const createUserRouter = ({ userController }) => {
-    const router = express.Router();
+const createUserRouter = ({ authMiddleware, userController }) => {
+    if (!authMiddleware) throw new Error('AuthMiddleware is required');
+    if (!userController) throw new Error('UserController is required');
 
+    const router = express.Router();
+    const { protect, restrictTo } = authMiddleware;
+
+    // Utility per gestione async
     const asyncHandler = (fn) => (req, res, next) => {
         Promise.resolve(fn(req, res, next)).catch((error) => {
-            logger.error('Route Error Handler', {
-                error,
+            logger.error('User Route Error:', {
+                error: error.message,
                 path: req.originalUrl,
-                method: req.method
+                method: req.method,
+                userId: req.user?.id,
+                timestamp: new Date().toISOString()
             });
             next(error);
         });
     };
 
+    // Middleware di logging
+    router.use((req, res, next) => {
+        logger.debug('User Route Called:', {
+            method: req.method,
+            path: req.originalUrl,
+            userId: req.user?.id,
+            role: req.user?.role,
+            timestamp: new Date().toISOString()
+        });
+        next();
+    });
+
     // Middleware di protezione globale
     router.use(protect);
 
-    // Rotte profilo utente
-    router.get('/me', asyncHandler(userController.getProfile.bind(userController)));
-    router.put('/me', asyncHandler(userController.updateProfile.bind(userController)));
+    // Rotte profilo utente (accessibili a tutti gli utenti autenticati)
+    router.get('/me', 
+        asyncHandler(userController.getProfile.bind(userController))
+    );
+    
+    router.put('/me', 
+        asyncHandler(userController.updateProfile.bind(userController))
+    );
 
     // Rotte gestione utenti (admin/manager only)
     router.use(restrictTo('admin', 'manager'));
 
-    router.route('/')
-        .get(asyncHandler(async (req, res) => {
-            const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 10;
-            const search = req.query.search || '';
+    // Route paginata per lista utenti
+    router.get('/', asyncHandler(async (req, res) => {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
 
-            const result = await userController.getAll({
+        logger.debug('Fetching users with params:', {
+            page,
+            limit,
+            search,
+            userId: req.user?.id
+        });
+
+        const result = await userController.getAll({
+            page,
+            limit,
+            search
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                users: result.users,
+                total: result.total,
                 page,
-                limit,
-                search
-            });
+                limit
+            }
+        });
+    }));
 
-            res.status(200).json({
-                status: 'success',
-                data: {
-                    users: result.users,
-                    total: result.total,
-                    page,
-                    limit
-                }
-            });
-        }))
-        .post(asyncHandler(userController.create.bind(userController)));
+    // Route CRUD per gestione utenti
+    router.post('/', 
+        asyncHandler(userController.create.bind(userController))
+    );
 
     router.route('/:id')
-        .get(asyncHandler(userController.getById.bind(userController)))
-        .put(asyncHandler(userController.update.bind(userController)))
-        .delete(asyncHandler(userController.delete.bind(userController)));
+        .get(
+            asyncHandler(userController.getById.bind(userController))
+        )
+        .put(
+            asyncHandler(userController.update.bind(userController))
+        )
+        .delete(
+            asyncHandler(userController.delete.bind(userController))
+        );
 
     // Gestione errori centralizzata
     router.use((err, req, res, next) => {
         logger.error('User Route Error:', {
-            error: err,
+            error: err.message,
+            stack: err.stack,
             path: req.originalUrl,
-            method: req.method
+            method: req.method,
+            userId: req.user?.id,
+            targetUserId: req.params.id,
+            timestamp: new Date().toISOString()
         });
 
+        // Gestione errori di validazione
+        if (err.name === 'ValidationError') {
+            return res.status(400).json({
+                status: 'error',
+                error: {
+                    message: 'Errore di validazione',
+                    code: 'USER_VALIDATION_ERROR',
+                    details: err.errors
+                }
+            });
+        }
+
+        // Gestione errori di autorizzazione
+        if (err.code === 'AUTH_004' || err.statusCode === 401) {
+            return res.status(401).json({
+                status: 'error',
+                error: {
+                    message: 'Non autorizzato',
+                    code: 'USER_AUTH_ERROR'
+                }
+            });
+        }
+
+        // Altri errori
         const standardError = createError(
             err.code || ErrorTypes.SYSTEM.INTERNAL_ERROR,
             err.message || 'Errore interno del server',
@@ -73,9 +147,14 @@ const createUserRouter = ({ userController }) => {
 
         res.status(standardError.status).json({
             status: 'error',
-            code: standardError.code,
-            message: standardError.message,
-            ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+            error: {
+                code: standardError.code,
+                message: standardError.message,
+                ...(process.env.NODE_ENV === 'development' && { 
+                    stack: err.stack,
+                    details: err.metadata 
+                })
+            }
         });
     });
 
@@ -83,3 +162,27 @@ const createUserRouter = ({ userController }) => {
 };
 
 module.exports = createUserRouter;
+
+/**
+ * @summary Documentazione delle Route
+ * 
+ * Route Utente (richiede autenticazione):
+ * GET    /users/me              - Profilo utente corrente
+ * PUT    /users/me              - Aggiorna profilo utente corrente
+ * 
+ * Route Admin/Manager:
+ * GET    /users                 - Lista utenti (paginata, con ricerca)
+ * POST   /users                 - Crea nuovo utente
+ * GET    /users/:id             - Dettaglio utente
+ * PUT    /users/:id             - Aggiorna utente
+ * DELETE /users/:id             - Elimina utente
+ * 
+ * Parametri di paginazione:
+ * - page: numero pagina (default: 1)
+ * - limit: elementi per pagina (default: 10)
+ * - search: termine di ricerca (opzionale)
+ * 
+ * Controllo Accessi:
+ * - Admin/Manager: accesso completo a tutte le route
+ * - Altri utenti: solo accesso al proprio profilo (/me)
+ */

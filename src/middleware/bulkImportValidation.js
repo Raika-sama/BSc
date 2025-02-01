@@ -1,16 +1,27 @@
 // src/middleware/bulkImportValidation.js
+/**
+ * @file bulkImportValidation.js
+ * @description Middleware di validazione per l'import massivo degli studenti
+ * @author Raika-sama
+ * @date 2025-02-01 10:34:55
+ */
 
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
-/**
- * Validazione per l'import massivo degli studenti
- */
-const bulkImportValidation = {
+class BulkImportValidation {
+    constructor() {
+        logger.debug('BulkImportValidation middleware initialized');
+    }
+
     /**
      * Valida la struttura base del file e i dati in esso contenuti
+     * @param {Array} students - Array di studenti da validare
+     * @param {string} schoolId - ID della scuola
+     * @returns {boolean} - true se la validazione passa
+     * @throws {Error} - Se ci sono errori di validazione
      */
-    validateImportData: (students, schoolId) => {
+    validateImportData(students, schoolId) {
         try {
             if (!Array.isArray(students) || students.length === 0) {
                 throw createError(
@@ -18,14 +29,6 @@ const bulkImportValidation = {
                     'Nessun dato valido trovato nel file'
                 );
             }
-
-            if (!schoolId) {
-                throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
-                    'ID scuola richiesto'
-                );
-            }
-
             const errors = [];
             const emailSet = new Set(); // Per controllare email duplicate nel batch
 
@@ -106,10 +109,27 @@ const bulkImportValidation = {
 
             return true;
         } catch (error) {
-            logger.error('Errore nella validazione del file di import:', error);
+            logger.error('Errore nella validazione del file di import:', {
+                error: error.message,
+                schoolId,
+                timestamp: new Date().toISOString()
+            });
             throw error;
         }
     }
-};
 
-module.exports = bulkImportValidation;
+    /**
+     * Middleware Express per la validazione del file di import
+     */
+    validateImport(req, res, next) {
+        try {
+            const { students, schoolId } = req.body;
+            this.validateImportData(students, schoolId);
+            next();
+        } catch (error) {
+            next(error);
+        }
+    }
+}
+
+module.exports = BulkImportValidation;

@@ -1,5 +1,4 @@
 // src/routes/authRoutes.js
-// src/routes/authRoutes.js
 const express = require('express');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
@@ -23,9 +22,9 @@ const createAuthRouter = ({ authController, authMiddleware }) => {
         });
     };
 
-    // Middleware di logging
+    // Middleware di logging per debugging
     router.use((req, res, next) => {
-        logger.info('Auth Route Called:', {
+        logger.debug('Auth Route Called:', {
             method: req.method,
             path: req.originalUrl,
             ip: req.ip,
@@ -52,7 +51,11 @@ const createAuthRouter = ({ authController, authMiddleware }) => {
     router.get('/verify', 
         protect,
         asyncHandler(async (req, res) => {
-            logger.info('Token verification:', { userId: req.user.id });
+            logger.debug('Token verification requested', { 
+                userId: req.user.id,
+                path: req.path 
+            });
+
             res.status(200).json({
                 status: 'success',
                 data: {
@@ -70,9 +73,10 @@ const createAuthRouter = ({ authController, authMiddleware }) => {
         })
     );
 
-    // Route protette
+    // Middleware di protezione per tutte le route seguenti
     router.use(protect);
 
+    // Route protette
     router.get('/me', 
         asyncHandler(authController.getMe.bind(authController))
     );
@@ -89,37 +93,41 @@ const createAuthRouter = ({ authController, authMiddleware }) => {
         asyncHandler(authController.logout.bind(authController))
     );
 
-    // Gestione errori
+    // Gestione errori centralizzata
     router.use((err, req, res, next) => {
         logger.error('Auth Error:', {
             error: err,
             path: req.originalUrl,
             method: req.method,
-            ip: req.ip
+            ip: req.ip,
+            userId: req.user?.id
         });
 
         if (err.code && err.status) {
             return res.status(err.status).json({
                 status: 'error',
-                code: err.code,
-                message: err.message
+                error: {
+                    code: err.code,
+                    message: err.message
+                }
             });
         }
 
         const standardError = createError(
             ErrorTypes.SYSTEM.INTERNAL_ERROR,
-            'Errore interno del server di autenticazione',
-            { originalError: err.message }
+            'Errore interno del server di autenticazione'
         );
 
         res.status(standardError.status).json({
             status: 'error',
-            code: standardError.code,
-            message: standardError.message,
-            ...(process.env.NODE_ENV === 'development' && { 
-                stack: err.stack,
-                originalError: err.message 
-            })
+            error: {
+                code: standardError.code,
+                message: standardError.message,
+                ...(process.env.NODE_ENV === 'development' && { 
+                    stack: err.stack,
+                    originalError: err.message 
+                })
+            }
         });
     });
 
@@ -132,7 +140,6 @@ module.exports = createAuthRouter;
  * @summary Documentazione delle Route
  * 
  * Route Pubbliche:
- * POST   /auth/register          - Registrazione nuovo utente
  * POST   /auth/login            - Login utente
  * POST   /auth/forgot-password  - Richiesta reset password
  * PUT    /auth/reset-password   - Reset password con token

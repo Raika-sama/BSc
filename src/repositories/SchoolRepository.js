@@ -12,7 +12,7 @@ const logger = require('../utils/errors/logger/logger');
  * Estende le funzionalità base del BaseRepository
  */
 class SchoolRepository extends BaseRepository {
-    constructor(classRepository, studentRepository) {
+    constructor(schoolModel, classRepository, studentRepository) {
         super(School);
         this.classRepository = classRepository;
         this.studentRepository = studentRepository;

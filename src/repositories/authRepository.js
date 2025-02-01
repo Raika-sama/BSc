@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 
 class AuthRepository {
     constructor(userModel) {
-        this.Model = userModel;
+        this.model = userModel;
         this.RESET_TOKEN_EXPIRES = 3600000; // 1 ora in millisecondi
     }
 
@@ -15,7 +15,7 @@ class AuthRepository {
      */
     async findById(userId) {
         try {
-            return await this.userModel.findById(userId).lean();
+            return await this.model.findById(userId).lean();
         } catch (error) {
             logger.error('Error finding user by id', { error, userId });
             throw error;
@@ -27,7 +27,7 @@ class AuthRepository {
      */
   async findByEmail(email) {
     try {
-        return await this.userModel.findOne({ email })
+        return await this.model.findOne({ email })
             .select('+password')
             .lean();
     } catch (error) {
@@ -41,7 +41,7 @@ class AuthRepository {
      */
     async updateLoginInfo(userId) {
         try {
-            return await this.userModel.findByIdAndUpdate(userId, {
+            return await this.model.findByIdAndUpdate(userId, {
                 $set: {
                     lastLogin: new Date(),
                     loginAttempts: 0,
@@ -60,7 +60,7 @@ class AuthRepository {
      */
     async incrementLoginAttempts(userId, maxAttempts, lockTime) {
         try {
-            const user = await this.userModel.findById(userId);
+            const user = await this.model.findById(userId);
             if (!user) return null;
 
             user.loginAttempts += 1;
@@ -82,7 +82,7 @@ class AuthRepository {
      */
     async updatePassword(userId, hashedPassword) {
         try {
-            const user = await this.userModel.findById(userId);
+            const user = await this.model.findById(userId);
             if (!user) {
                 throw createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,
@@ -176,7 +176,7 @@ async getMe(req, res) {
      */
     async verifyCredentials(email, password) {
         try {
-            const user = await this.userModel
+            const user = await this.model
                 .findOne({ email })
                 .select('+password');
 
@@ -209,7 +209,7 @@ async getMe(req, res) {
      */
 async createPasswordResetToken(email) {
     try {
-        const user = await this.userModel.findOne({ email });
+        const user = await this.model.findOne({ email });
         if (!user) {
             throw createError(
                 ErrorTypes.RESOURCE.NOT_FOUND,
@@ -245,7 +245,7 @@ async createPasswordResetToken(email) {
                 .update(token)
                 .digest('hex');
 
-            const user = await this.userModel.findOne({
+            const user = await this.model.findOne({
                 passwordResetToken: hashedToken,
                 passwordResetExpires: { $gt: Date.now() }
             });
@@ -308,7 +308,7 @@ async createPasswordResetToken(email) {
      */
     async updateLastLogin(userId) {
         try {
-            await this.userModel.findByIdAndUpdate(userId, {
+            await this.model.findByIdAndUpdate(userId, {
                 lastLogin: new Date()
             });
             logger.debug('Last login updated', { userId });
@@ -324,7 +324,7 @@ async createPasswordResetToken(email) {
      */
     async invalidateResetTokens(userId) {
         try {
-            await this.userModel.findByIdAndUpdate(userId, {
+            await this.model.findByIdAndUpdate(userId, {
                 passwordResetToken: undefined,
                 passwordResetExpires: undefined
             });

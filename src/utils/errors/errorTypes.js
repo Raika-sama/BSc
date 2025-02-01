@@ -143,6 +143,35 @@ const ErrorTypes = {
             code: 'SYS_003',
             message: 'Errore servizio esterno',
             status: 502
+        },
+    },
+
+    // Errori di Sessione (SESSION_) - 401, 500
+    SESSION: {
+        CREATION_FAILED: {
+            code: 'SESSION_001',
+            message: 'Errore nella creazione della sessione',
+            status: 500
+        },
+        NOT_FOUND: {
+            code: 'SESSION_002',
+            message: 'Sessione non trovata',
+            status: 401
+        },
+        EXPIRED: {
+            code: 'SESSION_003',
+            message: 'Sessione scaduta',
+            status: 401
+        },
+        INVALID: {
+            code: 'SESSION_004',
+            message: 'Sessione non valida',
+            status: 401
+        },
+        LIMIT_EXCEEDED: {
+            code: 'SESSION_005',
+            message: 'Limite massimo di sessioni raggiunto',
+            status: 400
         }
     }
 };

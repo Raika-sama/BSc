@@ -21,13 +21,23 @@ class SessionService {
      */
     async createSession(user, token, metadata) {
         try {
-            // Verifica se l'utente ha raggiunto il limite di sessioni
-            if (user.sessionTokens?.length >= this.MAX_SESSIONS_PER_USER) {
-                // Rimuovi la sessione più vecchia
-                user.sessionTokens.sort((a, b) => a.lastUsedAt - b.lastUsedAt);
-                user.sessionTokens.shift();
+            logger.debug('Creating session with data:', {
+                userId: user?._id,
+                hasMetadata: !!metadata,
+                metadataFields: metadata ? Object.keys(metadata) : []
+            });
+    
+            // Validazione input
+            if (!user || !user._id) {
+                throw new Error('Invalid user object');
             }
-
+            if (!token) {
+                throw new Error('Token is required');
+            }
+            if (!metadata || !metadata.userAgent || !metadata.ipAddress) {
+                throw new Error('Invalid metadata');
+            }
+    
             const sessionData = {
                 token,
                 userAgent: metadata.userAgent,
@@ -36,21 +46,30 @@ class SessionService {
                 createdAt: new Date(),
                 lastUsedAt: new Date()
             };
-
+    
+            // Aggiungi la sessione all'utente
             await user.addSessionToken(sessionData);
             await user.save();
-
-            logger.info('New session created', {
+    
+            logger.info('Session created successfully', {
                 userId: user._id,
-                sessionId: sessionData._id
+                expiresAt: sessionData.expiresAt
             });
-
+    
             return sessionData;
         } catch (error) {
-            logger.error('Error creating session', { error });
+            logger.error('Session creation error:', {
+                error: error.message,
+                stack: error.stack,
+                userData: {
+                    id: user?._id,
+                    hasSessionTokens: !!user?.sessionTokens
+                }
+            });
             throw createError(
                 ErrorTypes.SESSION.CREATION_FAILED,
-                'Errore nella creazione della sessione'
+                'Errore nella creazione della sessione',
+                { originalError: error.message }
             );
         }
     }

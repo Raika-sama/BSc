@@ -18,6 +18,7 @@ const TestRepository = require('./repositories/TestRepository');
 const ClassRepository = require('./repositories/ClassRepository');
 const SchoolRepository = require('./repositories/SchoolRepository');
 const StudentRepository = require('./repositories/StudentRepository');
+const StudentBulkImportRepository = require('./repositories/StudentBulkImportRepository');
 
 // Import Services
 const SessionService = require('./services/SessionService');
@@ -32,6 +33,7 @@ const SchoolController = require('./controllers/schoolController');
 const ClassController = require('./controllers/classController');
 const StudentController = require('./controllers/studentController');
 const TestController = require('./controllers/testController');
+const StudentBulkImportController = require('./controllers/studentBulkImportController');
 
 // Import Routes
 const routes = require('./routes');
@@ -39,6 +41,9 @@ const createCSIRoutes = require('./engines/CSI/routes/csi.routes');
 
 // Import del middleware di auth
 const createAuthMiddleware = require('./middleware/authMiddleware');
+
+// Import del middleware per import massivo studenti
+const BulkImportValidation = require('./middleware/bulkImportValidation');
 
 // Inizializza express
 const app = express();
@@ -63,6 +68,7 @@ const testRepository = new TestRepository(User);
 const classRepository = new ClassRepository(User);
 const schoolRepository = new SchoolRepository(User);
 const studentRepository = new StudentRepository(User);
+const studentBulkImportRepository = new StudentBulkImportRepository();
 
 // Inizializza Services (ordine corretto per evitare dipendenze circolari)
 const sessionService = new SessionService(userRepository);
@@ -70,7 +76,9 @@ const authService = new AuthService(authRepository, sessionService, userReposito
 const userService = new UserService(userRepository, authService, sessionService);
 
 // Inizializza il middleware di autenticazione
-const authMiddleware = createAuthMiddleware(authService, sessionService);
+const { protect, restrictTo, loginLimiter } = createAuthMiddleware(authService, sessionService);
+const authMiddleware = { protect, restrictTo, loginLimiter };
+const bulkImportValidation = new BulkImportValidation();
 
 // Inizializza Controllers
 const authController = new AuthController(authService, userService, sessionService);
@@ -79,6 +87,10 @@ const schoolController = new SchoolController(schoolRepository, userService);
 const classController = new ClassController(classRepository, schoolRepository, userService);
 const studentController = new StudentController(studentRepository, classRepository, schoolRepository);
 const testController = new TestController(testRepository, studentRepository, classRepository);
+const studentBulkImportController = new StudentBulkImportController(
+    studentBulkImportRepository,
+    bulkImportValidation
+);
 
 // Inizializza CSI Controller
 const csiController = new CSIController({
@@ -113,6 +125,7 @@ const dependencies = {
     schoolController,
     classController,
     studentController,
+    studentBulkImportController, // Aggiunto il controller per bulk import
     testController,
     csiController,
     // Services
@@ -121,13 +134,24 @@ const dependencies = {
     sessionService,
     // Middleware
     authMiddleware,
+    bulkImportValidation,
     // Repositories
     userRepository,
     classRepository,
     schoolRepository,
     studentRepository,
+    studentBulkImportRepository, // Aggiunto il repository per bulk import
     testRepository
 };
+
+// Prima di inizializzare le routes
+logger.debug('Dependencies check:', {
+    hasAuthMiddleware: !!dependencies.authMiddleware,
+    authMiddlewareMethods: dependencies.authMiddleware ? Object.keys(dependencies.authMiddleware) : [],
+    hasProtect: !!dependencies.authMiddleware?.protect,
+    hasRestrictTo: !!dependencies.authMiddleware?.restrictTo,
+    hasLoginLimiter: !!dependencies.authMiddleware?.loginLimiter
+});
 
 // Inizializza le routes
 const csiRoutes = createCSIRoutes({ 

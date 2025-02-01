@@ -43,15 +43,17 @@ const config = {
         }
     },
 
-    // Configurazione JWT
+    // Configurazione JWT aggiornata
     jwt: {
         secret: process.env.JWT_SECRET,
         expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+        refreshSecret: process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET, // Fallback al JWT_SECRET se non configurato
+        refreshExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d',
         cookieExpiresIn: parseInt(process.env.JWT_COOKIE_EXPIRES_IN || '1', 10),
         cookieOptions: {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 24 * 60 * 60 * 1000 // 24 ore
+            maxAge: 24 * 60 * 60 * 1000
         }
     },
 
@@ -85,7 +87,8 @@ const config = {
  */
 const requiredKeys = [
     'mongodb.uri',
-    'jwt.secret'
+    'jwt.secret',
+    'jwt.refreshSecret' // Aggiunto refresh token secret come requisito
 ];
 
 /**
@@ -113,6 +116,14 @@ const validateConfig = (cfg, keys, prefix = '') => {
 // Esegue la validazione della configurazione
 try {
     validateConfig(config, requiredKeys);
+    
+    // Log della configurazione JWT (senza esporre i segreti)
+    console.log('JWT Configuration loaded:', {
+        hasSecret: !!config.jwt.secret,
+        hasRefreshSecret: !!config.jwt.refreshSecret,
+        expiresIn: config.jwt.expiresIn,
+        refreshExpiresIn: config.jwt.refreshExpiresIn
+    });
 } catch (error) {
     if (process.env.NODE_ENV === 'test') {
         console.warn('Warning: Missing configuration in test environment:', error.message);
