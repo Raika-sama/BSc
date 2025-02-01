@@ -124,11 +124,43 @@ userSchema.index({ status: 1 });
 userSchema.index({ 'sessionTokens.token': 1 });
 userSchema.index({ 'sessionTokens.expiresAt': 1 });
 
+
+userSchema.pre('save', function(next) {
+    if (!this.sessionTokens) {
+        this.sessionTokens = [];
+    }
+    next();
+});
+
 // Metodi di utilità per la gestione delle sessioni
 userSchema.methods.addSessionToken = function(tokenData) {
     if (!this.sessionTokens) {
         this.sessionTokens = [];
     }
+    
+    // Log per debug
+    console.log('Adding session token to user:', {
+        userId: this._id,
+        currentSessionsCount: this.sessionTokens.length,
+        newTokenData: { ...tokenData, token: '***' }
+    });
+    
+    // Rimuovi sessioni scadute
+    this.sessionTokens = this.sessionTokens.filter(session => 
+        session.expiresAt > new Date()
+    );
+
+    // Limita il numero di sessioni attive
+    if (this.sessionTokens.length >= 5) {
+        // Rimuovi la sessione più vecchia
+        this.sessionTokens.sort((a, b) => a.lastUsedAt - b.lastUsedAt);
+        this.sessionTokens.shift();
+    }
+
+    this.sessionTokens.push(tokenData);
+    this.markModified('sessionTokens'); // Importante: notifica mongoose della modifica
+    return this;
+
     
     // Log per debug
     console.log('Adding session token:', {
@@ -182,12 +214,19 @@ userSchema.pre('save', async function(next) {
     }, {});
     
     if (Object.keys(changes).length > 0) {
-        await mongoose.model('UserAudit').create({
-            userId: this._id,
-            action: 'updated',
-            performedBy: this._performedBy || this._id,
-            changes
-        });
+        try {
+            // Verifica che UserAudit sia disponibile
+            const UserAudit = mongoose.models.UserAudit || require('./UserAudit');
+            await UserAudit.create({
+                userId: this._id,
+                action: 'updated',
+                performedBy: this._performedBy || this._id,
+                changes
+            });
+        } catch (error) {
+            console.error('Error creating audit log:', error);
+            // Non blocchiamo il salvataggio se l'audit fallisce
+        }
     }
     
     next();

@@ -15,6 +15,7 @@ const User = require('./User');
 const Class = require('./Class');
 const Student = require('./Student');
 const { Test, Result } = require('./Test');
+const UserAudit = require('./UserAudit');  // Aggiungi questa riga
 
 // Esporta tutti i modelli come oggetto
 module.exports = {
@@ -23,7 +24,9 @@ module.exports = {
     Class,     // Modello per la gestione delle classi
     Student,   // Modello per la gestione degli studenti
     Test,      // Modello per la struttura dei test
-    Result     // Modello per i risultati dei test
+    Result,     // Modello per i risultati dei test
+    UserAudit  // Modello per Audit Utenti
+
 };
 
 // Verifica che tutti i modelli siano stati caricati correttamente
@@ -33,7 +36,8 @@ const models = {
     Class,
     Student,
     Test,
-    Result
+    Result,
+    UserAudit
 };
 
 // Log dei modelli disponibili

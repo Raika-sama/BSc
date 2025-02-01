@@ -25,21 +25,31 @@ class AuthRepository {
   /**
      * Trova un utente per email
      */
-  async findByEmail(email) {
-    // Assicuriamoci di usare il modello mongoose e selezionare esplicitamente password
-    const user = await this.model.findOne({ email })
-        .select('+password +sessionTokens')
-        .exec();
-    
-    console.log('Found user:', {
-        hasUser: !!user,
-        isMongooseModel: user instanceof this.model,
-        hasAddSessionToken: typeof user?.addSessionToken === 'function',
-        methods: Object.keys(user?.__proto__ || {})
-    });
+    async findByEmail(email) {
+        try {
+            // Rimuovi .lean() e assicurati di avere una vera istanza mongoose
+            const user = await this.model.findOne({ email })
+                .select('+password +sessionTokens')
+                .exec();
+            
+            // Debug log
+            console.log('Found user:', {
+                hasUser: !!user,
+                isMongooseModel: user instanceof this.model,
+                hasAddSessionToken: typeof user?.addSessionToken === 'function',
+                sessionTokensCount: user?.sessionTokens?.length || 0
+            });
 
-    return user;
-}
+            return user;
+        } catch (error) {
+            logger.error('Error finding user by email:', {
+                error: error.message,
+                email,
+                stack: error.stack
+            });
+            throw error;
+        }
+    }
 
    /**
      * Aggiorna le informazioni di login
