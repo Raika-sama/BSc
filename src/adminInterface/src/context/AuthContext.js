@@ -62,6 +62,39 @@ export const AuthProvider = ({ children }) => {
         setError('Sessione scaduta');
     };
 
+    useEffect(() => {
+        const initAuth = async () => {
+            try {
+                setLoading(true);
+                const currentUser = authService.getCurrentUser();
+                
+                if (currentUser?.token) {
+                    const response = await axiosInstance.get('/auth/verify');
+                    
+                    if (response.data.status === 'success') {
+                        setUser(response.data.data.user);
+                        setUserStatus(response.data.data.user.status);
+                        setPermissions(response.data.data.user.permissions || []);
+                        setSessionData({
+                            token: currentUser.token,
+                            refreshToken: currentUser.refreshToken,
+                            expiresAt: response.data.data.user.tokenExpiresAt
+                        });
+                    } else {
+                        handleAuthError();
+                    }
+                }
+            } catch (err) {
+                handleAuthError();
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initAuth();
+    }, []); // Esegui solo all'mount
+
+    // Modifica la funzione login
     const login = async ({email, password}) => {
         try {
             const response = await authService.login(email, password);
@@ -69,6 +102,7 @@ export const AuthProvider = ({ children }) => {
             if (response.status === 'success') {
                 const { user, token, refreshToken } = response.data;
                 
+                // Imposta tutti i dati in una volta
                 setUser(user);
                 setUserStatus(user.status);
                 setPermissions(user.permissions || []);

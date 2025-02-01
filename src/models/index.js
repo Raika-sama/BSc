@@ -16,6 +16,9 @@ const Class = require('./Class');
 const Student = require('./Student');
 const { Test, Result } = require('./Test');
 const UserAudit = require('./UserAudit');  // Aggiungi questa riga
+if (!UserAudit.modelName) {
+    throw new Error('UserAudit model failed to initialize');
+}
 
 // Esporta tutti i modelli come oggetto
 module.exports = {

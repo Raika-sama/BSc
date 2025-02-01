@@ -160,28 +160,6 @@ userSchema.methods.addSessionToken = function(tokenData) {
     this.sessionTokens.push(tokenData);
     this.markModified('sessionTokens'); // Importante: notifica mongoose della modifica
     return this;
-
-    
-    // Log per debug
-    console.log('Adding session token:', {
-        userId: this._id,
-        tokenData: { ...tokenData, token: '***' }
-    });
-    
-    // Rimuovi sessioni scadute
-    this.sessionTokens = this.sessionTokens.filter(session => 
-        session.expiresAt > new Date()
-    );
-
-    // Limita il numero di sessioni attive
-    if (this.sessionTokens.length >= 5) {
-        // Rimuovi la sessione più vecchia
-        this.sessionTokens.sort((a, b) => a.lastUsedAt - b.lastUsedAt);
-        this.sessionTokens.shift();
-    }
-
-    this.sessionTokens.push(tokenData);
-    return this;
 };
 
 userSchema.methods.removeSessionToken = function(token) {

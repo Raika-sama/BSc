@@ -27,27 +27,18 @@ const Login = ({ onSuccessfulLogin, isModal = false }) => {
         setIsLoading(true);
 
         try {
-            const success = await login({
+            await login({
                 email: email.trim(),
                 password: password
             });
 
-            if (success) {
-                setAttempts(0); // Reset tentativi dopo login riuscito
-                
-                if (onSuccessfulLogin) {
-                    onSuccessfulLogin();
-                } else {
-                    const from = location.state?.from?.pathname || '/admin/dashboard';
-                    navigate(from, { replace: true });
-                }
-            } else {
-                handleFailedAttempt();
-            }
+            // Se il login ha successo, reindirizza
+            const from = location.state?.from?.pathname || '/admin/dashboard';
+            navigate(from, { replace: true });
+            
         } catch (error) {
             handleFailedAttempt();
             
-            // Gestione specifica degli errori
             if (error.response?.status === 429) {
                 setError('Troppi tentativi. Account temporaneamente bloccato.');
             } else if (error.response?.status === 401) {

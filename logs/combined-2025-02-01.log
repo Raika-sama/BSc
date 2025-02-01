@@ -108,3 +108,46 @@
 {"code":"SESSION_001","level":"error","message":"Errore nella creazione della sessione","metadata":{"originalError":"user.addSessionToken is not a function"},"status":500,"timestamp":"2025-02-01T11:14:16.076Z"}
 {"error":{"message":"Errore durante il login","metadata":{"originalError":{"code":"SESSION_001","message":"Errore nella creazione della sessione","metadata":{"originalError":"user.addSessionToken is not a function"},"status":500}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-01T11:14:16.077Z"}
 {"duration":"186ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1738408455894_3dkmjsxup","responseSize":"143 Bytes","statusCode":500,"timestamp":"2025-02-01T11:14:16.080Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"authRepository","timestamp":"2025-02-01T11:29:45.408Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"userRepository","timestamp":"2025-02-01T11:29:45.409Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"classRepository","timestamp":"2025-02-01T11:29:45.410Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"schoolRepository","timestamp":"2025-02-01T11:29:45.412Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"studentRepository","timestamp":"2025-02-01T11:29:45.412Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"testRepository","timestamp":"2025-02-01T11:29:45.413Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"auth","timestamp":"2025-02-01T11:29:45.414Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-02-01T11:29:45.414Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-02-01T11:29:45.415Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-02-01T11:29:45.416Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-02-01T11:29:45.416Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-02-01T11:29:45.417Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["authRepository","userRepository","classRepository","schoolRepository","studentRepository","testRepository","auth","user","class","school","student","test"],"timestamp":"2025-02-01T11:29:45.417Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-02-01T11:29:45.768Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-02-01T11:29:46.281Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-01T11:29:46.283Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-01T11:29:46.291Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-01T11:29:46.292Z"}
+{"error":"Schema hasn't been registered for model \"UserAudit\".\nUse mongoose.model(name, schema)","level":"error","message":"Session creation error:","stack":"MissingSchemaError: Schema hasn't been registered for model \"UserAudit\".\nUse mongoose.model(name, schema)\n    at Mongoose.model (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\index.js:544:13)\n    at model.<anonymous> (C:\\Users\\ricca\\Desktop\\BSc\\src\\models\\User.js:217:24)\n    at callMiddlewareFunction (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\kareem\\index.js:628:27)\n    at model.next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\kareem\\index.js:93:7)\n    at _next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\kareem\\index.js:146:10)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\kareem\\index.js:653:30\n    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)","timestamp":"2025-02-01T11:29:52.866Z","userData":{"hasSessionTokens":true,"id":"677bfe44f6789c907c9f3766"}}
+{"email":"riccardonicolilb@gmail.com","error":"Errore nella creazione della sessione","level":"error","message":"Login error:","timestamp":"2025-02-01T11:29:52.867Z"}
+{"code":"SESSION_001","level":"error","message":"Errore nella creazione della sessione","metadata":{"originalError":"Schema hasn't been registered for model \"UserAudit\".\nUse mongoose.model(name, schema)"},"status":500,"timestamp":"2025-02-01T11:29:52.868Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{"code":"SESSION_001","message":"Errore nella creazione della sessione","metadata":{"originalError":"Schema hasn't been registered for model \"UserAudit\".\nUse mongoose.model(name, schema)"},"status":500}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-01T11:29:52.869Z"}
+{"duration":"235ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1738409392638_petfoem0r","responseSize":"143 Bytes","statusCode":500,"timestamp":"2025-02-01T11:29:52.873Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"authRepository","timestamp":"2025-02-01T11:41:34.354Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"userRepository","timestamp":"2025-02-01T11:41:34.355Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"classRepository","timestamp":"2025-02-01T11:41:34.356Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"schoolRepository","timestamp":"2025-02-01T11:41:34.357Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"studentRepository","timestamp":"2025-02-01T11:41:34.357Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"testRepository","timestamp":"2025-02-01T11:41:34.358Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"auth","timestamp":"2025-02-01T11:41:34.359Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-02-01T11:41:34.360Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-02-01T11:41:34.360Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-02-01T11:41:34.362Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-02-01T11:41:34.363Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-02-01T11:41:34.363Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["authRepository","userRepository","classRepository","schoolRepository","studentRepository","testRepository","auth","user","class","school","student","test"],"timestamp":"2025-02-01T11:41:34.364Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-02-01T11:41:34.618Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-02-01T11:41:35.022Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-01T11:41:35.023Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-01T11:41:35.031Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-01T11:41:35.032Z"}
+{"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"},"timestamp":"2025-02-01T11:41:42.000Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0"},"timestamp":"2025-02-01T11:47:40.297Z","userId":"677bfe44f6789c907c9f3766"}
