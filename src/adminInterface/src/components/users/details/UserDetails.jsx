@@ -10,14 +10,75 @@ import {
     CircularProgress,
     Avatar,
     Chip,
-    Alert
+    Alert,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useUser } from '../../../context/UserContext';
+import { useSchool } from '../../../context/SchoolContext';  // Aggiungi questo
 import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
 import UserSessions from './UserSessions';
 import UserHistory from './UserHistory';
+
+// Componente per la gestione della scuola
+const SchoolSection = ({ userData, onUpdate }) => {
+    const { schools, getSchools } = useSchool();
+    const [selectedSchool, setSelectedSchool] = useState(userData.schoolId || '');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadSchools = async () => {
+            try {
+                await getSchools();
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadSchools();
+    }, []);
+
+    if (loading) {
+        return <CircularProgress size={24} />;
+    }
+
+    return (
+        <Box>
+            <Typography variant="h6" gutterBottom>
+                Gestione Scuola
+            </Typography>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel>Scuola Associata</InputLabel>
+                <Select
+                    value={selectedSchool}
+                    onChange={async (event) => {
+                        const newSchoolId = event.target.value;
+                        try {
+                            await onUpdate({ schoolId: newSchoolId });
+                            setSelectedSchool(newSchoolId);
+                        } catch (error) {
+                            console.error('Error updating school:', error);
+                        }
+                    }}
+                    label="Scuola Associata"
+                >
+                    <MenuItem value="">
+                        <em>Nessuna scuola</em>
+                    </MenuItem>
+                    {schools.map(school => (
+                        <MenuItem key={school._id} value={school._id}>
+                            {school.name}
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+        </Box>
+    );
+};
+
 
 const UserDetails = () => {
     const { id } = useParams();
@@ -138,7 +199,7 @@ const UserDetails = () => {
                     </Box>
                 </Paper>
 
-                {/* Tabs */}
+                {/* Tabs modificati */}
                 <Paper sx={{ mb: 3 }}>
                     <Tabs
                         value={currentTab}
@@ -146,6 +207,7 @@ const UserDetails = () => {
                         sx={{ borderBottom: 1, borderColor: 'divider' }}
                     >
                         <Tab label="Informazioni" />
+                        <Tab label="Scuola" />  {/* Nuovo tab */}
                         <Tab label="Permessi e Ruoli" />
                         <Tab label="Sessioni Attive" />
                         <Tab label="Storico Modifiche" />
@@ -158,19 +220,32 @@ const UserDetails = () => {
                                 onUpdate={loadUserData} 
                             />
                         )}
-                        {currentTab === 1 && (
+                        {currentTab === 1 && (  // Nuova sezione scuola
+                            <SchoolSection 
+                                userData={userData}
+                                onUpdate={async (updateData) => {
+                                    try {
+                                        await useUser().updateUser(userData._id, updateData);
+                                        await loadUserData();
+                                    } catch (error) {
+                                        console.error('Error updating school:', error);
+                                    }
+                                }}
+                            />
+                        )}
+                        {currentTab === 2 && (
                             <UserPermissions 
                                 userData={userData} 
                                 onUpdate={loadUserData} 
                             />
                         )}
-                        {currentTab === 2 && (
+                        {currentTab === 3 && (
                             <UserSessions 
                                 userData={userData} 
                                 onUpdate={loadUserData} 
                             />
                         )}
-                        {currentTab === 3 && (
+                        {currentTab === 4 && (
                             <UserHistory 
                                 userData={userData} 
                             />

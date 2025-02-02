@@ -83,24 +83,38 @@ export const UserProvider = ({ children }) => {
 
     const createUser = async (userData) => {
         try {
+            console.log('UserContext: Creating user with data:', userData);
+            
             const validationErrors = validateUserData(userData, true);
             if (validationErrors) {
+                console.error('Validation errors:', validationErrors);
                 throw new Error('Validation Error', { cause: validationErrors });
             }
-
+    
             const response = await axiosInstance.post('/users', userData);
-            
+            console.log('Server response:', response);
+    
             if (response.data.status === 'success') {
-                setUsers(prev => [...prev, response.data.data.user]);
+                const newUser = response.data.data.user;
+                console.log('New user created:', newUser);
+                
+                setUsers(prev => [...prev, newUser]);
                 showNotification('Utente creato con successo', 'success');
-                return response.data.data.user;
+                return newUser;
+            } else {
+                console.error('Invalid response format:', response.data);
+                throw new Error('Formato risposta non valido');
             }
         } catch (error) {
+            console.error('Error creating user:', error);
+            
             if (error.message === 'Validation Error') {
                 showNotification('Dati utente non validi', 'error');
                 throw error.cause;
             }
-            const errorMessage = error.response?.data?.error?.message || 'Errore nella creazione dell\'utente';
+            
+            const errorMessage = error.response?.data?.error?.message || 
+                               'Errore nella creazione dell\'utente';
             showNotification(errorMessage, 'error');
             throw error;
         }
@@ -165,7 +179,7 @@ export const UserProvider = ({ children }) => {
         if (isNewUser && (!userData.password || userData.password.length < 8)) {
             errors.password = 'La password deve essere di almeno 8 caratteri';
         }
-        if (!userData.role || !['teacher', 'admin'].includes(userData.role)) {
+        if (!userData.role || !['teacher', 'manager', 'admin'].includes(userData.role)) {
             errors.role = 'Ruolo non valido';
         }
         

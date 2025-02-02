@@ -11,6 +11,7 @@ import {
     InputLabel, 
     Select, 
     MenuItem,
+    FormHelperText,  // Aggiungiamo questa importazione
     CircularProgress,
     Box 
 } from '@mui/material';
@@ -64,22 +65,20 @@ const UserForm = ({ open, onClose, onSave, initialData, isLoading }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+        console.log('Form submitted with data:', formData);
+    
         // Validazione usando la funzione del context
         const validationErrors = validateUserData(formData, !initialData);
         if (validationErrors) {
+            console.log('Validation errors:', validationErrors);
             setErrors(validationErrors);
             return;
         }
-
+    
         try {
-            // Se in modalità modifica e la password è vuota, la rimuoviamo
-            const dataToSubmit = { ...formData };
-            if (initialData && !dataToSubmit.password) {
-                delete dataToSubmit.password;
-            }
-
-            await onSave(dataToSubmit);
+            console.log('Submitting data to onSave:', formData);
+            await onSave(formData);
+            console.log('Form submission successful');
             handleClose();
         } catch (error) {
             console.error('Form submission error:', error);
@@ -183,6 +182,7 @@ const UserForm = ({ open, onClose, onSave, initialData, isLoading }) => {
                             required
                         >
                             <MenuItem value="teacher">Insegnante</MenuItem>
+                            <MenuItem value="manager">Responsabile</MenuItem>
                             <MenuItem value="admin">Amministratore</MenuItem>
                         </Select>
                         {errors.role && (

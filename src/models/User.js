@@ -85,9 +85,11 @@ const userSchema = new mongoose.Schema({
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'School',
-        required: function() {
+        /*required: function() {
             return this.role === 'teacher' || this.role === 'manager';
-        }
+        }*/
+        required: false  // Cambiamo da required function a false
+
     },
     status: {
         type: String,

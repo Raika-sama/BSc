@@ -37,22 +37,92 @@ class UserService {
         }
     }
 
+
+     // Aggiungiamo il metodo validateUserData
+    validateUserData(userData, isNewUser = true) {
+        const errors = {};
+
+        // Validazioni base
+        if (!userData.firstName?.trim()) {
+            errors.firstName = 'Nome richiesto';
+        }
+
+        if (!userData.lastName?.trim()) {
+            errors.lastName = 'Cognome richiesto';
+        }
+
+        if (!userData.email?.trim()) {
+            errors.email = 'Email richiesta';
+        } else if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(userData.email)) {
+            errors.email = 'Email non valida';
+        }
+
+        // Validazione password solo per nuovi utenti
+        if (isNewUser && (!userData.password || userData.password.length < 8)) {
+            errors.password = 'Password deve essere di almeno 8 caratteri';
+        }
+
+        // Validazione ruolo
+        const validRoles = ['teacher', 'admin', 'manager'];
+        if (!userData.role || !validRoles.includes(userData.role)) {
+            errors.role = 'Ruolo non valido';
+        }
+
+        return Object.keys(errors).length > 0 ? errors : null;
+    }
+
+
     /**
      * Crea un nuovo utente
      * @param {Object} userData - Dati utente
      * @param {Object} options - Opzioni aggiuntive
      */
-     async createUser(userData, options = {}) {
-        // Validazioni
-        await this.validateUserData(userData);
-        
-        // Business logic
-        const hashedPassword = await this.hashPassword(userData.password);
-        const userToCreate = this.prepareUserData(userData, hashedPassword, options);
-        
-        // Persistenza
-        const user = await this.userRepository.create(userToCreate);
-        return this.sanitizeUser(user);
+    async createUser(userData, options = {}) {
+        try {
+            console.log('UserService: Validating user data:', {
+                ...userData,
+                password: '[REDACTED]'
+            });
+
+            // Validazione
+            const validationErrors = this.validateUserData(userData, true);
+            if (validationErrors) {
+                console.error('Validation errors:', validationErrors);
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_DATA,
+                    'Dati utente non validi',
+                    { errors: validationErrors }
+                );
+            }
+
+            // Hash password
+            const hashedPassword = await this.hashPassword(userData.password);
+
+            // Preparazione dati
+            const userToCreate = {
+                ...userData,
+                password: hashedPassword,
+                status: options.status || 'active',
+                passwordHistory: [{
+                    password: hashedPassword,
+                    changedAt: new Date()
+                }]
+            };
+
+            console.log('UserService: Creating user with prepared data');
+
+            // Creazione utente
+            const user = await this.userRepository.create(userToCreate);
+            console.log('UserService: User created successfully:', {
+                id: user._id,
+                email: user.email
+            });
+
+            return this.sanitizeUser(user);
+        } catch (error) {
+            console.error('UserService: Error creating user:', error);
+            throw error;
+        }
     }
 
     // Nuovo metodo per lista utenti

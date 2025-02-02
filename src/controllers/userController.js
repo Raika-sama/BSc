@@ -16,24 +16,46 @@ class UserController extends BaseController {
     async create(req, res) {
         try {
             const userData = req.body;
-            logger.debug('Creating new user', { 
-                email: userData.email,
-                role: userData.role 
+            console.log('Creating new user with data:', {
+                ...userData,
+                password: '[REDACTED]'
             });
-
+    
+            // Aggiunta controlli preliminari
+            if (!userData.email || !userData.password || !userData.firstName || !userData.lastName || !userData.role) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.MISSING_FIELDS,
+                    'Campi obbligatori mancanti'
+                ));
+            }
+    
             const user = await this.userService.createUser(userData);
-
-            logger.info('User created', { 
-                userId: user._id 
+            
+            console.log('User created successfully:', {
+                id: user._id,
+                email: user.email,
+                role: user.role
             });
-
-            this.sendResponse(res, {
+    
+            return this.sendResponse(res, {
                 status: 'success',
                 data: { user }
             }, 201);
         } catch (error) {
-            logger.error('User creation failed', { error });
-            this.handleError(res, error);
+            console.error('User creation failed:', error);
+            
+            // Gestione specifica degli errori
+            if (error.code === ErrorTypes.VALIDATION.INVALID_DATA) {
+                return this.sendError(res, error, 400);
+            }
+            if (error.code === 11000) { // MongoDB duplicate key error
+                return this.sendError(res, createError(
+                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
+                    'Email già registrata'
+                ));
+            }
+            
+            return this.sendError(res, error);
         }
     }
 
