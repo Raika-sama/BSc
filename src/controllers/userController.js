@@ -8,6 +8,10 @@ class UserController extends BaseController {
         super(null, 'user'); // Passiamo null come repository perché useremo il service
         this.userService = userService;
         this.sessionService = sessionService;
+        this.create = this.create.bind(this);
+        this.getAll = this.getAll.bind(this);
+        this.getById = this.getById.bind(this);
+        this.getAvailableManagers = this.getAvailableManagers.bind(this);
     }
 
     /**
@@ -140,6 +144,40 @@ async getById(req, res) {
         });
     } catch (error) {
         console.error('UserController: Get user failed:', error);
+        return this.sendError(res, error);
+    }
+}
+
+/**
+ * Recupera gli utenti disponibili per il ruolo di manager
+ */
+async getAvailableManagers(req, res) {
+    try {
+        logger.debug('Fetching available managers');
+
+        const users = await this.userService.listUsers({
+            role: { $in: ['admin', 'manager'] },
+            status: 'active'
+        });
+
+        logger.debug('Found available managers:', {
+            count: users.users.length
+        });
+
+        return this.sendResponse(res, {
+            status: 'success',
+            data: {
+                users: users.users.map(user => ({
+                    _id: user._id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email,
+                    role: user.role
+                }))
+            }
+        });
+    } catch (error) {
+        logger.error('Error fetching available managers:', error);
         return this.sendError(res, error);
     }
 }

@@ -394,7 +394,27 @@ export const SchoolProvider = ({ children }) => {
         }
     };
     
-
+    const fetchAvailableManagers = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            const response = await axiosInstance.get('/users/available-managers');
+            
+            if (response.data.status === 'success') {
+                return response.data.data.users;
+            }
+            return [];
+        } catch (error) {
+            const errorMessage = error.response?.data?.error?.message || 
+                               'Errore nel caricamento degli utenti disponibili';
+            setError(errorMessage);
+            showNotification(errorMessage, 'error');
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
     
 
     // Metodo per recuperare le sezioni di una scuola
@@ -554,6 +574,7 @@ const getSectionStudents = async (schoolId, sectionName) => {
             deleteSchool,
             addUserToSchool,
             removeManagerFromSchool,
+            fetchAvailableManagers,
             addManagerToSchool,
             validateSchoolData,
             getSections,

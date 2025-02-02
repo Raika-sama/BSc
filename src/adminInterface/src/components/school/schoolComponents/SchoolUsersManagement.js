@@ -61,34 +61,52 @@ const SchoolUsersManagement = ({
         userId: ''
     });
 
-    // Aggiungi questa funzione per caricare gli utenti disponibili
+    // Aggiungi questa funzione per caricare i manager disponibili
     const fetchAvailableManagers = async () => {
         try {
-            const response = await axiosInstance.get('/users?role=admin,manager');
-            // Filtra gli utenti che non sono già nella scuola
-            const filteredUsers = response.data.data.users.filter(user => 
-                !users.some(existing => existing.user._id === user._id) &&
-                (!manager || user._id !== manager._id)
-            );
-            setAvailableManagers(filteredUsers);
+            setLoading(true);
+            console.log('Iniziando fetchAvailableManagers...');
+            
+            const response = await axiosInstance.get('/users/available-managers');
+            console.log('Risposta ricevuta:', response);
+            
+            if (response.data.status === 'success') {
+                console.log('Manager disponibili:', response.data.data.users);
+                setAvailableManagers(response.data.data.users);
+            } else {
+                console.log('Risposta non ha status success:', response.data);
+            }
         } catch (error) {
-            showNotification('Errore nel caricamento degli utenti disponibili', 'error');
+            console.error('Errore dettagliato:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+            showNotification('Errore nel caricamento dei manager disponibili', 'error');
+        } finally {
+            setLoading(false);
         }
     };
 
+    useEffect(() => {
+        if (!operationDialog.open) {
+            setAvailableManagers([]);
+            setFormData({
+                email: '',
+                role: 'teacher',
+                userId: ''
+            });
+        }
+    }, [operationDialog.open]);
+    
+
+    // Modifica handleOpenDialog per usare fetchAvailableManagers
     const handleOpenDialog = async (type) => {
+        console.log('handleOpenDialog chiamato con type:', type);
         setOperationDialog({ open: true, type });
-        
         if (type === OPERATION_TYPES.CHANGE_MANAGER) {
-            try {
-                setLoading(true);
-                const managers = await fetchAvailableManagers();
-                setAvailableManagers(managers);
-            } catch (error) {
-                console.error('Error fetching managers:', error);
-            } finally {
-                setLoading(false);
-            }
+            console.log('Iniziando caricamento manager...');
+            await fetchAvailableManagers();
         }
     };
 
@@ -138,6 +156,49 @@ const SchoolUsersManagement = ({
             setLoading(false);
             setConfirmDialog({ open: false, title: '', message: '' });
         }
+    };
+
+    const renderManagerSelection = () => {
+        console.log('renderManagerSelection - stato corrente:', {
+            loading,
+            availableManagers,
+            formData
+        });
+    
+        if (loading) {
+            return (
+                <Box display="flex" justifyContent="center" my={3}>
+                    <CircularProgress />
+                </Box>
+            );
+        }
+    
+        if (!availableManagers || availableManagers.length === 0) {
+            console.log('Nessun manager disponibile trovato');
+            return (
+                <Typography color="text.secondary" sx={{ mt: 2 }}>
+                    Nessun utente disponibile come manager
+                </Typography>
+            );
+        }
+    
+        console.log('Rendering select con managers:', availableManagers);
+        return (
+            <TextField
+                select
+                fullWidth
+                label="Seleziona nuovo manager"
+                value={formData.userId}
+                onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
+                sx={{ mt: 2 }}
+            >
+                {availableManagers.map((user) => (
+                    <MenuItem key={user._id} value={user._id}>
+                        {`${user.firstName} ${user.lastName} (${user.email})`}
+                    </MenuItem>
+                ))}
+            </TextField>
+        );
     };
 
     const renderConfirmDialog = () => (
@@ -311,32 +372,7 @@ const SchoolUsersManagement = ({
                         </TextField>
                     </>
                 ) : (
-                    <>
-                        {loading ? (
-                            <Box display="flex" justifyContent="center" my={3}>
-                                <CircularProgress />
-                            </Box>
-                        ) : availableManagers.length > 0 ? (
-                            <TextField
-                                select
-                                fullWidth
-                                label="Seleziona nuovo manager"
-                                value={formData.userId}
-                                onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                                sx={{ mt: 2 }}
-                            >
-                                {availableManagers.map((user) => (
-                                    <MenuItem key={user._id} value={user._id}>
-                                        {`${user.firstName} ${user.lastName} (${user.email})`}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
-                        ) : (
-                            <Typography color="text.secondary" sx={{ mt: 2 }}>
-                                Nessun utente amministratore disponibile
-                            </Typography>
-                        )}
-                    </>
+                    renderManagerSelection()
                 )}
             </DialogContent>
             <DialogActions>
@@ -353,6 +389,7 @@ const SchoolUsersManagement = ({
             </DialogActions>
         </Dialog>
     );
+
 
     const content = (
         <>

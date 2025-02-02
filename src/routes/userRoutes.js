@@ -60,6 +60,12 @@ const createUserRouter = ({ authMiddleware, userController }) => {
     // Route paginata per lista utenti
     router.get('/', asyncHandler(userController.getAll.bind(userController)));
 
+    //rotta per trovare solo utenti admin o manager
+    router.get('/available-managers',
+        protect,
+        restrictTo('admin'),
+        asyncHandler(userController.getAvailableManagers.bind(userController))
+    );
 
     // Route CRUD per gestione utenti
     router.route('/:id')
