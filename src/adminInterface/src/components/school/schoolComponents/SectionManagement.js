@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, CircularProgress, Alert } from '@mui/material';
+import { Box, CircularProgress, Alert, Typography } from '@mui/material';  // Aggiungiamo Typography
 import { useSchool } from '../../../context/SchoolContext';  // Aggiungi questo import
 import SectionManagementHeader from './SectionManagementHeader';
 import SectionStats from './SectionStats';

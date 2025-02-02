@@ -1,11 +1,10 @@
 import React, { useMemo } from 'react';
-import { Box } from '@mui/material';
+import { Box, Typography, IconButton, Chip, Tooltip } from '@mui/material';  // Aggiungiamo Typography
 import { DataGrid } from '@mui/x-data-grid';
 import { motion } from 'framer-motion';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import GroupIcon from '@mui/icons-material/Group';
-import { IconButton, Chip, Tooltip } from '@mui/material';
 
 const SectionList = ({ sections = [], showInactive = false, onDeactivate, onReactivate }) => {
     const columns = [
@@ -41,7 +40,7 @@ const SectionList = ({ sections = [], showInactive = false, onDeactivate, onReac
             renderCell: (params) => (
                 <Box display="flex" alignItems="center" gap={1}>
                     <GroupIcon fontSize="small" color="action" />
-                    {params.value || 0}
+                    <Typography component="span">{params.value || 0}</Typography>
                 </Box>
             ),
         },

@@ -37,15 +37,17 @@ const AcademicYearsTab = ({ school }) => {
     const CurrentYearCard = () => (
         <Card elevation={3} sx={{ mb: 3 }}>
             <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center" mb={2}>
+                <Box display="flex" alignItems="center" gap={2} mb={2}>
                     <EventIcon color="primary" fontSize="large" />
                     <Typography variant="h6">Anno Accademico Corrente</Typography>
-                    <Chip 
-                        label="Attivo"
-                        color="success"
-                        size="small"
-                    />
-                </Stack>
+                    <Box>
+                        <Chip 
+                            label="Attivo"
+                            color="success"
+                            size="small"
+                        />
+                    </Box>
+                </Box>
 
                 {currentYear ? (
                     <Grid container spacing={3}>
@@ -119,17 +121,17 @@ const AcademicYearsTab = ({ school }) => {
                                 <ListItem>
                                     <ListItemText
                                         primary={
-                                            <Box>
-                                                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                                    <Typography variant="subtitle1" component="span">
-                                                        {formatDate(year.year)}
-                                                    </Typography>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="subtitle1" component="span">
+                                                    {formatDate(year.year)}
+                                                </Typography>
+                                                <Box>
                                                     <Chip
                                                         label="Concluso"
                                                         size="small"
                                                         color="default"
                                                     />
-                                                </Stack>
+                                                </Box>
                                             </Box>
                                         }
                                         secondary={

@@ -165,14 +165,16 @@ const SchoolUsersManagement = ({
                         </ListItemAvatar>
                         <ListItemText
                             primary={
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Typography>{`${user.firstName} ${user.lastName}`}</Typography>
-                                    <Chip
-                                        label={userAssignment.role === 'admin' ? 'Admin' : 'Insegnante'}
-                                        size="small"
-                                        color={userAssignment.role === 'admin' ? 'primary' : 'default'}
-                                        variant="outlined"
-                                    />
+                                <Box display="flex" alignItems="center" gap={1}>
+                                    <Typography component="span">{`${user.firstName} ${user.lastName}`}</Typography>
+                                    <Box>
+                                        <Chip
+                                            label={userAssignment.role === 'admin' ? 'Admin' : 'Insegnante'}
+                                            size="small"
+                                            color={userAssignment.role === 'admin' ? 'primary' : 'default'}
+                                            variant="outlined"
+                                        />
+                                    </Box>
                                 </Box>
                             }
                             secondary={user.email}

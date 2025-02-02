@@ -176,10 +176,17 @@ const OverviewTab = ({ school }) => {
             <Grid item xs={12} md={6}>
                 <Card elevation={2}>
                     <CardContent>
-                        <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-                            <EventIcon color="primary" />
+                        <Box display="flex" alignItems="center" gap={2} mb={2}>
+                            <EventIcon color="primary" fontSize="large" />
                             <Typography variant="h6">Anno Accademico Corrente</Typography>
-                        </Stack>
+                            <Box>
+                                <Chip 
+                                    label="Attivo"
+                                    color="success"
+                                    size="small"
+                                />
+                            </Box>
+                        </Box>
                         {school.academicYears?.[0] ? (
                             <List>
                                 <ListItem>
