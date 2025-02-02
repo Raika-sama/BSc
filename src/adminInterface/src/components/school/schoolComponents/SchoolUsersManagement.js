@@ -48,6 +48,38 @@ const SchoolUsersManagement = ({
         userId: ''
     });
 
+    const handleAddUser = async (userData) => {
+        try {
+            await updateSchoolUser(id, userData.email, {
+                action: 'add',
+                role: userData.role
+            });
+            await getSchoolById(id);
+        } catch (error) {
+            console.error('Error adding user:', error);
+        }
+    };
+    
+    const handleRemoveUser = async (userId) => {
+        try {
+            await updateSchoolUser(id, userId, {
+                action: 'remove'
+            });
+            await getSchoolById(id);
+        } catch (error) {
+            console.error('Error removing user:', error);
+        }
+    };
+    
+    const handleChangeManager = async (newManagerId) => {
+        try {
+            await updateSchool(id, { manager: newManagerId });
+            await getSchoolById(id);
+        } catch (error) {
+            console.error('Error changing manager:', error);
+        }
+    };
+    
     const handleOpenDialog = (type) => {
         setOperationDialog({ open: true, type });
         setFormData({ email: '', role: 'teacher', userId: '' });

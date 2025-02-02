@@ -7,7 +7,7 @@ import ClassManagement from '../components/classes/ClassManagement';    // Impor
 import ClassDetails from '../components/classes/details/ClassDetails';    // Nuovo componente
 import ClassTests from '../components/classes/ClassTests';        // Nuovo componente
 import SchoolWizard from '../components/school/wizard/SchoolWizard';
-import UsersManagement from '../components/school/UsersManagement'; // Aggiungi questo import
+import SchoolUsersManagement from '../components/school/schoolComponents/SchoolUsersManagement'; // Aggiungi questo import
 import StudentList from '../components/students/StudentList'; // Aggiungi questo import
 import ClassPopulate from '../components/classes/details/ClassPopulate';    // Aggiungi questo import
 import Profile from '../components/profile/Profile'; // Aggiungi questo import
@@ -116,7 +116,7 @@ export const adminRoutes = [
     },
     {
         path: 'schools/:id/users-management',
-        element: UsersManagement,
+        element: SchoolUsersManagement,
         title: 'Gestione Utenze',
         icon: PersonIcon,
         permissions: [PERMISSIONS.USERS.READ, PERMISSIONS.SCHOOLS.READ],

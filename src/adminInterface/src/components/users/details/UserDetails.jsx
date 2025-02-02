@@ -23,7 +23,6 @@ import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
 import UserSessions from './UserSessions';
 import UserHistory from './UserHistory';
-import UserSchoolManagement from './UserSchoolManagement';  // Aggiungi questo
 
 
 const UserDetails = () => {
@@ -153,7 +152,6 @@ const UserDetails = () => {
                         sx={{ borderBottom: 1, borderColor: 'divider' }}
                     >
                         <Tab label="Informazioni" />
-                        <Tab label="Scuola" />
                         <Tab label="Permessi e Ruoli" />
                         <Tab label="Sessioni Attive" />
                         <Tab label="Storico Modifiche" />
@@ -167,24 +165,18 @@ const UserDetails = () => {
                             />
                         )}
                         {currentTab === 1 && (
-                            <UserSchoolManagement
-                                userData={userData}
-                                onUpdate={loadUserData}
-                            />
-                        )}
-                        {currentTab === 2 && (
                             <UserPermissions 
                                 userData={userData} 
                                 onUpdate={loadUserData} 
                             />
                         )}
-                        {currentTab === 3 && (
+                        {currentTab === 2 && (
                             <UserSessions 
                                 userData={userData} 
                                 onUpdate={loadUserData} 
                             />
                         )}
-                        {currentTab === 4 && (
+                        {currentTab === 3 && (
                             <UserHistory 
                                 userData={userData} 
                             />

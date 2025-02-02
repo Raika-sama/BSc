@@ -125,19 +125,38 @@ const UserInfo = ({ userData, onUpdate }) => {
                         <Typography variant="subtitle2" color="textSecondary">
                             Data Creazione
                         </Typography>
-                        <Typography>
+                        <Box>
                             {new Date(userData.createdAt).toLocaleDateString()}
-                        </Typography>
+                        </Box>
                     </Grid>
                     <Grid item xs={12} sm={6}>
                         <Typography variant="subtitle2" color="textSecondary">
                             Ultimo Accesso
                         </Typography>
-                        <Typography>
+                        <Box>
                             {userData.lastLogin ? 
                                 new Date(userData.lastLogin).toLocaleDateString() : 
                                 'Mai'}
+                        </Box>
+                    </Grid>
+                    {/* Sezione scuola */}
+                    <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="textSecondary">
+                            Scuola Associata
                         </Typography>
+                        <Box sx={{ mt: 1 }}>
+                            {userData.schoolId ? (
+                                <Chip 
+                                    label={userData.schoolId.name || 'Scuola non trovata'}
+                                    color="primary"
+                                    size="small"
+                                />
+                            ) : (
+                                <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                                    Nessuna scuola associata
+                                </Box>
+                            )}
+                        </Box>
                     </Grid>
                 </Grid>
             </Box>
