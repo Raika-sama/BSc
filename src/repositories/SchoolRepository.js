@@ -788,6 +788,74 @@ class SchoolRepository extends BaseRepository {
             session.endSession();
         }
     }
+
+    async addManagerToSchool(schoolId, userId) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+    
+        try {
+            // 1. Trova la scuola e verifica che esista
+            const school = await this.model.findById(schoolId).session(session);
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+    
+            // 2. Verifica che non ci sia già un manager
+            if (school.manager) {
+                throw createError(
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
+                    'La scuola ha già un manager'
+                );
+            }
+    
+            // 3. Aggiorna la scuola con il nuovo manager
+            const updatedSchool = await this.model.findByIdAndUpdate(
+                schoolId,
+                {
+                    $set: { manager: userId },
+                    $push: { 
+                        users: { 
+                            user: userId, 
+                            role: 'manager' 
+                        } 
+                    }
+                },
+                { 
+                    new: true,
+                    session 
+                }
+            );
+    
+            await session.commitTransaction();
+            
+            logger.info('Manager aggiunto con successo', {
+                schoolId,
+                newManagerId: userId
+            });
+    
+            return {
+                school: updatedSchool,
+                newManagerId: userId
+            };
+    
+        } catch (error) {
+            await session.abortTransaction();
+            logger.error('Errore nell\'aggiunta del manager:', {
+                error: error.message,
+                schoolId
+            });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nell\'aggiunta del manager',
+                { originalError: error.message }
+            );
+        } finally {
+            session.endSession();
+        }
+    }
       
 }
 

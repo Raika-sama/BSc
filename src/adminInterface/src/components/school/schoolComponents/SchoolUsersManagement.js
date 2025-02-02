@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Typography,
@@ -26,6 +26,7 @@ import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import { useSchool } from '../../../context/SchoolContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { axiosInstance } from '../../../services/axiosConfig';
 
 const OPERATION_TYPES = {
     ADD_USER: 'ADD_USER',
@@ -42,8 +43,9 @@ const SchoolUsersManagement = ({
     isDialog = false
 }) => {
     const { showNotification } = useNotification();
-    const { removeManagerFromSchool } = useSchool();
+    const { removeManagerFromSchool, addManagerToSchool } = useSchool();
     const [loading, setLoading] = useState(false);
+    const [availableManagers, setAvailableManagers] = useState([]);
     const [operationDialog, setOperationDialog] = useState({
         open: false,
         type: null
@@ -59,9 +61,30 @@ const SchoolUsersManagement = ({
         userId: ''
     });
 
-    const handleOpenDialog = (type) => {
+    // Aggiungi questa funzione per caricare gli utenti disponibili
+    const fetchAvailableManagers = async () => {
+        try {
+            const response = await axiosInstance.get('/users?role=admin,manager');
+            // Filtra gli utenti che non sono già nella scuola
+            const filteredUsers = response.data.data.users.filter(user => 
+                !users.some(existing => existing.user._id === user._id) &&
+                (!manager || user._id !== manager._id)
+            );
+            setAvailableManagers(filteredUsers);
+        } catch (error) {
+            showNotification('Errore nel caricamento degli utenti disponibili', 'error');
+        }
+    };
+
+    const handleOpenDialog = async (type) => {
         setOperationDialog({ open: true, type });
         setFormData({ email: '', role: 'teacher', userId: '' });
+        
+        if (type === OPERATION_TYPES.CHANGE_MANAGER) {
+            setLoading(true);
+            await fetchAvailableManagers();
+            setLoading(false);
+        }
     };
 
     const handleCloseDialog = () => {
@@ -74,6 +97,9 @@ const SchoolUsersManagement = ({
             if (operationDialog.type === OPERATION_TYPES.ADD_USER) {
                 await onAddUser(formData);
                 showNotification('Utente aggiunto con successo', 'success');
+            } else if (operationDialog.type === OPERATION_TYPES.CHANGE_MANAGER) {
+                await addManagerToSchool(schoolId, formData.userId);
+                showNotification('Manager aggiunto con successo', 'success');
             }
             handleCloseDialog();
         } catch (error) {
@@ -166,7 +192,7 @@ const SchoolUsersManagement = ({
                             size="small"
                             color="primary"
                             startIcon={<AddIcon />}
-                            onClick={() => handleOpenDialog(OPERATION_TYPES.ADD_USER)}
+                            onClick={() => handleOpenDialog(OPERATION_TYPES.CHANGE_MANAGER)} // <-- Qui è il cambio
                             disabled={loading}
                         >
                             Aggiungi Manager
@@ -256,7 +282,7 @@ const SchoolUsersManagement = ({
     const renderOperationDialog = () => (
         <Dialog open={operationDialog.open} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
             <DialogTitle>
-                {operationDialog.type === OPERATION_TYPES.ADD_USER ? 'Aggiungi Utente' : 'Cambia Manager'}
+                {operationDialog.type === OPERATION_TYPES.ADD_USER ? 'Aggiungi Utente' : 'Aggiungi Manager'}
             </DialogTitle>
             <DialogContent>
                 {operationDialog.type === OPERATION_TYPES.ADD_USER ? (
@@ -280,28 +306,42 @@ const SchoolUsersManagement = ({
                         </TextField>
                     </>
                 ) : (
-                    <TextField
-                        select
-                        fullWidth
-                        label="Seleziona nuovo manager"
-                        value={formData.userId}
-                        onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                        sx={{ mt: 2 }}
-                    >
-                        {users.map((user) => (
-                            <MenuItem key={user._id} value={user._id}>
-                                {`${user.firstName} ${user.lastName}`}
-                            </MenuItem>
-                        ))}
-                    </TextField>
+                    <>
+                        {loading ? (
+                            <Box display="flex" justifyContent="center" my={3}>
+                                <CircularProgress />
+                            </Box>
+                        ) : availableManagers.length > 0 ? (
+                            <TextField
+                                select
+                                fullWidth
+                                label="Seleziona nuovo manager"
+                                value={formData.userId}
+                                onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
+                                sx={{ mt: 2 }}
+                            >
+                                {availableManagers.map((user) => (
+                                    <MenuItem key={user._id} value={user._id}>
+                                        {`${user.firstName} ${user.lastName} (${user.email})`}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        ) : (
+                            <Typography color="text.secondary" sx={{ mt: 2 }}>
+                                Nessun utente amministratore disponibile
+                            </Typography>
+                        )}
+                    </>
                 )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleCloseDialog} disabled={loading}>Annulla</Button>
+                <Button onClick={handleCloseDialog} disabled={loading}>
+                    Annulla
+                </Button>
                 <Button 
                     onClick={handleSubmit} 
                     variant="contained"
-                    disabled={loading}
+                    disabled={loading || (operationDialog.type === OPERATION_TYPES.CHANGE_MANAGER && !formData.userId)}
                 >
                     Conferma
                 </Button>

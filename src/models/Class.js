@@ -89,11 +89,11 @@ const classSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  mainTeacherIsTemporary: {     // Nuovo campo
+  mainTeacherIsTemporary: {     
       type: Boolean,
       default: false
   },
-  previousMainTeacher: {         // Nuovo campo per storico
+  previousMainTeacher: {         
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
   },

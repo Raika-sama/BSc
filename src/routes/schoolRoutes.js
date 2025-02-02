@@ -124,6 +124,11 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
         }
     });
 
+    router.post('/:id/add-manager',
+        restrictTo('admin'),
+        asyncHandler(schoolController.addManagerToSchool.bind(schoolController))
+    );
+
     router.post('/:id/remove-manager',
         restrictTo('admin'),
         asyncHandler(schoolController.removeManagerFromSchool.bind(schoolController))

@@ -342,6 +342,57 @@ export const SchoolProvider = ({ children }) => {
             setLoading(false);
         }
     };
+
+    const addManagerToSchool = async (schoolId, userId) => {
+        try {
+            setLoading(true);
+            setError(null);
+    
+            const response = await axiosInstance.post(
+                `/schools/${schoolId}/add-manager`,
+                { userId }
+            );
+    
+            if (response.data.status === 'success') {
+                const updatedSchool = response.data.data.school;
+                const newManagerId = response.data.data.newManagerId;
+                
+                // Aggiorna lo stato locale
+                setSchools(prev => prev.map(school => 
+                    school._id === schoolId ? {
+                        ...school,
+                        manager: newManagerId,
+                        users: [
+                            ...school.users,
+                            { user: newManagerId, role: 'manager' }
+                        ]
+                    } : school
+                ));
+    
+                if (selectedSchool?._id === schoolId) {
+                    setSelectedSchool(prev => ({
+                        ...prev,
+                        manager: newManagerId,
+                        users: [
+                            ...prev.users,
+                            { user: newManagerId, role: 'manager' }
+                        ]
+                    }));
+                }
+    
+                showNotification('Manager aggiunto con successo', 'success');
+                return updatedSchool;
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.error?.message || 
+                               'Errore nell\'aggiunta del manager';
+            setError(errorMessage);
+            showNotification(errorMessage, 'error');
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
     
 
     
@@ -503,6 +554,7 @@ const getSectionStudents = async (schoolId, sectionName) => {
             deleteSchool,
             addUserToSchool,
             removeManagerFromSchool,
+            addManagerToSchool,
             validateSchoolData,
             getSections,
             getSectionStudents,

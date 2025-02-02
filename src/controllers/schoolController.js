@@ -31,7 +31,7 @@ class SchoolController extends BaseController {
         this.addUserToSchool = this.addUserToSchool.bind(this);
         this.setupInitialConfiguration = this.setupInitialConfiguration.bind(this);
         this.removeManagerFromSchool = this.removeManagerFromSchool.bind(this);
-
+        this.addManagerToSchool = this.addManagerToSchool.bind(this);
     }
 
     // Aggiungi questi metodi di utility
@@ -402,6 +402,83 @@ class SchoolController extends BaseController {
         }
     }
 
+
+    /**
+     * Aggiunge un manager a una scuola
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     */
+    async addManagerToSchool(req, res) {
+        try {
+            logger.debug('Inizio aggiunta manager alla scuola', { 
+                schoolId: req.params.id,
+                newManagerId: req.body.userId,
+                requestedBy: req.user._id
+            });
+
+            const schoolId = req.params.id;
+            const { userId } = req.body;
+
+            if (!userId) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'ID utente non fornito'
+                );
+            }
+
+            const school = await this.repository.findById(schoolId);
+            
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+
+            // Verifica che non ci sia già un manager
+            if (school.manager) {
+                throw createError(
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
+                    'La scuola ha già un manager'
+                );
+            }
+
+            // Esegui l'aggiunta attraverso il repository
+            const result = await this.repository.addManagerToSchool(schoolId, userId);
+
+            logger.info('Manager aggiunto con successo', {
+                schoolId,
+                newManagerId: userId,
+                updatedSchool: result.school._id
+            });
+
+            // Invia la risposta
+            return res.status(200).json({
+                status: 'success',
+                data: {
+                    school: result.school,
+                    newManagerId: result.newManagerId,
+                    message: 'Manager aggiunto con successo'
+                }
+            });
+
+        } catch (error) {
+            logger.error('Errore nell\'aggiunta del manager:', {
+                error: error.message,
+                schoolId: req.params.id,
+                stack: error.stack
+            });
+
+            return res.status(error.statusCode || 500).json({
+                status: 'error',
+                error: {
+                    message: error.message || 'Errore nell\'aggiunta del manager',
+                    code: error.code || 'INTERNAL_SERVER_ERROR'
+                }
+            });
+        }
+    }
+    
     /**
      * Rimuove il manager da una scuola e aggiorna le relative entità
      * @param {Request} req - Express request object
