@@ -31,30 +31,36 @@ class AuthService {
      * @param {Object} user - Utente per cui generare il token
      * @returns {Object} Access token e refresh token
      */
-    generateTokens(user) {
+    generateTokens(user, sessionToken) {
         try {
             // Access Token
             const accessToken = jwt.sign(
                 {
                     id: user._id,
                     role: user.role,
-                    schoolId: user.schoolId
+                    schoolId: user.schoolId,
+                    sessionId: sessionToken,
+                    permissions: user.permissions
                 },
                 this.JWT_SECRET,
                 { expiresIn: this.JWT_EXPIRES_IN }
             );
-
+    
             // Refresh Token
             const refreshToken = jwt.sign(
-                { id: user._id },
+                { 
+                    id: user._id,
+                    sessionId: sessionToken
+                },
                 this.JWT_REFRESH_SECRET,
                 { expiresIn: this.REFRESH_TOKEN_EXPIRES_IN }
             );
-
+    
             logger.debug('Tokens generated successfully', {
-                userId: user._id
+                userId: user._id,
+                hasSessionToken: !!sessionToken
             });
-
+    
             return { accessToken, refreshToken };
         } catch (error) {
             logger.error('Token generation error:', error);
@@ -136,25 +142,43 @@ class AuthService {
                 );
             }
     
-            // Genera tokens
-            const { accessToken, refreshToken } = this.generateTokens(user);
+            // Crea prima il token di sessione
+            const sessionToken = jwt.sign(
+                { 
+                    userId: user._id,
+                    createdAt: Date.now() 
+                }, 
+                this.JWT_SECRET
+            );
     
-            // Modifica qui: aggiungi il console.log per debug
-    console.log('Session creation data:', {
-        hasUser: !!user,
-        metadata: {
-            ...metadata,
-            expiresIn: this.REFRESH_TOKEN_EXPIRES_IN
-        }
-    });
-            // Crea sessione con i metadati corretti
-            await this.sessionService.createSession(user, refreshToken, {
+            // Log per debug della creazione sessione
+            logger.debug('Creating session', {
+                userId: user._id,
+                sessionToken: sessionToken.substring(0, 10) + '...',
+                metadata
+            });
+    
+            // Crea la sessione nel database
+            await this.sessionService.createSession(user, sessionToken, {
                 userAgent: metadata.userAgent,
                 ipAddress: metadata.ipAddress,
                 expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
-                token: refreshToken  // Aggiungi questo
+                token: sessionToken
             });
-        
+    
+            // Genera i tokens includendo il sessionId
+            const { accessToken, refreshToken } = this.generateTokens(user, sessionToken);
+    
+            // Log dei dati di sessione creati
+            logger.debug('Session creation data:', {
+                hasUser: !!user,
+                hasSessionToken: !!sessionToken,
+                metadata: {
+                    ...metadata,
+                    expiresIn: this.REFRESH_TOKEN_EXPIRES_IN
+                }
+            });
+    
             // Aggiorna info login
             await this.authRepository.updateLoginInfo(user._id);
     
@@ -163,6 +187,7 @@ class AuthService {
     
             logger.info('Login successful', { 
                 userId: user._id,
+                hasSessionToken: !!sessionToken,
                 metadata 
             });
     
@@ -176,8 +201,7 @@ class AuthService {
             logger.error('Login error:', {
                 error: error.message,
                 email,
-                stack: error.stack  // Aggiungi lo stack trace
-
+                stack: error.stack
             });
             throw error;
         }

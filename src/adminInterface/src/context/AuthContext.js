@@ -22,14 +22,13 @@ export const AuthProvider = ({ children }) => {
     const [error, setError] = useState(null);
     const [permissions, setPermissions] = useState([]);
     const [userStatus, setUserStatus] = useState(null);
-    const [sessionData, setSessionData] = useState(null);
+    //const [sessionData, setSessionData] = useState(null);
     const { showNotification } = useNotification();
 
 
     const handleAuthError = () => {
         authService.logout();
         setUser(null);
-        setSessionData(null);
         setError('Sessione scaduta');
     };
 
@@ -38,7 +37,7 @@ export const AuthProvider = ({ children }) => {
             try {
                 const currentUser = authService.getCurrentUser();
                 
-                if (!currentUser?.token) {
+                if (!currentUser) {
                     setLoading(false);
                     return;
                 }
@@ -50,16 +49,10 @@ export const AuthProvider = ({ children }) => {
                         setUser(currentUser);
                         setUserStatus(currentUser.status);
                         setPermissions(currentUser.permissions || []);
-                        setSessionData({
-                            token: currentUser.token,
-                            refreshToken: currentUser.refreshToken,
-                            expiresAt: currentUser.tokenExpiresAt
-                        });
                     } else {
                         handleAuthError();
                     }
                 } catch (err) {
-                    // Se l'errore non è 401, gestisci come errore di autenticazione
                     if (err.response?.status !== 401) {
                         handleAuthError();
                     }
@@ -78,20 +71,12 @@ export const AuthProvider = ({ children }) => {
             console.log('📡 Inviando richiesta di login al server...');
             const response = await authService.login(email, password);
             
-            console.log('📨 Risposta server ricevuta:', response);
-            
             if (response.status === 'success') {
-                const { user, token, refreshToken } = response.data;
+                const { user } = response.data;
                 
-                console.log('🔐 Impostazione dati utente e token...');
                 setUser(user);
                 setUserStatus(user.status);
                 setPermissions(user.permissions || []);
-                setSessionData({
-                    token,
-                    refreshToken,
-                    expiresAt: user.tokenExpiresAt
-                });
                 
                 console.log('✨ Login completato con successo');
                 return true;
@@ -108,7 +93,6 @@ export const AuthProvider = ({ children }) => {
         try {
             await authService.logout();
             setUser(null);
-            setSessionData(null);
             setPermissions([]);
             setUserStatus(null);
             setError(null);
@@ -118,7 +102,9 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const refreshSession = async () => {
+    
+
+   /* const refreshSession = async () => {
         try {
             if (!sessionData?.refreshToken) return false;
             
@@ -140,7 +126,7 @@ export const AuthProvider = ({ children }) => {
             handleAuthError();
             return false;
         }
-    };
+    }; */
 
     const updateUser = (userData) => {
         try {
@@ -152,6 +138,7 @@ export const AuthProvider = ({ children }) => {
             showNotification('Errore nell\'aggiornamento dei dati utente', 'error');
         }
     };
+
 
     const checkPermission = (permission) => {
         return permissions?.includes(permission) || user?.role === 'admin' || false;
@@ -165,12 +152,10 @@ export const AuthProvider = ({ children }) => {
         user,
         loading,
         error,
-        isAuthenticated: !!sessionData?.token,
+        isAuthenticated: !!user,
         permissions,
-        sessionData,
         login,
         logout,
-        refreshSession,
         updateUser,
         checkPermission,
         isAccountActive,

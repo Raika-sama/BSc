@@ -37,7 +37,7 @@ class AuthMiddleware {
     /*
      * Middleware di protezione route
      */
-     protect = async (req, res, next) => {
+    protect = async (req, res, next) => {
         try {
             const token = this.extractToken(req);
             
@@ -47,7 +47,7 @@ class AuthMiddleware {
                     'Autenticazione richiesta'
                 );
             }
-
+    
             // Verifica blacklist
             if (this.tokenBlacklist.has(token)) {
                 throw createError(
@@ -55,15 +55,21 @@ class AuthMiddleware {
                     'Token non più valido'
                 );
             }
-
+    
             // Verifica e decodifica token
             const decoded = await this.authService.verifyToken(token);
-
+    
+            logger.debug('Token decoded:', {
+                userId: decoded.id,
+                sessionId: decoded.sessionId,
+                path: req.path
+            });
+    
             // Verifica sessione
             const { user, session } = await this.sessionService.validateSession(
                 decoded.sessionId
             );
-
+    
             // Aggiungi user al request
             req.user = {
                 id: decoded.id,
@@ -71,12 +77,13 @@ class AuthMiddleware {
                 permissions: decoded.permissions,
                 sessionId: decoded.sessionId
             };
-
+    
             logger.debug('Authentication successful', {
                 userId: decoded.id,
-                path: req.path
+                path: req.path,
+                sessionId: decoded.sessionId
             });
-
+    
             next();
         } catch (error) {
             logger.error('Authentication failed', {

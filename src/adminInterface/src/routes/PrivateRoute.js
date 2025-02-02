@@ -3,7 +3,6 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { CircularProgress, Box } from '@mui/material';
 
-// Definisci LoadingFallback localmente
 const LoadingFallback = () => (
     <Box 
         sx={{ 
@@ -18,35 +17,59 @@ const LoadingFallback = () => (
 );
 
 const PrivateRoute = ({ children }) => {
-    const { user, loading, isAuthenticated } = useAuth();
+    const { user, loading, isAuthenticated, userStatus } = useAuth();
     const location = useLocation();
 
-    console.log('🛡️ PrivateRoute:', {
+    console.log('🛡️ PrivateRoute Check:', {
         isAuthenticated,
         hasUser: !!user,
+        userStatus,
         loading,
         currentPath: location.pathname
     });
 
-    // Se stiamo caricando, mostra il loader
+    // Stato di caricamento
     if (loading) {
         return <LoadingFallback />;
     }
 
-    // Se non siamo autenticati, redirect al login
+    // Verifica autenticazione
     if (!isAuthenticated || !user) {
-        // Previeni redirect loop controllando se siamo già sulla pagina di login
-        if (location.pathname !== '/login') {
-            return <Navigate to="/login" state={{ from: location }} replace />;
-        }
-        return null;
+        console.log('🚫 PrivateRoute: Utente non autenticato, reindirizzamento a login');
+        return <Navigate 
+            to="/login" 
+            state={{ from: location, message: 'Effettua il login per continuare' }} 
+            replace 
+        />;
     }
 
+    // Verifica stato utente
+    if (userStatus !== 'active') {
+        console.log('⚠️ PrivateRoute: Account utente non attivo');
+        return <Navigate 
+            to="/unauthorized" 
+            state={{ 
+                reason: 'account_status',
+                message: 'Il tuo account non è attivo. Contatta l\'amministratore.' 
+            }} 
+            replace 
+        />;
+    }
+
+    // Verifica ruolo admin
     if (user.role !== 'admin') {
         console.log('⛔ PrivateRoute: Utente non admin');
-        return <Navigate to="/unauthorized" replace />;
+        return <Navigate 
+            to="/unauthorized" 
+            state={{ 
+                reason: 'insufficient_permissions',
+                message: 'Non hai i permessi necessari per accedere a questa sezione.' 
+            }} 
+            replace 
+        />;
     }
 
+    // Se tutte le verifiche passano, renderizza il contenuto
     console.log('✅ PrivateRoute: Accesso consentito');
     return children;
 };

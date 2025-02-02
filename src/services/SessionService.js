@@ -19,55 +19,47 @@ class SessionService {
      * @param {string} token - Token di sessione
      * @param {Object} metadata - Metadati della sessione
      */
-    async createSession(user, token, metadata) {
-        try {
-            // Se l'utente non è un documento Mongoose, lo recuperiamo dal database
-            if (!user.addSessionToken) {
-                logger.debug('Converting plain user object to Mongoose document');
-                user = await this.userRepository.findById(user._id)
-                    .select('+sessionTokens');
-                
-                if (!user) {
-                    throw new Error('User not found during session creation');
-                }
+    // SessionService.js
+
+async createSession(user, token, metadata) {
+    try {
+        console.log('Creating session with data:', {
+            userId: user._id,
+            hasSessionTokens: Array.isArray(user.sessionTokens),
+            sessionTokensCount: user.sessionTokens?.length
+        });
+        
+        // Se l'utente non è un documento Mongoose, lo recuperiamo dal database
+        if (!user.addSessionToken) {
+            console.log('Converting plain user object to Mongoose document');
+            user = await this.userRepository.findById(user._id)
+                .select('+sessionTokens');
+            
+            if (!user) {
+                throw new Error('User not found during session creation');
             }
-    
-            const sessionData = {
-                token,
-                userAgent: metadata.userAgent,
-                ipAddress: metadata.ipAddress,
-                expiresAt: new Date(Date.now() + ms(metadata.expiresIn || '7d')),
-                createdAt: new Date(),
-                lastUsedAt: new Date()
-            };
-    
-            // Debug log
-            console.log('Creating session with data:', {
-                userId: user._id,
-                hasAddSessionToken: typeof user.addSessionToken === 'function',
-                sessionData: { ...sessionData, token: '***' }
-            });
-    
-            await user.addSessionToken(sessionData);
-            await user.save();
-    
-            return sessionData;
-        } catch (error) {
-            logger.error('Session creation error:', {
-                error: error.message,
-                stack: error.stack,
-                userData: {
-                    id: user?._id,
-                    hasSessionTokens: !!user?.sessionTokens
-                }
-            });
-            throw createError(
-                ErrorTypes.SESSION.CREATION_FAILED,
-                'Errore nella creazione della sessione',
-                { originalError: error.message }
-            );
         }
+
+        await user.addSessionToken({
+            token,
+            userAgent: metadata.userAgent,
+            ipAddress: metadata.ipAddress,
+            expiresAt: new Date(Date.now() + ms(metadata.expiresIn || '7d'))
+        });
+
+        console.log('Session created successfully:', {
+            userId: user._id,
+            sessionTokensCount: user.sessionTokens.length
+        });
+
+        await user.save();
+        
+        return true;
+    } catch (error) {
+        console.error('Session creation error:', error);
+        throw error;
     }
+}
 
     /**
      * Verifica validità sessione

@@ -16,19 +16,64 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
 
+// Definizione menu items con permessi richiesti
 const menuItems = [
-    { path: 'dashboard', title: 'Dashboard', icon: <DashboardIcon /> },
-    { path: 'users', title: 'Gestione Utenti', icon: <PersonIcon /> },
-    { path: 'schools', title: 'Gestione Scuole', icon: <SchoolIcon /> },
-    { path: 'classes', title: 'Gestione Classi', icon: <ClassIcon /> },
-    { path: 'students', title: 'Gestione Studenti', icon: <StudentsIcon /> },
-    { path: 'api-explorer', title: 'API Explorer', icon: <ApiIcon /> },
+    { 
+        path: 'dashboard', 
+        title: 'Dashboard', 
+        icon: <DashboardIcon />,
+        requiredPermission: null // accessibile a tutti gli admin
+    },
+    { 
+        path: 'users', 
+        title: 'Gestione Utenti', 
+        icon: <PersonIcon />,
+        requiredPermission: 'users:read'
+    },
+    { 
+        path: 'schools', 
+        title: 'Gestione Scuole', 
+        icon: <SchoolIcon />,
+        requiredPermission: 'schools:read'
+    },
+    { 
+        path: 'classes', 
+        title: 'Gestione Classi', 
+        icon: <ClassIcon />,
+        requiredPermission: 'classes:read'
+    },
+    { 
+        path: 'students', 
+        title: 'Gestione Studenti', 
+        icon: <StudentsIcon />,
+        requiredPermission: 'students:read'
+    },
+    { 
+        path: 'api-explorer', 
+        title: 'API Explorer', 
+        icon: <ApiIcon />,
+        requiredPermission: null, // accessibile a tutti gli admin
+        adminOnly: true
+    },
 ];
 
 const Sidebar = ({ open, drawerWidth, onDrawerToggle }) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { user, checkPermission } = useAuth();
+
+    // Filtra menu items in base ai permessi
+    const filteredMenuItems = menuItems.filter(item => {
+        if (item.adminOnly && user?.role !== 'admin') {
+            return false;
+        }
+        if (item.requiredPermission) {
+            return checkPermission(item.requiredPermission);
+        }
+        return true;
+    });
 
     const handleNavigation = (path) => {
         navigate(`/admin/${path}`);
@@ -67,7 +112,7 @@ const Sidebar = ({ open, drawerWidth, onDrawerToggle }) => {
                 animate="show"
             >
                 <List sx={{ pt: 1 }}>
-                    {menuItems.map((item) => {
+                    {filteredMenuItems.map((item) => {
                         const isSelected = location.pathname === `/admin/${item.path}`;
                         
                         return (

@@ -26,71 +26,100 @@ import {
     Class as ClassIcon,
     Assignment as TestIcon,
 } from '@mui/icons-material';
-
+const PERMISSIONS = {
+    USERS: {
+        READ: 'users:read',
+        WRITE: 'users:write'
+    },
+    SCHOOLS: {
+        READ: 'schools:read',
+        WRITE: 'schools:write'
+    },
+    CLASSES: {
+        READ: 'classes:read',
+        WRITE: 'classes:write'
+    },
+    STUDENTS: {
+        READ: 'students:read',
+        WRITE: 'students:write'
+    },
+    TESTS: {
+        READ: 'tests:read',
+        WRITE: 'tests:write'
+    },
+    RESULTS: {
+        READ: 'results:read',
+        WRITE: 'results:write'
+    }
+};
 export const adminRoutes = [
     {
         path: 'dashboard',
         element: Dashboard,
         title: 'Dashboard',
-        icon: DashboardIcon
+        icon: DashboardIcon,
+        permissions: null, // accessibile a tutti gli admin
+        showInMenu: true
     },
     {
         path: 'users',
         element: UserManagement,
         title: 'Gestione Utenti',
-        icon: PersonIcon
+        icon: PersonIcon,
+        permissions: [PERMISSIONS.USERS.READ],
+        writePermission: PERMISSIONS.USERS.WRITE,
+        showInMenu: true
     },
     {
         path: 'schools',
         element: SchoolManagement,
         title: 'Gestione Scuole',
-        icon: SchoolIcon
+        icon: SchoolIcon,
+        permissions: [PERMISSIONS.SCHOOLS.READ],
+        writePermission: PERMISSIONS.SCHOOLS.WRITE,
+        showInMenu: true
     },
     {
-        path: 'schools/:id',  // Aggiungiamo la rotta per i dettagli
+        path: 'schools/:id',
         element: SchoolDetails,
         title: 'Dettagli Scuola',
         icon: SchoolIcon,
-        showInMenu: false  // Non mostrare nel menu laterale
+        permissions: [PERMISSIONS.SCHOOLS.READ],
+        writePermission: PERMISSIONS.SCHOOLS.WRITE,
+        showInMenu: false
     },
     {
         path: 'classes',
-        element: ClassManagement, // ClassManagement component quando lo creerai
+        element: ClassManagement,
         title: 'Gestione Classi',
-        icon: ClassIcon
-    },
-    {
-        path: 'tests',
-        element: null, // TestManagement component quando lo creerai
-        title: 'Gestione Test',
-        icon: TestIcon,
-        showInMenu: false  // Non mostrare nel menu laterale
+        icon: ClassIcon,
+        permissions: [PERMISSIONS.CLASSES.READ],
+        writePermission: PERMISSIONS.CLASSES.WRITE,
+        showInMenu: true
     },
     {
         path: 'schools/create',
         element: SchoolWizard,
         title: 'Crea Scuola',
-        showInMenu: false  // Non mostrare nel menu laterale
-    },
-    {
-        path: 'schools/:id/users-management',  // Aggiungi questa rotta
-        element: UsersManagement,
-        title: 'Gestione Utenze',
-        icon: PersonIcon,
-        showInMenu: false  // Non mostrare nel menu laterale
-    },
-    {
-        path: 'schools/:id/details',  // Cambiato da schools/:id
-        element: SchoolDetails,
-        title: 'Dettagli Scuola',
-        icon: SchoolIcon,
+        permissions: [PERMISSIONS.SCHOOLS.WRITE],
         showInMenu: false
     },
     {
-        path: 'schools/:id/sections-management',  // Path più specifico
+        path: 'schools/:id/users-management',
+        element: UsersManagement,
+        title: 'Gestione Utenze',
+        icon: PersonIcon,
+        permissions: [PERMISSIONS.USERS.READ, PERMISSIONS.SCHOOLS.READ],
+        writePermission: PERMISSIONS.USERS.WRITE,
+        showInMenu: false
+    },
+    {
+        path: 'schools/:id/sections-management',
         element: SectionManagement,
         title: 'Gestione Sezioni',
         icon: SchoolIcon,
+        permissions: [PERMISSIONS.SCHOOLS.READ],
+        writePermission: PERMISSIONS.SCHOOLS.WRITE,
         showInMenu: false
     },
     {
@@ -98,6 +127,8 @@ export const adminRoutes = [
         element: ClassDetails,
         title: 'Dettagli Classe',
         icon: ClassIcon,
+        permissions: [PERMISSIONS.CLASSES.READ],
+        writePermission: PERMISSIONS.CLASSES.WRITE,
         showInMenu: false
     },
     {
@@ -105,59 +136,77 @@ export const adminRoutes = [
         element: ClassTests,
         title: 'Gestione Test Classe',
         icon: TestIcon,
+        permissions: [PERMISSIONS.CLASSES.READ, PERMISSIONS.TESTS.READ],
+        writePermission: PERMISSIONS.TESTS.WRITE,
         showInMenu: false
     },
     {
-        path: 'classes/:classId/populate',    // Aggiungi questa rotta
-        element: ClassPopulate,
-        title: 'Popola Classe',
-        icon: ClassIcon,
-        showInMenu: false
-    },
-    {
-        path: 'students',         // Aggiungi questa route
+        path: 'students',
         element: StudentList,
         title: 'Gestione Studenti',
-        icon: PersonIcon
+        icon: PersonIcon,
+        permissions: [PERMISSIONS.STUDENTS.READ],
+        writePermission: PERMISSIONS.STUDENTS.WRITE,
+        showInMenu: true
     },
     {
-        path: 'students/assign-school',    // viene dopo 'students'
+        path: 'students/assign-school',
         element: AssignSchoolPage,
         title: 'Assegnazione Studenti',
         icon: PersonIcon,
-        showInMenu: false  // Non lo mostriamo nel menu laterale
+        permissions: [PERMISSIONS.STUDENTS.WRITE, PERMISSIONS.SCHOOLS.READ],
+        showInMenu: false
     },
     {
         path: 'students/:id',
         element: StudentIndex,
         title: 'Dettagli Studente',
         icon: PersonIcon,
+        permissions: [PERMISSIONS.STUDENTS.READ],
+        writePermission: PERMISSIONS.STUDENTS.WRITE,
         showInMenu: false
     },
-  // 
     {
         path: 'students/:studentId/tests',
         element: () => <StudentIndex initialTab="tests" />,
         title: 'Test dello Studente',
         icon: TestIcon,
+        permissions: [PERMISSIONS.STUDENTS.READ, PERMISSIONS.TESTS.READ],
         showInMenu: false
     },
     {
         path: 'profile',
         element: Profile,
         title: 'Profilo Utente',
-        showInMenu: false  // Non lo mostriamo nel menu laterale
-    },
-   {
-        path: 'personal-test',
-        element: PersonalTest,
-        title: 'Test Personale',
+        permissions: null, // accessibile a tutti gli utenti autenticati
         showInMenu: false
     },
     {
-        path: 'api-explorer',  // senza /admin/ perché viene aggiunto automaticamente
-        element: ApiExplorer,     
+        path: 'personal-test',
+        element: PersonalTest,
+        title: 'Test Personale',
+        permissions: null, // accessibile a tutti gli utenti autenticati
+        showInMenu: false
+    },
+    {
+        path: 'api-explorer',
+        element: ApiExplorer,
         title: 'Api Explorer',
+        permissions: null, // solo admin
+        adminOnly: true,
         showInMenu: true
     }
 ];
+// Utility per verificare i permessi delle rotte
+export const hasRoutePermission = (route, checkPermission) => {
+    // Se non ci sono permessi richiesti o l'utente è admin, concedi accesso
+    if (!route.permissions) return true;
+    
+    // Verifica tutti i permessi richiesti
+    return route.permissions.every(permission => checkPermission(permission));
+};
+
+export const canWriteInRoute = (route, checkPermission) => {
+    if (!route.writePermission) return true;
+    return checkPermission(route.writePermission);
+};

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Typography, Box, CircularProgress, Alert } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 
 const Login = ({ onSuccessfulLogin, isModal = false }) => {
     const [email, setEmail] = useState('');
@@ -9,11 +9,19 @@ const Login = ({ onSuccessfulLogin, isModal = false }) => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [attempts, setAttempts] = useState(0);
-    const { login, isAuthenticated, loading } = useAuth(); // Aggiungi loading qui
+    const { login, isAuthenticated, loading, user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
-    
+    useEffect(() => {
+        // Se l'utente è già autenticato, reindirizza
+        if (isAuthenticated && user && !loading) {
+            const from = location.state?.from?.pathname || '/admin/dashboard';
+            console.log('🔄 Reindirizzamento automatico a:', from);
+            navigate(from, { replace: true });
+        }
+    }, [isAuthenticated, user, loading, navigate, location]);
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
@@ -21,20 +29,17 @@ const Login = ({ onSuccessfulLogin, isModal = false }) => {
         console.log('⌛ Iniziando processo di login...');
 
         try {
-            console.log('🚀 Chiamata alla funzione login...');
             const success = await login({
                 email: email.trim(),
                 password: password
             });
             
             console.log('✅ Risultato login:', success);
-            console.log('🔑 Stato autenticazione:', isAuthenticated);
-
-            if (success) {
-                console.log('📍 Tentativo di reindirizzamento a:', location.state?.from?.pathname || '/admin/dashboard');
-                const from = location.state?.from?.pathname || '/admin/dashboard';
-                navigate(from, { replace: true });
+            
+            if (!success) {
+                throw new Error('Login fallito');
             }
+
         } catch (error) {
             console.error('❌ Errore durante il login:', error);
             handleFailedAttempt();
@@ -50,23 +55,10 @@ const Login = ({ onSuccessfulLogin, isModal = false }) => {
             setIsLoading(false);
         }
     };
-    
-    // Aggiungi questo useEffect per debug
-    useEffect(() => {
-        console.log('🔄 Stato autenticazione cambiato:', isAuthenticated);
-        if (isAuthenticated) {
-            console.log('🎯 Utente autenticato, tentativo di reindirizzamento...');
-        }
-    }, [isAuthenticated]);
-
-    // Se l'utente è già autenticato, reindirizza alla dashboard
-    if (isAuthenticated && !loading) {
-        return <Navigate to="/admin/dashboard" replace />;
-    }
 
     const handleFailedAttempt = () => {
         setAttempts(prev => prev + 1);
-        setPassword(''); // Pulisci la password dopo un tentativo fallito
+        setPassword('');
     };
 
     const getWarningMessage = () => {
@@ -77,6 +69,16 @@ const Login = ({ onSuccessfulLogin, isModal = false }) => {
         }
         return null;
     };
+
+    // Non mostrare nulla durante il caricamento iniziale
+    if (loading) {
+        return null;
+    }
+
+    // Se l'utente è già autenticato e non siamo in modalità modale, reindirizza
+    if (isAuthenticated && user && !isModal) {
+        return <Navigate to="/admin/dashboard" replace />;
+    }
 
     return (
         <Box sx={{ p: isModal ? 4 : 0 }}>
