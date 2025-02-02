@@ -38,59 +38,57 @@ setupAxiosInterceptors();
 function App() {
     return (
         <Router>
-
             <NotificationProvider>
                 <AuthProvider>
-                    <UserProvider>
-                        <SchoolProvider>
-                            <ClassProvider>
-                                <StudentProvider>
-                                    <Suspense fallback={<LoadingFallback />}>
-                                        <Routes>
-                                            {/* Public routes */}
-                                            <Route path="/" element={<HomePage />} /> {/* Nuova root route */}
-                                            {/* Public routes */}
-                                            <Route path="/" element={<HomePage />} /> {/* Nuova root route */}
-                                            <Route path="/unauthorized" element={<Unauthorized />} />
-                                            <Route path="/test/csi/:token" element={<PublicCSI />} />
-                                            <Route path="/unauthorized" element={<Unauthorized />} />
-                                            <Route path="/test/csi/:token" element={<PublicCSI />} />
-                                            {/* Protected admin routes */}
-                                            <Route
-                                                path="/admin/*"
-                                                element={
-                                                    <PrivateRoute>
-                                                        <MainLayout>
-                                                            <Suspense fallback={<LoadingFallback />}>
-                                                                <Routes>
-                                                                    {adminRoutes.map((route) => 
-                                                                        route.element && (
-                                                                            <Route
-                                                                                key={route.path}
-                                                                                path={route.path}
-                                                                                element={
-                                                                                    <Suspense fallback={<LoadingFallback />}>
-                                                                                        <route.element />
-                                                                                    </Suspense>
-                                                                                }
-                                                                            />
-                                                                        )
-                                                                    )}
-                                                                </Routes>
-                                                            </Suspense>
-                                                        </MainLayout>
-                                                    </PrivateRoute>
-                                                }
-                                            />
+                    <Suspense fallback={<LoadingFallback />}>
+                        <Routes>
+                            {/* Public routes che non richiedono autenticazione */}
+                            <Route path="/" element={<HomePage />} />
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/unauthorized" element={<Unauthorized />} />
+                            <Route path="/test/csi/:token" element={<PublicCSI />} />
 
-                                            {/* Catch all redirect */}
-                                            <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
-                                        </Routes>
-                                    </Suspense>
-                                </StudentProvider>
-                            </ClassProvider>
-                        </SchoolProvider>
-                    </UserProvider>
+                            {/* Protected admin routes con tutti i provider necessari */}
+                            <Route
+                                path="/admin/*"
+                                element={
+                                    <PrivateRoute>
+                                        <UserProvider>
+                                            <SchoolProvider>
+                                                <ClassProvider>
+                                                    <StudentProvider>
+                                                        <MainLayout>
+                                                            <Routes>
+                                                                {adminRoutes.map((route) => 
+                                                                    route.element && (
+                                                                        <Route
+                                                                            key={route.path}
+                                                                            path={route.path}
+                                                                            element={<route.element />}
+                                                                        />
+                                                                    )
+                                                                )}
+                                                            </Routes>
+                                                        </MainLayout>
+                                                    </StudentProvider>
+                                                </ClassProvider>
+                                            </SchoolProvider>
+                                        </UserProvider>
+                                    </PrivateRoute>
+                                }
+                            />
+
+                            {/* Redirect solo se autenticati */}
+                            <Route 
+                                path="*" 
+                                element={
+                                    <PrivateRoute>
+                                        <Navigate to="/admin/dashboard" replace />
+                                    </PrivateRoute>
+                                } 
+                            />
+                        </Routes>
+                    </Suspense>
                 </AuthProvider>
             </NotificationProvider>
         </Router>

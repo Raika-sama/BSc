@@ -9,34 +9,34 @@ const Login = ({ onSuccessfulLogin, isModal = false }) => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [attempts, setAttempts] = useState(0);
-    const { login, isAuthenticated } = useAuth();
+    const { login, isAuthenticated, loading } = useAuth(); // Aggiungi loading qui
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Redirect se già autenticato
-    useEffect(() => {
-        if (isAuthenticated) {
-            const from = location.state?.from?.pathname || '/admin/dashboard';
-            navigate(from, { replace: true });
-        }
-    }, [isAuthenticated, navigate, location]);
-
+    
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
+        console.log('⌛ Iniziando processo di login...');
 
         try {
-            await login({
+            console.log('🚀 Chiamata alla funzione login...');
+            const success = await login({
                 email: email.trim(),
                 password: password
             });
-
-            // Se il login ha successo, reindirizza
-            const from = location.state?.from?.pathname || '/admin/dashboard';
-            navigate(from, { replace: true });
             
+            console.log('✅ Risultato login:', success);
+            console.log('🔑 Stato autenticazione:', isAuthenticated);
+
+            if (success) {
+                console.log('📍 Tentativo di reindirizzamento a:', location.state?.from?.pathname || '/admin/dashboard');
+                const from = location.state?.from?.pathname || '/admin/dashboard';
+                navigate(from, { replace: true });
+            }
         } catch (error) {
+            console.error('❌ Errore durante il login:', error);
             handleFailedAttempt();
             
             if (error.response?.status === 429) {
@@ -50,6 +50,19 @@ const Login = ({ onSuccessfulLogin, isModal = false }) => {
             setIsLoading(false);
         }
     };
+    
+    // Aggiungi questo useEffect per debug
+    useEffect(() => {
+        console.log('🔄 Stato autenticazione cambiato:', isAuthenticated);
+        if (isAuthenticated) {
+            console.log('🎯 Utente autenticato, tentativo di reindirizzamento...');
+        }
+    }, [isAuthenticated]);
+
+    // Se l'utente è già autenticato, reindirizza alla dashboard
+    if (isAuthenticated && !loading) {
+        return <Navigate to="/admin/dashboard" replace />;
+    }
 
     const handleFailedAttempt = () => {
         setAttempts(prev => prev + 1);

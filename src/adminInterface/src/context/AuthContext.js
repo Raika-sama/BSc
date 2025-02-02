@@ -25,35 +25,6 @@ export const AuthProvider = ({ children }) => {
     const [sessionData, setSessionData] = useState(null);
     const { showNotification } = useNotification();
 
-    useEffect(() => {
-        checkAuth();
-    }, []);
-
-
-    const checkAuth = async () => {
-        try {
-            setLoading(true);
-            const currentUser = authService.getCurrentUser();
-            
-            if (currentUser?.token) {
-                // Verifica il token con il backend
-                const response = await axiosInstance.get('/auth/verify');
-                
-                if (response.data.status === 'success') {
-                    setUser(response.data.data.user);
-                    setUserStatus(response.data.data.user.status);
-                    setPermissions(response.data.data.user.permissions || []);
-                    setSessionData(response.data.data.session);
-                } else {
-                    handleAuthError();
-                }
-            }
-        } catch (err) {
-            handleAuthError();
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleAuthError = () => {
         authService.logout();
@@ -65,44 +36,54 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const initAuth = async () => {
             try {
-                setLoading(true);
                 const currentUser = authService.getCurrentUser();
                 
-                if (currentUser?.token) {
+                if (!currentUser?.token) {
+                    setLoading(false);
+                    return;
+                }
+    
+                try {
                     const response = await axiosInstance.get('/auth/verify');
                     
                     if (response.data.status === 'success') {
-                        setUser(response.data.data.user);
-                        setUserStatus(response.data.data.user.status);
-                        setPermissions(response.data.data.user.permissions || []);
+                        setUser(currentUser);
+                        setUserStatus(currentUser.status);
+                        setPermissions(currentUser.permissions || []);
                         setSessionData({
                             token: currentUser.token,
                             refreshToken: currentUser.refreshToken,
-                            expiresAt: response.data.data.user.tokenExpiresAt
+                            expiresAt: currentUser.tokenExpiresAt
                         });
                     } else {
                         handleAuthError();
                     }
+                } catch (err) {
+                    // Se l'errore non è 401, gestisci come errore di autenticazione
+                    if (err.response?.status !== 401) {
+                        handleAuthError();
+                    }
                 }
-            } catch (err) {
-                handleAuthError();
             } finally {
                 setLoading(false);
             }
         };
-
+    
         initAuth();
     }, []); // Esegui solo all'mount
 
     // Modifica la funzione login
     const login = async ({email, password}) => {
         try {
+            console.log('📡 Inviando richiesta di login al server...');
             const response = await authService.login(email, password);
+            
+            console.log('📨 Risposta server ricevuta:', response);
             
             if (response.status === 'success') {
                 const { user, token, refreshToken } = response.data;
                 
-                // Imposta tutti i dati in una volta
+                console.log('🔐 Impostazione dati utente e token...');
                 setUser(user);
                 setUserStatus(user.status);
                 setPermissions(user.permissions || []);
@@ -112,10 +93,12 @@ export const AuthProvider = ({ children }) => {
                     expiresAt: user.tokenExpiresAt
                 });
                 
+                console.log('✨ Login completato con successo');
                 return true;
             }
             return false;
         } catch (error) {
+            console.error('💥 Errore durante il login:', error);
             showNotification(error.response?.data?.error?.message || 'Errore durante il login', 'error');
             throw error;
         }

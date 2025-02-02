@@ -4,22 +4,47 @@ import { axiosInstance } from './axiosConfig';
 const authService = {
     login: async (email, password) => {
         try {
+            console.log('🚀 Invio richiesta login con:', { email });
+            
             const response = await axiosInstance.post('/auth/login', { 
                 email, 
                 password 
             });
             
-            if (response.data.data.token) {
+            if (response.data.status === 'success' && response.data.data) {
+                const { user, accessToken, refreshToken } = response.data.data;
+                
+                if (!user || !accessToken) {
+                    throw new Error('Dati di autenticazione incompleti');
+                }
+
+                // Salva i dati dell'utente usando accessToken invece di token
                 const userData = {
-                    ...response.data.data.user,
-                    token: response.data.data.token,
-                    refreshToken: response.data.data.refreshToken
+                    ...user,
+                    token: accessToken, // Manteniamo token per compatibilità
+                    accessToken,        // Salviamo anche accessToken
+                    refreshToken
                 };
+                
                 localStorage.setItem('user', JSON.stringify(userData));
+
+                // Restituisci i dati strutturati usando la stessa struttura
+                return {
+                    status: 'success',
+                    data: {
+                        user,
+                        token: accessToken, // Per compatibilità con AuthContext
+                        refreshToken
+                    }
+                };
             }
-            return response.data.data;
+            throw new Error('Risposta non valida dal server');
         } catch (error) {
-            console.error('Login error:', error);
+            console.error('❌ Login error:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
             throw error;
         }
     },
