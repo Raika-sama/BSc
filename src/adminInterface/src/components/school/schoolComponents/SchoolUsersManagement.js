@@ -78,12 +78,17 @@ const SchoolUsersManagement = ({
 
     const handleOpenDialog = async (type) => {
         setOperationDialog({ open: true, type });
-        setFormData({ email: '', role: 'teacher', userId: '' });
         
         if (type === OPERATION_TYPES.CHANGE_MANAGER) {
-            setLoading(true);
-            await fetchAvailableManagers();
-            setLoading(false);
+            try {
+                setLoading(true);
+                const managers = await fetchAvailableManagers();
+                setAvailableManagers(managers);
+            } catch (error) {
+                console.error('Error fetching managers:', error);
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
