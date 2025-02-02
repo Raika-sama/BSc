@@ -142,6 +142,15 @@ export const adminRoutes = [
         showInMenu: false
     },
     {
+        path: 'classes/:classId/populate',  // Aggiungi questa nuova rotta
+        element: ClassPopulate,
+        title: 'Popola Classe',
+        icon: ClassIcon,
+        permissions: [PERMISSIONS.CLASSES.READ, PERMISSIONS.STUDENTS.READ],
+        writePermission: PERMISSIONS.CLASSES.WRITE,
+        showInMenu: false
+    },
+    {
         path: 'classes/:classId/tests',
         element: ClassTests,
         title: 'Gestione Test Classe',

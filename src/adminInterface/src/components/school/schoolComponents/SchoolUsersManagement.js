@@ -38,8 +38,7 @@ const SchoolUsersManagement = ({
     onAddUser,
     onRemoveUser,
     onChangeManager,
-    isDialog = false,
-    onClose
+    isDialog = false
 }) => {
     const { showNotification } = useNotification();
     const [operationDialog, setOperationDialog] = useState({
@@ -80,14 +79,56 @@ const SchoolUsersManagement = ({
         }
     };
 
+    const handleManagerAction = async () => {
+        if (manager) {
+            // Se c'è un manager, lo rimuoviamo
+            try {
+                await onChangeManager(null);
+                showNotification('Manager rimosso con successo', 'success');
+            } catch (error) {
+                showNotification('Errore nella rimozione del manager', 'error');
+            }
+        } else {
+            // Se non c'è un manager, apriamo il dialog per aggiungerne uno
+            handleOpenDialog(OPERATION_TYPES.ADD_USER);
+        }
+    };
+
     const renderUsersList = () => (
         <List>
             {/* Manager Section */}
-            {manager && (
-                <Box sx={{ mb: 3, p: 2, bgcolor: 'rgba(25, 118, 210, 0.08)', borderRadius: 1 }}>
-                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+            <Box sx={{ mb: 3, p: 2, bgcolor: 'rgba(25, 118, 210, 0.08)', borderRadius: 1 }}>
+                <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    mb: 1
+                }}>
+                    <Typography variant="subtitle1" fontWeight="bold">
                         Manager della Scuola
                     </Typography>
+                    {manager ? (
+                        <Button
+                            size="small"
+                            color="error"
+                            startIcon={<DeleteIcon />}
+                            onClick={() => onChangeManager(null)}
+                        >
+                            Rimuovi Manager
+                        </Button>
+                    ) : (
+                        <Button
+                            size="small"
+                            color="primary"
+                            startIcon={<AddIcon />}
+                            onClick={() => handleOpenDialog(OPERATION_TYPES.ADD_USER)}
+                        >
+                            Aggiungi Manager
+                        </Button>
+                    )}
+                </Box>
+                
+                {manager ? (
                     <ListItem disablePadding>
                         <ListItemAvatar>
                             <Avatar sx={{ bgcolor: 'primary.main' }}>
@@ -98,18 +139,16 @@ const SchoolUsersManagement = ({
                             primary={`${manager.firstName} ${manager.lastName}`}
                             secondary={manager.email}
                         />
-                        <Button
-                            size="small"
-                            onClick={() => handleOpenDialog(OPERATION_TYPES.CHANGE_MANAGER)}
-                        >
-                            Cambia Manager
-                        </Button>
                     </ListItem>
-                </Box>
-            )}
-
+                ) : (
+                    <Typography color="text.secondary" variant="body2" sx={{ mt: 1 }}>
+                        Nessun manager assegnato
+                    </Typography>
+                )}
+            </Box>
+    
             <Divider sx={{ my: 2 }} />
-
+    
             {/* Users List */}
             <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="subtitle1" fontWeight="bold">
@@ -122,7 +161,7 @@ const SchoolUsersManagement = ({
                     Aggiungi Utente
                 </Button>
             </Box>
-
+    
             {users.map((userAssignment) => {
                 const user = userAssignment.user || userAssignment;
                 return (
