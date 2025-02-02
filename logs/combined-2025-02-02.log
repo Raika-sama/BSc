@@ -10064,3 +10064,39 @@
 {"level":"info","message":"Database connesso con successo","timestamp":"2025-02-02T19:35:37.061Z"}
 {"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-02T19:35:37.069Z"}
 {"level":"info","message":"Ambiente: development","timestamp":"2025-02-02T19:35:37.070Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"authRepository","timestamp":"2025-02-02T19:42:06.469Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"userRepository","timestamp":"2025-02-02T19:42:06.470Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"classRepository","timestamp":"2025-02-02T19:42:06.471Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"schoolRepository","timestamp":"2025-02-02T19:42:06.471Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"studentRepository","timestamp":"2025-02-02T19:42:06.472Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"testRepository","timestamp":"2025-02-02T19:42:06.473Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"auth","timestamp":"2025-02-02T19:42:06.473Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-02-02T19:42:06.474Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-02-02T19:42:06.475Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-02-02T19:42:06.475Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-02-02T19:42:06.476Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-02-02T19:42:06.477Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["authRepository","userRepository","classRepository","schoolRepository","studentRepository","testRepository","auth","user","class","school","student","test"],"timestamp":"2025-02-02T19:42:06.477Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-02-02T19:42:06.714Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-02-02T19:42:07.116Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-02T19:42:07.117Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-02T19:42:07.123Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-02T19:42:07.124Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"authRepository","timestamp":"2025-02-02T19:44:01.919Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"userRepository","timestamp":"2025-02-02T19:44:01.920Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"classRepository","timestamp":"2025-02-02T19:44:01.921Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"schoolRepository","timestamp":"2025-02-02T19:44:01.922Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"studentRepository","timestamp":"2025-02-02T19:44:01.923Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"testRepository","timestamp":"2025-02-02T19:44:01.923Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"auth","timestamp":"2025-02-02T19:44:01.924Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"user","timestamp":"2025-02-02T19:44:01.924Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"class","timestamp":"2025-02-02T19:44:01.925Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"school","timestamp":"2025-02-02T19:44:01.926Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"student","timestamp":"2025-02-02T19:44:01.926Z"}
+{"level":"warn","message":"Warning: ModelName mancante nel repository","repository":"test","timestamp":"2025-02-02T19:44:01.927Z"}
+{"level":"info","message":"Repository caricati con successo","repositories":["authRepository","userRepository","classRepository","schoolRepository","studentRepository","testRepository","auth","user","class","school","student","test"],"timestamp":"2025-02-02T19:44:01.927Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-02-02T19:44:02.171Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-02-02T19:44:02.573Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-02T19:44:02.574Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-02T19:44:02.582Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-02T19:44:02.583Z"}

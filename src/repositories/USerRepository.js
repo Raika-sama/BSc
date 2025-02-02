@@ -125,12 +125,8 @@ class UserRepository extends BaseRepository {
      */
     async findWithFilters(filters = {}, options = {}) {
         try {
-            console.log('Repository: Starting query with filters:', filters);
-            
-            // Costruisci la query di base
             let query = {};
             
-            // Gestisci la ricerca
             if (filters.search) {
                 query.$or = [
                     { firstName: { $regex: filters.search, $options: 'i' } },
@@ -139,24 +135,18 @@ class UserRepository extends BaseRepository {
                 ];
             }
     
-            // Gestisci i ruoli
             if (filters.role) {
                 query.role = filters.role;
             }
     
-            // Gestisci lo status
             if (filters.status) {
                 query.status = filters.status;
             }
     
-            console.log('Final query:', query);
-    
-            // Calcola skip per paginazione
             const page = parseInt(options.page) || 1;
             const limit = parseInt(options.limit) || 10;
             const skip = (page - 1) * limit;
     
-            // Esegui le query in parallelo
             const [users, total] = await Promise.all([
                 this.model
                     .find(query)
@@ -168,19 +158,11 @@ class UserRepository extends BaseRepository {
                 this.model.countDocuments(query)
             ]);
     
-            console.log('Repository: Query results:', {
-                usersFound: users.length,
-                totalUsers: total,
-                page,
-                limit
-            });
-    
             return {
                 users,
                 total,
                 page,
-                limit,
-                totalPages: Math.ceil(total / limit)
+                limit
             };
         } catch (error) {
             console.error('Repository Error:', error);

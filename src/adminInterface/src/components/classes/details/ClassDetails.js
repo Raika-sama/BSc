@@ -49,30 +49,22 @@ const ClassDetails = () => {
             if (!classId) return;
             
             try {
-                setLocalLoading(true);
                 const response = await getClassDetails(classId);
                 if (isMounted) {
                     setClassData(response);
-                    setLocalError(null);
                 }
             } catch (err) {
-                if (isMounted) {
-                    setLocalError(err.message);
-                }
-            } finally {
-                if (isMounted) {
-                    setLocalLoading(false);
-                }
+                // Gli errori sono già gestiti nel context
+                console.error('Error loading class details:', err);
             }
         };
 
         loadData();
 
-        // Cleanup function
         return () => {
             isMounted = false;
         };
-    }, [classId, getClassDetails]);
+    }, [classId]); // Rimuovi getClassDetails dalle dipendenze
 
     const handleViewDetails = (student) => {
         setSelectedStudent(student);

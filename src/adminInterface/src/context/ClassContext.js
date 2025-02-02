@@ -333,31 +333,28 @@ export const ClassProvider = ({ children }) => {
             dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
             
             const response = await axiosInstance.get(`/classes/${classId}`);
-            console.log('📡 ClassContext: API Response:', response.data);
-
+            
             if (response.data.status === 'success') {
                 const classData = response.data.data.class;
-                // Memorizza i dati nel reducer se necessario
                 dispatch({
                     type: CLASS_ACTIONS.UPDATE_CLASS,
                     payload: classData
                 });
                 return classData;
             } else {
-                console.warn('⚠️ ClassContext: API returned non-success status:', response.data);
                 throw new Error(response.data.message || 'Errore nel recupero dei dettagli della classe');
             }
         } catch (error) {
             console.error('❌ ClassContext: Error in getClassDetails:', error);
             dispatch({ 
                 type: CLASS_ACTIONS.SET_ERROR, 
-                payload: error.response?.data?.message || 'Errore nel recupero dei dettagli della classe' 
+                payload: error.response?.data?.message || error.message 
             });
             throw error;
         } finally {
             dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: false });
         }
-    }, []);  // useCallback senza dipendenze
+    }, []);  // Mantieni vuoto l'array delle dipendenze
 
     const removeStudentsFromClass = async (classId, studentIds) => {
         try {

@@ -21,40 +21,33 @@ export const UserProvider = ({ children }) => {
                 params: { page, limit, search, sort }
             });
     
-            console.log('Raw response:', response);
-    
-            // Estrai i dati dalla struttura annidata
-            const userData = response?.data?.data?.data;
-            
-            console.log('Extracted user data:', userData);
-    
-            if (userData && response.data.status === 'success') {
-                // Ora userData dovrebbe contenere direttamente l'oggetto con users, total, etc.
-                setUsers(userData.users || []);
-                setTotalUsers(userData.total || 0);
+            // La struttura della risposta dovrebbe essere più semplice
+            if (response.data.status === 'success') {
+                const { users, total, page: currentPage } = response.data.data;
+                
+                setUsers(users || []);
+                setTotalUsers(total || 0);
                 setError(null);
                 
                 return {
-                    users: userData.users || [],
-                    total: userData.total || 0,
-                    page: userData.page || page,
-                    limit: userData.limit || limit
+                    users,
+                    total,
+                    page: currentPage,
+                    limit
                 };
-            } else {
-                console.error('Invalid data structure:', response.data);
-                throw new Error('Struttura dati non valida');
             }
+            
+            throw new Error('Struttura dati non valida');
         } catch (error) {
             console.error('Error in getUsers:', error);
-            const errorMessage = error.response?.data?.error?.message || 'Errore nel caricamento degli utenti';
-            setError(errorMessage);
-            showNotification(errorMessage, 'error');
+            setError(error.message);
+            showNotification(error.message, 'error');
             
             return {
                 users: [],
                 total: 0,
-                page: page,
-                limit: limit
+                page,
+                limit
             };
         } finally {
             setLoading(false);
