@@ -1,0 +1,18 @@
+{"error":{"code":"SESSION_002","message":"Sessione non trovata","metadata":{},"status":401},"level":"error","message":"Session validation error","timestamp":"2025-02-02T09:49:35.581Z"}
+{"error":{"code":"SESSION_002","message":"Sessione non trovata","metadata":{},"status":401},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T09:49:35.582Z"}
+{"body":{},"error":{"code":"SESSION_002","message":"Sessione non trovata"},"level":"error","message":"Errore richiesta","method":"GET","query":{"limit":"10","page":"1","search":"","sort":"-createdAt"},"requestId":"req_1738489775556_umi8lme84","timestamp":"2025-02-02T09:49:35.584Z","url":"/api/v1/users?page=1&limit=10&search=&sort=-createdAt"}
+{"level":"error","message":"Sessione non trovata","timestamp":"2025-02-02T09:49:35.585Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-02-02T09:49:35.629Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-02T09:49:35.631Z"}
+{"error":{"code":"SESSION_002","message":"Sessione non trovata","metadata":{},"status":401},"level":"error","message":"Session validation error","timestamp":"2025-02-02T09:49:48.705Z"}
+{"error":{"code":"SESSION_002","message":"Sessione non trovata","metadata":{},"status":401},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T09:49:48.706Z"}
+{"body":{},"error":{"code":"SESSION_002","message":"Sessione non trovata"},"level":"error","message":"Errore richiesta","method":"GET","query":{"institutionType":"","limit":"10","page":"1","populate":"manager","region":"","schoolType":""},"requestId":"req_1738489788680_f8en68vmb","timestamp":"2025-02-02T09:49:48.708Z","url":"/api/v1/schools?page=1&limit=10&populate=manager&region=&schoolType=&institutionType="}
+{"level":"error","message":"Sessione non trovata","timestamp":"2025-02-02T09:49:48.709Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-02-02T09:49:48.718Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-02T09:49:48.719Z"}
+{"error":{"code":"SESSION_002","message":"Sessione non trovata","metadata":{},"status":401},"level":"error","message":"Session validation error","timestamp":"2025-02-02T09:56:04.116Z"}
+{"error":{"code":"SESSION_002","message":"Sessione non trovata","metadata":{},"status":401},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T09:56:04.117Z"}
+{"body":{},"error":{"code":"SESSION_002","message":"Sessione non trovata"},"level":"error","message":"Errore richiesta","method":"GET","query":{"limit":"10","page":"1","search":"","sort":"-createdAt"},"requestId":"req_1738490164094_lxxztdxte","timestamp":"2025-02-02T09:56:04.118Z","url":"/api/v1/users?page=1&limit=10&search=&sort=-createdAt"}
+{"level":"error","message":"Sessione non trovata","timestamp":"2025-02-02T09:56:04.119Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-02-02T09:56:04.153Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-02T09:56:04.154Z"}
