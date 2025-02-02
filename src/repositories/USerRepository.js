@@ -2,6 +2,7 @@
 const BaseRepository = require('./base/BaseRepository');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
+const mongoose = require('mongoose');
 
 class UserRepository extends BaseRepository {
     constructor(userModel) {
@@ -143,11 +144,28 @@ class UserRepository extends BaseRepository {
             if (filters.status) {
                 query.status = filters.status;
             }
-
-            // Aggiung il nuovo filtro per schoolId
+    
+            // Se c'è un filtro per schoolId, troviamo prima gli utenti dalla scuola
             if (filters.schoolId) {
-                query.schoolId = filters.schoolId;
+                // Prima troviamo la scuola
+                const school = await mongoose.model('School').findById(filters.schoolId);
+                if (school && school.users) {
+                    // Estraiamo gli ID degli utenti dalla scuola
+                    const userIds = school.users.map(u => u.user.toString());
+                    // Aggiungiamo il filtro per gli ID degli utenti
+                    query._id = { $in: userIds };
+                    
+                    // Log per debug
+                    console.log('School users filter:', {
+                        schoolId: filters.schoolId,
+                        userIds: userIds,
+                        usersCount: userIds.length
+                    });
+                }
             }
+
+                    // Log per debug
+            console.log('Final query:', query);
     
             const page = parseInt(options.page) || 1;
             const limit = parseInt(options.limit) || 10;
@@ -156,13 +174,20 @@ class UserRepository extends BaseRepository {
             const [users, total] = await Promise.all([
                 this.model
                     .find(query)
-                    .select('firstName lastName email role status schoolId createdAt') // Aggiungi schoolId alla selezione
+                    .select('firstName lastName email role status schoolId createdAt')
                     .sort(options.sort || { createdAt: -1 })
                     .skip(skip)
                     .limit(limit)
                     .lean(),
                 this.model.countDocuments(query)
             ]);
+
+              // Log per debug
+            console.log('Query results:', {
+                totalFound: total,
+                usersReturned: users.length,
+                filters: filters
+            });
     
             return {
                 users,

@@ -88,17 +88,17 @@ const ClassDetails = () => {
             const confirmed = window.confirm(
                 'Sei sicuro di voler rimuovere il docente principale?'
             );
-
+    
             if (confirmed) {
                 await removeMainTeacher(classId);
-                await loadClassData(); // Usa loadClassData invece di fetchData
+                await loadClassData();
             }
         } catch (error) {
             setLocalError('Errore durante la rimozione del docente principale');
             console.error('Error removing main teacher:', error);
         }
     };
-
+    
     if (localLoading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">

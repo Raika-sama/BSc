@@ -355,28 +355,19 @@ export const SchoolProvider = ({ children }) => {
     
             if (response.data.status === 'success') {
                 const updatedSchool = response.data.data.school;
-                const newManagerId = response.data.data.newManagerId;
                 
-                // Aggiorna lo stato locale
+                // Aggiorna solo il manager, non l'array users
                 setSchools(prev => prev.map(school => 
                     school._id === schoolId ? {
                         ...school,
-                        manager: newManagerId,
-                        users: [
-                            ...school.users,
-                            { user: newManagerId, role: 'manager' }
-                        ]
+                        manager: userId
                     } : school
                 ));
     
                 if (selectedSchool?._id === schoolId) {
                     setSelectedSchool(prev => ({
                         ...prev,
-                        manager: newManagerId,
-                        users: [
-                            ...prev.users,
-                            { user: newManagerId, role: 'manager' }
-                        ]
+                        manager: userId
                     }));
                 }
     

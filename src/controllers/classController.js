@@ -23,6 +23,7 @@ class ClassController extends BaseController {
         this.createInitialClasses = this.createInitialClasses.bind(this);
         this.getMyClasses = this.getMyClasses.bind(this);
         this.getById = this.getById.bind(this);
+        this.removeMainTeacher = this.removeMainTeacher.bind(this);
         this.removeStudentsFromClass = this.removeStudentsFromClass.bind(this);
     }
 
@@ -567,6 +568,51 @@ async removeStudentsFromClass(req, res, next) {
             classId,
             studentIds
         });
+        next(error);
+    }
+}
+
+async updateMainTeacher(req, res, next) {
+    try {
+        const { classId } = req.params;
+        const { teacherId } = req.body;
+
+        if (!teacherId) {
+            throw createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'ID docente richiesto'
+            );
+        }
+
+        const updatedClass = await this.repository.updateMainTeacher(classId, teacherId);
+        
+        this.sendResponse(res, { 
+            status: 'success',
+            data: { class: updatedClass }
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+async removeMainTeacher(req, res, next) {
+    try {
+        const { classId } = req.params;
+        
+        logger.debug('Removing main teacher from class:', { classId });
+
+        const updatedClass = await this.repository.removeMainTeacher(classId);
+        
+        this.sendResponse(res, {
+            status: 'success',
+            data: {
+                class: updatedClass
+            }
+        });
+
+    } catch (error) {
+        logger.error('Error in removeMainTeacher:', error);
         next(error);
     }
 }

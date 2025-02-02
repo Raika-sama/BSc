@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { useClass } from '../../../../context/ClassContext';
 import { useUser } from '../../../../context/UserContext'; // Aggiungi questo import
+import { axiosInstance } from '../../../../services/axiosConfig';
 
 const TeacherForm = ({
     open,
@@ -31,44 +32,79 @@ const TeacherForm = ({
     const [teachers, setTeachers] = useState([]);
     const [selectedTeacher, setSelectedTeacher] = useState(null);
 
-    // Modifica la funzione per caricare gli insegnanti
-    useEffect(() => {
-        const fetchTeachers = async () => {
-            try {
-                setLoading(true);
-                console.log('Fetching teachers with filters:', {
-                    search: searchQuery,
-                    role: 'teacher',
-                    schoolId: classData.schoolId._id,
-                });
+// Separare il caricamento iniziale dalla ricerca
+useEffect(() => {
+    let mounted = true;
 
-                // Usa getUsers con i filtri appropriati
-                const response = await getUsers({
-                    search: searchQuery,
-                    role: 'teacher', // Filtra solo per insegnanti
-                    schoolId: classData.schoolId._id, // Filtra per la scuola della classe
-                    limit: 50 // Aumenta il limite per ottenere più risultati
-                });
-                console.log('Teachers response:', response);
+    const loadInitialTeachers = async () => {
+        if (!open || !classData?.schoolId?._id) return;
+        
+        try {
+            setLoading(true);
+            console.log('Loading teachers with schoolId:', classData.schoolId._id);
 
-                
-                if (response && response.users) {
-                    setTeachers(response.users);
-                } else {
-                    console.error('Invalid response format:', response);
-                }
-            } catch (err) {
-                console.error('Error fetching teachers:', err);
+            const response = await getUsers({
+                schoolId: classData.schoolId._id.toString(), // Forziamo la conversione a string
+                limit: 50
+            });
+
+            if (mounted && response?.users) {
+                console.log('Teachers loaded:', response.users);
+                setTeachers(response.users);
+            }
+        } catch (err) {
+            if (mounted) {
+                console.error('Error loading teachers:', err);
                 setError('Errore nel caricamento degli insegnanti');
-            } finally {
+            }
+        } finally {
+            if (mounted) {
                 setLoading(false);
             }
-        };
-
-        if (open && searchQuery.length >= 2) { // Aggiungi un minimo di caratteri per la ricerca
-            fetchTeachers();
         }
-    }, [open, searchQuery, classData.schoolId._id, getUsers]);
+    };
+
+    loadInitialTeachers();
+
+    return () => {
+        mounted = false;
+    };
+}, [open, classData?.schoolId?._id]);
+
+// Gestire la ricerca separatamente
+useEffect(() => {
+    let mounted = true;
+    const timeoutId = setTimeout(async () => {
+        if (!open || searchQuery.length < 2) return;
+        
+        try {
+            setLoading(true);
+            const response = await getUsers({
+                search: searchQuery,
+                schoolId: classData.schoolId._id,
+                limit: 50
+            });
+
+            if (mounted && response?.users) {
+                setTeachers(response.users);
+            }
+        } catch (err) {
+            if (mounted) {
+                console.error('Error searching teachers:', err);
+                setError('Errore nella ricerca');
+            }
+        } finally {
+            if (mounted) {
+                setLoading(false);
+            }
+        }
+    }, 300); // Debounce
+
+    return () => {
+        mounted = false;
+        clearTimeout(timeoutId);
+    };
+}, [searchQuery, open, classData.schoolId._id]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -76,25 +112,33 @@ const TeacherForm = ({
             setError('Seleziona un insegnante');
             return;
         }
-
+    
         try {
             setLoading(true);
             setError(null);
-
-            // Prepara i dati da inviare
-            const updateData = {
-                ...classData,
-                mainTeacher: selectedTeacher._id
-            };
-
-            // Chiama l'API per aggiornare la classe
-            await updateClass(classData._id, updateData);
-
-            // Chiudi il form e aggiorna i dati
-            onClose(true);
+    
+            console.log('Updating main teacher:', {
+                classId: classData._id,
+                teacherId: selectedTeacher._id,
+                teacherName: `${selectedTeacher.firstName} ${selectedTeacher.lastName}`
+            });
+    
+            const response = await axiosInstance.post(
+                `/classes/${classData._id}/update-main-teacher`,
+                { teacherId: selectedTeacher._id }
+            );
+    
+            console.log('Update response:', response.data);
+    
+            if (response.data.status === 'success') {
+                onClose(true);  // Trigger refresh dei dati
+            }
         } catch (err) {
-            setError(err.message || 'Errore durante l\'aggiornamento del docente principale');
-            console.error('Error updating main teacher:', err);
+            console.error('Error details:', {
+                message: err.message,
+                response: err.response?.data
+            });
+            setError(err.response?.data?.message || 'Errore durante l\'aggiornamento del docente principale');
         } finally {
             setLoading(false);
         }

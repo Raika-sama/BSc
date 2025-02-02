@@ -70,6 +70,14 @@ const createClassRouter = ({ authMiddleware, classController }) => {
         asyncHandler(classController.removeStudentsFromClass.bind(classController))
     );
 
+    router.post('/:classId/update-main-teacher', 
+        restrictTo('admin'),
+        asyncHandler(classController.updateMainTeacher.bind(classController))
+    );
+    
+    router.post('/:classId/remove-main-teacher', classController.removeMainTeacher);
+
+
     // Route per setup iniziale classi
     router.post('/initial-setup',
         restrictTo('admin'),

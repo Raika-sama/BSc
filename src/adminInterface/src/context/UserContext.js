@@ -13,20 +13,24 @@ export const UserProvider = ({ children }) => {
     const { showNotification } = useNotification();
 
     const getUsers = async (filters = {}) => {
-        const { page = 1, limit = 10, search = '', sort = '-createdAt', schoolId, role } = filters;
-        
-        setLoading(true);
         try {
-            console.log('UserContext: Getting users with filters:', filters);
-
+            console.log('Getting users with filters:', filters); // Debug log
+            
+            const { page = 1, limit = 10, search = '', sort = '-createdAt', schoolId, role } = filters;
+            
+            // Validiamo che schoolId sia presente
+            if (schoolId) {
+                console.log('SchoolId present:', schoolId);
+            }
+    
             const response = await axiosInstance.get('/users', {
                 params: { 
                     page, 
                     limit, 
                     search, 
                     sort,
-                    schoolId, // Assicurati che questo venga passato
-                    role 
+                    ...(schoolId && { schoolId }), // Usiamo spread operator solo se schoolId esiste
+                    ...(role && { role })
                 }
             });
     

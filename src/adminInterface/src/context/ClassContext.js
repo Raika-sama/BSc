@@ -384,6 +384,31 @@ export const ClassProvider = ({ children }) => {
         }
     };
 
+    const removeMainTeacher = async (classId) => {
+        try {
+            dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
+            
+            const response = await axiosInstance.post(`/classes/${classId}/remove-main-teacher`);
+            
+            if (response.data.status === 'success') {
+                // Aggiorna lo stato locale
+                dispatch({
+                    type: CLASS_ACTIONS.UPDATE_CLASS,
+                    payload: response.data.data.class
+                });
+                
+                return response.data.data.class;
+            }
+        } catch (error) {
+            dispatch({ 
+                type: CLASS_ACTIONS.SET_ERROR, 
+                payload: error.response?.data?.message || error.message 
+            });
+            throw error;
+        } finally {
+            dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: false });
+        }
+    };
 
 
     return (
@@ -397,6 +422,7 @@ export const ClassProvider = ({ children }) => {
             deleteClass,
             getClassDetails,
             removeStudentsFromClass,
+            removeMainTeacher,
             dispatch
         }}>
             {children}

@@ -828,6 +828,111 @@ async getMyClasses(userId) {
             }
         }
 
+        async updateMainTeacher(classId, teacherId) {
+            const session = await mongoose.startSession();
+            session.startTransaction();
+        
+            try {
+                // 1. Trova la classe
+                const classDoc = await this.model.findById(classId).session(session);
+                if (!classDoc) {
+                    throw createError(
+                        ErrorTypes.RESOURCE.NOT_FOUND,
+                        'Classe non trovata'
+                    );
+                }
+        
+                // 2. Aggiorna la classe
+                classDoc.mainTeacher = teacherId;
+                classDoc.mainTeacherIsTemporary = false;
+                classDoc.previousMainTeacher = undefined;
+                await classDoc.save({ session });
+        
+                // 3. Aggiorna gli studenti della classe
+                await mongoose.model('Student').updateMany(
+                    { classId: classId },
+                    { 
+                        $set: { mainTeacher: teacherId },
+                        $addToSet: { teachers: teacherId } 
+                    },
+                    { session }
+                );
+        
+                await session.commitTransaction();
+                return classDoc;
+        
+            } catch (error) {
+                await session.abortTransaction();
+                throw createError(
+                    ErrorTypes.DATABASE.QUERY_FAILED,
+                    'Errore nell\'aggiornamento del docente principale',
+                    { originalError: error.message }
+                );
+            } finally {
+                session.endSession();
+            }
+        }
+
+        async removeMainTeacher(classId) {
+            const session = await mongoose.startSession();
+            session.startTransaction();
+        
+            try {
+                // 1. Trova la classe e verifica che esista
+                const classDoc = await this.model.findById(classId).session(session);
+                if (!classDoc) {
+                    throw createError(
+                        ErrorTypes.RESOURCE.NOT_FOUND,
+                        'Classe non trovata'
+                    );
+                }
+        
+                // 2. Verifica che ci sia un mainTeacher da rimuovere
+                if (!classDoc.mainTeacher) {
+                    throw createError(
+                        ErrorTypes.BUSINESS.INVALID_OPERATION,
+                        'Nessun docente principale assegnato'
+                    );
+                }
+        
+                const previousTeacherId = classDoc.mainTeacher;
+        
+                // 3. Aggiorna la classe
+                classDoc.previousMainTeacher = previousTeacherId;
+                classDoc.mainTeacher = null;
+                classDoc.mainTeacherIsTemporary = true;
+                await classDoc.save({ session });
+        
+                // 4. Aggiorna gli studenti
+                await mongoose.model('Student').updateMany(
+                    { 
+                        classId: classId,
+                        mainTeacher: previousTeacherId
+                    },
+                    { 
+                        $set: { mainTeacher: null },
+                        $pull: { teachers: previousTeacherId }
+                    },
+                    { session }
+                );
+        
+                await session.commitTransaction();
+                
+                return classDoc;
+        
+            } catch (error) {
+                await session.abortTransaction();
+                logger.error('Error removing main teacher:', error);
+                throw createError(
+                    ErrorTypes.DATABASE.QUERY_FAILED,
+                    'Errore nella rimozione del docente principale',
+                    { originalError: error.message }
+                );
+            } finally {
+                session.endSession();
+            }
+        }
+
 }
 
 module.exports = ClassRepository;

@@ -811,31 +811,15 @@ class SchoolRepository extends BaseRepository {
                 );
             }
     
-            // 3. Aggiorna la scuola con il nuovo manager
+            // 3. Aggiorna solo il campo manager
             const updatedSchool = await this.model.findByIdAndUpdate(
                 schoolId,
-                {
-                    $set: { manager: userId },
-                    $push: { 
-                        users: { 
-                            user: userId, 
-                            role: 'manager' 
-                        } 
-                    }
-                },
-                { 
-                    new: true,
-                    session 
-                }
+                { $set: { manager: userId } },
+                { new: true, session }
             );
     
             await session.commitTransaction();
             
-            logger.info('Manager aggiunto con successo', {
-                schoolId,
-                newManagerId: userId
-            });
-    
             return {
                 school: updatedSchool,
                 newManagerId: userId
@@ -843,10 +827,6 @@ class SchoolRepository extends BaseRepository {
     
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Errore nell\'aggiunta del manager:', {
-                error: error.message,
-                schoolId
-            });
             throw createError(
                 ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nell\'aggiunta del manager',

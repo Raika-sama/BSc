@@ -6873,3 +6873,108 @@
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-02-02T20:23:30.753Z"}
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-02-02T20:23:30.766Z"}
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T20:23:30.767Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/679c7483bdb941a2c477668a","timestamp":"2025-02-02T20:43:56.383Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{},"requestId":"req_1738529036379_82evee5ds","timestamp":"2025-02-02T20:43:56.384Z","url":"/api/v1/classes/679c7483bdb941a2c477668a"}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-02T20:43:56.385Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T20:44:30.337Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{"limit":"10","page":"1","populate":"manager"},"requestId":"req_1738529070334_42hvr3id1","timestamp":"2025-02-02T20:44:30.339Z","url":"/api/v1/schools?page=1&limit=10&populate=manager"}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-02T20:44:30.340Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T20:44:30.346Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{"limit":"50","page":"1"},"requestId":"req_1738529070343_qbxuyec5i","timestamp":"2025-02-02T20:44:30.347Z","url":"/api/v1/students?page=1&limit=50"}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-02T20:44:30.347Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-02-02T20:44:36.602Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T20:44:36.603Z"}
+{"error":"School validation failed: users.0.role: `manager` is not a valid enum value for path `role`.","level":"error","message":"Errore nella riattivazione della sezione:","schoolId":"679c7483bdb941a2c477667a","sectionName":"A","stack":"ValidationError: School validation failed: users.0.role: `manager` is not a valid enum value for path `role`.\n    at Document.invalidate (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\document.js:3219:32)\n    at Subdocument.invalidate (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\types\\subdocument.js:229:12)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\document.js:3012:17\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\schematype.js:1368:9\n    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)","timestamp":"2025-02-02T20:47:06.514Z"}
+{"error":"Errore nella riattivazione della sezione","level":"error","message":"Controller: Errore nella riattivazione sezione","schoolId":"679c7483bdb941a2c477667a","sectionName":"A","timestamp":"2025-02-02T20:47:06.515Z"}
+{"error":"School validation failed: users.0.role: `manager` is not a valid enum value for path `role`.","level":"error","message":"Errore nella riattivazione della sezione:","schoolId":"679c7483bdb941a2c477667a","sectionName":"A","stack":"ValidationError: School validation failed: users.0.role: `manager` is not a valid enum value for path `role`.\n    at Document.invalidate (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\document.js:3219:32)\n    at Subdocument.invalidate (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\types\\subdocument.js:229:12)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\document.js:3012:17\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\schematype.js:1368:9\n    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)","timestamp":"2025-02-02T20:47:17.195Z"}
+{"error":"Errore nella riattivazione della sezione","level":"error","message":"Controller: Errore nella riattivazione sezione","schoolId":"679c7483bdb941a2c477667a","sectionName":"A","timestamp":"2025-02-02T20:47:17.196Z"}
+{"error":"Cannot read properties of undefined (reading '_id')","level":"error","message":"Errore nella riattivazione della sezione:","schoolId":"679c7483bdb941a2c477667a","sectionName":"A","stack":"TypeError: Cannot read properties of undefined (reading '_id')\n    at SchoolRepository.reactivateSection (C:\\Users\\ricca\\Desktop\\BSc\\src\\repositories\\SchoolRepository.js:569:59)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async SchoolController.reactivateSection (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\schoolController.js:608:28)","timestamp":"2025-02-02T20:48:50.057Z"}
+{"error":"Errore nella riattivazione della sezione","level":"error","message":"Controller: Errore nella riattivazione sezione","schoolId":"679c7483bdb941a2c477667a","sectionName":"A","timestamp":"2025-02-02T20:48:50.058Z"}
+{"error":"School validation failed: users.0.role: `manager` is not a valid enum value for path `role`.","level":"error","message":"Errore nella riattivazione della sezione:","schoolId":"679c7483bdb941a2c477667a","sectionName":"A","stack":"ValidationError: School validation failed: users.0.role: `manager` is not a valid enum value for path `role`.\n    at Document.invalidate (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\document.js:3219:32)\n    at Subdocument.invalidate (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\types\\subdocument.js:229:12)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\document.js:3012:17\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\mongoose\\lib\\schematype.js:1368:9\n    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)","timestamp":"2025-02-02T20:49:15.802Z"}
+{"error":"Errore nella riattivazione della sezione","level":"error","message":"Controller: Errore nella riattivazione sezione","schoolId":"679c7483bdb941a2c477667a","sectionName":"A","timestamp":"2025-02-02T20:49:15.803Z"}
+{"error":"Cannot read properties of undefined (reading '_id')","level":"error","message":"Errore nella riattivazione della sezione:","schoolId":"679c7483bdb941a2c477667a","sectionName":"A","stack":"TypeError: Cannot read properties of undefined (reading '_id')\n    at SchoolRepository.reactivateSection (C:\\Users\\ricca\\Desktop\\BSc\\src\\repositories\\SchoolRepository.js:569:59)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async SchoolController.reactivateSection (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\schoolController.js:608:28)","timestamp":"2025-02-02T20:50:39.384Z"}
+{"error":"Errore nella riattivazione della sezione","level":"error","message":"Controller: Errore nella riattivazione sezione","schoolId":"679c7483bdb941a2c477667a","sectionName":"A","timestamp":"2025-02-02T20:50:39.386Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T21:03:10.577Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{"institutionType":"","limit":"10","page":"1","populate":"manager","region":"","schoolType":""},"requestId":"req_1738530190574_lbzwlmkag","timestamp":"2025-02-02T21:03:10.578Z","url":"/api/v1/schools?page=1&limit=10&populate=manager&region=&schoolType=&institutionType="}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-02T21:03:10.579Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T21:03:38.072Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{},"requestId":"req_1738530218069_kpj2awb0u","timestamp":"2025-02-02T21:03:38.075Z","url":"/api/v1/classes"}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-02T21:03:38.076Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T21:03:39.049Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{"institutionType":"","limit":"10","page":"1","populate":"manager","region":"","schoolType":""},"requestId":"req_1738530219046_ez94z5y18","timestamp":"2025-02-02T21:03:39.050Z","url":"/api/v1/schools?page=1&limit=10&populate=manager&region=&schoolType=&institutionType="}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-02T21:03:39.051Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-02-02T21:03:42.117Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T21:03:42.118Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-02T21:12:44.616Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-02T21:12:44.616Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T21:12:44.617Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T21:12:44.618Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-02-02T21:29:48.807Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-02-02T21:29:48.808Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-02-02T21:29:48.826Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T21:29:48.827Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:03.928Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:04.104Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:04.250Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:04.411Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:04.554Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:04.699Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:04.844Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:04.987Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:05.124Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:05.270Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:05.429Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:05.573Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:05.714Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:05.868Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:06.022Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:06.160Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:06.302Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:06.440Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:06.585Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:06.731Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:06.890Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:07.028Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:07.170Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:07.313Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:07.487Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:07.637Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:07.779Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:07.925Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:08.078Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:08.214Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:08.351Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:08.497Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:08.699Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:08.846Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:08.987Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:09.133Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:09.282Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:22.136Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:22.280Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:22.426Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:22.569Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:22.708Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:22.850Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:22.989Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:23.135Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:23.279Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:23.432Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:23.573Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:23.713Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:23.853Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:24.011Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:24.157Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:24.322Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:24.501Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:24.647Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:24.783Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:35:24.919Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-02T21:36:55.532Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-02T21:36:55.533Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T21:36:55.535Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T21:36:55.536Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-02T21:44:17.722Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-02T21:44:17.723Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T21:44:17.723Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T21:44:17.724Z","userId":"677bfe44f6789c907c9f3766"}
