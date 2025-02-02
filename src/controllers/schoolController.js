@@ -26,6 +26,9 @@ class SchoolController extends BaseController {
         this.getByRegion = this.getByRegion.bind(this);
         this.getByType = this.getByType.bind(this);
         this.getMySchool = this.getMySchool.bind(this);
+        this.getAll = this.getAll.bind(this);
+        this.getById = this.getById.bind(this);
+        this.addUserToSchool = this.addUserToSchool.bind(this);
         this.setupInitialConfiguration = this.setupInitialConfiguration.bind(this);
     }
 
@@ -48,63 +51,63 @@ class SchoolController extends BaseController {
         });
     }
 
-/**
- * Ottiene la scuola associata all'utente corrente
- */
-async getMySchool(req, res) {
-    try {
-        logger.debug('Starting getMySchool method', {
-            user: req.user,
-            userId: req.user._id
-        });
+    /**
+     * Ottiene la scuola associata all'utente corrente
+     */
+    async getMySchool(req, res) {
+        try {
+            logger.debug('Starting getMySchool method', {
+                user: req.user,
+                userId: req.user._id
+            });
 
-        // Prima trova le classi dove l'utente è mainTeacher
-        const userClass = await this.classRepository.findOne({
-            mainTeacher: req.user._id
-        });
+            // Prima trova le classi dove l'utente è mainTeacher
+            const userClass = await this.classRepository.findOne({
+                mainTeacher: req.user._id
+            });
 
-        logger.debug('Found class:', { userClass });
+            logger.debug('Found class:', { userClass });
 
-        if (!userClass) {
-            return this.sendError(res, {
-                statusCode: 404,
-                message: 'Nessuna classe associata all\'utente',
-                code: 'CLASS_NOT_FOUND'
+            if (!userClass) {
+                return this.sendError(res, {
+                    statusCode: 404,
+                    message: 'Nessuna classe associata all\'utente',
+                    code: 'CLASS_NOT_FOUND'
+                });
+            }
+
+            // Poi usa lo schoolId della classe per trovare la scuola
+            const school = await this.repository.findById(userClass.schoolId);
+
+            logger.debug('Found school:', { school });
+
+            if (!school) {
+                return this.sendError(res, {
+                    statusCode: 404,
+                    message: 'Scuola non trovata',
+                    code: 'SCHOOL_NOT_FOUND'
+                });
+            }
+
+            this.sendResponse(res, {
+                school
+            });
+
+        } catch (error) {
+            logger.error('Error in getMySchool:', {
+                error: error.message,
+                stack: error.stack,
+                userId: req.user?._id
+            });
+
+            this.sendError(res, {
+                statusCode: 500,
+                message: 'Errore nel recupero della scuola',
+                code: 'SCHOOL_FETCH_ERROR',
+                error: error.message
             });
         }
-
-        // Poi usa lo schoolId della classe per trovare la scuola
-        const school = await this.repository.findById(userClass.schoolId);
-
-        logger.debug('Found school:', { school });
-
-        if (!school) {
-            return this.sendError(res, {
-                statusCode: 404,
-                message: 'Scuola non trovata',
-                code: 'SCHOOL_NOT_FOUND'
-            });
-        }
-
-        this.sendResponse(res, {
-            school
-        });
-
-    } catch (error) {
-        logger.error('Error in getMySchool:', {
-            error: error.message,
-            stack: error.stack,
-            userId: req.user?._id
-        });
-
-        this.sendError(res, {
-            statusCode: 500,
-            message: 'Errore nel recupero della scuola',
-            code: 'SCHOOL_FETCH_ERROR',
-            error: error.message
-        });
     }
-}
 
     /**
      * Crea una nuova scuola
@@ -372,6 +375,28 @@ async getMySchool(req, res) {
             });
         } catch (error) {
             this.sendError(res, error);
+        }
+    }
+
+    async addUserToSchool(req, res) {
+        try {
+            const { id } = req.params;
+            const { userId, role } = req.body;
+    
+            logger.debug('Adding user to school', {
+                schoolId: id,
+                userId,
+                role
+            });
+    
+            const school = await this.repository.addUser(id, userId, role);
+            
+            return this.sendResponse(res, {
+                school
+            });
+        } catch (error) {
+            logger.error('Error adding user to school', error);
+            return this.sendError(res, error);
         }
     }
 

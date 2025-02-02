@@ -77,6 +77,10 @@ export const SchoolProvider = ({ children }) => {
         return Object.keys(errors).length > 0 ? errors : null;
     };
 
+    const getSchools = async () => {
+        return await fetchSchools(1, 1000);
+    };
+
     const getSchoolById = async (id) => {
         try {
             setLoading(true);
@@ -98,7 +102,6 @@ export const SchoolProvider = ({ children }) => {
         }
     };
 
-
     const fetchSchools = useCallback(async (page = 1, limit = 10, filters = {}) => {
         setLoading(true);
         setError(null);
@@ -106,7 +109,7 @@ export const SchoolProvider = ({ children }) => {
             const queryParams = new URLSearchParams({
                 page,
                 limit,
-                populate: 'manager', // Aggiungiamo questo per popolare i dati del manager
+                populate: 'manager',
                 ...filters
             });
             
@@ -115,7 +118,6 @@ export const SchoolProvider = ({ children }) => {
             
             if (response.data.status === 'success') {
                 console.log('Schools received:', response.data.data.schools);
-                // Assicuriamoci che i dati del manager siano strutturati correttamente
                 const formattedSchools = response.data.data.schools.map(school => ({
                     ...school,
                     manager: school.manager ? {
@@ -124,7 +126,6 @@ export const SchoolProvider = ({ children }) => {
                         lastName: school.manager.lastName,
                         email: school.manager.email
                     } : null,
-                    // Formattiamo le sezioni se necessario
                     sections: Array.isArray(school.sections) ? school.sections.map(section => ({
                         name: section.name,
                         maxStudents: section.maxStudents || 0
@@ -133,13 +134,16 @@ export const SchoolProvider = ({ children }) => {
     
                 setSchools(formattedSchools);
                 setTotalSchools(response.data.results);
+                return formattedSchools; // Ritorna i dati formattati
             }
+            return []; // Ritorna un array vuoto se non ci sono dati
         } catch (error) {
             console.error('Error fetching schools:', error);
             const errorMessage = error.response?.data?.error?.message || 
                                'Errore nel caricamento delle scuole';
             setError(errorMessage);
             showNotification(errorMessage, 'error');
+            return []; // Ritorna un array vuoto in caso di errore
         } finally {
             setLoading(false);
         }
@@ -271,6 +275,26 @@ export const SchoolProvider = ({ children }) => {
             setLoading(false);
         }
     };
+
+    const addUserToSchool = async (schoolId, userId, role = 'teacher') => {
+        try {
+            const response = await axiosInstance.post(`/schools/${schoolId}/users`, {
+                userId,
+                role
+            });
+    
+            if (response.data.status === 'success') {
+                showNotification('Utente aggiunto alla scuola con successo', 'success');
+                return response.data.data.school;
+            }
+        } catch (error) {
+            console.error('Error adding user to school:', error);
+            const errorMessage = error.response?.data?.error?.message || 'Errore nell\'aggiunta dell\'utente alla scuola';
+            showNotification(errorMessage, 'error');
+            throw error;
+        }
+    };
+
 
     // Metodo per recuperare le sezioni di una scuola
      // Modifichiamo anche getSections per usare il nuovo stato
@@ -419,6 +443,7 @@ const getSectionStudents = async (schoolId, sectionName) => {
             error,
             totalSchools,
             selectedSchool,
+            getSchools,
             getSchoolById,
             fetchSchools,
             getSchoolsByRegion,
@@ -426,6 +451,7 @@ const getSectionStudents = async (schoolId, sectionName) => {
             createSchool,
             updateSchool,
             deleteSchool,
+            addUserToSchool,
             validateSchoolData,
             getSections,
             getSectionStudents,

@@ -106,6 +106,24 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
             asyncHandler(schoolController.delete.bind(schoolController))
         );
 
+    // POST /schools/:id/users
+    router.post('/:id/users', protect, restrictTo('admin'), async (req, res) => {
+        const { id } = req.params;
+        const { userId, role } = req.body;
+        
+        try {
+            // Aggiunge l'utente alla scuola
+            const school = await schoolController.addUserToSchool(id, userId, role);
+            
+            res.status(200).json({
+                status: 'success',
+                data: { school }
+            });
+        } catch (error) {
+            next(error);
+        }
+    });
+
     // Gestione errori specifica per le scuole
     router.use((err, req, res, next) => {
         logger.error('School Route Error:', {
