@@ -83,7 +83,7 @@ const OverviewTab = ({ school }) => {
                     </CardContent>
                 </Card>
             </Grid>
-
+    
             {/* Info Location */}
             <Grid item xs={12} md={6}>
                 <Card elevation={2}>
@@ -119,7 +119,7 @@ const OverviewTab = ({ school }) => {
                     </CardContent>
                 </Card>
             </Grid>
-
+    
             {/* Info Manager */}
             <Grid item xs={12} md={6}>
                 <Card elevation={2}>
@@ -147,18 +147,20 @@ const OverviewTab = ({ school }) => {
                                 <Divider component="li" />
                                 
                                 <ListItem>
-                                <ListItemText 
-                                    primary="Ruolo"
-                                    secondary={
-                                        <Box sx={{ mt: 0.5 }}>
-                                            <Chip 
-                                                label={school.manager.role}
-                                                color="primary"
-                                                size="small"
-                                            />
-                                        </Box>
-                                    }
-                                />
+                                    <ListItemText 
+                                        primary="Ruolo"
+                                        secondary={
+                                            <Typography component="div" variant="body2">
+                                                <Box sx={{ mt: 0.5 }}>
+                                                    <Chip 
+                                                        label={school.manager.role}
+                                                        color="primary"
+                                                        size="small"
+                                                    />
+                                                </Box>
+                                            </Typography>
+                                        }
+                                    />
                                 </ListItem>
                             </List>
                         ) : (
@@ -171,7 +173,7 @@ const OverviewTab = ({ school }) => {
                     </CardContent>
                 </Card>
             </Grid>
-
+    
             {/* Anno Accademico Corrente */}
             <Grid item xs={12} md={6}>
                 <Card elevation={2}>
@@ -198,18 +200,20 @@ const OverviewTab = ({ school }) => {
                                 <Divider component="li" />
                                 
                                 <ListItem>
-                                <ListItemText 
-                                    primary="Stato"
-                                    secondary={
-                                        <Box sx={{ mt: 0.5 }}>
-                                            <Chip 
-                                                label={school.academicYears[0].status === 'active' ? 'Attivo' : 'Non Attivo'}
-                                                color={school.academicYears[0].status === 'active' ? 'success' : 'default'}
-                                                size="small"
-                                            />
-                                        </Box>
-                                    }
-                                />
+                                    <ListItemText 
+                                        primary="Stato"
+                                        secondary={
+                                            <Typography component="div" variant="body2">
+                                                <Box sx={{ mt: 0.5 }}>
+                                                    <Chip 
+                                                        label={school.academicYears[0].status === 'active' ? 'Attivo' : 'Non Attivo'}
+                                                        color={school.academicYears[0].status === 'active' ? 'success' : 'default'}
+                                                        size="small"
+                                                    />
+                                                </Box>
+                                            </Typography>
+                                        }
+                                    />
                                 </ListItem>
                             </List>
                         ) : (

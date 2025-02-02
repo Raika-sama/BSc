@@ -1,4 +1,3 @@
-// src/components/school/schoolComponents/SchoolUsersManagement.js
 import React, { useState } from 'react';
 import {
     Box,
@@ -23,21 +22,26 @@ import PersonIcon from '@mui/icons-material/Person';
 import StarIcon from '@mui/icons-material/Star';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
+import { useSchool } from '../../../context/SchoolContext';
+import { useNotification } from '../../../context/NotificationContext';
 
-// Tipo di operazione per il dialog
 const OPERATION_TYPES = {
     ADD_USER: 'ADD_USER',
     CHANGE_MANAGER: 'CHANGE_MANAGER'
 };
 
 const SchoolUsersManagement = ({
+    schoolId,
     users = [],
     manager,
     onAddUser,
     onRemoveUser,
     onChangeManager,
-    isDialog = false // flag per determinare se è utilizzato come dialog o componente standalone
+    isDialog = false,
+    onClose
 }) => {
+    const { showNotification } = useNotification();
     const [operationDialog, setOperationDialog] = useState({
         open: false,
         type: null
@@ -48,38 +52,6 @@ const SchoolUsersManagement = ({
         userId: ''
     });
 
-    const handleAddUser = async (userData) => {
-        try {
-            await updateSchoolUser(id, userData.email, {
-                action: 'add',
-                role: userData.role
-            });
-            await getSchoolById(id);
-        } catch (error) {
-            console.error('Error adding user:', error);
-        }
-    };
-    
-    const handleRemoveUser = async (userId) => {
-        try {
-            await updateSchoolUser(id, userId, {
-                action: 'remove'
-            });
-            await getSchoolById(id);
-        } catch (error) {
-            console.error('Error removing user:', error);
-        }
-    };
-    
-    const handleChangeManager = async (newManagerId) => {
-        try {
-            await updateSchool(id, { manager: newManagerId });
-            await getSchoolById(id);
-        } catch (error) {
-            console.error('Error changing manager:', error);
-        }
-    };
-    
     const handleOpenDialog = (type) => {
         setOperationDialog({ open: true, type });
         setFormData({ email: '', role: 'teacher', userId: '' });
@@ -90,13 +62,22 @@ const SchoolUsersManagement = ({
         setFormData({ email: '', role: 'teacher', userId: '' });
     };
 
-    const handleSubmit = () => {
-        if (operationDialog.type === OPERATION_TYPES.ADD_USER) {
-            onAddUser(formData);
-        } else if (operationDialog.type === OPERATION_TYPES.CHANGE_MANAGER) {
-            onChangeManager(formData.userId);
+    const handleSubmit = async () => {
+        try {
+            if (operationDialog.type === OPERATION_TYPES.ADD_USER) {
+                await onAddUser(formData);
+                showNotification('Utente aggiunto con successo', 'success');
+            } else if (operationDialog.type === OPERATION_TYPES.CHANGE_MANAGER) {
+                await onChangeManager(formData.userId);
+                showNotification('Manager cambiato con successo', 'success');
+            }
+            handleCloseDialog();
+        } catch (error) {
+            showNotification(
+                error.response?.data?.error?.message || 'Errore nell\'operazione',
+                'error'
+            );
         }
-        handleCloseDialog();
     };
 
     const renderUsersList = () => (
@@ -244,7 +225,6 @@ const SchoolUsersManagement = ({
         </>
     );
 
-    // Se usato come dialog, wrappa il contenuto in un dialog
     if (isDialog) {
         return (
             <Dialog open onClose={onClose} maxWidth="md" fullWidth>

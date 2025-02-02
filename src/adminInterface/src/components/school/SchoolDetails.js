@@ -10,62 +10,133 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSchool } from '../../context/SchoolContext';
+import { useNotification } from '../../context/NotificationContext';
 
-// Importiamo i nuovi componenti
+// Importiamo i componenti
 import OverviewTab from './details/OverviewTab';
 import AdminDetailsTab from './details/AdminDetailsTab';
 import AcademicYearsTab from './details/AcademicYearsTab';
 import SectionManagement from './schoolComponents/SectionManagement';
 import SchoolUsersManagement from './schoolComponents/SchoolUsersManagement';
 
-// Animazioni
-const pageTransition = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -20 }
+// Definizione delle animazioni
+const pageVariants = {
+    initial: { 
+        opacity: 0, 
+        y: 20 
+    },
+    animate: { 
+        opacity: 1, 
+        y: 0,
+        transition: {
+            duration: 0.4,
+            ease: "easeOut"
+        }
+    },
+    exit: { 
+        opacity: 0, 
+        y: -20,
+        transition: {
+            duration: 0.3,
+            ease: "easeIn"
+        }
+    }
 };
 
-const tabContentTransition = {
-    initial: { opacity: 0, x: 20 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -20 }
+const tabContentVariants = {
+    initial: { 
+        opacity: 0, 
+        x: 20 
+    },
+    animate: { 
+        opacity: 1, 
+        x: 0,
+        transition: {
+            duration: 0.3,
+            ease: "easeOut"
+        }
+    },
+    exit: { 
+        opacity: 0, 
+        x: -20,
+        transition: {
+            duration: 0.2,
+            ease: "easeIn"
+        }
+    }
 };
 
 const SchoolDetails = () => {
     const [activeTab, setActiveTab] = useState(0);
     const navigate = useNavigate();
     const { id } = useParams();
+    const { showNotification } = useNotification();
     const { 
         selectedSchool,
         loading,
         error,
         getSchoolById,
-        updateSchool
+        updateSchool,
+        addUserToSchool
     } = useSchool();
 
     useEffect(() => {
-        // Verifichiamo che id esista e che selectedSchool non sia già caricato 
-        // o che sia una scuola diversa
         if (id && (!selectedSchool || selectedSchool._id !== id)) {
             getSchoolById(id);
         }
-    }, [id]);
+    }, [id, getSchoolById, selectedSchool]);
+
+    const handleAddUser = async (userData) => {
+        try {
+            await addUserToSchool(id, userData.email, userData.role);
+            await getSchoolById(id);
+            showNotification('Utente aggiunto con successo', 'success');
+        } catch (error) {
+            showNotification(
+                error.response?.data?.error?.message || 'Errore nell\'aggiunta dell\'utente',
+                'error'
+            );
+        }
+    };
+
+    const handleRemoveUser = async (userId) => {
+        try {
+            await updateSchool(id, {
+                action: 'removeUser',
+                userId: userId
+            });
+            await getSchoolById(id);
+            showNotification('Utente rimosso con successo', 'success');
+        } catch (error) {
+            showNotification(
+                error.response?.data?.error?.message || 'Errore nella rimozione dell\'utente',
+                'error'
+            );
+        }
+    };
+
+    const handleChangeManager = async (newManagerId) => {
+        try {
+            await updateSchool(id, {
+                manager: newManagerId
+            });
+            await getSchoolById(id);
+            showNotification('Manager aggiornato con successo', 'success');
+        } catch (error) {
+            showNotification(
+                error.response?.data?.error?.message || 'Errore nel cambio del manager',
+                'error'
+            );
+        }
+    };
 
     const handleBack = () => {
         navigate('/admin/schools');
     };
 
     const handleEdit = () => {
-        // Implementare la logica di edit
-        console.log('Edit clicked');
+        navigate(`/admin/schools/${id}/edit`);
     };
-
-    console.log('SchoolDetails rendered with:', {
-        selectedSchool,
-        loading,
-        error,
-        id
-    });
 
     if (loading) {
         return (
@@ -80,15 +151,17 @@ const SchoolDetails = () => {
     }
 
     if (!selectedSchool) {
-        console.log('selectedSchool is null or undefined');
         return <Alert severity="info">Scuola non trovata</Alert>;
     }
-    console.log('School data:', selectedSchool);
 
     return (
-        <motion.div {...pageTransition}>
+        <motion.div
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageVariants}
+        >
             <Container maxWidth="lg" sx={{ mt: 3 }}>
-
                 {/* Header */}
                 <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
                     <IconButton onClick={handleBack} size="small">
@@ -121,15 +194,22 @@ const SchoolDetails = () => {
                     </Tabs>
                 </Box>
 
-                {/* Aggiungiamo i nuovi componenti nel Tab Content */}
+                {/* Tab Content */}
                 <AnimatePresence mode="wait">
-                    <motion.div {...tabContentTransition} key={activeTab}>
+                    <motion.div
+                        key={activeTab}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        variants={tabContentVariants}
+                    >
                         {activeTab === 0 && <OverviewTab school={selectedSchool} />}
                         {activeTab === 1 && <AdminDetailsTab school={selectedSchool} />}
                         {activeTab === 2 && <AcademicYearsTab school={selectedSchool} />}
-                        {activeTab === 3 && <SectionManagement />}
+                        {activeTab === 3 && <SectionManagement schoolId={id} />}
                         {activeTab === 4 && (
                             <SchoolUsersManagement
+                                schoolId={id}
                                 users={selectedSchool.users}
                                 manager={selectedSchool.manager}
                                 onAddUser={handleAddUser}

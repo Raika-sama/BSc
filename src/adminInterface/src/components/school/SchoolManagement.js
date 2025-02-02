@@ -10,7 +10,8 @@ import {
     CardContent,
     Grid,
     IconButton,
-    Tooltip
+    Tooltip,
+    Pagination
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -22,26 +23,7 @@ import {
 import { useNotification } from '../../context/NotificationContext';
 import { useSchool } from '../../context/SchoolContext';
 import SchoolList from './SchoolList';
-import { Bar } from 'react-chartjs-2';  // Rimosso Line, teniamo solo Bar
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    BarElement,        // Aggiunto BarElement
-    Title,
-    Tooltip as ChartTooltip,
-    Legend
-} from 'chart.js';
 import SchoolFilters from './schoolComponents/SchoolFilters';
-
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    BarElement,         // Aggiunto BarElement
-    Title,
-    ChartTooltip,
-    Legend
-);
 
 const ITEMS_PER_PAGE = 10;
 
@@ -100,60 +82,32 @@ const SchoolManagement = () => {
         { 
             title: 'Scuole Totali', 
             value: totalSchools || 0,
-            icon: <SchoolIcon fontSize="large" />,
+            icon: <SchoolIcon />,
             color: 'primary.main' 
         },
         { 
             title: 'Scuole Medie', 
             value: schools?.filter(s => s?.schoolType === 'middle_school')?.length || 0,
-            icon: <ClassIcon fontSize="large" />,
+            icon: <ClassIcon />,
             color: 'secondary.main' 
         },
         { 
             title: 'Scuole Superiori', 
             value: schools?.filter(s => s?.schoolType === 'high_school')?.length || 0,
-            icon: <SchoolIcon fontSize="large" />,
+            icon: <SchoolIcon />,
             color: 'success.main' 
         },
         { 
             title: 'Regioni', 
             value: [...new Set(schools?.map(s => s?.region))].length || 0,
-            icon: <LocationIcon fontSize="large" />,
+            icon: <LocationIcon />,
             color: 'info.main' 
         }
     ];
 
-    // Dati per il grafico di distribuzione delle scuole per regione
-    const chartData = {
-        labels: [...new Set(schools?.map(s => s?.region))],
-        datasets: [
-            {
-                label: 'Scuole per Regione',
-                data: [...new Set(schools?.map(s => s?.region))].map(region =>
-                    schools?.filter(s => s?.region === region)?.length || 0
-                ),
-                backgroundColor: [
-                    'rgba(75, 192, 192, 0.6)',
-                    'rgba(54, 162, 235, 0.6)',
-                    'rgba(153, 102, 255, 0.6)',
-                    'rgba(255, 159, 64, 0.6)',
-                    'rgba(255, 99, 132, 0.6)',
-                ],
-                borderColor: [
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)',
-                    'rgba(255, 99, 132, 1)',
-                ],
-                borderWidth: 1
-            }
-        ]
-    };
-
     return (
         <Container maxWidth={false} sx={{ mt: 4, mb: 4, px: 3 }}> 
-        {/* Header */}
+            {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                 <Typography variant="h4" component="h1">
                     Gestione Scuole
@@ -174,107 +128,85 @@ const SchoolManagement = () => {
                 </Box>
             </Box>
 
-            {/* Layout superiore con stats e grafico */}
-            <Grid container spacing={2} sx={{ mb: 2 }}>  {/* Ridotto spacing da 3 a 2 e mb da 3 a 2 */}
-                {/* Colonna sinistra con stats cards */}
-                <Grid item xs={12} md={4}>
-                    <Grid container spacing={1}>  {/* Ridotto spacing da 2 a 1 */}
-                        {statsCards.map((card, index) => (
-                            <Grid item xs={6} md={6} key={index}>  {/* Cambiato md da 12 a 6 per layout 2x2 */}
-                                <Card>
-                                    <CardContent sx={{ py: 1, px: 1.5 }}>  {/* Ridotto ulteriormente il padding */}
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}> {/* Ridotto gap da 2 a 1 */}
-                                            <Box sx={{ color: card.color }}>
-                                                {React.cloneElement(card.icon, { fontSize: 'small' })}  {/* Icona ancora più piccola */}
-                                            </Box>
-                                            <Box>
-                                                <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.75rem' }}> {/* Testo più piccolo */}
-                                                    {card.title}
-                                                </Typography>
-                                                <Typography variant="h6" sx={{ color: card.color, fontSize: '1.1rem' }}> {/* Numero più piccolo */}
-                                                    {card.value}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        ))}
+            {/* Stats Cards */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+                {statsCards.map((card, index) => (
+                    <Grid item xs={12} sm={6} md={3} key={index}>
+                        <Card elevation={2}>
+                            <CardContent sx={{ 
+                                p: 2,
+                                '&:last-child': { pb: 2 }
+                            }}>
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 2
+                                }}>
+                                    <Box sx={{ 
+                                        color: card.color,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        bgcolor: `${card.color}15`,
+                                        borderRadius: 1,
+                                        p: 1
+                                    }}>
+                                        {card.icon}
+                                    </Box>
+                                    <Box>
+                                        <Typography 
+                                            variant="body2" 
+                                            color="textSecondary"
+                                            gutterBottom
+                                        >
+                                            {card.title}
+                                        </Typography>
+                                        <Typography 
+                                            variant="h5" 
+                                            sx={{ color: card.color }}
+                                        >
+                                            {card.value}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            </CardContent>
+                        </Card>
                     </Grid>
-                </Grid>
-
-                {/* Colonna destra con grafico */}
-                <Grid item xs={12} md={8}>
-                    <Paper sx={{ p: 1.5, height: '100%' }}>  {/* Ridotto padding da 2 a 1.5 */}
-                        
-                        <Box sx={{ 
-                             height: 200,
-                             width: '90%',        // Aggiunto width al 90%
-                             margin: '0 auto',    // Centra il grafico
-                             position: 'relative' // Assicura il corretto posizionamento
-                        }}>  {/* Ridotto altezza da 280 a 200 */}
-                            <Bar
-                                data={chartData}
-                                options={{
-                                    responsive: true,
-                                    maintainAspectRatio: false,
-                                    plugins: {
-                                        legend: {
-                                            position: 'top',
-                                            labels: {
-                                                boxWidth: 10,  // Legenda più piccola
-                                                padding: 8,    // Padding più piccolo
-                                                font: {
-                                                    size: 11   // Font più piccolo
-                                                }
-                                            }
-                                        }
-                                    },
-                                    scales: {
-                                        y: {
-                                            beginAtZero: true,
-                                            ticks: {
-                                                stepSize: 1,
-                                                font: {
-                                                    size: 10  // Font assi più piccolo
-                                                }
-                                            }
-                                        },
-                                        x: {
-                                            ticks: {
-                                                font: {
-                                                    size: 10  // Font assi più piccolo
-                                                }
-                                            }
-                                        }
-                                    }
-                                }}
-                            />
-                        </Box>
-                    </Paper>
-                </Grid>
+                ))}
             </Grid>
 
             {/* Filtri */}
             {isFilterOpen && (
-                <SchoolFilters
-                    filters={filters}
-                    onChange={setFilters}
-                    onReset={() => setFilters({ region: '', schoolType: '', institutionType: '' })}
-                />
+                <Box sx={{ mb: 3 }}>
+                    <SchoolFilters
+                        filters={filters}
+                        onChange={setFilters}
+                        onReset={() => setFilters({ 
+                            region: '', 
+                            schoolType: '', 
+                            institutionType: '' 
+                        })}
+                    />
+                </Box>
             )}
 
             {/* Lista Scuole */}
-            <SchoolList
-                schools={schools}
-                loading={loading}
-                onEdit={handleEditClick}
-                onDelete={handleDeleteSchool}
-            />
+            <Paper elevation={2} sx={{ mb: 3 }}>
+                <SchoolList
+                    schools={schools}
+                    loading={loading}
+                    onEdit={handleEditClick}
+                    onDelete={handleDeleteSchool}
+                />
+            </Paper>
 
             {/* Paginazione */}
             {!loading && totalSchools > ITEMS_PER_PAGE && (
-                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                <Box sx={{ 
+                    mt: 3, 
+                    display: 'flex', 
+                    justifyContent: 'center' 
+                }}>
                     <Pagination
                         count={Math.ceil(totalSchools / ITEMS_PER_PAGE)}
                         page={page}

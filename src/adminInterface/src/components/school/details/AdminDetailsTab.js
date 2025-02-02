@@ -48,18 +48,20 @@ const AdminDetailsTab = ({ school }) => {
                                 <ListItemText 
                                     primary="Stato Scuola"
                                     secondary={
-                                        <Box sx={{ mt: 0.5 }}>
-                                            <Chip 
-                                                label={school.isActive ? "Attiva" : "Inattiva"}
-                                                color={school.isActive ? "success" : "error"}
-                                                size="small"
-                                            />
-                                        </Box>
+                                        <Typography component="div" variant="body2">
+                                            <Box sx={{ mt: 0.5 }}>
+                                                <Chip 
+                                                    label={school.isActive ? "Attiva" : "Inattiva"}
+                                                    color={school.isActive ? "success" : "error"}
+                                                    size="small"
+                                                />
+                                            </Box>
+                                        </Typography>
                                     }
                                 />
                             </ListItem>
                             <Divider component="li" />
-
+    
                             <ListItem>
                                 <ListItemText 
                                     primary="Numero Massimo Studenti per Classe"
@@ -71,7 +73,7 @@ const AdminDetailsTab = ({ school }) => {
                                 />
                             </ListItem>
                             <Divider component="li" />
-
+    
                             <ListItem>
                                 <ListItemText 
                                     primary="Numero Sezioni Attive"
@@ -86,7 +88,7 @@ const AdminDetailsTab = ({ school }) => {
                     </CardContent>
                 </Card>
             </Grid>
-
+    
             {/* Timeline Modifiche */}
             <Grid item xs={12} md={6}>
                 <Card elevation={2}>
@@ -103,7 +105,7 @@ const AdminDetailsTab = ({ school }) => {
                                 />
                             </ListItem>
                             <Divider component="li" />
-
+    
                             <ListItem>
                                 <ListItemText 
                                     primary="Ultima Modifica"
@@ -114,7 +116,7 @@ const AdminDetailsTab = ({ school }) => {
                     </CardContent>
                 </Card>
             </Grid>
-
+    
             {/* Info Utenti */}
             <Grid item xs={12} md={6}>
                 <Card elevation={2}>
@@ -128,27 +130,29 @@ const AdminDetailsTab = ({ school }) => {
                                 <ListItemText 
                                     primary="Utenti Associati"
                                     secondary={
-                                        <Box sx={{ mt: 1 }}>
-                                            <Stack direction="row" spacing={1}>
-                                                <Chip 
-                                                    label={`${school.users?.length || 0} totali`}
-                                                    size="small"
-                                                    color="primary"
-                                                    variant="outlined"
-                                                />
-                                                <Chip 
-                                                    label={`${school.users?.filter(u => u.role === 'admin')?.length || 0} admin`}
-                                                    size="small"
-                                                    color="secondary"
-                                                    variant="outlined"
-                                                />
-                                            </Stack>
-                                        </Box>
+                                        <Typography component="div" variant="body2">
+                                            <Box sx={{ mt: 1 }}>
+                                                <Stack direction="row" spacing={1}>
+                                                    <Chip 
+                                                        label={`${school.users?.length || 0} totali`}
+                                                        size="small"
+                                                        color="primary"
+                                                        variant="outlined"
+                                                    />
+                                                    <Chip 
+                                                        label={`${school.users?.filter(u => u.role === 'admin')?.length || 0} admin`}
+                                                        size="small"
+                                                        color="secondary"
+                                                        variant="outlined"
+                                                    />
+                                                </Stack>
+                                            </Box>
+                                        </Typography>
                                     }
                                 />
                             </ListItem>
                             <Divider component="li" />
-
+    
                             <ListItem>
                                 <ListItemText 
                                     primary="Manager"
@@ -169,7 +173,7 @@ const AdminDetailsTab = ({ school }) => {
                     </CardContent>
                 </Card>
             </Grid>
-
+    
             {/* Note e Configurazioni */}
             <Grid item xs={12} md={6}>
                 <Card elevation={2}>
@@ -200,7 +204,7 @@ const AdminDetailsTab = ({ school }) => {
                                         </Typography>
                                     </Box>
                                 )}
-
+    
                                 <Box>
                                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                         Versione
