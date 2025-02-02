@@ -20,14 +20,31 @@ export const UserProvider = ({ children }) => {
             const response = await axiosInstance.get('/users', {
                 params: { page, limit, search, sort }
             });
-            
+    
+            console.log('Raw response from server:', response);
+            console.log('Response data:', response.data);
+    
             if (response.data.status === 'success') {
-                setUsers(response.data.data.users);
-                setTotalUsers(response.data.data.total);
+                // Correggiamo l'accesso ai dati - c'è un data nested
+                const responseData = response.data.data.data;  // Nota il doppio .data
+                
+                console.log('Processed data:', responseData);
+    
+                setUsers(responseData.users || []);  // Aggiungiamo fallback array vuoto
+                setTotalUsers(responseData.total || 0);  // Aggiungiamo fallback a 0
                 setError(null);
-                return response.data.data;
+                
+                return {
+                    users: responseData.users || [],
+                    total: responseData.total || 0,
+                    page: responseData.page || 1,
+                    limit: responseData.limit || 10
+                };
+            } else {
+                throw new Error('Invalid response format');
             }
         } catch (error) {
+            console.error('Error in getUsers:', error);
             const errorMessage = error.response?.data?.error?.message || 'Errore nel caricamento degli utenti';
             setError(errorMessage);
             showNotification(errorMessage, 'error');
@@ -129,16 +146,61 @@ export const UserProvider = ({ children }) => {
         return Object.keys(errors).length > 0 ? errors : null;
     };
 
+    const getUserById = async (userId) => {
+        try {
+            const response = await axiosInstance.get(`/users/${userId}`);
+            if (response.data.status === 'success') {
+                return response.data.data.user;
+            }
+            throw new Error('Utente non trovato');
+        } catch (error) {
+            const errorMessage = error.response?.data?.error?.message || 'Errore nel recupero dell\'utente';
+            showNotification(errorMessage, 'error');
+            throw error;
+        }
+    };
+    
+    const getUserHistory = async (userId) => {
+        try {
+            const response = await axiosInstance.get(`/users/${userId}/history`);
+            if (response.data.status === 'success') {
+                return response.data.data.history;
+            }
+            return [];
+        } catch (error) {
+            const errorMessage = error.response?.data?.error?.message || 'Errore nel recupero dello storico';
+            showNotification(errorMessage, 'error');
+            return [];
+        }
+    };
+    
+    const terminateSession = async (userId, sessionId) => {
+        try {
+            const response = await axiosInstance.delete(`/users/${userId}/sessions/${sessionId}`);
+            if (response.data.status === 'success') {
+                showNotification('Sessione terminata con successo', 'success');
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.error?.message || 'Errore nella terminazione della sessione';
+            showNotification(errorMessage, 'error');
+            throw error;
+        }
+    };
+
+
     const value = {
         users,
         loading,
         error,
         totalUsers,
         getUsers,
+        getUserById,
+        getUserHistory,
         createUser,
         updateUser,
         deleteUser,
-        validateUserData
+        validateUserData,
+        terminateSession
     };
 
     return (

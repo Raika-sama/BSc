@@ -4793,3 +4793,37 @@
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-02-02T12:16:19.089Z"}
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-02-02T12:16:19.104Z"}
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T12:16:19.105Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-02-02T13:35:10.000Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-02-02T13:35:10.003Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-02-02T13:35:10.020Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T13:35:10.021Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T13:50:22.301Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{"limit":"10","page":"1","search":"","sort":"-createdAt"},"requestId":"req_1738504222298_lyhao92pj","timestamp":"2025-02-02T13:50:22.302Z","url":"/api/v1/users?page=1&limit=10&search=&sort=-createdAt"}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-02T13:50:22.303Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T13:50:24.878Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{"limit":"10","page":"1","populate":"manager"},"requestId":"req_1738504224875_xwcuoaa75","timestamp":"2025-02-02T13:50:24.878Z","url":"/api/v1/schools?page=1&limit=10&populate=manager"}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-02T13:50:24.879Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T13:50:24.885Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{"limit":"50","page":"1"},"requestId":"req_1738504224883_76wd433d2","timestamp":"2025-02-02T13:50:24.885Z","url":"/api/v1/students?page=1&limit=50"}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-02T13:50:24.886Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T13:50:25.488Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{},"requestId":"req_1738504225486_dojkhqf9n","timestamp":"2025-02-02T13:50:25.489Z","url":"/api/v1/classes"}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-02T13:50:25.490Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T13:50:27.539Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{"limit":"10","page":"1","populate":"manager"},"requestId":"req_1738504227537_tn3upylut","timestamp":"2025-02-02T13:50:27.540Z","url":"/api/v1/schools?page=1&limit=10&populate=manager"}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-02T13:50:27.540Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-02T13:50:27.545Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{"limit":"50","page":"1"},"requestId":"req_1738504227543_94bsps0cs","timestamp":"2025-02-02T13:50:27.546Z","url":"/api/v1/students?page=1&limit=50"}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-02T13:50:27.547Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-02-02T13:50:29.417Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-02-02T13:50:29.419Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-02-02T13:50:29.428Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T13:50:29.429Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-02-02T14:07:28.704Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-02-02T14:07:28.705Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-02-02T14:07:28.713Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T14:07:28.713Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-02-02T14:23:02.073Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-02-02T14:23:02.075Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-02-02T14:23:02.087Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T14:23:02.089Z"}

@@ -32,14 +32,31 @@ class UserService {
 
     // Nuovo metodo per lista utenti
     async listUsers(filters = {}, options = {}) {
-        const { users, total, page, totalPages } = 
-            await this.userRepository.findWithFilters(filters, options);
+        console.log('Service listUsers called with:', { filters, options });
+    
+        // Estraiamo i parametri di paginazione
+        const { page, limit, search } = filters;
+    
+        const result = await this.userRepository.findWithFilters(
+            { search }, // Passiamo solo i filtri di ricerca
+            { 
+                page,
+                limit,
+                sort: { createdAt: -1 }
+            }
+        );
         
+        console.log('Service received users:', {
+            count: result.users.length,
+            total: result.total,
+            page: result.page
+        });
+    
         return {
-            users: users.map(user => this.sanitizeUser(user)),
-            total,
-            page,
-            totalPages
+            users: result.users.map(user => this.sanitizeUser(user)),
+            total: result.total,
+            page: result.page,
+            totalPages: result.totalPages
         };
     }
 
@@ -126,7 +143,7 @@ class UserService {
         };
     }
 
-    
+
     /**
      * Cambia lo stato di un utente
      * @param {string} userId - ID utente
@@ -263,7 +280,15 @@ class UserService {
      * @param {Object} user - Utente da sanitizzare
      */
     sanitizeUser(user) {
-        const { password, passwordHistory, passwordResetToken, passwordResetExpires, ...safeUser } = user.toObject();
+        const userData = user.toObject();
+        // Rimuoviamo solo i campi sensibili
+        const {
+            password,
+            passwordHistory,
+            passwordResetToken,
+            passwordResetExpires,
+            ...safeUser
+        } = userData;
         return safeUser;
     }
 }

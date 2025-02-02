@@ -1,6 +1,8 @@
 // src/adminInterface/src/context/ClassContext.js
 import React, { createContext, useContext, useReducer } from 'react';
 import { axiosInstance } from '../services/axiosConfig';
+import { useAuth } from './AuthContext'; // Aggiungi questo import
+
 
 const ClassContext = createContext();
 
@@ -93,6 +95,7 @@ const classReducer = (state, action) => {
 
 export const ClassProvider = ({ children }) => {
     const [state, dispatch] = useReducer(classReducer, initialState);
+    const { user } = useAuth(); // Usa useAuth hook
 
     const fetchClasses = async (schoolId) => {
         try {
@@ -197,36 +200,56 @@ export const ClassProvider = ({ children }) => {
         try {
             dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
             
-            const user = JSON.parse(localStorage.getItem('user'));
-            console.debug('Fetching classes as:', {
-                role: user?.role,
-                schoolId: user?.schoolId
+            if (!user) {
+                throw new Error('Utente non autenticato');
+            }
+    
+            console.log('ClassContext: Iniziando getMyClasses', {
+                role: user.role,
+                schoolId: user.schoolId,
+                userId: user._id
             });
                 
             const response = await axiosInstance.get('/classes');
+            console.log('ClassContext: Risposta API ricevuta', response.data);
                 
             if (response.data.status === 'success') {
-                // Funzione per formattare una classe
+                // Funzione per formattare una classe secondo il modello Class.js
                 const formatClass = (classData) => {
-                    // Verifica che schoolName sia presente o estrailo da schoolId
-                    const schoolName = classData.schoolName || 
-                                     (classData.school?.name) || 
-                                     (classData.schoolId?.name) || 
-                                     'N/A';
-    
+                    // Estrai il nome della scuola in modo sicuro
+                    const schoolName = classData.schoolId?.name || 
+                                      classData.school?.name || 
+                                      'N/A';
+                
+                    // Estrai l'ID della scuola in modo sicuro
+                    const schoolId = classData.schoolId?._id || 
+                                    classData.schoolId || 
+                                    null;
+                
+                    console.log('Debug formatClass:', {
+                        originalSchoolData: classData.schoolId,
+                        extractedName: schoolName,
+                        extractedId: schoolId
+                    });
+                
                     return {
-                        classId: classData.classId || classData._id, // Gestisce entrambi i formati
+                        classId: classData._id,
                         year: classData.year,
                         section: classData.section,
                         academicYear: classData.academicYear,
-                        status: classData.status || 'active', // Valore di default
+                        status: classData.status || 'active',
+                        // Aggiungi sia il nome che l'ID della scuola
                         schoolName: schoolName,
-                        schoolId: classData.schoolId?._id || classData.schoolId,
+                        schoolId: schoolId,
                         mainTeacher: classData.mainTeacher,
+                        mainTeacherIsTemporary: classData.mainTeacherIsTemporary || false,
+                        previousMainTeacher: classData.previousMainTeacher,
                         teachers: classData.teachers || [],
-                        isActive: classData.isActive ?? true, // Default a true se non specificato
-                        capacity: classData.capacity || 0,
+                        isActive: classData.isActive,
+                        capacity: classData.capacity,
                         students: classData.students || [],
+                        notes: classData.notes,
+                        // Campi calcolati
                         totalStudents: classData.students?.length || 0,
                         activeStudents: classData.students?.filter(s => s.status === 'active')?.length || 0
                     };
@@ -235,31 +258,38 @@ export const ClassProvider = ({ children }) => {
                 let mainTeacherClasses = [];
                 let coTeacherClasses = [];
     
-                // Gestisce diversi formati di risposta possibili
-                if (user?.role === 'admin') {
-                    // Per admin, tutte le classi vanno in mainTeacherClasses
-                    const classes = Array.isArray(response.data.classes) ? 
-                        response.data.classes : 
-                        (response.data.data?.classes || []);
-                    
-                    mainTeacherClasses = classes.map(formatClass);
-                } else {
-                    // Per altri ruoli, usa la separazione mainTeacher/coTeacher
-                    mainTeacherClasses = Array.isArray(response.data.mainTeacherClasses) ? 
-                        response.data.mainTeacherClasses.map(formatClass) :
-                        (Array.isArray(response.data.data?.mainTeacherClasses) ?
-                            response.data.data.mainTeacherClasses.map(formatClass) : []);
-    
-                    coTeacherClasses = Array.isArray(response.data.coTeacherClasses) ?
-                        response.data.coTeacherClasses.map(formatClass) :
-                        (Array.isArray(response.data.data?.coTeacherClasses) ?
-                            response.data.data.coTeacherClasses.map(formatClass) : []);
+                switch (user.role) {
+                    case 'admin':
+                        const classes = Array.isArray(response.data.classes) ? 
+                            response.data.classes : 
+                            (response.data.data?.classes || []);
+                        mainTeacherClasses = classes.map(formatClass);
+                        break;
+                            
+                    case 'manager':
+                        const schoolClasses = Array.isArray(response.data.classes) ? 
+                            response.data.classes.filter(c => c.schoolId === user.schoolId) : 
+                            [];
+                        mainTeacherClasses = schoolClasses.map(formatClass);
+                        break;
+                            
+                    case 'teacher':
+                        mainTeacherClasses = Array.isArray(response.data.mainTeacherClasses) ? 
+                            response.data.mainTeacherClasses.map(formatClass) :
+                            [];
+                        coTeacherClasses = Array.isArray(response.data.coTeacherClasses) ?
+                            response.data.coTeacherClasses.map(formatClass) :
+                            [];
+                        break;
+                            
+                    default:
+                        console.warn('Ruolo utente non riconosciuto:', user.role);
                 }
     
-                console.debug('Classes formatted:', {
+                console.log('Classi formattate:', {
+                    role: user.role,
                     mainTeacherCount: mainTeacherClasses.length,
-                    coTeacherCount: coTeacherClasses.length,
-                    role: user?.role
+                    coTeacherCount: coTeacherClasses.length
                 });
     
                 dispatch({ 
@@ -267,19 +297,6 @@ export const ClassProvider = ({ children }) => {
                     payload: {
                         mainTeacherClasses,
                         coTeacherClasses
-                    }
-                });
-    
-                dispatch({
-                    type: CLASS_ACTIONS.UPDATE_STATS,
-                    payload: {
-                        totalClasses: mainTeacherClasses.length + coTeacherClasses.length,
-                        activeClasses: mainTeacherClasses.filter(c => c.isActive).length + 
-                                     coTeacherClasses.filter(c => c.isActive).length,
-                        totalStudents: mainTeacherClasses.reduce((acc, c) => acc + c.totalStudents, 0) +
-                                     coTeacherClasses.reduce((acc, c) => acc + c.totalStudents, 0),
-                        activeStudents: mainTeacherClasses.reduce((acc, c) => acc + c.activeStudents, 0) +
-                                      coTeacherClasses.reduce((acc, c) => acc + c.activeStudents, 0)
                     }
                 });
     
@@ -294,7 +311,7 @@ export const ClassProvider = ({ children }) => {
             console.error('Error fetching classes:', error);
             dispatch({ 
                 type: CLASS_ACTIONS.SET_ERROR, 
-                payload: error.response?.data?.message || 'Errore nel recupero delle classi' 
+                payload: error.response?.data?.message || error.message 
             });
             
             dispatch({ 
@@ -369,7 +386,7 @@ export const ClassProvider = ({ children }) => {
             createInitialClasses,
             updateClass,
             deleteClass,
-            getClassDetails,  // Aggiungi questa
+            getClassDetails,
             removeStudentsFromClass,
             dispatch
         }}>

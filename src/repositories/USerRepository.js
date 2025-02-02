@@ -118,24 +118,52 @@ async findById(id) {
      */
     async findWithFilters(filters = {}, options = {}) {
         try {
-            const query = { isDeleted: false, ...filters };
-            const {
-                page = 1,
-                limit = 10,
-                sort = { createdAt: -1 }
-            } = options;
-
+            // Estraiamo i parametri di paginazione dai filtri
+            const { page = 1, limit = 10, search = '', ...queryFilters } = filters;
+            
+            // Costruiamo la query di base
+            let query = {};
+            
+            // Aggiungiamo la ricerca se presente
+            if (search) {
+                query.$or = [
+                    { firstName: { $regex: search, $options: 'i' } },
+                    { lastName: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } }
+                ];
+            }
+    
+            // Aggiungiamo altri filtri se presenti
+            if (Object.keys(queryFilters).length > 0) {
+                query = { ...query, ...queryFilters };
+            }
+    
+            console.log('Repository Query:', {
+                query,
+                page,
+                limit,
+                sort: options.sort || { createdAt: -1 }
+            });
+    
             const skip = (page - 1) * limit;
-
+    
             const [users, total] = await Promise.all([
                 this.model
                     .find(query)
-                    .sort(sort)
+                    .sort(options.sort || { createdAt: -1 })
                     .skip(skip)
-                    .limit(limit),
+                    .limit(limit)
+                    .select('-password -passwordHistory -passwordResetToken -passwordResetExpires'),
                 this.model.countDocuments(query)
             ]);
-
+    
+            console.log('Repository Result:', {
+                usersFound: users.length,
+                total,
+                page,
+                totalPages: Math.ceil(total / limit)
+            });
+    
             return {
                 users,
                 total,
@@ -143,11 +171,8 @@ async findById(id) {
                 totalPages: Math.ceil(total / limit)
             };
         } catch (error) {
-            logger.error('Error finding users with filters', { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella ricerca utenti'
-            );
+            console.error('Repository Error:', error);
+            throw error;
         }
     }
 }

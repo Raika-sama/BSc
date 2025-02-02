@@ -15,8 +15,9 @@ import PersonalTest from '../components/profile/PersonalTest';  // Aggiungi ques
 import SectionManagement from '../components/school/schoolComponents/SectionManagement';
 import AssignSchoolPage from '../components/students/AssignSchoolPage';
 import ApiExplorer from '../components/api-explorer/ApiExplorer';
-//import StudentTestsLayout from '../components/students/studentTests/StudentTestsLayout';
 import StudentIndex from '../components/students/list/details/studentIndex';
+import UserDetails from '../components/users/details/UserDetails';  // Aggiungi questo import
+
 
 // Importa le icone da Material-UI
 import {
@@ -62,13 +63,22 @@ export const adminRoutes = [
         showInMenu: true
     },
     {
-        path: 'users',
+        path: 'users/*',
         element: UserManagement,
         title: 'Gestione Utenti',
         icon: PersonIcon,
         permissions: [PERMISSIONS.USERS.READ],
         writePermission: PERMISSIONS.USERS.WRITE,
         showInMenu: true
+    },
+    {
+        path: 'users/:id',
+        element: UserDetails,  // Il componente che abbiamo creato
+        title: 'Dettagli Utente',
+        icon: PersonIcon,
+        permissions: [PERMISSIONS.USERS.READ],
+        writePermission: PERMISSIONS.USERS.WRITE,
+        showInMenu: false
     },
     {
         path: 'schools',

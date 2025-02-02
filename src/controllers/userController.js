@@ -38,34 +38,53 @@ class UserController extends BaseController {
     }
 
 
-    async getAll(req, res) {
-        try {
-            const { page = 1, limit = 10, search = '' } = req.query;
-            
-            logger.debug('Fetching users with params:', { 
-                page,
-                limit,
-                search,
-                userId: req.user?.id 
-            });
+// Chiama tutti gli utenti
+async getAll(req, res) {
+    try {
+        const { page = 1, limit = 10, search = '' } = req.query;
+        
+        console.log('Controller getAll called with:', {
+            page,
+            limit,
+            search,
+            user: req.user?.id
+        });
 
-            const result = await this.userService.listUsers({
-                page: parseInt(page),
-                limit: parseInt(limit),
-                search
-            });
+        const result = await this.userService.listUsers({
+            page: parseInt(page),
+            limit: parseInt(limit),
+            search
+        });
 
-            this.sendResponse(res, {
+        console.log('Controller sending response:', {
+            userCount: result.users.length,
+            total: result.total,
+            page: result.page,
+            responseStructure: {
+                status: 'success',
+                data: {
+                    users: `[${result.users.length} items]`,
+                    total: result.total,
+                    page: parseInt(page),
+                    limit: parseInt(limit)
+                }
+            }
+        });
+
+        return this.sendResponse(res, {
+            status: 'success',
+            data: {
                 users: result.users,
                 total: result.total,
                 page: parseInt(page),
                 limit: parseInt(limit)
-            });
-        } catch (error) {
-            // Usa sendError invece di handleError
-            this.sendError(res, error);
-        }
+            }
+        });
+    } catch (error) {
+        console.error('Controller Error:', error);
+        return this.sendError(res, error);
     }
+}
 
     /**
      * Ottiene utente per ID

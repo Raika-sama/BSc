@@ -58,8 +58,11 @@ const createUserRouter = ({ authMiddleware, userController }) => {
     router.use(restrictTo('admin', 'manager'));
 
     // Route paginata per lista utenti
-    router.get('/', asyncHandler(userController.getAll.bind(userController)));
-
+    router.get('/', 
+        protect, // Middleware di autenticazione
+        restrictTo('admin', 'manager'), // Middleware di autorizzazione
+        asyncHandler(userController.getAll.bind(userController))
+    );
 
     // Route CRUD per gestione utenti
     router.post('/', 

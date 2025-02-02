@@ -483,20 +483,26 @@ async createInitialClasses(req, res, next) {
 
 async getMyClasses(req, res, next) {
     try {
-        logger.debug('getMyClasses called for user:', {
-            userId: req.user._id
+        logger.debug('ClassController: getMyClasses chiamato', {
+            userId: req.user._id,
+            role: req.user.role,
+            schoolId: req.user.schoolId
         });
 
         const result = await this.repository.getMyClasses(req.user._id);
+        logger.debug('ClassController: Risultato ottenuto', {
+            mainTeacherClassesCount: result.mainTeacherClasses?.length,
+            coTeacherClassesCount: result.coTeacherClasses?.length
+        });
 
-        // Invia risposta con classi separate per ruolo
         this.sendResponse(res, {
+            status: 'success',
             mainTeacherClasses: result.mainTeacherClasses,
             coTeacherClasses: result.coTeacherClasses
         });
 
     } catch (error) {
-        logger.error('Error in getMyClasses controller:', {
+        logger.error('ClassController: Errore in getMyClasses', {
             error: error.message,
             stack: error.stack,
             userId: req.user?._id
@@ -504,7 +510,6 @@ async getMyClasses(req, res, next) {
         next(error);
     }
 }
-
 async getById(req, res, next) {
     try {
         const { id } = req.params;

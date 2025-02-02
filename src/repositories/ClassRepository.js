@@ -527,6 +527,11 @@ async getMyClasses(userId) {
             .select('role schoolId')
             .lean();
 
+            logger.debug('ClassRepository: Utente trovato', { 
+                role: user?.role, 
+                schoolId: user?.schoolId 
+            });
+
         if (!user) {
             throw createError(
                 ErrorTypes.RESOURCE.NOT_FOUND,
@@ -702,7 +707,9 @@ async getMyClasses(userId) {
         }
 
         const result = await this.model.aggregate(pipeline);
-
+        logger.debug('ClassRepository: Query completata', {
+            resultLength: result.length
+        });
         // Per admin e manager, formatta il risultato nello stesso formato usato per i teacher
         if (user.role === 'admin' || user.role === 'manager') {
             return {
@@ -715,7 +722,10 @@ async getMyClasses(userId) {
         return result[0];
 
     } catch (error) {
-        logger.error('Error in getMyClasses:', { error });
+        logger.error('ClassRepository: Errore in getMyClasses', { 
+            error: error.message,
+            userId 
+        });        
         throw createError(
             ErrorTypes.DATABASE.QUERY_FAILED,
             'Errore nel recupero delle classi',

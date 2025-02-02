@@ -51,7 +51,10 @@ const ClassManagement = () => {
     const [studentsFilter, setStudentsFilter] = useState('');
 
     useEffect(() => {
-        getMyClasses();
+        console.log('ClassManagement: Inizializzazione');
+        getMyClasses().catch(error => {
+            console.error('ClassManagement: Errore nel caricamento classi:', error);
+        });
     }, []);
 
     const handleApplyFilters = () => {
