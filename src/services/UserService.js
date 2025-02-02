@@ -17,47 +17,30 @@ class UserService {
      * @param {Object} userData - Dati utente
      * @param {Object} options - Opzioni aggiuntive
      */
-    async createUser(userData, options = {}) {
-        try {
-            logger.debug('Creating new user', { 
-                email: userData.email,
-                role: userData.role 
-            });
+     async createUser(userData, options = {}) {
+        // Validazioni
+        await this.validateUserData(userData);
+        
+        // Business logic
+        const hashedPassword = await this.hashPassword(userData.password);
+        const userToCreate = this.prepareUserData(userData, hashedPassword, options);
+        
+        // Persistenza
+        const user = await this.userRepository.create(userToCreate);
+        return this.sanitizeUser(user);
+    }
 
-            // Verifica email duplicata
-            const existingUser = await this.userRepository.findByEmail(userData.email);
-            if (existingUser) {
-                throw createError(
-                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
-                    'Email già registrata'
-                );
-            }
-
-            // Hash password
-            const hashedPassword = await this.hashPassword(userData.password);
-
-            // Prepara dati utente
-            const userToCreate = {
-                ...userData,
-                password: hashedPassword,
-                status: options.status || 'active',
-                passwordHistory: [{
-                    password: hashedPassword,
-                    changedAt: new Date()
-                }]
-            };
-
-            // Crea utente
-            const newUser = await this.userRepository.create(userToCreate);
-            logger.info('User created successfully', { 
-                userId: newUser._id 
-            });
-
-            return this.sanitizeUser(newUser);
-        } catch (error) {
-            logger.error('Error creating user', { error });
-            throw error;
-        }
+    // Nuovo metodo per lista utenti
+    async listUsers(filters = {}, options = {}) {
+        const { users, total, page, totalPages } = 
+            await this.userRepository.findWithFilters(filters, options);
+        
+        return {
+            users: users.map(user => this.sanitizeUser(user)),
+            total,
+            page,
+            totalPages
+        };
     }
 
     /**
@@ -130,6 +113,20 @@ class UserService {
         await this.sessionService.removeAllSessions(userId);
     }
 
+
+    prepareUserData(userData, hashedPassword, options) {
+        return {
+            ...userData,
+            password: hashedPassword,
+            status: options.status || 'active',
+            passwordHistory: [{
+                password: hashedPassword,
+                changedAt: new Date()
+            }]
+        };
+    }
+
+    
     /**
      * Cambia lo stato di un utente
      * @param {string} userId - ID utente
@@ -228,6 +225,29 @@ class UserService {
             throw error;
         }
     }
+
+        /**
+     * Soft delete utente
+     * @param {string} userId - ID utente
+     */
+        async softDeleteUser(userId) {
+            const user = await this.userRepository.findById(userId);
+            if (!user) {
+                throw createError(ErrorTypes.RESOURCE.NOT_FOUND, 'Utente non trovato');
+            }
+    
+            // Business logic per soft delete
+            const updateData = {
+                isDeleted: true,
+                deletedAt: new Date(),
+                status: 'inactive'
+            };
+    
+            await this.sessionService.removeAllSessions(userId);
+            return this.userRepository.update(userId, updateData);
+        }
+    
+    
 
     /**
      * Hash password

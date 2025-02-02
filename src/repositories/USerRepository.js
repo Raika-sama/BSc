@@ -29,6 +29,28 @@ class UserRepository extends BaseRepository {
         }
     }
 
+    // Nel Repository
+async findById(id) {
+    try {
+        const user = await this.model.findById(id);
+        if (!user) {
+            throw new ApplicationError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Utente non trovato',
+                { userId: id }
+            );
+        }
+        return user;
+    } catch (error) {
+        if (error instanceof ApplicationError) throw error;
+        throw new ApplicationError(
+            ErrorTypes.DATABASE.QUERY_FAILED,
+            'Errore nel recupero utente',
+            { userId: id, originalError: error.message }
+        );
+    }
+}
+
     /**
      * Crea nuovo utente
      * @param {Object} userData - Dati utente
@@ -88,36 +110,6 @@ class UserRepository extends BaseRepository {
         }
     }
 
-    /**
-     * Soft delete utente
-     * @param {string} userId - ID utente
-     */
-    async softDelete(userId) {
-        try {
-            const user = await this.model.findByIdAndUpdate(
-                userId,
-                {
-                    isDeleted: true,
-                    deletedAt: new Date(),
-                    status: 'inactive'
-                },
-                { new: true }
-            );
-
-            if (!user) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Utente non trovato'
-                );
-            }
-
-            logger.info('User soft deleted', { userId });
-            return user;
-        } catch (error) {
-            logger.error('Error soft deleting user', { error });
-            throw error;
-        }
-    }
 
     /**
      * Trova utenti con filtri e paginazione

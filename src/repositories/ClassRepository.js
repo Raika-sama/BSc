@@ -332,9 +332,7 @@ async findWithDetails(id) {
         }
     }
 
-    // src/repositories/ClassRepository.js
 
-    // Nel ClassRepository
     async createInitialClasses(schoolId, academicYear, sections) {
         const session = await mongoose.startSession();
         session.startTransaction();
@@ -518,114 +516,213 @@ async findWithDetails(id) {
             }
         }
 
-        async getMyClasses(userId) {
-            try {
-                logger.debug('Getting classes for user:', { userId });
-        
-                const pipeline = [
+
+// In ClassRepository.js
+async getMyClasses(userId) {
+    try {
+        logger.debug('Getting classes for user:', { userId });
+
+        // Prima otteniamo l'utente con i suoi dettagli
+        const user = await mongoose.model('User').findById(userId)
+            .select('role schoolId')
+            .lean();
+
+        if (!user) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Utente non trovato'
+            );
+        }
+
+        logger.debug('User details:', { 
+            role: user.role, 
+            schoolId: user.schoolId 
+        });
+
+        let pipeline = [];
+
+        // Pipeline diversa in base al ruolo
+        switch (user.role) {
+            case 'admin':
+                // Admin vede tutte le classi
+                pipeline = [
+                    {
+                        $lookup: {
+                            from: 'schools',
+                            localField: 'schoolId',
+                            foreignField: '_id',
+                            as: 'school'
+                        }
+                    },
+                    {
+                        $unwind: '$school'
+                    },
+                    {
+                        $match: {
+                            isActive: true
+                        }
+                    },
+                    {
+                        $project: {
+                            schoolId: 1,
+                            schoolName: '$school.name',
+                            classId: '$_id',
+                            year: 1,
+                            section: 1,
+                            academicYear: 1,
+                            students: 1,
+                            mainTeacher: 1,
+                            teachers: 1
+                        }
+                    },
+                    {
+                        $sort: { 
+                            'school.name': 1, 
+                            year: 1, 
+                            section: 1 
+                        }
+                    }
+                ];
+                break;
+
+            case 'manager':
+                // Manager vede solo le classi della sua scuola
+                pipeline = [
+                    {
+                        $match: {
+                            schoolId: user.schoolId,
+                            isActive: true
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: 'schools',
+                            localField: 'schoolId',
+                            foreignField: '_id',
+                            as: 'school'
+                        }
+                    },
+                    {
+                        $unwind: '$school'
+                    },
+                    {
+                        $project: {
+                            schoolId: 1,
+                            schoolName: '$school.name',
+                            classId: '$_id',
+                            year: 1,
+                            section: 1,
+                            academicYear: 1,
+                            students: 1,
+                            mainTeacher: 1,
+                            teachers: 1
+                        }
+                    },
+                    {
+                        $sort: { 
+                            year: 1, 
+                            section: 1 
+                        }
+                    }
+                ];
+                break;
+
+            case 'teacher':
+                // Teacher vede le classi dove è mainTeacher o nell'array teachers
+                pipeline = [
+                    {
+                        $match: {
+                            isActive: true,
+                            $or: [
+                                { mainTeacher: new mongoose.Types.ObjectId(userId) },
+                                { teachers: new mongoose.Types.ObjectId(userId) }
+                            ]
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: 'schools',
+                            localField: 'schoolId',
+                            foreignField: '_id',
+                            as: 'school'
+                        }
+                    },
+                    {
+                        $unwind: '$school'
+                    },
+                    {
+                        $project: {
+                            schoolId: 1,
+                            schoolName: '$school.name',
+                            classId: '$_id',
+                            year: 1,
+                            section: 1,
+                            academicYear: 1,
+                            students: 1,
+                            mainTeacher: 1,
+                            teachers: 1,
+                            isMainTeacher: {
+                                $eq: ['$mainTeacher', new mongoose.Types.ObjectId(userId)]
+                            }
+                        }
+                    },
+                    {
+                        $sort: { 
+                            isMainTeacher: -1,
+                            year: 1, 
+                            section: 1 
+                        }
+                    },
                     {
                         $facet: {
-                            // Classi dove l'utente è insegnante principale
                             mainTeacherClasses: [
                                 {
                                     $match: {
-                                        mainTeacher: new mongoose.Types.ObjectId(userId),
-                                        isActive: true
-                                    }
-                                },
-                                {
-                                    $lookup: {
-                                        from: 'schools',
-                                        localField: 'schoolId',
-                                        foreignField: '_id',
-                                        as: 'school'
-                                    }
-                                },
-                                {
-                                    $unwind: '$school'
-                                },
-                                {
-                                    $project: {
-                                        schoolId: '$schoolId',
-                                        schoolName: '$school.name',
-                                        classId: '$_id',
-                                        year: 1,
-                                        section: 1,
-                                        academicYear: 1,
-                                        students: 1
-                                    }
-                                },
-                                {
-                                    $sort: { 
-                                        schoolName: 1, 
-                                        year: 1, 
-                                        section: 1 
+                                        isMainTeacher: true
                                     }
                                 }
                             ],
-                            // Classi dove l'utente è co-insegnante
                             coTeacherClasses: [
                                 {
                                     $match: {
-                                        teachers: new mongoose.Types.ObjectId(userId),
-                                        mainTeacher: { 
-                                            $ne: new mongoose.Types.ObjectId(userId) 
-                                        },
-                                        isActive: true
-                                    }
-                                },
-                                {
-                                    $lookup: {
-                                        from: 'schools',
-                                        localField: 'schoolId',
-                                        foreignField: '_id',
-                                        as: 'school'
-                                    }
-                                },
-                                {
-                                    $unwind: '$school'
-                                },
-                                {
-                                    $project: {
-                                        schoolId: '$schoolId',
-                                        schoolName: '$school.name',
-                                        classId: '$_id',
-                                        year: 1,
-                                        section: 1,
-                                        academicYear: 1,
-                                        students: 1
-                                    }
-                                },
-                                {
-                                    $sort: { 
-                                        schoolName: 1, 
-                                        year: 1, 
-                                        section: 1 
+                                        isMainTeacher: false
                                     }
                                 }
                             ]
                         }
                     }
                 ];
-        
-                const [result] = await this.model.aggregate(pipeline);
-        
-                logger.debug('Found classes:', {
-                    mainTeacherClassesCount: result.mainTeacherClasses.length,
-                    coTeacherClassesCount: result.coTeacherClasses.length
-                });
-        
-                return result;
-        
-            } catch (error) {
-                logger.error('Error in getMyClasses:', { error });
+                break;
+
+            default:
                 throw createError(
-                    ErrorTypes.DATABASE.QUERY_FAILED,
-                    'Errore nel recupero delle classi',
-                    { originalError: error.message }
+                    ErrorTypes.AUTH.INVALID_ROLE,
+                    'Ruolo utente non valido'
                 );
-            }
         }
+
+        const result = await this.model.aggregate(pipeline);
+
+        // Per admin e manager, formatta il risultato nello stesso formato usato per i teacher
+        if (user.role === 'admin' || user.role === 'manager') {
+            return {
+                mainTeacherClasses: result,
+                coTeacherClasses: []
+            };
+        }
+
+        // Per teacher, il risultato è già nel formato corretto dalla facet
+        return result[0];
+
+    } catch (error) {
+        logger.error('Error in getMyClasses:', { error });
+        throw createError(
+            ErrorTypes.DATABASE.QUERY_FAILED,
+            'Errore nel recupero delle classi',
+            { originalError: error.message }
+        );
+    }
+}
 
         async deactivateClassesBySection(schoolId, sectionName, session) {
             try {

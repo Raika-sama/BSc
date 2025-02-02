@@ -13,16 +13,23 @@ export const CLASS_ACTIONS = {
     DELETE_CLASS: 'DELETE_CLASS',
     SET_ERROR: 'SET_ERROR',
     CLEAR_ERROR: 'CLEAR_ERROR',
-    SET_MY_CLASSES: 'SET_MY_CLASSES'
+    SET_MY_CLASSES: 'SET_MY_CLASSES',
+    UPDATE_STATS: 'UPDATE_STATS'
 };
 
 // Stato iniziale
 const initialState = {
     classes: [],
-    mainTeacherClasses: [], // Aggiungere questa riga
-    coTeacherClasses: [],   // Aggiungere questa riga
+    mainTeacherClasses: [],
+    coTeacherClasses: [],
     loading: false,
-    error: null
+    error: null,
+    stats: {
+        totalClasses: 0,
+        activeClasses: 0,
+        totalStudents: 0,
+        activeStudents: 0
+    }
 };
 
 // Reducer
@@ -74,6 +81,11 @@ const classReducer = (state, action) => {
             coTeacherClasses: action.payload.coTeacherClasses,
             loading: false
         };
+        case CLASS_ACTIONS.UPDATE_STATS:
+            return {
+                ...state,
+                stats: action.payload
+            };
         default:
             return state;
     }
@@ -186,58 +198,115 @@ export const ClassProvider = ({ children }) => {
             dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
             
             const user = JSON.parse(localStorage.getItem('user'));
-            console.log('Fetching classes as:', user?.role);
+            console.debug('Fetching classes as:', {
+                role: user?.role,
+                schoolId: user?.schoolId
+            });
                 
             const response = await axiosInstance.get('/classes');
                 
             if (response.data.status === 'success') {
                 // Funzione per formattare una classe
-                const formatClass = (classData) => ({
-                    classId: classData._id,  // Aggiungiamo classId per DataGrid
-                    year: classData.year,
-                    section: classData.section,
-                    academicYear: classData.academicYear,
-                    status: classData.status,
-                    schoolName: classData.schoolId?.name || 'N/A',
-                    schoolId: classData.schoolId?._id,
-                    mainTeacher: {
-                        id: classData.mainTeacher?._id,
-                        firstName: classData.mainTeacher?.firstName,
-                        lastName: classData.mainTeacher?.lastName
-                    },
-                    // Aggiungi altri campi necessari...
-                    isActive: classData.isActive,
-                    capacity: classData.capacity,
-                    students: classData.students
+                const formatClass = (classData) => {
+                    // Verifica che schoolName sia presente o estrailo da schoolId
+                    const schoolName = classData.schoolName || 
+                                     (classData.school?.name) || 
+                                     (classData.schoolId?.name) || 
+                                     'N/A';
+    
+                    return {
+                        classId: classData.classId || classData._id, // Gestisce entrambi i formati
+                        year: classData.year,
+                        section: classData.section,
+                        academicYear: classData.academicYear,
+                        status: classData.status || 'active', // Valore di default
+                        schoolName: schoolName,
+                        schoolId: classData.schoolId?._id || classData.schoolId,
+                        mainTeacher: classData.mainTeacher,
+                        teachers: classData.teachers || [],
+                        isActive: classData.isActive ?? true, // Default a true se non specificato
+                        capacity: classData.capacity || 0,
+                        students: classData.students || [],
+                        totalStudents: classData.students?.length || 0,
+                        activeStudents: classData.students?.filter(s => s.status === 'active')?.length || 0
+                    };
+                };
+    
+                let mainTeacherClasses = [];
+                let coTeacherClasses = [];
+    
+                // Gestisce diversi formati di risposta possibili
+                if (user?.role === 'admin') {
+                    // Per admin, tutte le classi vanno in mainTeacherClasses
+                    const classes = Array.isArray(response.data.classes) ? 
+                        response.data.classes : 
+                        (response.data.data?.classes || []);
+                    
+                    mainTeacherClasses = classes.map(formatClass);
+                } else {
+                    // Per altri ruoli, usa la separazione mainTeacher/coTeacher
+                    mainTeacherClasses = Array.isArray(response.data.mainTeacherClasses) ? 
+                        response.data.mainTeacherClasses.map(formatClass) :
+                        (Array.isArray(response.data.data?.mainTeacherClasses) ?
+                            response.data.data.mainTeacherClasses.map(formatClass) : []);
+    
+                    coTeacherClasses = Array.isArray(response.data.coTeacherClasses) ?
+                        response.data.coTeacherClasses.map(formatClass) :
+                        (Array.isArray(response.data.data?.coTeacherClasses) ?
+                            response.data.data.coTeacherClasses.map(formatClass) : []);
+                }
+    
+                console.debug('Classes formatted:', {
+                    mainTeacherCount: mainTeacherClasses.length,
+                    coTeacherCount: coTeacherClasses.length,
+                    role: user?.role
                 });
     
-                if (user?.role === 'admin') {
-                    // Formattiamo tutte le classi per admin
-                    const formattedClasses = response.data.data.classes.map(formatClass);
-                    dispatch({ 
-                        type: CLASS_ACTIONS.SET_MY_CLASSES, 
-                        payload: {
-                            mainTeacherClasses: formattedClasses,
-                            coTeacherClasses: [] 
-                        }
-                    });
-                } else {
-                    // Per i teacher, formattiamo entrambi gli array
-                    dispatch({ 
-                        type: CLASS_ACTIONS.SET_MY_CLASSES, 
-                        payload: {
-                            mainTeacherClasses: response.data.data.mainTeacherClasses.map(formatClass),
-                            coTeacherClasses: response.data.data.coTeacherClasses.map(formatClass)
-                        }
-                    });
-                }
+                dispatch({ 
+                    type: CLASS_ACTIONS.SET_MY_CLASSES, 
+                    payload: {
+                        mainTeacherClasses,
+                        coTeacherClasses
+                    }
+                });
+    
+                dispatch({
+                    type: CLASS_ACTIONS.UPDATE_STATS,
+                    payload: {
+                        totalClasses: mainTeacherClasses.length + coTeacherClasses.length,
+                        activeClasses: mainTeacherClasses.filter(c => c.isActive).length + 
+                                     coTeacherClasses.filter(c => c.isActive).length,
+                        totalStudents: mainTeacherClasses.reduce((acc, c) => acc + c.totalStudents, 0) +
+                                     coTeacherClasses.reduce((acc, c) => acc + c.totalStudents, 0),
+                        activeStudents: mainTeacherClasses.reduce((acc, c) => acc + c.activeStudents, 0) +
+                                      coTeacherClasses.reduce((acc, c) => acc + c.activeStudents, 0)
+                    }
+                });
+    
+                return {
+                    mainTeacherClasses,
+                    coTeacherClasses
+                };
             }
+                
+            throw new Error(response.data.message || 'Errore nel recupero delle classi');
         } catch (error) {
             console.error('Error fetching classes:', error);
             dispatch({ 
                 type: CLASS_ACTIONS.SET_ERROR, 
                 payload: error.response?.data?.message || 'Errore nel recupero delle classi' 
             });
+            
+            dispatch({ 
+                type: CLASS_ACTIONS.SET_MY_CLASSES, 
+                payload: {
+                    mainTeacherClasses: [],
+                    coTeacherClasses: []
+                }
+            });
+            throw error;
+        } finally {
+            dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: false });
         }
     };
 

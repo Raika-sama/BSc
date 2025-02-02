@@ -5,7 +5,7 @@ const logger = require('../utils/errors/logger/logger');
 
 class UserController extends BaseController {
     constructor(userService, sessionService) {
-        super();
+        super(null, 'user'); // Passiamo null come repository perché useremo il service
         this.userService = userService;
         this.sessionService = sessionService;
     }
@@ -34,6 +34,36 @@ class UserController extends BaseController {
         } catch (error) {
             logger.error('User creation failed', { error });
             this.handleError(res, error);
+        }
+    }
+
+
+    async getAll(req, res) {
+        try {
+            const { page = 1, limit = 10, search = '' } = req.query;
+            
+            logger.debug('Fetching users with params:', { 
+                page,
+                limit,
+                search,
+                userId: req.user?.id 
+            });
+
+            const result = await this.userService.listUsers({
+                page: parseInt(page),
+                limit: parseInt(limit),
+                search
+            });
+
+            this.sendResponse(res, {
+                users: result.users,
+                total: result.total,
+                page: parseInt(page),
+                limit: parseInt(limit)
+            });
+        } catch (error) {
+            // Usa sendError invece di handleError
+            this.sendError(res, error);
         }
     }
 

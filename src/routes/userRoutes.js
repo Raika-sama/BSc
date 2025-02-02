@@ -58,34 +58,8 @@ const createUserRouter = ({ authMiddleware, userController }) => {
     router.use(restrictTo('admin', 'manager'));
 
     // Route paginata per lista utenti
-    router.get('/', asyncHandler(async (req, res) => {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const search = req.query.search || '';
+    router.get('/', asyncHandler(userController.getAll.bind(userController)));
 
-        logger.debug('Fetching users with params:', {
-            page,
-            limit,
-            search,
-            userId: req.user?.id
-        });
-
-        const result = await userController.getAll({
-            page,
-            limit,
-            search
-        });
-
-        res.status(200).json({
-            status: 'success',
-            data: {
-                users: result.users,
-                total: result.total,
-                page,
-                limit
-            }
-        });
-    }));
 
     // Route CRUD per gestione utenti
     router.post('/', 
