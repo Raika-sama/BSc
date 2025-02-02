@@ -9,6 +9,7 @@ import {
     MenuItem,
     Divider,
     Avatar,
+    useTheme as useMuiTheme,
 } from '@mui/material';
 import {
     Menu as MenuIcon,
@@ -17,12 +18,15 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext/ThemeContextIndex';
 
 const Header = ({ open, drawerWidth, onDrawerToggle }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [anchorEl, setAnchorEl] = useState(null);
-
+    const muiTheme = useMuiTheme();
+    // Estrai sia il tema corrente che il tema MUI
+    const { currentTheme, theme: customTheme } = useTheme();
     const handleMenu = (event) => {
         setAnchorEl(event.currentTarget);
     };
@@ -51,10 +55,12 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
             position="fixed"
             sx={{
                 width: '100%',
-                backgroundColor: 'primary.main',
-                backgroundImage: 'linear-gradient(to right, #64B5F6, #42A5F5)',
-                boxShadow: '0 2px 8px rgba(100, 181, 246, 0.2)',
-                zIndex: (theme) => theme.zIndex.drawer + 1,
+                bgcolor: 'primary.main',
+                backgroundImage: `linear-gradient(to right, ${customTheme.palette.primary.light}, ${customTheme.palette.primary.main})`,
+                boxShadow: customTheme.palette.mode === 'dark'
+                    ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+                    : '0 2px 8px rgba(100, 181, 246, 0.2)',
+                zIndex: muiTheme.zIndex.drawer + 1,
                 transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
             }}
         >
@@ -108,7 +114,9 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                             sx={{ 
                                 width: 32, 
                                 height: 32, 
-                                bgcolor: 'primary.dark',
+                                bgcolor: customTheme.palette.mode === 'dark' 
+                                    ? customTheme.palette.primary.light 
+                                    : customTheme.palette.primary.dark,
                                 fontSize: '1rem',
                                 fontWeight: 500,
                                 border: '2px solid rgba(255,255,255,0.8)'
@@ -134,12 +142,17 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                         PaperProps={{
                             sx: {
                                 mt: 1,
-                                boxShadow: '0 4px 12px rgba(100, 181, 246, 0.15)',
+                                bgcolor: 'background.paper',
+                                boxShadow: customTheme.palette.mode === 'dark'
+                                    ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                                    : '0 4px 12px rgba(100, 181, 246, 0.15)',
                                 '& .MuiMenuItem-root': {
                                     px: 2,
                                     py: 1,
                                     '&:hover': {
-                                        backgroundColor: 'rgba(100, 181, 246, 0.08)',
+                                        backgroundColor: customTheme.palette.mode === 'dark'
+                                            ? 'rgba(255, 255, 255, 0.05)'
+                                            : 'rgba(100, 181, 246, 0.08)',
                                     },
                                 },
                             },
@@ -148,7 +161,7 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                         <Box sx={{ px: 2, py: 1 }}>
                             <Typography variant="subtitle1" sx={{ 
                                 fontWeight: 500,
-                                color: 'primary.dark'
+                                color: 'primary.main'
                             }}>
                                 {user?.firstName} {user?.lastName}
                             </Typography>
@@ -169,7 +182,9 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                             sx={{ 
                                 color: 'error.main',
                                 '&:hover': {
-                                    backgroundColor: 'error.lighter',
+                                    backgroundColor: customTheme.palette.mode === 'dark'
+                                        ? 'rgba(244, 67, 54, 0.15)'
+                                        : 'error.lighter',
                                 }
                             }}
                         >

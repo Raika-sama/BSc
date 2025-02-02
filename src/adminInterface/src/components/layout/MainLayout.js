@@ -1,59 +1,24 @@
-import React, { useState } from 'react';
-import { Box, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+// src/components/layout/MainLayout.js
+import React, { useState} from 'react';
+import { Box, CssBaseline, ThemeProvider as MuiThemeProvider } from '@mui/material';
 import { motion } from 'framer-motion';
 import Header from './Header';
 import Sidebar from './Sidebar';
+// Importiamo il nostro ThemeProvider personalizzato
+import { ThemeProvider, useTheme } from '../../context/ThemeContext/ThemeContextIndex';
 
-// Definizione del tema personalizzato
-const theme = createTheme({
-    palette: {
-        primary: {
-            main: '#64B5F6',
-            light: '#90CAF9',
-            dark: '#42A5F5',
-            contrastText: '#fff'
-        },
-        background: {
-            default: '#F5F7FA',
-            paper: '#FFFFFF'
-        },
-        sidebar: {
-            background: '#FFFFFF',
-            hover: '#E3F2FD',
-            selected: '#BBDEFB',
-            text: '#37474F'
-        }
-    },
-    transitions: {
-        duration: {
-            shortest: 150,
-            shorter: 200,
-            short: 250,
-            standard: 300,
-            complex: 375,
-            enteringScreen: 225,
-            leavingScreen: 195,
-        },
-        easing: {
-            easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
-            easeOut: 'cubic-bezier(0.0, 0, 0.2, 1)',
-            easeIn: 'cubic-bezier(0.4, 0, 1, 1)',
-            sharp: 'cubic-bezier(0.4, 0, 0.6, 1)',
-        },
-    },
-});
-
-const drawerWidth = 240;
-
-const MainLayout = ({ children }) => {
+const MainLayoutContent = ({ children }) => {
+    // Usiamo il nostro hook personalizzato per accedere al tema
+    const { theme } = useTheme();
     const [open, setOpen] = useState(true);
+    const drawerWidth = 240;
 
     const handleDrawerToggle = () => {
         setOpen(!open);
     };
 
     return (
-        <ThemeProvider theme={theme}>
+        <MuiThemeProvider theme={theme}>
             <Box sx={{ 
                 display: 'flex',
                 minHeight: '100vh',
@@ -102,6 +67,17 @@ const MainLayout = ({ children }) => {
                     {children}
                 </Box>
             </Box>
+        </MuiThemeProvider>
+    );
+};
+
+// Wrapper component che fornisce il context
+const MainLayout = ({ children }) => {
+    return (
+        <ThemeProvider>
+            <MainLayoutContent>
+                {children}
+            </MainLayoutContent>
         </ThemeProvider>
     );
 };
