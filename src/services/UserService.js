@@ -43,7 +43,7 @@ class UserService {
         console.log('UserService: Found users:', result);
         return result;
     }
-    
+
      // Aggiungiamo il metodo validateUserData
     validateUserData(userData, isNewUser = true) {
         const errors = {};
@@ -132,34 +132,51 @@ class UserService {
     }
 
     // Nuovo metodo per lista utenti
-    async listUsers(filters = {}, options = {}) {
-        console.log('Service listUsers called with:', { filters, options });
-    
-        // Estraiamo i parametri di paginazione
-        const { page, limit, search } = filters;
-    
+async listUsers(filters = {}, options = {}) {
+    console.log('Service listUsers called with:', { filters, options });
+
+    try {
+        // Normalizza i parametri
+        const normalizedFilters = {
+            search: filters.search || '',
+            role: filters.role,
+            status: filters.status
+        };
+
+        const normalizedOptions = {
+            page: parseInt(filters.page) || 1,
+            limit: parseInt(filters.limit) || 10,
+            sort: options.sort || { createdAt: -1 }
+        };
+
+        console.log('Normalized parameters:', {
+            filters: normalizedFilters,
+            options: normalizedOptions
+        });
+
         const result = await this.userRepository.findWithFilters(
-            { search }, // Passiamo solo i filtri di ricerca
-            { 
-                page,
-                limit,
-                sort: { createdAt: -1 }
-            }
+            normalizedFilters,
+            normalizedOptions
         );
-        
-        console.log('Service received users:', {
-            count: result.users.length,
+
+        console.log('Service received result:', {
+            usersCount: result.users.length,
             total: result.total,
             page: result.page
         });
-    
+
         return {
             users: result.users.map(user => this.sanitizeUser(user)),
             total: result.total,
             page: result.page,
+            limit: result.limit,
             totalPages: result.totalPages
         };
+    } catch (error) {
+        console.error('Service Error:', error);
+        throw error;
     }
+}
 
     /**
      * Aggiorna un utente esistente
@@ -381,15 +398,17 @@ class UserService {
      * @param {Object} user - Utente da sanitizzare
      */
     sanitizeUser(user) {
-        const userData = user.toObject();
-        // Rimuoviamo solo i campi sensibili
+        if (!user) return null;
+        
+        // Estrai direttamente i campi che vuoi escludere
         const {
             password,
             passwordHistory,
             passwordResetToken,
             passwordResetExpires,
             ...safeUser
-        } = userData;
+        } = user;
+        
         return safeUser;
     }
 }

@@ -123,28 +123,64 @@ class UserRepository extends BaseRepository {
      * @param {Object} filters - Filtri di ricerca
      * @param {Object} options - Opzioni di paginazione e ordinamento
      */
-    async findWithFilters(filters = {}) {
+    async findWithFilters(filters = {}, options = {}) {
         try {
             console.log('Repository: Starting query with filters:', filters);
             
-            const query = { ...filters };
+            // Costruisci la query di base
+            let query = {};
+            
+            // Gestisci la ricerca
+            if (filters.search) {
+                query.$or = [
+                    { firstName: { $regex: filters.search, $options: 'i' } },
+                    { lastName: { $regex: filters.search, $options: 'i' } },
+                    { email: { $regex: filters.search, $options: 'i' } }
+                ];
+            }
+    
+            // Gestisci i ruoli
             if (filters.role) {
                 query.role = filters.role;
             }
     
-            const users = await this.model
-                .find(query)
-                .select('firstName lastName email role')
-                .lean();
+            // Gestisci lo status
+            if (filters.status) {
+                query.status = filters.status;
+            }
     
-            console.log('Repository: Found users:', {
-                count: users.length,
-                filters
+            console.log('Final query:', query);
+    
+            // Calcola skip per paginazione
+            const page = parseInt(options.page) || 1;
+            const limit = parseInt(options.limit) || 10;
+            const skip = (page - 1) * limit;
+    
+            // Esegui le query in parallelo
+            const [users, total] = await Promise.all([
+                this.model
+                    .find(query)
+                    .select('firstName lastName email role status createdAt')
+                    .sort(options.sort || { createdAt: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .lean(),
+                this.model.countDocuments(query)
+            ]);
+    
+            console.log('Repository: Query results:', {
+                usersFound: users.length,
+                totalUsers: total,
+                page,
+                limit
             });
     
             return {
                 users,
-                total: users.length
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
             };
         } catch (error) {
             console.error('Repository Error:', error);

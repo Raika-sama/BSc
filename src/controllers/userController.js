@@ -67,44 +67,36 @@ class UserController extends BaseController {
 // Chiama tutti gli utenti
 async getAll(req, res) {
     try {
-        const { page = 1, limit = 10, search = '' } = req.query;
+        const { page = 1, limit = 10, search = '', sort = '-createdAt', ...otherFilters } = req.query;
         
         console.log('Controller getAll called with:', {
             page,
             limit,
             search,
+            sort,
+            otherFilters,
             user: req.user?.id
         });
 
-        const result = await this.userService.listUsers({
-            page: parseInt(page),
-            limit: parseInt(limit),
-            search
-        });
+        const result = await this.userService.listUsers(
+            {
+                page,
+                limit,
+                search,
+                ...otherFilters
+            },
+            { sort }
+        );
 
-        console.log('Controller sending response:', {
-            userCount: result.users.length,
+        console.log('Controller received result:', {
+            usersCount: result.users.length,
             total: result.total,
-            page: result.page,
-            responseStructure: {
-                status: 'success',
-                data: {
-                    users: `[${result.users.length} items]`,
-                    total: result.total,
-                    page: parseInt(page),
-                    limit: parseInt(limit)
-                }
-            }
+            page: result.page
         });
 
         return this.sendResponse(res, {
             status: 'success',
-            data: {
-                users: result.users,
-                total: result.total,
-                page: parseInt(page),
-                limit: parseInt(limit)
-            }
+            data: result
         });
     } catch (error) {
         console.error('Controller Error:', error);

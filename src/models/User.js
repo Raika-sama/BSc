@@ -125,6 +125,10 @@ userSchema.index({ schoolId: 1 });
 userSchema.index({ status: 1 });
 userSchema.index({ 'sessionTokens.token': 1 });
 userSchema.index({ 'sessionTokens.expiresAt': 1 });
+userSchema.index({ firstName: 1, lastName: 1 });  // Nuovo
+userSchema.index({ createdAt: -1 });  // Nuovo
+userSchema.index({ role: 1, status: 1 });  // Nuovo
+userSchema.index({ lastLogin: -1 });  // Nuovo
 
 
 userSchema.pre('save', function(next) {
