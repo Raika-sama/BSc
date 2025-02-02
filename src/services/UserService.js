@@ -37,7 +37,13 @@ class UserService {
         }
     }
 
-
+    async findWithFilters(filters) {
+        console.log('UserService: Finding users with filters:', filters);
+        const result = await this.userRepository.findWithFilters(filters);
+        console.log('UserService: Found users:', result);
+        return result;
+    }
+    
      // Aggiungiamo il metodo validateUserData
     validateUserData(userData, isNewUser = true) {
         const errors = {};

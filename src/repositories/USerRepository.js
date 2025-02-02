@@ -123,59 +123,28 @@ class UserRepository extends BaseRepository {
      * @param {Object} filters - Filtri di ricerca
      * @param {Object} options - Opzioni di paginazione e ordinamento
      */
-    async findWithFilters(filters = {}, options = {}) {
+    async findWithFilters(filters = {}) {
         try {
-            // Estraiamo i parametri di paginazione dai filtri
-            const { page = 1, limit = 10, search = '', ...queryFilters } = filters;
+            console.log('Repository: Starting query with filters:', filters);
             
-            // Costruiamo la query di base
-            let query = {};
-            
-            // Aggiungiamo la ricerca se presente
-            if (search) {
-                query.$or = [
-                    { firstName: { $regex: search, $options: 'i' } },
-                    { lastName: { $regex: search, $options: 'i' } },
-                    { email: { $regex: search, $options: 'i' } }
-                ];
+            const query = { ...filters };
+            if (filters.role) {
+                query.role = filters.role;
             }
     
-            // Aggiungiamo altri filtri se presenti
-            if (Object.keys(queryFilters).length > 0) {
-                query = { ...query, ...queryFilters };
-            }
+            const users = await this.model
+                .find(query)
+                .select('firstName lastName email role')
+                .lean();
     
-            console.log('Repository Query:', {
-                query,
-                page,
-                limit,
-                sort: options.sort || { createdAt: -1 }
-            });
-    
-            const skip = (page - 1) * limit;
-    
-            const [users, total] = await Promise.all([
-                this.model
-                    .find(query)
-                    .sort(options.sort || { createdAt: -1 })
-                    .skip(skip)
-                    .limit(limit)
-                    .select('-password -passwordHistory -passwordResetToken -passwordResetExpires'),
-                this.model.countDocuments(query)
-            ]);
-    
-            console.log('Repository Result:', {
-                usersFound: users.length,
-                total,
-                page,
-                totalPages: Math.ceil(total / limit)
+            console.log('Repository: Found users:', {
+                count: users.length,
+                filters
             });
     
             return {
                 users,
-                total,
-                page,
-                totalPages: Math.ceil(total / limit)
+                total: users.length
             };
         } catch (error) {
             console.error('Repository Error:', error);

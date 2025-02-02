@@ -21,34 +21,41 @@ export const UserProvider = ({ children }) => {
                 params: { page, limit, search, sort }
             });
     
-            console.log('Raw response from server:', response);
-            console.log('Response data:', response.data);
+            console.log('Raw response:', response);
     
-            if (response.data.status === 'success') {
-                // Correggiamo l'accesso ai dati - c'è un data nested
-                const responseData = response.data.data.data;  // Nota il doppio .data
-                
-                console.log('Processed data:', responseData);
+            // Estrai i dati dalla struttura annidata
+            const userData = response?.data?.data?.data;
+            
+            console.log('Extracted user data:', userData);
     
-                setUsers(responseData.users || []);  // Aggiungiamo fallback array vuoto
-                setTotalUsers(responseData.total || 0);  // Aggiungiamo fallback a 0
+            if (userData && response.data.status === 'success') {
+                // Ora userData dovrebbe contenere direttamente l'oggetto con users, total, etc.
+                setUsers(userData.users || []);
+                setTotalUsers(userData.total || 0);
                 setError(null);
                 
                 return {
-                    users: responseData.users || [],
-                    total: responseData.total || 0,
-                    page: responseData.page || 1,
-                    limit: responseData.limit || 10
+                    users: userData.users || [],
+                    total: userData.total || 0,
+                    page: userData.page || page,
+                    limit: userData.limit || limit
                 };
             } else {
-                throw new Error('Invalid response format');
+                console.error('Invalid data structure:', response.data);
+                throw new Error('Struttura dati non valida');
             }
         } catch (error) {
             console.error('Error in getUsers:', error);
             const errorMessage = error.response?.data?.error?.message || 'Errore nel caricamento degli utenti';
             setError(errorMessage);
             showNotification(errorMessage, 'error');
-            throw error;
+            
+            return {
+                users: [],
+                total: 0,
+                page: page,
+                limit: limit
+            };
         } finally {
             setLoading(false);
         }

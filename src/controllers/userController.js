@@ -155,19 +155,18 @@ async getAvailableManagers(req, res) {
     try {
         logger.debug('Fetching available managers');
 
-        const users = await this.userService.listUsers({
+        // Modifica qui per usare direttamente findWithFilters
+        const result = await this.userService.findWithFilters({
             role: { $in: ['admin', 'manager'] },
             status: 'active'
         });
 
-        logger.debug('Found available managers:', {
-            count: users.users.length
-        });
+        console.log('Found managers:', result); // Debug log
 
         return this.sendResponse(res, {
             status: 'success',
             data: {
-                users: users.users.map(user => ({
+                users: result.users.map(user => ({
                     _id: user._id,
                     firstName: user.firstName,
                     lastName: user.lastName,

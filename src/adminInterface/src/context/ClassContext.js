@@ -1,5 +1,5 @@
 // src/adminInterface/src/context/ClassContext.js
-import React, { createContext, useContext, useReducer } from 'react';
+import React, { createContext, useContext, useReducer, useCallback } from 'react';
 import { axiosInstance } from '../services/axiosConfig';
 import { useAuth } from './AuthContext'; // Aggiungi questo import
 
@@ -327,21 +327,28 @@ export const ClassProvider = ({ children }) => {
         }
     };
 
-    const getClassDetails = async (classId) => {
+    const getClassDetails = useCallback(async (classId) => {
         try {
-            console.log('🎯 ClassContext: Getting details for classId:', classId); // Log 7
+            console.log('🎯 ClassContext: Getting details for classId:', classId);
             dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
+            
             const response = await axiosInstance.get(`/classes/${classId}`);
-            console.log('📡 ClassContext: API Response:', response.data); // Log 8
+            console.log('📡 ClassContext: API Response:', response.data);
 
             if (response.data.status === 'success') {
-                return response.data.data.class; // Modifica qui per estrarre i dati corretti
+                const classData = response.data.data.class;
+                // Memorizza i dati nel reducer se necessario
+                dispatch({
+                    type: CLASS_ACTIONS.UPDATE_CLASS,
+                    payload: classData
+                });
+                return classData;
             } else {
-                console.warn('⚠️ ClassContext: API returned non-success status:', response.data); // Log 9
+                console.warn('⚠️ ClassContext: API returned non-success status:', response.data);
                 throw new Error(response.data.message || 'Errore nel recupero dei dettagli della classe');
             }
         } catch (error) {
-            console.error('❌ ClassContext: Error in getClassDetails:', error); // Log 10
+            console.error('❌ ClassContext: Error in getClassDetails:', error);
             dispatch({ 
                 type: CLASS_ACTIONS.SET_ERROR, 
                 payload: error.response?.data?.message || 'Errore nel recupero dei dettagli della classe' 
@@ -350,7 +357,7 @@ export const ClassProvider = ({ children }) => {
         } finally {
             dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: false });
         }
-    };
+    }, []);  // useCallback senza dipendenze
 
     const removeStudentsFromClass = async (classId, studentIds) => {
         try {

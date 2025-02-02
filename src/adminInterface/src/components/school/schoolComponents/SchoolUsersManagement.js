@@ -68,13 +68,19 @@ const SchoolUsersManagement = ({
             console.log('Iniziando fetchAvailableManagers...');
             
             const response = await axiosInstance.get('/users/available-managers');
-            console.log('Risposta ricevuta:', response);
+            console.log('Risposta completa:', response);
             
-            if (response.data.status === 'success') {
-                console.log('Manager disponibili:', response.data.data.users);
-                setAvailableManagers(response.data.data.users);
+            // Accediamo correttamente all'array degli utenti attraverso data.data
+            if (response.data.status === 'success' && response.data.data && response.data.data.data && response.data.data.data.users) {
+                const managers = response.data.data.data.users;
+                console.log('Manager disponibili:', managers);
+                setAvailableManagers(managers);
             } else {
-                console.log('Risposta non ha status success:', response.data);
+                console.log('Struttura risposta:', response.data);
+                console.log('Tentativo di accesso diretto:', response.data?.data?.users);
+                // Proviamo a recuperare i dati in modo diverso
+                const users = response.data?.data?.users || [];
+                setAvailableManagers(users);
             }
         } catch (error) {
             console.error('Errore dettagliato:', {
@@ -83,21 +89,19 @@ const SchoolUsersManagement = ({
                 status: error.response?.status
             });
             showNotification('Errore nel caricamento dei manager disponibili', 'error');
+            setAvailableManagers([]);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        if (!operationDialog.open) {
-            setAvailableManagers([]);
-            setFormData({
-                email: '',
-                role: 'teacher',
-                userId: ''
-            });
-        }
-    }, [operationDialog.open]);
+        console.log('availableManagers aggiornato:', {
+            isArray: Array.isArray(availableManagers),
+            length: availableManagers?.length,
+            value: availableManagers
+        });
+    }, [availableManagers]);
     
 
     // Modifica handleOpenDialog per usare fetchAvailableManagers
@@ -162,6 +166,8 @@ const SchoolUsersManagement = ({
         console.log('renderManagerSelection - stato corrente:', {
             loading,
             availableManagers,
+            isArray: Array.isArray(availableManagers),
+            length: availableManagers?.length,
             formData
         });
     
@@ -173,8 +179,10 @@ const SchoolUsersManagement = ({
             );
         }
     
-        if (!availableManagers || availableManagers.length === 0) {
-            console.log('Nessun manager disponibile trovato');
+        // Verifica esplicita che availableManagers sia un array e abbia elementi
+        const managers = Array.isArray(availableManagers) ? availableManagers : [];
+        
+        if (managers.length === 0) {
             return (
                 <Typography color="text.secondary" sx={{ mt: 2 }}>
                     Nessun utente disponibile come manager
@@ -182,7 +190,7 @@ const SchoolUsersManagement = ({
             );
         }
     
-        console.log('Rendering select con managers:', availableManagers);
+        console.log('Rendering select con managers:', managers);
         return (
             <TextField
                 select
@@ -192,7 +200,7 @@ const SchoolUsersManagement = ({
                 onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
                 sx={{ mt: 2 }}
             >
-                {availableManagers.map((user) => (
+                {managers.map((user) => (
                     <MenuItem key={user._id} value={user._id}>
                         {`${user.firstName} ${user.lastName} (${user.email})`}
                     </MenuItem>

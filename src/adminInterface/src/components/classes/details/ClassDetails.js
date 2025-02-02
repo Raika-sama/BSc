@@ -30,7 +30,10 @@ const ClassDetails = () => {
         try {
             setLocalLoading(true);
             const response = await getClassDetails(classId);
-            setClassData(response);
+            // Verifica se i dati sono effettivamente cambiati prima di aggiornare lo stato
+            if (JSON.stringify(response) !== JSON.stringify(classData)) {
+                setClassData(response);
+            }
             setLocalError(null);
         } catch (err) {
             setLocalError(err.message);
@@ -40,10 +43,36 @@ const ClassDetails = () => {
     };
 
     useEffect(() => {
-        if (classId) {
-            fetchData();
-        }
-    }, [classId]);
+        let isMounted = true;
+
+        const loadData = async () => {
+            if (!classId) return;
+            
+            try {
+                setLocalLoading(true);
+                const response = await getClassDetails(classId);
+                if (isMounted) {
+                    setClassData(response);
+                    setLocalError(null);
+                }
+            } catch (err) {
+                if (isMounted) {
+                    setLocalError(err.message);
+                }
+            } finally {
+                if (isMounted) {
+                    setLocalLoading(false);
+                }
+            }
+        };
+
+        loadData();
+
+        // Cleanup function
+        return () => {
+            isMounted = false;
+        };
+    }, [classId, getClassDetails]);
 
     const handleViewDetails = (student) => {
         setSelectedStudent(student);

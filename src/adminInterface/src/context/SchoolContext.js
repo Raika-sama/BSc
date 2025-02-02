@@ -397,20 +397,24 @@ export const SchoolProvider = ({ children }) => {
     const fetchAvailableManagers = async () => {
         try {
             setLoading(true);
-            setError(null);
+            console.log('Iniziando fetchAvailableManagers...');
             
             const response = await axiosInstance.get('/users/available-managers');
+            console.log('Risposta completa:', response);
             
-            if (response.data.status === 'success') {
-                return response.data.data.users;
+            if (response.data.status === 'success' && response.data.data.users) {
+                console.log('Manager disponibili:', response.data.data.users);
+                setAvailableManagers(response.data.data.users);
+            } else {
+                console.log('Risposta non valida:', response.data);
             }
-            return [];
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || 
-                               'Errore nel caricamento degli utenti disponibili';
-            setError(errorMessage);
-            showNotification(errorMessage, 'error');
-            throw error;
+            console.error('Errore dettagliato:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+            showNotification('Errore nel caricamento dei manager disponibili', 'error');
         } finally {
             setLoading(false);
         }
