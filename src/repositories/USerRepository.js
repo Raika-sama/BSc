@@ -128,7 +128,9 @@ class UserRepository extends BaseRepository {
         try {
             let query = {};
             
-            // Filtri esistenti
+            console.log('Repository findWithFilters received:', { filters, options });
+    
+            // Filtri base
             if (filters.search) {
                 query.$or = [
                     { firstName: { $regex: filters.search, $options: 'i' } },
@@ -145,26 +147,17 @@ class UserRepository extends BaseRepository {
                 query.status = filters.status;
             }
     
-            // Se c'è un filtro per schoolId, troviamo prima gli utenti dalla scuola
+            // Gestione filtro schoolId
             if (filters.schoolId) {
-                // Prima troviamo la scuola
-                const school = await mongoose.model('School').findById(filters.schoolId);
-                if (school && school.users) {
-                    // Estraiamo gli ID degli utenti dalla scuola
-                    const userIds = school.users.map(u => u.user.toString());
-                    // Aggiungiamo il filtro per gli ID degli utenti
-                    query._id = { $in: userIds };
-                    
-                    // Log per debug
-                    console.log('School users filter:', {
-                        schoolId: filters.schoolId,
-                        userIds: userIds,
-                        usersCount: userIds.length
-                    });
+                console.log('Applying schoolId filter:', filters.schoolId);
+                try {
+                    const objectId = new mongoose.Types.ObjectId(filters.schoolId);
+                    query.schoolId = objectId;
+                } catch (err) {
+                    console.error('Invalid schoolId format:', err);
                 }
             }
-
-                    // Log per debug
+    
             console.log('Final query:', query);
     
             const page = parseInt(options.page) || 1;
@@ -181,12 +174,11 @@ class UserRepository extends BaseRepository {
                     .lean(),
                 this.model.countDocuments(query)
             ]);
-
-              // Log per debug
+    
             console.log('Query results:', {
                 totalFound: total,
                 usersReturned: users.length,
-                filters: filters
+                query
             });
     
             return {

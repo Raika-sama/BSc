@@ -44,6 +44,45 @@ class UserService {
         return result;
     }
 
+    async getSchoolTeachers(schoolId) {
+        try {
+            console.log('Getting teachers for school:', schoolId);
+            
+            // Troviamo la scuola e popoliamo i riferimenti agli utenti
+            const school = await mongoose.model('School')
+                .findById(schoolId)
+                .populate('manager', 'firstName lastName email role')
+                .populate('users.user', 'firstName lastName email role');
+    
+            if (!school) {
+                throw new Error('Scuola non trovata');
+            }
+    
+            // Raccogliamo tutti gli utenti (manager e teachers)
+            const teachers = [];
+    
+            // Aggiungiamo il manager se esiste
+            if (school.manager) {
+                teachers.push(school.manager);
+            }
+    
+            // Aggiungiamo gli insegnanti dal campo users
+            if (school.users && school.users.length > 0) {
+                const teacherUsers = school.users
+                    .filter(u => u.role === 'teacher' && u.user)
+                    .map(u => u.user);
+                teachers.push(...teacherUsers);
+            }
+    
+            console.log(`Found ${teachers.length} teachers for school ${schoolId}`);
+            
+            return teachers;
+        } catch (error) {
+            console.error('Error getting school teachers:', error);
+            throw error;
+        }
+    }
+
      // Aggiungiamo il metodo validateUserData
     validateUserData(userData, isNewUser = true) {
         const errors = {};
@@ -134,22 +173,29 @@ class UserService {
     // Nuovo metodo per lista utenti
     async listUsers(filters = {}, options = {}) {
         try {
+            console.log('UserService: Received filters:', filters);
+    
             const normalizedFilters = {
                 search: filters.search || '',
                 role: filters.role,
                 status: filters.status,
-                schoolId: filters.schoolId // Aggiungi il supporto per schoolId
+                schoolId: filters.schoolId
             };
     
-            const normalizedOptions = {
-                page: parseInt(filters.page) || 1,
-                limit: parseInt(filters.limit) || 10,
-                sort: options.sort || { createdAt: -1 }
-            };
+            // Rimuovi i filtri undefined
+            Object.keys(normalizedFilters).forEach(key => 
+                normalizedFilters[key] === undefined && delete normalizedFilters[key]
+            );
+    
+            console.log('UserService: Normalized filters:', normalizedFilters);
     
             const result = await this.userRepository.findWithFilters(
                 normalizedFilters,
-                normalizedOptions
+                {
+                    page: parseInt(filters.page) || 1,
+                    limit: parseInt(filters.limit) || 10,
+                    sort: options.sort || { createdAt: -1 }
+                }
             );
     
             return {
@@ -159,7 +205,7 @@ class UserService {
                 limit: result.limit
             };
         } catch (error) {
-            console.error('Service Error:', error);
+            console.error('UserService Error:', error);
             throw error;
         }
     }

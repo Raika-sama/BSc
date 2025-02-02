@@ -98,7 +98,7 @@ const ClassDetails = () => {
             console.error('Error removing main teacher:', error);
         }
     };
-    
+
     if (localLoading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -187,7 +187,10 @@ const ClassDetails = () => {
                         loadClassData(); // Usa loadClassData invece di fetchData
                     }
                 }}
-                classData={classData}
+                classData={{
+                        ...classData,
+                        schoolId: classData.schoolId // Assicurati che questo contenga l'ID della scuola
+                    }}                
                 isMainTeacher={true}
             />
         </Box>

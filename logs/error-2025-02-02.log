@@ -6978,3 +6978,157 @@
 {"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-02T21:44:17.723Z"}
 {"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T21:44:17.723Z"}
 {"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T21:44:17.724Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:35.155Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:35.402Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:35.618Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:35.814Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:36.009Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:36.254Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:36.485Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:36.685Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:36.882Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:37.079Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:37.290Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:37.507Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:37.726Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:37.960Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:38.166Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:38.389Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:38.612Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:38.844Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:39.052Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:39.294Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:39.520Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:39.713Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:39.902Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:40.100Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:40.301Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:40.492Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:40.751Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:40.955Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:41.166Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:41.364Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:41.586Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:41.803Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:42.015Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:42.213Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:42.425Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:42.629Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:42.841Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:43.034Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:43.267Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:43.467Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:43.689Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:43.880Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:44.072Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:44.265Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:44.461Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:44.649Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:44.834Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:45.029Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:45.221Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:45.427Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:45.628Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:45.858Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:46.064Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:46.267Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:46.466Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:46.654Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:46.840Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:47.026Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:47.213Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:47.425Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T21:58:47.650Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-02T21:59:54.592Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-02T21:59:54.593Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T21:59:54.593Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T21:59:54.594Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:22.801Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:23.063Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:23.276Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:23.536Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:23.761Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:23.975Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:24.163Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:24.375Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:24.571Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:24.753Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:24.935Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:25.119Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:25.305Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:25.489Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:25.676Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:25.870Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:26.079Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:26.280Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:26.461Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:26.652Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:26.852Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:27.093Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:27.310Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:27.505Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:27.695Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:27.907Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:28.125Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:28.347Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:28.577Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:28.792Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:28.989Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:29.165Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:29.303Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:29.441Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:29.613Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:29.770Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:29.912Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:30.073Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:30.212Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:30.354Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:30.530Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:30.670Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:30.832Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-02T22:13:30.970Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-02T22:13:30.971Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T22:13:30.972Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T22:13:30.973Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:30.981Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:31.132Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:39.314Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:39.514Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:39.712Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:39.927Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:40.109Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:40.295Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:40.481Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:40.705Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:40.911Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:41.139Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:41.348Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:41.575Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:41.773Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:41.949Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:42.130Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:42.320Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:42.513Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:42.705Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:42.903Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:43.089Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:43.285Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:43.525Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:43.764Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:43.945Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:44.120Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:44.296Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:44.474Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:44.650Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:13:44.834Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:26:27.688Z"}
+{"level":"error","message":"user error:","timestamp":"2025-02-02T22:26:34.249Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-02T22:27:18.810Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-02T22:27:18.811Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T22:27:18.813Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T22:27:18.814Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-02T22:40:23.152Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-02T22:40:23.153Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T22:40:23.154Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-02T22:40:23.155Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"error","message":"Errore non gestito:","timestamp":"2025-02-02T22:40:32.136Z"}

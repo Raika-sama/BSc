@@ -2,10 +2,12 @@
 const BaseController = require('./baseController');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
-
+const mongoose = require('mongoose');
 class UserController extends BaseController {
     constructor(userService, sessionService) {
         super(null, 'user'); // Passiamo null come repository perché useremo il service
+        this.userService = userService;
+        this.sessionService = sessionService;
         this.userService = userService;
         this.sessionService = sessionService;
         this.create = this.create.bind(this);
@@ -67,22 +69,34 @@ class UserController extends BaseController {
 // Chiama tutti gli utenti
 async getAll(req, res) {
     try {
-        const { page = 1, limit = 10, search = '', sort = '-createdAt', schoolId } = req.query;
+        const { page = 1, limit = 10, search = '', sort = '-createdAt', schoolId, role } = req.query;
         
-        console.log('Controller getAll called with:', {
+        console.log('Controller getAll received raw query:', req.query);
+        console.log('Controller getAll parsed params:', {
             page,
             limit,
             search,
             sort,
             schoolId,
+            role,
             user: req.user?.id
         });
+
+        // Validazione schoolId
+        if (schoolId && !mongoose.Types.ObjectId.isValid(schoolId)) {
+            return this.sendError(res, createError(
+                ErrorTypes.VALIDATION.INVALID_ID,
+                'ID scuola non valido'
+            ));
+        }
 
         const result = await this.userService.listUsers({
             page: parseInt(page),
             limit: parseInt(limit),
             search,
-            schoolId // Aggiungi il filtro schoolId
+            schoolId,
+            role,
+            sort
         });
 
         return this.sendResponse(res, {
@@ -136,38 +150,38 @@ async getById(req, res) {
     }
 }
 
-/**
- * Recupera gli utenti disponibili per il ruolo di manager
- */
-async getAvailableManagers(req, res) {
-    try {
-        logger.debug('Fetching available managers');
+    /**
+     * Recupera gli utenti disponibili per il ruolo di manager
+     */
+    async getAvailableManagers(req, res) {
+        try {
+            logger.debug('Fetching available managers');
 
-        // Modifica qui per usare direttamente findWithFilters
-        const result = await this.userService.findWithFilters({
-            role: { $in: ['admin', 'manager'] },
-            status: 'active'
-        });
+            // Modifica qui per usare direttamente findWithFilters
+            const result = await this.userService.findWithFilters({
+                role: { $in: ['admin', 'manager'] },
+                status: 'active'
+            });
 
-        console.log('Found managers:', result); // Debug log
+            console.log('Found managers:', result); // Debug log
 
-        return this.sendResponse(res, {
-            status: 'success',
-            data: {
-                users: result.users.map(user => ({
-                    _id: user._id,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    email: user.email,
-                    role: user.role
-                }))
-            }
-        });
-    } catch (error) {
-        logger.error('Error fetching available managers:', error);
-        return this.sendError(res, error);
+            return this.sendResponse(res, {
+                status: 'success',
+                data: {
+                    users: result.users.map(user => ({
+                        _id: user._id,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        email: user.email,
+                        role: user.role
+                    }))
+                }
+            });
+        } catch (error) {
+            logger.error('Error fetching available managers:', error);
+            return this.sendError(res, error);
+        }
     }
-}
 
     /**
      * Aggiorna utente
@@ -328,6 +342,62 @@ async getAvailableManagers(req, res) {
             this.handleError(res, error);
         }
     }
+
+    async getSchoolTeachers(req, res) {
+        try {
+            const { schoolId } = req.params;
+
+            console.log('Getting teachers for school:', schoolId);
+
+            if (!mongoose.Types.ObjectId.isValid(schoolId)) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.INVALID_ID,
+                    'ID scuola non valido'
+                ));
+            }
+
+            // Mettiamo la logica direttamente nel controller per ora
+            const school = await mongoose.model('School')
+                .findById(schoolId)
+                .populate('manager', 'firstName lastName email role')
+                .populate('users.user', 'firstName lastName email role')
+                .select('manager users');
+
+            if (!school) {
+                return this.sendError(res, createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                ));
+            }
+
+            // Raccogli tutti gli insegnanti
+            const teachers = [];
+
+            // Aggiungi il manager se esiste
+            if (school.manager) {
+                teachers.push(school.manager);
+            }
+
+            // Aggiungi gli insegnanti dal campo users
+            if (school.users && school.users.length > 0) {
+                const teacherUsers = school.users
+                    .filter(u => u.role === 'teacher' && u.user)
+                    .map(u => u.user);
+                teachers.push(...teacherUsers);
+            }
+
+            return this.sendResponse(res, {
+                status: 'success',
+                data: {
+                    teachers
+                }
+            });
+        } catch (error) {
+            console.error('Controller Error:', error);
+            return this.sendError(res, error);
+        }
+    }
+
 }
 
 module.exports = UserController;

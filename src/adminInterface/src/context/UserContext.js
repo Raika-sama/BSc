@@ -14,28 +14,29 @@ export const UserProvider = ({ children }) => {
 
     const getUsers = async (filters = {}) => {
         try {
-            console.log('Getting users with filters:', filters); // Debug log
+            console.log('UserContext: Getting users with filters:', filters);
             
-            const { page = 1, limit = 10, search = '', sort = '-createdAt', schoolId, role } = filters;
-            
-            // Validiamo che schoolId sia presente
-            if (schoolId) {
-                console.log('SchoolId present:', schoolId);
-            }
-    
-            const response = await axiosInstance.get('/users', {
-                params: { 
-                    page, 
-                    limit, 
-                    search, 
-                    sort,
-                    ...(schoolId && { schoolId }), // Usiamo spread operator solo se schoolId esiste
-                    ...(role && { role })
-                }
+            // Costruiamo i parametri della query
+            const queryParams = new URLSearchParams({
+                page: filters.page || 1,
+                limit: filters.limit || 10,
+                search: filters.search || '',
+                sort: filters.sort || '-createdAt'
             });
     
+            // Aggiungiamo schoolId solo se presente
+            if (filters.schoolId) {
+                queryParams.append('schoolId', filters.schoolId);
+            }
+    
+            // Aggiungiamo role solo se presente
+            if (filters.role) {
+                queryParams.append('role', filters.role);
+            }
+    
+            const response = await axiosInstance.get(`/users?${queryParams.toString()}`);
             console.log('UserContext: Response received:', response.data);
-
+    
             if (response.data.status === 'success') {
                 const { users, total, page: currentPage } = response.data.data.data;
                 
@@ -47,24 +48,22 @@ export const UserProvider = ({ children }) => {
                     users,
                     total,
                     page: currentPage,
-                    limit
+                    limit: filters.limit
                 };
             }
             
             throw new Error('Struttura dati non valida');
         } catch (error) {
-            console.error('Error in getUsers:', error);
+            console.error('UserContext: Error in getUsers:', error);
             setError(error.message);
             showNotification(error.message, 'error');
             
             return {
                 users: [],
                 total: 0,
-                page,
-                limit
+                page: filters.page || 1,
+                limit: filters.limit || 10
             };
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -93,6 +92,23 @@ export const UserProvider = ({ children }) => {
             throw error;
         }
     };
+
+    const getSchoolTeachers = async (schoolId) => {
+        try {
+            const response = await axiosInstance.get(`/users/school/${schoolId}/teachers`);
+            
+            if (response.data.status === 'success') {
+                return response.data.data.teachers;
+            }
+            
+            throw new Error('Errore nel recupero degli insegnanti');
+        } catch (error) {
+            console.error('Error fetching school teachers:', error);
+            showNotification('Errore nel caricamento degli insegnanti', 'error');
+            return [];
+        }
+    };
+    
 
 
     const createUser = async (userData) => {
@@ -237,6 +253,7 @@ export const UserProvider = ({ children }) => {
         totalUsers,
         getUsers,
         getUserById,
+        getSchoolTeachers,
         getUserHistory,
         createUser,
         updateUser,

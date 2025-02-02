@@ -1,6 +1,7 @@
 // src/routes/schoolRoutes.js
 const express = require('express');
 const logger = require('../utils/errors/logger/logger');
+const userController = require('../controllers/userController');
 
 const createSchoolRouter = ({ authMiddleware, schoolController }) => {
     if (!authMiddleware) throw new Error('AuthMiddleware is required');
@@ -41,6 +42,8 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
     router.get('/my-school', 
         asyncHandler(schoolController.getMySchool.bind(schoolController))
     );
+
+
 
     router.get('/region/:region', 
         asyncHandler(schoolController.getByRegion.bind(schoolController))
