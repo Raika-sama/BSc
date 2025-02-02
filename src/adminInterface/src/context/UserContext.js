@@ -54,6 +54,32 @@ export const UserProvider = ({ children }) => {
         }
     };
 
+    const getUserById = async (userId) => {
+        try {
+            console.log('UserContext: Fetching user details for ID:', userId);
+            const response = await axiosInstance.get(`/users/${userId}`);
+            
+            console.log('UserContext: Raw response:', response.data);
+    
+            if (response.data.status === 'success' && response.data.data?.data?.user) {
+                // Estraiamo l'oggetto user corretto dalla struttura nidificata
+                const userData = response.data.data.data.user;
+                console.log('UserContext: Processed user data:', userData);
+                return userData;
+            } else {
+                console.error('UserContext: Invalid response structure:', response.data);
+                throw new Error('Dati utente non trovati nella risposta');
+            }
+        } catch (error) {
+            console.error('UserContext: Error fetching user details:', error);
+            const errorMessage = error.response?.data?.error?.message || 
+                               error.message || 
+                               'Errore nel recupero dei dettagli utente';
+            showNotification(errorMessage, 'error');
+            throw error;
+        }
+    };
+
 
     const createUser = async (userData) => {
         try {
@@ -146,19 +172,7 @@ export const UserProvider = ({ children }) => {
         return Object.keys(errors).length > 0 ? errors : null;
     };
 
-    const getUserById = async (userId) => {
-        try {
-            const response = await axiosInstance.get(`/users/${userId}`);
-            if (response.data.status === 'success') {
-                return response.data.data.user;
-            }
-            throw new Error('Utente non trovato');
-        } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || 'Errore nel recupero dell\'utente';
-            showNotification(errorMessage, 'error');
-            throw error;
-        }
-    };
+
     
     const getUserHistory = async (userId) => {
         try {

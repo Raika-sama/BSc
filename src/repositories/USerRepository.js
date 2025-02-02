@@ -30,26 +30,33 @@ class UserRepository extends BaseRepository {
     }
 
     // Nel Repository
-async findById(id) {
-    try {
-        const user = await this.model.findById(id);
-        if (!user) {
-            throw new ApplicationError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Utente non trovato',
-                { userId: id }
-            );
+    async findById(id) {
+        try {
+            console.log('UserRepository: Finding user by ID:', id);
+            
+            const user = await this.model.findById(id)
+                .select('-password -passwordHistory -passwordResetToken -passwordResetExpires');
+            
+            if (!user) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente non trovato'
+                );
+            }
+    
+            return user;
+        } catch (error) {
+            console.error('UserRepository: Error finding user by ID:', error);
+            if (error.name === 'CastError') {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_ID,
+                    'ID utente non valido'
+                );
+            }
+            throw error;
         }
-        return user;
-    } catch (error) {
-        if (error instanceof ApplicationError) throw error;
-        throw new ApplicationError(
-            ErrorTypes.DATABASE.QUERY_FAILED,
-            'Errore nel recupero utente',
-            { userId: id, originalError: error.message }
-        );
     }
-}
+    
 
     /**
      * Crea nuovo utente

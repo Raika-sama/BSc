@@ -12,6 +12,31 @@ class UserService {
         this.PASSWORD_HISTORY_LIMIT = 5;
     }
 
+    async getUserById(userId) {
+        try {
+            console.log('UserService: Getting user by ID:', userId);
+            const user = await this.userRepository.findById(userId);
+            
+            console.log('UserService: User lookup result:', {
+                found: !!user,
+                userId: userId
+            });
+    
+            if (!user) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente non trovato'
+                );
+            }
+    
+            const sanitizedUser = this.sanitizeUser(user);
+            return sanitizedUser;
+        } catch (error) {
+            console.error('UserService: Error getting user by ID:', error);
+            throw error;
+        }
+    }
+
     /**
      * Crea un nuovo utente
      * @param {Object} userData - Dati utente

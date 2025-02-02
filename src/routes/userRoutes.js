@@ -58,27 +58,33 @@ const createUserRouter = ({ authMiddleware, userController }) => {
     router.use(restrictTo('admin', 'manager'));
 
     // Route paginata per lista utenti
-    router.get('/', 
-        protect, // Middleware di autenticazione
-        restrictTo('admin', 'manager'), // Middleware di autorizzazione
-        asyncHandler(userController.getAll.bind(userController))
-    );
+    router.get('/', asyncHandler(userController.getAll.bind(userController)));
+
 
     // Route CRUD per gestione utenti
-    router.post('/', 
-        asyncHandler(userController.create.bind(userController))
+    router.route('/:id')
+    .get(
+        asyncHandler(async (req, res) => {
+            console.log('UserRoutes: GET /:id called with:', {
+                id: req.params.id,
+                user: req.user?.id
+            });
+            return userController.getById(req, res);
+        })
+    )
+    .put(
+        asyncHandler(userController.update.bind(userController))
+    )
+    .delete(
+        asyncHandler(userController.delete.bind(userController))
     );
 
-    router.route('/:id')
-        .get(
-            asyncHandler(userController.getById.bind(userController))
-        )
-        .put(
-            asyncHandler(userController.update.bind(userController))
-        )
-        .delete(
-            asyncHandler(userController.delete.bind(userController))
-        );
+    // Rotta per creazione nuovo utente
+    router.post('/', 
+    asyncHandler(userController.create.bind(userController))
+    );
+
+
 
     // Gestione errori centralizzata
     router.use((err, req, res, next) => {

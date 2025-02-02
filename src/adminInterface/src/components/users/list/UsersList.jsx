@@ -1,6 +1,12 @@
 // src/components/users/list/UsersList.jsx
 import React, { useState, useEffect } from 'react';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, IconButton, Tooltip } from '@mui/material';
+import { 
+    Visibility as VisibilityIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon 
+} from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { DataGrid } from '@mui/x-data-grid';
 import { motion } from 'framer-motion';
 import { useUser } from '../../../context/UserContext';
@@ -8,6 +14,7 @@ import UsersFilters from './UsersFilters';
 import UserQuickActions from './UserQuickActions';
 
 const UsersList = () => {
+    const navigate = useNavigate();
     const { users, loading, getUsers, totalUsers } = useUser();
     const [pageSize, setPageSize] = useState(10);
     const [page, setPage] = useState(0);
@@ -18,6 +25,9 @@ const UsersList = () => {
         sort: '-createdAt'
     });
 
+    const handleViewDetails = (userId) => {
+        navigate(`/admin/users/${userId}`);
+    };
 
 
     const loadUsers = async () => {
@@ -104,7 +114,17 @@ const UsersList = () => {
             width: 150,
             sortable: false,
             renderCell: (params) => (
-                <UserQuickActions user={params.row} onActionComplete={loadUsers} />
+                <Box>
+                    <Tooltip title="Visualizza Dettagli">
+                        <IconButton
+                            onClick={() => handleViewDetails(params.row._id)}
+                            size="small"
+                            sx={{ mr: 1 }}
+                        >
+                            <VisibilityIcon />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
             )
         }
     ];
@@ -128,7 +148,7 @@ const UsersList = () => {
                     
                     <Box sx={{ height: 'calc(100% - 80px)', width: '100%' }}>
                         <DataGrid
-                            rows={users || []}  // Assicuriamoci che sia sempre un array
+                            rows={users || []}
                             columns={[
                                 {
                                     field: 'fullName',
@@ -138,30 +158,77 @@ const UsersList = () => {
                                         `${params.row?.firstName || ''} ${params.row?.lastName || ''}`
                                 },
                                 { field: 'email', headerName: 'Email', flex: 1 },
-                                { field: 'role', headerName: 'Ruolo', width: 130 },
-                                { field: 'status', headerName: 'Stato', width: 130 }
+                                {
+                                    field: 'role',
+                                    headerName: 'Ruolo',
+                                    width: 130,
+                                    renderCell: (params) => (
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
+                                                color: params.value === 'admin' ? 'error.main' : 
+                                                       params.value === 'manager' ? 'primary.main' : 
+                                                       'text.secondary'
+                                            }}
+                                        >
+                                            {params.value.charAt(0).toUpperCase() + params.value.slice(1)}
+                                        </Typography>
+                                    )
+                                },
+                                {
+                                    field: 'status',
+                                    headerName: 'Stato',
+                                    width: 130,
+                                    renderCell: (params) => (
+                                        <Box
+                                            sx={{
+                                                px: 2,
+                                                py: 0.5,
+                                                borderRadius: 1,
+                                                bgcolor: params.value === 'active' ? 'success.light' :
+                                                        params.value === 'inactive' ? 'warning.light' :
+                                                        'error.light',
+                                                color: params.value === 'active' ? 'success.dark' :
+                                                        params.value === 'inactive' ? 'warning.dark' :
+                                                        'error.dark'
+                                            }}
+                                        >
+                                            {params.value === 'active' ? 'Attivo' :
+                                             params.value === 'inactive' ? 'Inattivo' :
+                                             'Sospeso'}
+                                        </Box>
+                                    )
+                                },
+                                {
+                                    field: 'actions',
+                                    headerName: 'Azioni',
+                                    width: 150,
+                                    sortable: false,
+                                    renderCell: (params) => (
+                                        <Box>
+                                            <Tooltip title="Visualizza Dettagli">
+                                                <IconButton
+                                                    onClick={() => handleViewDetails(params.row._id)}
+                                                    size="small"
+                                                    sx={{ mr: 1 }}
+                                                >
+                                                    <VisibilityIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
+                                    )
+                                }
                             ]}
                             pagination
                             pageSize={pageSize}
                             rowsPerPageOptions={[10, 25, 50]}
-                            rowCount={totalUsers || 0}  // Assicuriamoci che sia sempre un numero
+                            rowCount={totalUsers || 0}
                             paginationMode="server"
                             onPageChange={setPage}
                             onPageSizeChange={setPageSize}
                             loading={loading}
-                            getRowId={(row) => row._id || Math.random()}  // Fallback per il rowId
-                            components={{
-                                NoRowsOverlay: () => (
-                                    <Box sx={{ 
-                                        display: 'flex', 
-                                        justifyContent: 'center', 
-                                        alignItems: 'center',
-                                        height: '100%'
-                                    }}>
-                                        <Typography>Nessun utente trovato</Typography>
-                                    </Box>
-                                )
-                            }}
+                            getRowId={(row) => row._id}
+                            disableSelectionOnClick
                         />
                     </Box>
                 </Paper>

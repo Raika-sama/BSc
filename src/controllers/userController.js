@@ -89,27 +89,38 @@ async getAll(req, res) {
     /**
      * Ottiene utente per ID
      */
-    async getById(req, res) {
-        try {
-            const { id } = req.params;
-            const user = await this.userService.getUserById(id);
+// src/controllers/UserController.js
+async getById(req, res) {
+    try {
+        const { id } = req.params;
+        console.log('UserController: Getting user by ID:', {
+            requestedId: id,
+            requestingUser: req.user?.id
+        });
 
-            if (!user) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Utente non trovato'
-                );
-            }
+        const user = await this.userService.getUserById(id);
+        
+        console.log('UserController: User found:', {
+            found: !!user,
+            userData: user ? { id: user._id, email: user.email } : null
+        });
 
-            this.sendResponse(res, {
-                status: 'success',
-                data: { user }
-            });
-        } catch (error) {
-            logger.error('Get user failed', { error });
-            this.handleError(res, error);
+        if (!user) {
+            return this.sendError(res, createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Utente non trovato'
+            ));
         }
+
+        return this.sendResponse(res, {
+            status: 'success',
+            data: { user }
+        });
+    } catch (error) {
+        console.error('UserController: Get user failed:', error);
+        return this.sendError(res, error);
     }
+}
 
     /**
      * Aggiorna utente

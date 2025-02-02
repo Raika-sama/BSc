@@ -1,6 +1,6 @@
 // src/components/users/details/UserDetails.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
     Box,
     Paper,
@@ -9,37 +9,58 @@ import {
     Typography,
     CircularProgress,
     Avatar,
-    Chip
+    Chip,
+    Alert
 } from '@mui/material';
 import { motion } from 'framer-motion';
+import { useUser } from '../../../context/UserContext';
 import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
 import UserSessions from './UserSessions';
 import UserHistory from './UserHistory';
-import { useUser } from '../../../context/UserContext';
 
 const UserDetails = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [currentTab, setCurrentTab] = useState(0);
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const { getUserById } = useUser();
-
-    useEffect(() => {
-        loadUserData();
-    }, [id]);
 
     const loadUserData = async () => {
         try {
+            console.log('UserDetails: Loading data for user ID:', id);
             setLoading(true);
+            setError(null);
+
             const data = await getUserById(id);
+            
+            if (!data || !data._id) {
+                throw new Error('Dati utente non validi');
+            }
+
+            console.log('UserDetails: Successfully loaded user data:', {
+                id: data._id,
+                email: data.email,
+                firstName: data.firstName,
+                lastName: data.lastName
+            });
+
             setUserData(data);
         } catch (error) {
-            console.error('Error loading user details:', error);
+            console.error('UserDetails: Error loading user data:', error);
+            setError(error.message || 'Errore nel caricamento dei dati utente');
         } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (id) {
+            loadUserData();
+        }
+    }, [id]);
 
     if (loading) {
         return (
@@ -49,13 +70,26 @@ const UserDetails = () => {
         );
     }
 
-    if (!userData) {
+    if (error) {
         return (
             <Box p={3}>
-                <Typography>Utente non trovato</Typography>
+                <Alert severity="error">
+                    {error}
+                </Alert>
             </Box>
         );
     }
+
+    if (!userData) {
+        return (
+            <Box p={3}>
+                <Alert severity="warning">
+                    Utente non trovato
+                </Alert>
+            </Box>
+        );
+    }
+
 
     return (
         <motion.div
@@ -84,14 +118,14 @@ const UserDetails = () => {
                                 {userData.email}
                             </Typography>
                             <Box sx={{ mt: 1 }}>
-                                <Chip
-                                    label={userData.role.toUpperCase()}
+                            <Chip
+                                    label={userData.role?.toUpperCase()}
                                     color="primary"
                                     size="small"
                                     sx={{ mr: 1 }}
                                 />
                                 <Chip
-                                    label={userData.status.toUpperCase()}
+                                    label={userData.status?.toUpperCase()}
                                     color={
                                         userData.status === 'active' ? 'success' :
                                         userData.status === 'inactive' ? 'warning' :
