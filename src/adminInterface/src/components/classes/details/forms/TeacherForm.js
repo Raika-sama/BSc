@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// src/adminInterface/src/components/classes/details/forms/TeacherForm.js
+
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -12,47 +14,56 @@ import {
     Autocomplete
 } from '@mui/material';
 import { useClass } from '../../../../context/ClassContext';
-import { useUser } from '../../../../context/UserContext';
+import { useUser } from '../../../../context/UserContext'; // Aggiungi questo import
 import { axiosInstance } from '../../../../services/axiosConfig';
 
 const TeacherForm = ({ open, onClose, classData, isMainTeacher = true }) => {
     const { getSchoolTeachers } = useUser();
-    
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [teachers, setTeachers] = useState([]);
     const [selectedTeacher, setSelectedTeacher] = useState(null);
 
-    // Carica i docenti solo quando il form viene aperto
     useEffect(() => {
-        if (!open || !classData?.schoolId?._id) {
-            return;
-        }
-
-        const fetchTeachers = async () => {
+        let mounted = true;
+    
+        const loadTeachers = async () => {
+            if (!open || !classData?.schoolId?._id) return;
+    
             try {
                 setLoading(true);
                 setError(null);
-                const response = await getSchoolTeachers(classData.schoolId._id);
-                setTeachers(response || []);
+                
+                const teachersList = await getSchoolTeachers(classData.schoolId._id);
+                console.log('Received teachers list:', teachersList);
+    
+                if (mounted) {
+                    if (Array.isArray(teachersList) && teachersList.length > 0) {
+                        console.log('Setting teachers:', teachersList);
+                        setTeachers(teachersList);
+                    } else {
+                        console.log('No teachers found or invalid data:', teachersList);
+                        setTeachers([]);
+                    }
+                }
             } catch (err) {
-                console.error('Failed to load teachers:', err);
-                setError('Errore nel caricamento degli insegnanti');
+                if (mounted) {
+                    console.error('Failed to load teachers:', err);
+                    setError('Errore nel caricamento degli insegnanti');
+                }
             } finally {
-                setLoading(false);
+                if (mounted) {
+                    setLoading(false);
+                }
             }
         };
-
-        fetchTeachers();
-    }, [open, classData?.schoolId?._id]); // Rimuovi getSchoolTeachers dalle dipendenze
-
-    // Reset dello stato quando il form viene chiuso
-    useEffect(() => {
-        if (!open) {
-            setSelectedTeacher(null);
-            setError(null);
-        }
-    }, [open]);
+    
+        loadTeachers();
+    
+        return () => {
+            mounted = false;
+        };
+    }, [open, classData?.schoolId?._id]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -65,15 +76,27 @@ const TeacherForm = ({ open, onClose, classData, isMainTeacher = true }) => {
             setLoading(true);
             setError(null);
     
+            console.log('Updating main teacher:', {
+                classId: classData._id,
+                teacherId: selectedTeacher._id,
+                teacherName: `${selectedTeacher.firstName} ${selectedTeacher.lastName}`
+            });
+    
             const response = await axiosInstance.post(
                 `/classes/${classData._id}/update-main-teacher`,
                 { teacherId: selectedTeacher._id }
             );
     
+            console.log('Update response:', response.data);
+    
             if (response.data.status === 'success') {
-                onClose(true);
+                onClose(true);  // Trigger refresh dei dati
             }
         } catch (err) {
+            console.error('Error details:', {
+                message: err.message,
+                response: err.response?.data
+            });
             setError(err.response?.data?.message || 'Errore durante l\'aggiornamento del docente principale');
         } finally {
             setLoading(false);
@@ -100,26 +123,35 @@ const TeacherForm = ({ open, onClose, classData, isMainTeacher = true }) => {
                     )}
 
                     <Box sx={{ mb: 2 }}>
-                        <Autocomplete
-                            options={teachers}
-                            getOptionLabel={(option) => 
-                                `${option.firstName} ${option.lastName} (${option.email})`
-                            }
-                            onChange={(_, newValue) => setSelectedTeacher(newValue)}
-                            renderInput={(params) => (
-                                <TextField
-                                    {...params}
-                                    label="Cerca Docente"
-                                    variant="outlined"
-                                    fullWidth
-                                    required
-                                />
-                            )}
-                            loading={loading}
-                            disabled={loading}
-                            noOptionsText="Nessun docente trovato"
-                            loadingText="Caricamento..."
-                        />
+                        {/* Aggiungi un log per vedere i dati disponibili */}
+                        {console.log('Teachers data in render:', teachers)}
+
+                    <Autocomplete
+                        options={teachers || []}
+                        getOptionLabel={(option) => {
+                            console.log('Option being rendered:', option); // Aggiungi questo log
+                            return option ? `${option.firstName} ${option.lastName} (${option.email})` : '';
+                        }}
+                        onChange={(_, newValue) => {
+                            console.log('Selected teacher:', newValue); // Aggiungi questo log
+                            setSelectedTeacher(newValue);
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Cerca Docente"
+                                variant="outlined"
+                                fullWidth
+                                required
+                                error={!!error}
+                                helperText={error || 'Seleziona un docente'}
+                            />
+                        )}
+                        loading={loading}
+                        disabled={loading}
+                        noOptionsText="Nessun docente trovato"
+                        loadingText="Caricamento..."
+                    />
                     </Box>
 
                     {selectedTeacher && (

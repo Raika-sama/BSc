@@ -192,6 +192,35 @@ class UserRepository extends BaseRepository {
             throw error;
         }
     }
+
+    async getSchoolTeachers(schoolId) {
+        try {
+            console.log('UserRepository: Getting teachers for school:', schoolId);
+            
+            const school = await mongoose.model('School')
+                .findById(schoolId)
+                .populate({
+                    path: 'manager',
+                    select: 'firstName lastName email role'
+                })
+                .populate({
+                    path: 'users.user',
+                    select: 'firstName lastName email role'
+                })
+                .select('manager users')
+                .lean();
+    
+            console.log('UserRepository: School query result:', {
+                hasManager: !!school?.manager,
+                usersCount: school?.users?.length || 0
+            });
+    
+            return school;
+        } catch (error) {
+            console.error('UserRepository Error:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = UserRepository;

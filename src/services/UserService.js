@@ -46,39 +46,36 @@ class UserService {
 
     async getSchoolTeachers(schoolId) {
         try {
-            console.log('Getting teachers for school:', schoolId);
+            console.log('UserService: Getting teachers for school:', schoolId);
             
-            // Troviamo la scuola e popoliamo i riferimenti agli utenti
-            const school = await mongoose.model('School')
-                .findById(schoolId)
-                .populate('manager', 'firstName lastName email role')
-                .populate('users.user', 'firstName lastName email role');
-    
+            const school = await this.userRepository.getSchoolTeachers(schoolId);
+            
             if (!school) {
-                throw new Error('Scuola non trovata');
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
             }
     
-            // Raccogliamo tutti gli utenti (manager e teachers)
             const teachers = [];
-    
-            // Aggiungiamo il manager se esiste
+            
+            // Aggiungi il manager se esiste
             if (school.manager) {
-                teachers.push(school.manager);
+                teachers.push(this.sanitizeUser(school.manager));
             }
     
-            // Aggiungiamo gli insegnanti dal campo users
-            if (school.users && school.users.length > 0) {
+            // Aggiungi gli insegnanti
+            if (school.users && Array.isArray(school.users)) {
                 const teacherUsers = school.users
                     .filter(u => u.role === 'teacher' && u.user)
-                    .map(u => u.user);
+                    .map(u => this.sanitizeUser(u.user));
                 teachers.push(...teacherUsers);
             }
     
-            console.log(`Found ${teachers.length} teachers for school ${schoolId}`);
-            
+            console.log(`UserService: Found ${teachers.length} teachers`);
             return teachers;
         } catch (error) {
-            console.error('Error getting school teachers:', error);
+            console.error('UserService Error:', error);
             throw error;
         }
     }

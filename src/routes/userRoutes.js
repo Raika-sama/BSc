@@ -57,12 +57,15 @@ const createUserRouter = ({ authMiddleware, userController }) => {
     // Rotte gestione utenti (admin/manager only)
     router.use(restrictTo('admin', 'manager'));
 
+    // Aggiungi questa prima delle altre rotte
+    router.get('/school/:schoolId/teachers', 
+        
+    asyncHandler(userController.getSchoolTeachers.bind(userController))
+);
     // Route paginata per lista utenti
     router.get('/', asyncHandler(userController.getAll.bind(userController)));
    
-    router.get('/school/:schoolId/teachers', 
-        asyncHandler(userController.getSchoolTeachers.bind(userController))
-    );
+ 
 
     //rotta per trovare solo utenti admin o manager
     router.get('/available-managers',
@@ -93,6 +96,8 @@ const createUserRouter = ({ authMiddleware, userController }) => {
     router.post('/', 
     asyncHandler(userController.create.bind(userController))
     );
+
+ 
 
 
 

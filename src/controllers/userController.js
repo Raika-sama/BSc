@@ -346,50 +346,45 @@ async getById(req, res) {
     async getSchoolTeachers(req, res) {
         try {
             const { schoolId } = req.params;
-
+            
             console.log('Getting teachers for school:', schoolId);
-
-            if (!mongoose.Types.ObjectId.isValid(schoolId)) {
-                return this.sendError(res, createError(
-                    ErrorTypes.VALIDATION.INVALID_ID,
-                    'ID scuola non valido'
-                ));
-            }
-
-            // Mettiamo la logica direttamente nel controller per ora
+    
             const school = await mongoose.model('School')
                 .findById(schoolId)
                 .populate('manager', 'firstName lastName email role')
                 .populate('users.user', 'firstName lastName email role')
                 .select('manager users');
-
+    
             if (!school) {
                 return this.sendError(res, createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,
                     'Scuola non trovata'
                 ));
             }
-
-            // Raccogli tutti gli insegnanti
+    
             const teachers = [];
-
+    
             // Aggiungi il manager se esiste
             if (school.manager) {
                 teachers.push(school.manager);
             }
-
-            // Aggiungi gli insegnanti dal campo users
+    
+            // Aggiungi gli insegnanti
             if (school.users && school.users.length > 0) {
                 const teacherUsers = school.users
                     .filter(u => u.role === 'teacher' && u.user)
                     .map(u => u.user);
                 teachers.push(...teacherUsers);
             }
-
+    
+            console.log(`Found ${teachers.length} teachers for school ${schoolId}`);
+            console.log('Teachers data:', teachers);
+    
+            // Assicuriamoci che la risposta sia strutturata correttamente
             return this.sendResponse(res, {
                 status: 'success',
                 data: {
-                    teachers
+                    teachers // Rimuovi il livello extra di nidificazione
                 }
             });
         } catch (error) {
@@ -397,7 +392,7 @@ async getById(req, res) {
             return this.sendError(res, error);
         }
     }
-
+    
 }
 
 module.exports = UserController;

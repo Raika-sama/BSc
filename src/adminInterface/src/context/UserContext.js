@@ -95,21 +95,43 @@ export const UserProvider = ({ children }) => {
 
     const getSchoolTeachers = async (schoolId) => {
         try {
+            console.log('Fetching teachers for school:', schoolId);
             const response = await axiosInstance.get(`/users/school/${schoolId}/teachers`);
             
-            if (response.data.status === 'success') {
-                return response.data.data.teachers;
+            console.log('Raw server response:', response.data);
+    
+            // Verifica la struttura corretta
+            if (response.data.status === 'success' && 
+                response.data.data?.data?.teachers && 
+                Array.isArray(response.data.data.data.teachers)) {
+                
+                const teachers = response.data.data.data.teachers;
+                console.log('Teachers extracted successfully:', teachers);
+                return teachers;
+            } else {
+                // Proviamo a trovare i teachers nella struttura
+                let teachers = null;
+                
+                if (response.data.data?.teachers) {
+                    teachers = response.data.data.teachers;
+                } else if (response.data.data?.data?.teachers) {
+                    teachers = response.data.data.data.teachers;
+                }
+    
+                if (Array.isArray(teachers)) {
+                    console.log('Teachers found in alternative structure:', teachers);
+                    return teachers;
+                }
+    
+                console.error('Could not find teachers in response structure:', response.data);
+                throw new Error('Struttura risposta non valida');
             }
-            
-            throw new Error('Errore nel recupero degli insegnanti');
         } catch (error) {
             console.error('Error fetching school teachers:', error);
             showNotification('Errore nel caricamento degli insegnanti', 'error');
             return [];
         }
     };
-    
-
 
     const createUser = async (userData) => {
         try {
