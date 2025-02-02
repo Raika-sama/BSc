@@ -64,39 +64,41 @@ class UserController extends BaseController {
     }
 
 
-    // Chiama tutti gli utenti
-    async getAll(req, res) {
-        try {
-            const { page = 1, limit = 10, search = '', sort = '-createdAt' } = req.query;
-            
-            console.log('Controller getAll called with:', {
-                page,
-                limit,
-                search,
-                sort,
-                user: req.user?.id
-            });
+// Chiama tutti gli utenti
+async getAll(req, res) {
+    try {
+        const { page = 1, limit = 10, search = '', sort = '-createdAt', schoolId } = req.query;
+        
+        console.log('Controller getAll called with:', {
+            page,
+            limit,
+            search,
+            sort,
+            schoolId,
+            user: req.user?.id
+        });
 
-            const result = await this.userService.listUsers({
+        const result = await this.userService.listUsers({
+            page: parseInt(page),
+            limit: parseInt(limit),
+            search,
+            schoolId // Aggiungi il filtro schoolId
+        });
+
+        return this.sendResponse(res, {
+            status: 'success',
+            data: {
+                users: result.users,
+                total: result.total,
                 page: parseInt(page),
-                limit: parseInt(limit),
-                search
-            });
-
-            return this.sendResponse(res, {
-                status: 'success',
-                data: {
-                    users: result.users,
-                    total: result.total,
-                    page: parseInt(page),
-                    limit: parseInt(limit)
-                }
-            });
-        } catch (error) {
-            console.error('Controller Error:', error);
-            return this.sendError(res, error);
-        }
+                limit: parseInt(limit)
+            }
+        });
+    } catch (error) {
+        console.error('Controller Error:', error);
+        return this.sendError(res, error);
     }
+}
 
     /**
      * Ottiene utente per ID

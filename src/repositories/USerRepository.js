@@ -127,6 +127,7 @@ class UserRepository extends BaseRepository {
         try {
             let query = {};
             
+            // Filtri esistenti
             if (filters.search) {
                 query.$or = [
                     { firstName: { $regex: filters.search, $options: 'i' } },
@@ -142,6 +143,11 @@ class UserRepository extends BaseRepository {
             if (filters.status) {
                 query.status = filters.status;
             }
+
+            // Aggiung il nuovo filtro per schoolId
+            if (filters.schoolId) {
+                query.schoolId = filters.schoolId;
+            }
     
             const page = parseInt(options.page) || 1;
             const limit = parseInt(options.limit) || 10;
@@ -150,7 +156,7 @@ class UserRepository extends BaseRepository {
             const [users, total] = await Promise.all([
                 this.model
                     .find(query)
-                    .select('firstName lastName email role status createdAt')
+                    .select('firstName lastName email role status schoolId createdAt') // Aggiungi schoolId alla selezione
                     .sort(options.sort || { createdAt: -1 })
                     .skip(skip)
                     .limit(limit)

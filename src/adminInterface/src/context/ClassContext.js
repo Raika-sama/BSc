@@ -335,7 +335,12 @@ export const ClassProvider = ({ children }) => {
             const response = await axiosInstance.get(`/classes/${classId}`);
             
             if (response.data.status === 'success') {
-                const classData = response.data.data.class;
+                // Assicurarsi di estrarre correttamente i dati dalla risposta
+                const classData = response.data.class || response.data.data?.class;
+                if (!classData) {
+                    throw new Error('Dati della classe non trovati nella risposta');
+                }
+                
                 dispatch({
                     type: CLASS_ACTIONS.UPDATE_CLASS,
                     payload: classData
@@ -354,7 +359,7 @@ export const ClassProvider = ({ children }) => {
         } finally {
             dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: false });
         }
-    }, []);  // Mantieni vuoto l'array delle dipendenze
+    }, []);
 
     const removeStudentsFromClass = async (classId, studentIds) => {
         try {

@@ -13,17 +13,27 @@ export const UserProvider = ({ children }) => {
     const { showNotification } = useNotification();
 
     const getUsers = async (filters = {}) => {
-        const { page = 1, limit = 10, search = '', sort = '-createdAt' } = filters;
+        const { page = 1, limit = 10, search = '', sort = '-createdAt', schoolId, role } = filters;
         
         setLoading(true);
         try {
+            console.log('UserContext: Getting users with filters:', filters);
+
             const response = await axiosInstance.get('/users', {
-                params: { page, limit, search, sort }
+                params: { 
+                    page, 
+                    limit, 
+                    search, 
+                    sort,
+                    schoolId, // Assicurati che questo venga passato
+                    role 
+                }
             });
     
-            // La struttura della risposta dovrebbe essere più semplice
+            console.log('UserContext: Response received:', response.data);
+
             if (response.data.status === 'success') {
-                const { users, total, page: currentPage } = response.data.data;
+                const { users, total, page: currentPage } = response.data.data.data;
                 
                 setUsers(users || []);
                 setTotalUsers(total || 0);

@@ -137,7 +137,8 @@ class UserService {
             const normalizedFilters = {
                 search: filters.search || '',
                 role: filters.role,
-                status: filters.status
+                status: filters.status,
+                schoolId: filters.schoolId // Aggiungi il supporto per schoolId
             };
     
             const normalizedOptions = {
@@ -151,7 +152,6 @@ class UserService {
                 normalizedOptions
             );
     
-            // Non serve mappare i risultati con sanitizeUser se usiamo .lean()
             return {
                 users: result.users,
                 total: result.total,
@@ -383,20 +383,23 @@ class UserService {
      * Sanitizza oggetto utente per risposta
      * @param {Object} user - Utente da sanitizzare
      */
-    sanitizeUser(user) {
-        if (!user) return null;
-        
-        // Estrai direttamente i campi che vuoi escludere
-        const {
-            password,
-            passwordHistory,
-            passwordResetToken,
-            passwordResetExpires,
-            ...safeUser
-        } = user;
-        
-        return safeUser;
-    }
+sanitizeUser(user) {
+    if (!user) return null;
+    
+    // Se l'oggetto è già un plain object (da .lean())
+    const userData = user.toObject ? user.toObject() : { ...user };
+    
+    // Rimuovi i campi sensibili
+    const {
+        password,
+        passwordHistory,
+        passwordResetToken,
+        passwordResetExpires,
+        ...safeUser
+    } = userData;
+    
+    return safeUser;
+}
 }
 
 module.exports = UserService;

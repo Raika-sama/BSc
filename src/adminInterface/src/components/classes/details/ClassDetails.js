@@ -10,12 +10,12 @@ import StudentsList from './detailscomponents/StudentsList';
 import StudentDetailsDialog from './detailscomponents/StudentDetailsDialog';
 import StudentForm from '../../students/StudentForm';
 import StudentClassForm from './forms/StudentClassForm';
+import TeacherForm from './forms/TeacherForm'; // Aggiungi questo import
 
 const ClassDetails = () => {
     const { classId } = useParams();
     const navigate = useNavigate();
-    const { getClassDetails } = useClass();
-    
+    const { getClassDetails, removeMainTeacher } = useClass(); // Aggiungi removeMainTeacher
     const [classData, setClassData] = useState(null);
     const [localError, setLocalError] = useState(null);
     const [localLoading, setLocalLoading] = useState(true);
@@ -25,18 +25,24 @@ const ClassDetails = () => {
     const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
     const [pageSize, setPageSize] = useState(25);
     const [studentFormOpen, setStudentFormOpen] = useState(false);
+    const [teacherFormOpen, setTeacherFormOpen] = useState(false); // Nuovo stato per il form docente
 
-    const fetchData = async () => {
+     // Funzione per caricare i dati della classe
+     const loadClassData = async () => {
+        if (!classId) {
+            setLocalError("ID classe non fornito");
+            setLocalLoading(false);
+            return;
+        }
+        
         try {
             setLocalLoading(true);
             const response = await getClassDetails(classId);
-            // Verifica se i dati sono effettivamente cambiati prima di aggiornare lo stato
-            if (JSON.stringify(response) !== JSON.stringify(classData)) {
-                setClassData(response);
-            }
+            setClassData(response);
             setLocalError(null);
         } catch (err) {
-            setLocalError(err.message);
+            setLocalError(err.message || 'Errore nel caricamento dei dati della classe');
+            console.error('Errore nel caricamento:', err);
         } finally {
             setLocalLoading(false);
         }
@@ -45,26 +51,18 @@ const ClassDetails = () => {
     useEffect(() => {
         let isMounted = true;
 
-        const loadData = async () => {
-            if (!classId) return;
-            
-            try {
-                const response = await getClassDetails(classId);
-                if (isMounted) {
-                    setClassData(response);
-                }
-            } catch (err) {
-                // Gli errori sono già gestiti nel context
-                console.error('Error loading class details:', err);
+        const initializeData = async () => {
+            if (isMounted) {
+                await loadClassData();
             }
         };
 
-        loadData();
+        initializeData();
 
         return () => {
             isMounted = false;
         };
-    }, [classId]); // Rimuovi getClassDetails dalle dipendenze
+    }, [classId, getClassDetails]);
 
     const handleViewDetails = (student) => {
         setSelectedStudent(student);
@@ -78,6 +76,27 @@ const ClassDetails = () => {
 
     const handleNavigateToTests = (studentId) => {
         navigate(`/admin/students/${studentId}/tests`);
+    };
+
+   // Nuove funzioni per gestire il docente principale
+   const handleAddMainTeacher = () => {
+    setTeacherFormOpen(true);
+    };
+
+    const handleRemoveMainTeacher = async () => {
+        try {
+            const confirmed = window.confirm(
+                'Sei sicuro di voler rimuovere il docente principale?'
+            );
+
+            if (confirmed) {
+                await removeMainTeacher(classId);
+                await loadClassData(); // Usa loadClassData invece di fetchData
+            }
+        } catch (error) {
+            setLocalError('Errore durante la rimozione del docente principale');
+            console.error('Error removing main teacher:', error);
+        }
     };
 
     if (localLoading) {
@@ -96,6 +115,7 @@ const ClassDetails = () => {
         return <Alert severity="info">Nessun dato disponibile per questa classe.</Alert>;
     }
 
+
     return (
         <Box p={3}>
             <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
@@ -112,6 +132,8 @@ const ClassDetails = () => {
                 <InfoSection 
                     expandedInfo={expandedInfo}
                     classData={classData}
+                    onAddMainTeacher={handleAddMainTeacher} // Aggiungi questa prop
+                    onRemoveMainTeacher={handleRemoveMainTeacher} // Aggiungi questa prop
                 />
             </Paper>
 
@@ -123,7 +145,7 @@ const ClassDetails = () => {
                 onViewDetails={handleViewDetails}
                 onEdit={handleEdit}
                 onNavigateToTests={handleNavigateToTests}
-                fetchData={fetchData}
+                fetchData={loadClassData} // Passa la nuova funzione loadClassData invece di fetchData
             />
 
             <StudentDetailsDialog 
@@ -140,7 +162,7 @@ const ClassDetails = () => {
                 onClose={() => {
                     setFormOpen(false);
                     setSelectedStudent(null);
-                    fetchData();
+                    loadClassData(); // Usa loadClassData qui
                 }}
                 student={selectedStudent}
             />
@@ -150,13 +172,27 @@ const ClassDetails = () => {
                 onClose={(shouldRefresh) => {
                     setStudentFormOpen(false);
                     if (shouldRefresh) {
-                        fetchData();
+                        loadClassData(); // Usa loadClassData qui
                     }
                 }}
                 classData={classData}
             />
+
+            {/* Aggiungere il form per il docente principale */}
+            <TeacherForm 
+                open={teacherFormOpen}
+                onClose={(shouldRefresh) => {
+                    setTeacherFormOpen(false);
+                    if (shouldRefresh) {
+                        loadClassData(); // Usa loadClassData invece di fetchData
+                    }
+                }}
+                classData={classData}
+                isMainTeacher={true}
+            />
         </Box>
     );
+
 };
 
 export default ClassDetails;
