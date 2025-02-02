@@ -30,6 +30,8 @@ class SchoolController extends BaseController {
         this.getById = this.getById.bind(this);
         this.addUserToSchool = this.addUserToSchool.bind(this);
         this.setupInitialConfiguration = this.setupInitialConfiguration.bind(this);
+        this.removeManagerFromSchool = this.removeManagerFromSchool.bind(this);
+
     }
 
     // Aggiungi questi metodi di utility
@@ -401,229 +403,295 @@ class SchoolController extends BaseController {
     }
 
     /**
- * Gestisce la disattivazione di una sezione
- */
-async deactivateSection(req, res) {
-    try {
-        const { schoolId, sectionName } = req.params;
-
-        logger.debug('Controller: Inizio deactivateSection', {
-            schoolId,
-            sectionName,
-            hasRepository: !!this.repository,
-            hasClassRepository: !!this.repository.classRepository // Verifica se classRepository è definito
-        });
-
-        // 1. Prima recupera gli studenti che saranno impattati
-        const students = await this.repository.getStudentsBySection(schoolId, sectionName);
-        
-        // 2. Disattiva la sezione
-        const updatedSchool = await this.repository.deactivateSection(schoolId, sectionName);
-        
-        // 3. Aggiorna gli studenti
-        const studentUpdateResult = await this.studentRepository.updateStudentsForDeactivatedSection(
-            schoolId, 
-            sectionName
-        );
-
-        logger.info('Sezione disattivata con successo:', {
-            schoolId,
-            sectionName,
-            studentsUpdated: studentUpdateResult.modifiedCount
-        });
-
-        this.sendResponse(res, {
-            message: 'Sezione disattivata con successo',
-            studentsUpdated: studentUpdateResult.modifiedCount,
-            school: updatedSchool
-        });
-
-    } catch (error) {
-        logger.error('Errore nella disattivazione della sezione:', {
-            error: error.message,
-            stack: error.stack
-        });
-        this.sendError(res, error);
-    }
-}
-
-/**
- * Riattiva una sezione precedentemente disattivata
- */
-async reactivateSection(req, res) {
-    try {
-        const { schoolId, sectionName } = req.params;
-        
-        logger.debug('Controller: Richiesta riattivazione sezione', {
-            schoolId,
-            sectionName,
-            userId: req.user?.id
-        });
-
-        const result = await this.repository.reactivateSection(schoolId, sectionName);
-
-        this.sendResponse(res, {
-            status: 'success',
-            data: {
-                school: result.school,
-                classesReactivated: result.classesReactivated
-            }
-        });
-
-    } catch (error) {
-        logger.error('Controller: Errore nella riattivazione sezione', {
-            error: error.message,
-            schoolId: req.params.schoolId,
-            sectionName: req.params.sectionName
-        });
-        this.sendError(res, error);
-    }
-}
-
-/**
- * Recupera le sezioni di una scuola con il conteggio degli studenti
- */
-async getSections(req, res) {
-    try {
-        const schoolId = req.params.id;
-        const { includeInactive = false } = req.query;
-
-        logger.debug('Richiesta recupero sezioni:', {
-            schoolId,
-            includeInactive,
-            userRole: req.user.role
-        });
-
-        // Recupera la scuola
-        let school;
+     * Rimuove il manager da una scuola e aggiorna le relative entità
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     */
+    async removeManagerFromSchool(req, res) {
         try {
-            school = await this.repository.findById(schoolId);
-            logger.debug('Scuola trovata:', {
-                schoolId: school._id,
-                schoolName: school.name
+            logger.debug('Inizio rimozione manager dalla scuola', { 
+                schoolId: req.params.id,
+                requestedBy: req.user._id
             });
+    
+            const schoolId = req.params.id;
+            const school = await this.repository.findById(schoolId);
+            
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+    
+            // 2. Verifica che ci sia un manager da rimuovere
+            if (!school.manager) {
+                throw createError(
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
+                    'La scuola non ha un manager da rimuovere'
+                );
+            }
+    
+            // 3. Esegui la rimozione attraverso il repository
+            const result = await this.repository.removeManagerFromSchool(schoolId);
+    
+            logger.info('Manager rimosso con successo', {
+                schoolId,
+                oldManagerId: result.oldManagerId,
+                updatedSchool: result.school._id
+            });
+    
+            // 4. Invia la risposta
+            return res.status(200).json({
+                status: 'success',
+                data: {
+                    school: result.school,
+                    oldManagerId: result.oldManagerId,
+                    message: 'Manager rimosso con successo'
+                }
+            });
+    
         } catch (error) {
-            logger.error('Errore nel recupero della scuola:', {
+            logger.error('Errore nella rimozione del manager:', {
                 error: error.message,
-                schoolId
+                schoolId: req.params.id,
+                stack: error.stack
             });
-            return this.sendError(res, {
-                statusCode: 404,
-                message: 'Scuola non trovata',
-                code: 'SCHOOL_NOT_FOUND'
+    
+            return res.status(error.statusCode || 500).json({
+                status: 'error',
+                error: {
+                    message: error.message || 'Errore nella rimozione del manager',
+                    code: error.code || 'INTERNAL_SERVER_ERROR'
+                }
             });
         }
+    }
 
-        // Verifica autorizzazioni
-        if (req.user.role !== 'admin') {
-            if (!req.user.schoolId || req.user.schoolId.toString() !== schoolId) {
+    /**
+     * Gestisce la disattivazione di una sezione
+     */
+    async deactivateSection(req, res) {
+        try {
+            const { schoolId, sectionName } = req.params;
+
+            logger.debug('Controller: Inizio deactivateSection', {
+                schoolId,
+                sectionName,
+                hasRepository: !!this.repository,
+                hasClassRepository: !!this.repository.classRepository // Verifica se classRepository è definito
+            });
+
+            // 1. Prima recupera gli studenti che saranno impattati
+            const students = await this.repository.getStudentsBySection(schoolId, sectionName);
+            
+            // 2. Disattiva la sezione
+            const updatedSchool = await this.repository.deactivateSection(schoolId, sectionName);
+            
+            // 3. Aggiorna gli studenti
+            const studentUpdateResult = await this.studentRepository.updateStudentsForDeactivatedSection(
+                schoolId, 
+                sectionName
+            );
+
+            logger.info('Sezione disattivata con successo:', {
+                schoolId,
+                sectionName,
+                studentsUpdated: studentUpdateResult.modifiedCount
+            });
+
+            this.sendResponse(res, {
+                message: 'Sezione disattivata con successo',
+                studentsUpdated: studentUpdateResult.modifiedCount,
+                school: updatedSchool
+            });
+
+        } catch (error) {
+            logger.error('Errore nella disattivazione della sezione:', {
+                error: error.message,
+                stack: error.stack
+            });
+            this.sendError(res, error);
+        }
+    }
+
+    /**
+     * Riattiva una sezione precedentemente disattivata
+     */
+    async reactivateSection(req, res) {
+        try {
+            const { schoolId, sectionName } = req.params;
+            
+            logger.debug('Controller: Richiesta riattivazione sezione', {
+                schoolId,
+                sectionName,
+                userId: req.user?.id
+            });
+
+            const result = await this.repository.reactivateSection(schoolId, sectionName);
+
+            this.sendResponse(res, {
+                status: 'success',
+                data: {
+                    school: result.school,
+                    classesReactivated: result.classesReactivated
+                }
+            });
+
+        } catch (error) {
+            logger.error('Controller: Errore nella riattivazione sezione', {
+                error: error.message,
+                schoolId: req.params.schoolId,
+                sectionName: req.params.sectionName
+            });
+            this.sendError(res, error);
+        }
+    }
+
+    /**
+     * Recupera le sezioni di una scuola con il conteggio degli studenti
+     */
+    async getSections(req, res) {
+        try {
+            const schoolId = req.params.id;
+            const { includeInactive = false } = req.query;
+
+            logger.debug('Richiesta recupero sezioni:', {
+                schoolId,
+                includeInactive,
+                userRole: req.user.role
+            });
+
+            // Recupera la scuola
+            let school;
+            try {
+                school = await this.repository.findById(schoolId);
+                logger.debug('Scuola trovata:', {
+                    schoolId: school._id,
+                    schoolName: school.name
+                });
+            } catch (error) {
+                logger.error('Errore nel recupero della scuola:', {
+                    error: error.message,
+                    schoolId
+                });
                 return this.sendError(res, {
-                    statusCode: 403,
-                    message: 'Non autorizzato ad accedere a questa scuola',
-                    code: 'UNAUTHORIZED_SCHOOL_ACCESS'
+                    statusCode: 404,
+                    message: 'Scuola non trovata',
+                    code: 'SCHOOL_NOT_FOUND'
                 });
             }
-        }
 
-        // Recupera il conteggio degli studenti per sezione
-        const classesWithStudents = await Class.aggregate([
-            { 
-                $match: { 
-                    schoolId: new mongoose.Types.ObjectId(schoolId),
-                    isActive: true 
-                } 
-            },
-            {
-                $group: {
-                    _id: '$section',
-                    studentCount: {
-                        $sum: {
-                            $size: {
-                                $filter: {
-                                    input: '$students',
-                                    as: 'student',
-                                    cond: { $eq: ['$$student.status', 'active'] }
+            // Verifica autorizzazioni
+            if (req.user.role !== 'admin') {
+                if (!req.user.schoolId || req.user.schoolId.toString() !== schoolId) {
+                    return this.sendError(res, {
+                        statusCode: 403,
+                        message: 'Non autorizzato ad accedere a questa scuola',
+                        code: 'UNAUTHORIZED_SCHOOL_ACCESS'
+                    });
+                }
+            }
+
+            // Recupera il conteggio degli studenti per sezione
+            const classesWithStudents = await Class.aggregate([
+                { 
+                    $match: { 
+                        schoolId: new mongoose.Types.ObjectId(schoolId),
+                        isActive: true 
+                    } 
+                },
+                {
+                    $group: {
+                        _id: '$section',
+                        studentCount: {
+                            $sum: {
+                                $size: {
+                                    $filter: {
+                                        input: '$students',
+                                        as: 'student',
+                                        cond: { $eq: ['$$student.status', 'active'] }
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-        ]);
+            ]);
 
-        // Mappa le sezioni con i conteggi
-        const sections = school.sections
-            .filter(section => includeInactive === 'true' || section.isActive)
-            .map(section => {
-                const stats = classesWithStudents.find(c => c._id === section.name);
-                return {
-                    ...section.toObject(),
-                    studentsCount: stats?.studentCount || 0
-                };
+            // Mappa le sezioni con i conteggi
+            const sections = school.sections
+                .filter(section => includeInactive === 'true' || section.isActive)
+                .map(section => {
+                    const stats = classesWithStudents.find(c => c._id === section.name);
+                    return {
+                        ...section.toObject(),
+                        studentsCount: stats?.studentCount || 0
+                    };
+                });
+
+            logger.debug('Sezioni recuperate con successo:', {
+                schoolId,
+                sectionsCount: sections.length,
+                sectionsWithStudents: sections.map(s => ({
+                    name: s.name,
+                    studentsCount: s.studentsCount
+                }))
             });
 
-        logger.debug('Sezioni recuperate con successo:', {
-            schoolId,
-            sectionsCount: sections.length,
-            sectionsWithStudents: sections.map(s => ({
-                name: s.name,
-                studentsCount: s.studentsCount
-            }))
-        });
+            this.sendResponse(res, {
+                sections: sections
+            });
 
-        this.sendResponse(res, {
-            sections: sections
-        });
-
-    } catch (error) {
-        logger.error('Errore nel recupero delle sezioni:', {
-            error: error.message,
-            stack: error.stack
-        });
-        this.sendError(res, {
-            statusCode: 500,
-            message: 'Errore interno nel recupero delle sezioni',
-            code: 'INTERNAL_SERVER_ERROR'
-        });
+        } catch (error) {
+            logger.error('Errore nel recupero delle sezioni:', {
+                error: error.message,
+                stack: error.stack
+            });
+            this.sendError(res, {
+                statusCode: 500,
+                message: 'Errore interno nel recupero delle sezioni',
+                code: 'INTERNAL_SERVER_ERROR'
+            });
+        }
     }
-}
 
-async getSectionStudents(req, res) {
-    try {
-        const { schoolId, sectionName } = req.params;
+    async getSectionStudents(req, res) {
+        try {
+            const { schoolId, sectionName } = req.params;
 
-        logger.debug('Recupero studenti della sezione:', {
-            schoolId,
-            sectionName
-        });
+            logger.debug('Recupero studenti della sezione:', {
+                schoolId,
+                sectionName
+            });
 
-        const students = await this.repository.getStudentsBySection(schoolId, sectionName);
+            const students = await this.repository.getStudentsBySection(schoolId, sectionName);
 
-        // Formatta i dati degli studenti per il frontend
-        const formattedStudents = students.map(student => ({
-            _id: student._id,
-            firstName: student.firstName,
-            lastName: student.lastName,
-            year: student.year,
-            currentClass: student.currentClass
-        }));
+            // Formatta i dati degli studenti per il frontend
+            const formattedStudents = students.map(student => ({
+                _id: student._id,
+                firstName: student.firstName,
+                lastName: student.lastName,
+                year: student.year,
+                currentClass: student.currentClass
+            }));
 
-        this.sendResponse(res, {
-            students: formattedStudents
-        });
+            this.sendResponse(res, {
+                students: formattedStudents
+            });
 
-    } catch (error) {
-        logger.error('Errore nel recupero degli studenti della sezione:', {
-            error: error.message,
-            stack: error.stack
-        });
-        this.sendError(res, {
-            statusCode: 500,
-            message: 'Errore nel recupero degli studenti della sezione',
-            code: 'INTERNAL_SERVER_ERROR'
-        });
+        } catch (error) {
+            logger.error('Errore nel recupero degli studenti della sezione:', {
+                error: error.message,
+                stack: error.stack
+            });
+            this.sendError(res, {
+                statusCode: 500,
+                message: 'Errore nel recupero degli studenti della sezione',
+                code: 'INTERNAL_SERVER_ERROR'
+            });
+        }
     }
-}
 
     
 }

@@ -295,6 +295,56 @@ export const SchoolProvider = ({ children }) => {
         }
     };
 
+    const removeManagerFromSchool = async (schoolId) => {
+        try {
+            setLoading(true);
+            setError(null);
+    
+            const response = await axiosInstance.post(
+                `/schools/${schoolId}/remove-manager`
+            );
+    
+            if (response.data.status === 'success') {
+                const updatedSchool = response.data.data.school;
+                const oldManagerId = response.data.data.oldManagerId;
+                
+                // Aggiorna lo stato locale
+                setSchools(prev => prev.map(school => 
+                    school._id === schoolId ? {
+                        ...school,
+                        manager: null,
+                        users: school.users.filter(u => 
+                            u.user._id !== oldManagerId
+                        )
+                    } : school
+                ));
+    
+                if (selectedSchool?._id === schoolId) {
+                    setSelectedSchool(prev => ({
+                        ...prev,
+                        manager: null,
+                        users: prev.users.filter(u => 
+                            u.user._id !== oldManagerId
+                        )
+                    }));
+                }
+    
+                showNotification('Manager rimosso con successo', 'success');
+                return updatedSchool;
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.error?.message || 
+                               'Errore nella rimozione del manager';
+            setError(errorMessage);
+            showNotification(errorMessage, 'error');
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+
+    
 
     // Metodo per recuperare le sezioni di una scuola
      // Modifichiamo anche getSections per usare il nuovo stato
@@ -452,6 +502,7 @@ const getSectionStudents = async (schoolId, sectionName) => {
             updateSchool,
             deleteSchool,
             addUserToSchool,
+            removeManagerFromSchool,
             validateSchoolData,
             getSections,
             getSectionStudents,

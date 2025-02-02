@@ -16,7 +16,8 @@ import {
     IconButton,
     TextField,
     MenuItem,
-    Divider
+    Divider,
+    CircularProgress
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import StarIcon from '@mui/icons-material/Star';
@@ -37,13 +38,20 @@ const SchoolUsersManagement = ({
     manager,
     onAddUser,
     onRemoveUser,
-    onChangeManager,
+    onClose,
     isDialog = false
 }) => {
     const { showNotification } = useNotification();
+    const { removeManagerFromSchool } = useSchool();
+    const [loading, setLoading] = useState(false);
     const [operationDialog, setOperationDialog] = useState({
         open: false,
         type: null
+    });
+    const [confirmDialog, setConfirmDialog] = useState({
+        open: false,
+        title: '',
+        message: ''
     });
     const [formData, setFormData] = useState({
         email: '',
@@ -66,9 +74,6 @@ const SchoolUsersManagement = ({
             if (operationDialog.type === OPERATION_TYPES.ADD_USER) {
                 await onAddUser(formData);
                 showNotification('Utente aggiunto con successo', 'success');
-            } else if (operationDialog.type === OPERATION_TYPES.CHANGE_MANAGER) {
-                await onChangeManager(formData.userId);
-                showNotification('Manager cambiato con successo', 'success');
             }
             handleCloseDialog();
         } catch (error) {
@@ -79,20 +84,59 @@ const SchoolUsersManagement = ({
         }
     };
 
-    const handleManagerAction = async () => {
-        if (manager) {
-            // Se c'è un manager, lo rimuoviamo
-            try {
-                await onChangeManager(null);
-                showNotification('Manager rimosso con successo', 'success');
-            } catch (error) {
-                showNotification('Errore nella rimozione del manager', 'error');
-            }
-        } else {
-            // Se non c'è un manager, apriamo il dialog per aggiungerne uno
-            handleOpenDialog(OPERATION_TYPES.ADD_USER);
+    const handleManagerRemove = () => {
+        setConfirmDialog({
+            open: true,
+            title: 'Conferma Rimozione Manager',
+            message: `Sei sicuro di voler rimuovere ${manager.firstName} ${manager.lastName} come manager della scuola? 
+                     Questa azione potrebbe avere conseguenze sulle classi e gli studenti associati.`
+        });
+    };
+
+    const handleConfirmManagerRemove = async () => {
+        try {
+            setLoading(true);
+            await removeManagerFromSchool(schoolId);
+            showNotification('Manager rimosso con successo', 'success');
+        } catch (error) {
+            showNotification(
+                error.response?.data?.error?.message || 'Errore nella rimozione del manager',
+                'error'
+            );
+        } finally {
+            setLoading(false);
+            setConfirmDialog({ open: false, title: '', message: '' });
         }
     };
+
+    const renderConfirmDialog = () => (
+        <Dialog
+            open={confirmDialog.open}
+            onClose={() => setConfirmDialog({ open: false, title: '', message: '' })}
+        >
+            <DialogTitle>{confirmDialog.title}</DialogTitle>
+            <DialogContent>
+                <Typography>{confirmDialog.message}</Typography>
+            </DialogContent>
+            <DialogActions>
+                <Button 
+                    onClick={() => setConfirmDialog({ open: false, title: '', message: '' })}
+                    disabled={loading}
+                >
+                    Annulla
+                </Button>
+                <Button 
+                    onClick={handleConfirmManagerRemove}
+                    color="error"
+                    variant="contained"
+                    disabled={loading}
+                    startIcon={loading ? <CircularProgress size={20} /> : <DeleteIcon />}
+                >
+                    {loading ? 'Rimozione in corso...' : 'Rimuovi Manager'}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
 
     const renderUsersList = () => (
         <List>
@@ -112,7 +156,8 @@ const SchoolUsersManagement = ({
                             size="small"
                             color="error"
                             startIcon={<DeleteIcon />}
-                            onClick={() => onChangeManager(null)}
+                            onClick={handleManagerRemove}
+                            disabled={loading}
                         >
                             Rimuovi Manager
                         </Button>
@@ -122,6 +167,7 @@ const SchoolUsersManagement = ({
                             color="primary"
                             startIcon={<AddIcon />}
                             onClick={() => handleOpenDialog(OPERATION_TYPES.ADD_USER)}
+                            disabled={loading}
                         >
                             Aggiungi Manager
                         </Button>
@@ -146,9 +192,9 @@ const SchoolUsersManagement = ({
                     </Typography>
                 )}
             </Box>
-    
+
             <Divider sx={{ my: 2 }} />
-    
+
             {/* Users List */}
             <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="subtitle1" fontWeight="bold">
@@ -157,11 +203,12 @@ const SchoolUsersManagement = ({
                 <Button
                     startIcon={<AddIcon />}
                     onClick={() => handleOpenDialog(OPERATION_TYPES.ADD_USER)}
+                    disabled={loading}
                 >
                     Aggiungi Utente
                 </Button>
             </Box>
-    
+
             {users.map((userAssignment) => {
                 const user = userAssignment.user || userAssignment;
                 return (
@@ -173,6 +220,7 @@ const SchoolUsersManagement = ({
                                 onClick={() => onRemoveUser(user._id)}
                                 size="small"
                                 color="error"
+                                disabled={loading}
                             >
                                 <DeleteIcon />
                             </IconButton>
@@ -249,8 +297,12 @@ const SchoolUsersManagement = ({
                 )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleCloseDialog}>Annulla</Button>
-                <Button onClick={handleSubmit} variant="contained">
+                <Button onClick={handleCloseDialog} disabled={loading}>Annulla</Button>
+                <Button 
+                    onClick={handleSubmit} 
+                    variant="contained"
+                    disabled={loading}
+                >
                     Conferma
                 </Button>
             </DialogActions>
@@ -261,6 +313,7 @@ const SchoolUsersManagement = ({
         <>
             {renderUsersList()}
             {renderOperationDialog()}
+            {renderConfirmDialog()}
         </>
     );
 
@@ -270,7 +323,7 @@ const SchoolUsersManagement = ({
                 <DialogTitle>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Typography variant="h6">Gestione Utenti</Typography>
-                        <IconButton onClick={onClose} size="small">
+                        <IconButton onClick={onClose} size="small" disabled={loading}>
                             <CloseIcon />
                         </IconButton>
                     </Box>

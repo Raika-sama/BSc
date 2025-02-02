@@ -124,6 +124,11 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
         }
     });
 
+    router.post('/:id/remove-manager',
+        restrictTo('admin'),
+        asyncHandler(schoolController.removeManagerFromSchool.bind(schoolController))
+    );
+
     // Gestione errori specifica per le scuole
     router.use((err, req, res, next) => {
         logger.error('School Route Error:', {

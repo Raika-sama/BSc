@@ -700,6 +700,94 @@ class SchoolRepository extends BaseRepository {
         }
     }
 
+    // In SchoolRepository.js
+
+    async removeManagerFromSchool(schoolId) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+    
+        try {
+            // 1. Trova la scuola e verifica che esista
+            const school = await this.model.findById(schoolId).session(session);
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+    
+            const oldManagerId = school.manager;
+    
+            // 2. Aggiorna le classi dove l'ex manager è mainTeacher
+            await Class.updateMany(
+                {
+                    schoolId,
+                    mainTeacher: oldManagerId
+                },
+                {
+                    $set: {
+                        mainTeacherIsTemporary: true,
+                        previousMainTeacher: oldManagerId,
+                        mainTeacher: null  // Temporaneamente null
+                    }
+                },
+                { session }
+            );
+    
+            // 3. Aggiorna gli studenti che avevano l'ex manager come mainTeacher
+            await Student.updateMany(
+                {
+                    schoolId,
+                    mainTeacher: oldManagerId
+                },
+                {
+                    $set: { mainTeacher: null },
+                    $pull: { teachers: oldManagerId }  // Rimuove l'ex manager dall'array teachers
+                },
+                { session }
+            );
+    
+            // 4. Rimuovi il manager dalla scuola e dall'array users
+            const updatedSchool = await this.model.findByIdAndUpdate(
+                schoolId,
+                {
+                    $set: { manager: null },
+                    $pull: { users: { user: oldManagerId } }  // Rimuove l'utente dall'array users
+                },
+                { 
+                    new: true,
+                    session 
+                }
+            );
+    
+            await session.commitTransaction();
+            
+            logger.info('Manager rimosso con successo', {
+                schoolId,
+                oldManagerId,
+                wasAlsoUser: school.users.some(u => u.user.toString() === oldManagerId.toString())
+            });
+    
+            return {
+                school: updatedSchool,
+                oldManagerId
+            };
+    
+        } catch (error) {
+            await session.abortTransaction();
+            logger.error('Errore nella rimozione del manager:', {
+                error: error.message,
+                schoolId
+            });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore nella rimozione del manager',
+                { originalError: error.message }
+            );
+        } finally {
+            session.endSession();
+        }
+    }
       
 }
 
