@@ -1,12 +1,9 @@
 // src/components/ClassManagement/ClassManagement.jsx
+// src/components/classes/ClassManagement.js
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
     Box,
     Typography,
-    Paper,
-    Tabs,
-    Tab,
     CircularProgress,
     Dialog,
     DialogTitle,
@@ -14,27 +11,29 @@ import {
     DialogActions,
     Button,
     Alert,
-    Chip,
     Tooltip,
-    IconButton
+    IconButton,
+    Tabs,
+    Tab
 } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ContentLayout } from '../common/commonIndex';
-import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
+import ListLayout from '../common/ListLayout';
+import { DataGrid } from '@mui/x-data-grid';
 import { useClass } from '../../context/ClassContext';
 import { useAuth } from '../../context/AuthContext';
 import { 
-    Delete as DeleteIcon,
-    Visibility as VisibilityIcon,
-    Quiz as QuizIcon,
-    School as SchoolIcon,
-    Warning as WarningIcon,
-    CheckCircle as CheckCircleIcon,
     Add as AddIcon,
-    FilterList as FilterListIcon
+    FilterList as FilterListIcon,
+    School as SchoolIcon,
+    Class as ClassIcon,
+    Group as GroupIcon,
+    Assessment as AssessmentIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { StatCards } from './classcomponents/StatCards';
 import { FilterToolbar } from './classcomponents/FilterToolbar';
+import createColumns from './classcomponents/ClassColumns';
+
 
 const ClassManagement = () => {
     const [tabValue, setTabValue] = useState(0);
@@ -108,222 +107,7 @@ const ClassManagement = () => {
         });
     };
 
-    const columns = [
-        {
-            field: 'schoolName',
-            headerName: 'Scuola',
-            flex: 1,
-            minWidth: 180,
-            renderCell: (params) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <SchoolIcon sx={{ fontSize: '1.1rem', color: 'primary.main' }} />
-                    <Typography variant="body2">{params.value}</Typography>
-                </Box>
-            )
-        },
-        {
-            field: 'year',
-            headerName: 'Anno',
-            width: 80,
-            align: 'center',
-            headerAlign: 'center',
-            renderCell: (params) => (
-                <Chip
-                    label={`${params.value}°`}
-                    color="primary"
-                    size="small"
-                    sx={{
-                        minWidth: '50px',
-                        height: '24px',
-                        backgroundColor: (theme) => theme.palette.primary.main,
-                        color: 'white',
-                        fontWeight: 'bold',
-                        '& .MuiChip-label': {
-                            fontSize: '0.875rem',
-                            px: 1
-                        }
-                    }}
-                />
-            )
-        },
-        {
-            field: 'section',
-            headerName: 'Sezione',
-            width: 90,
-            align: 'center',
-            headerAlign: 'center',
-            renderCell: (params) => (
-                <Chip
-                    label={params.value}
-                    color="secondary"
-                    size="small"
-                    sx={{
-                        minWidth: '50px',
-                        height: '24px',
-                        backgroundColor: (theme) => theme.palette.secondary.main,
-                        color: 'white',
-                        fontWeight: 'bold',
-                        '& .MuiChip-label': {
-                            fontSize: '0.875rem',
-                            px: 1
-                        }
-                    }}
-                />
-            )
-        },
-        {
-            field: 'academicYear',
-            headerName: 'Anno Accademico',
-            width: 130,
-            align: 'center',
-            headerAlign: 'center'
-        },
-        {
-            field: 'status',
-            headerName: 'Status',
-            width: 150,
-            align: 'center',
-            headerAlign: 'center',
-            renderCell: (params) => {
-                const status = params.value;
-                let chipColor;
-                let label;
-                
-                switch (status) {
-                    case 'active':
-                        chipColor = 'success';
-                        label = 'Attiva';
-                        break;
-                    case 'planned':
-                        chipColor = 'info';
-                        label = 'Pianificata';
-                        break;
-                    case 'archived':
-                        chipColor = 'default';
-                        label = 'Archiviata';
-                        break;
-                    default:
-                        chipColor = 'default';
-                        label = status;
-                }
-                
-                return (
-                    <Chip
-                        label={label}
-                        color={chipColor}
-                        size="small"
-                        sx={{
-                            minWidth: '90px',
-                            height: '24px',
-                            '& .MuiChip-label': {
-                                fontSize: '0.75rem'
-                            }
-                        }}
-                    />
-                );
-            }
-        },
-        {
-            field: 'isActive',
-            headerName: 'Attiva',
-            width: 120,
-            align: 'center',
-            headerAlign: 'center',
-            renderCell: (params) => {
-                return (
-                    <Chip
-                        label={params.value ? 'Sì' : 'No'}
-                        color={params.value ? 'success' : 'error'}
-                        size="small"
-                        sx={{
-                            minWidth: '60px',
-                            height: '24px',
-                            '& .MuiChip-label': {
-                                fontSize: '0.75rem'
-                            }
-                        }}
-                    />
-                );
-            }
-        },
-        {
-            field: 'studentCount',
-            headerName: 'Studenti',
-            width: 150,
-            align: 'center',
-            headerAlign: 'center',
-            renderCell: (params) => {
-                const count = params.row.students?.length || 0;
-                const capacity = params.row.capacity || 0;
-                const isFull = count >= capacity;
-                const isPending = count > 0 && count < capacity;
-                const isEmpty = count === 0;
-
-                return (
-                    <Tooltip title={`${count}/${capacity} studenti`}>
-                        <Chip
-                            icon={isEmpty ? 
-                                <WarningIcon sx={{ fontSize: '1rem !important' }} /> :
-                                isFull ? 
-                                <CheckCircleIcon sx={{ fontSize: '1rem !important' }} /> :
-                                <WarningIcon sx={{ fontSize: '1rem !important' }} />
-                            }
-                            label={isEmpty ? 'Vuota' : 
-                                   isFull ? 'Completa' : 
-                                   `${count}/${capacity}`}
-                            color={isEmpty ? 'warning' : 
-                                   isFull ? 'success' : 
-                                   'primary'}
-                            size="small"
-                            sx={{
-                                minWidth: '90px',
-                                height: '24px',
-                                '& .MuiChip-label': {
-                                    fontSize: '0.75rem',
-                                    px: 1
-                                }
-                            }}
-                        />
-                    </Tooltip>
-                );
-            }
-        },
-        {
-            field: 'actions',
-            type: 'actions',
-            headerName: 'Azioni',
-            width: 150,
-            getActions: (params) => [
-                <GridActionsCellItem
-                    icon={
-                        <Tooltip title="Visualizza dettagli">
-                            <VisibilityIcon sx={{ fontSize: '1.1rem' }} />
-                        </Tooltip>
-                    }
-                    label="Visualizza"
-                    onClick={() => handleViewDetails(params.row)}
-                />,
-                <GridActionsCellItem
-                    icon={
-                        <Tooltip title="Gestione test">
-                            <QuizIcon sx={{ fontSize: '1.1rem' }} />
-                        </Tooltip>
-                    }
-                    label="Test"
-                    onClick={() => handleTestManagement(params.row)}
-                />,
-                <GridActionsCellItem
-                    icon={
-                        <Tooltip title="Elimina classe">
-                            <DeleteIcon sx={{ fontSize: '1.1rem', color: 'error.main' }} />
-                        </Tooltip>
-                    }
-                    label="Elimina"
-                    onClick={() => handleDeleteClick(params.row)}
-                />
-            ]
-        }
-    ];
+    const columns = createColumns(handleViewDetails, handleTestManagement, handleDeleteClick);
 
     const handleDeleteClick = (classData) => {
         setSelectedClass(classData);
@@ -354,11 +138,43 @@ const ClassManagement = () => {
     const currentClasses = isAdmin ? filteredMainTeacherClasses : 
         (tabValue === 0 ? filteredMainTeacherClasses : filteredCoTeacherClasses);
 
+        const statsCards = [
+            { 
+                title: 'Totale Classi', 
+                value: mainTeacherClasses.length + coTeacherClasses.length,
+                icon: <SchoolIcon />,
+                color: 'primary.main' 
+            },
+            { 
+                title: 'Classi Insegnate', 
+                value: mainTeacherClasses.length,
+                icon: <ClassIcon />,
+                color: 'secondary.main' 
+            },
+            { 
+                title: 'Classi Co-Insegnate', 
+                value: coTeacherClasses.length,
+                icon: <GroupIcon />,
+                color: 'success.main' 
+            },
+            { 
+                title: 'Test Attivi', 
+                value: currentClasses.reduce((acc, curr) => acc + (curr.activeTests || 0), 0),
+                icon: <AssessmentIcon />,
+                color: 'info.main' 
+            }
+        ];
+
     if (loading) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-                <CircularProgress size={30} />
-            </Box>
+            <ContentLayout
+                title={isAdmin ? 'Gestione Classi (Admin)' : 'Gestione Classi'}
+                subtitle="Caricamento in corso..."
+            >
+                <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                    <CircularProgress />
+                </Box>
+            </ContentLayout>
         );
     }
 
@@ -371,7 +187,7 @@ const ClassManagement = () => {
                     <Tooltip title="Filtri">
                         <IconButton 
                             onClick={() => setIsFilterOpen(!isFilterOpen)}
-                            sx={{ color: 'inherit' }}
+                            color="primary"
                         >
                             <FilterListIcon />
                         </IconButton>
@@ -380,12 +196,6 @@ const ClassManagement = () => {
                         variant="contained"
                         startIcon={<AddIcon />}
                         onClick={() => navigate('/admin/classes/create')}
-                        sx={{
-                            backgroundColor: 'primary.main',
-                            '&:hover': {
-                                backgroundColor: 'primary.dark',
-                            }
-                        }}
                     >
                         Nuova Classe
                     </Button>
@@ -393,35 +203,15 @@ const ClassManagement = () => {
             }
         >
             <Box sx={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                height: 'calc(100vh - 180px)',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 3
             }}>
-                {/* Stat Cards con Animazione */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    <StatCards classes={currentClasses} />
-                </motion.div>
-
-                {/* Main Content */}
-                <Paper 
-                    elevation={0}
-                    sx={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        borderRadius: 2,
-                        overflow: 'hidden',
-                        border: '1px solid',
-                        borderColor: 'divider'
-                    }}
-                >
-                    {/* Toolbar Filtri con Animazione */}
-                    <AnimatePresence>
+                <ListLayout
+                    statsCards={statsCards}
+                    isFilterOpen={isFilterOpen}
+                    filterComponent={
                         <FilterToolbar
                             schoolFilter={schoolFilter}
                             setSchoolFilter={setSchoolFilter}
@@ -436,74 +226,72 @@ const ClassManagement = () => {
                             handleApplyFilters={handleApplyFilters}
                             handleResetFilters={handleResetFilters}
                         />
-                    </AnimatePresence>
-
-                    {/* Tabs con Animazione */}
-                    {!isAdmin && (
-                        <Tabs
-                            value={tabValue}
-                            onChange={(e, newValue) => setTabValue(newValue)}
-                            sx={{
-                                minHeight: '48px',
-                                borderBottom: 1,
-                                borderColor: 'divider',
-                                bgcolor: 'background.paper',
-                                '& .MuiTab-root': {
-                                    minHeight: '48px',
-                                    fontSize: '0.875rem',
-                                    textTransform: 'none',
-                                    fontWeight: 500
-                                }
-                            }}
-                        >
-                            <Tab label={`Le mie classi (${filteredMainTeacherClasses.length})`} />
-                            <Tab label={`Classi co-insegnate (${filteredCoTeacherClasses.length})`} />
-                        </Tabs>
-                    )}
-
-                    {/* DataGrid Container */}
-                    <Box sx={{ 
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        height: '100%',
-                        minHeight: 400
-                    }}>
-                        <DataGrid
-                            rows={currentClasses}
-                            columns={columns}
-                            getRowId={(row) => row.classId}
-                            pageSize={pageSize}
-                            rowsPerPageOptions={[25, 50, 100]}
-                            onPageSizeChange={setPageSize}
-                            disableSelectionOnClick
-                            density="compact"
-                            sx={{
-                                border: 'none',
-                                '& .MuiDataGrid-cell': {
-                                    fontSize: '0.875rem',
-                                    py: 1
-                                },
-                                '& .MuiDataGrid-columnHeaders': {
-                                    backgroundColor: 'background.default',
-                                    borderBottom: 2,
-                                    borderColor: 'divider'
-                                },
-                                '& .MuiDataGrid-row': {
-                                    '&:hover': {
-                                        backgroundColor: 'action.hover'
+                    }
+                    listComponent={
+                        <Box sx={{ 
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            height: '100%'
+                        }}>
+                            {!isAdmin && (
+                                <Tabs
+                                    value={tabValue}
+                                    onChange={(e, newValue) => setTabValue(newValue)}
+                                    sx={{
+                                        minHeight: '48px',
+                                        borderBottom: 1,
+                                        borderColor: 'divider',
+                                        bgcolor: 'background.paper',
+                                        '& .MuiTab-root': {
+                                            minHeight: '48px',
+                                            fontSize: '0.875rem',
+                                            textTransform: 'none',
+                                            fontWeight: 500
+                                        }
+                                    }}
+                                >
+                                    <Tab label={`Le mie classi (${filteredMainTeacherClasses.length})`} />
+                                    <Tab label={`Classi co-insegnate (${filteredCoTeacherClasses.length})`} />
+                                </Tabs>
+                            )}
+                            <DataGrid
+                                rows={currentClasses}
+                                columns={columns}
+                                getRowId={(row) => row.classId}
+                                pageSize={pageSize}
+                                rowsPerPageOptions={[25, 50, 100]}
+                                onPageSizeChange={setPageSize}
+                                disableSelectionOnClick
+                                density="compact"
+                                sx={{
+                                    border: 'none',
+                                    flex: 1,
+                                    '& .MuiDataGrid-cell': {
+                                        fontSize: '0.875rem',
+                                        py: 1
+                                    },
+                                    '& .MuiDataGrid-columnHeaders': {
+                                        backgroundColor: 'background.default',
+                                        borderBottom: 2,
+                                        borderColor: 'divider'
+                                    },
+                                    '& .MuiDataGrid-row': {
+                                        '&:hover': {
+                                            backgroundColor: 'action.hover'
+                                        }
+                                    },
+                                    '& .MuiDataGrid-footerContainer': {
+                                        borderTop: 2,
+                                        borderColor: 'divider'
                                     }
-                                },
-                                '& .MuiDataGrid-footerContainer': {
-                                    borderTop: 2,
-                                    borderColor: 'divider'
-                                }
-                            }}
-                        />
-                    </Box>
-                </Paper>
+                                }}
+                            />
+                        </Box>
+                    }
+                />
 
-                {/* Delete Dialog con Animazione */}
+                {/* Delete Dialog */}
                 <AnimatePresence>
                     {openDeleteDialog && (
                         <Dialog
@@ -552,7 +340,5 @@ const ClassManagement = () => {
         </ContentLayout>
     );
 };
-
-
 
 export default ClassManagement;
