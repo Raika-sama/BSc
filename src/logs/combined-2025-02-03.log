@@ -41,3 +41,12 @@
 {"level":"info","message":"Total questions in database: 30","timestamp":"2025-02-03T16:51:02.232Z"}
 {"0":"_id_","1":"id_1","2":"version_1_active_1","3":"categoria_1","level":"info","message":"Indexes created:","timestamp":"2025-02-03T16:51:02.253Z"}
 {"level":"info","message":"Database connection closed","timestamp":"2025-02-03T16:51:02.268Z"}
+{"level":"info","message":"Attempting to connect to: mongodb+srv://[USERNAME]:[PASSWORD]@cluster0.4nf56.mongodb.net/brainScannerDB?retryWrites=true&w=majority&appName=Cluster0","timestamp":"2025-02-03T20:35:32.164Z"}
+{"level":"info","message":"Connected to database: brainScannerDB","timestamp":"2025-02-03T20:35:32.641Z"}
+{"level":"info","message":"Questions before cleanup: 0","timestamp":"2025-02-03T20:35:32.795Z"}
+{"level":"info","message":"Cleared existing questions","timestamp":"2025-02-03T20:35:32.819Z"}
+{"level":"info","message":"Successfully initialized 30 CSI questions","timestamp":"2025-02-03T20:35:32.871Z"}
+{"Autonomia":6,"Creatività":5,"Decisione":6,"Elaborazione":7,"PreferenzaVisiva":6,"level":"info","message":"Questions by category:","timestamp":"2025-02-03T20:35:33.033Z"}
+{"level":"info","message":"Total questions in database: 30","timestamp":"2025-02-03T20:35:33.058Z"}
+{"0":"_id_","1":"id_1","2":"version_1_active_1","3":"categoria_1","level":"info","message":"Indexes created:","timestamp":"2025-02-03T20:35:33.086Z"}
+{"level":"info","message":"Database connection closed","timestamp":"2025-02-03T20:35:33.099Z"}

@@ -24,77 +24,92 @@ const CSIQuestionDialog = ({ open, question, onClose, onSave }) => {
         metadata: { polarity: '+' },
         version: '1.0.0',
         active: true,
-        weight: 1  // Valore predefinito per il peso
+        weight: 1
     });
 
     useEffect(() => {
         if (question) {
-            setFormData(question);
+            // Se stiamo modificando una domanda esistente
+            setFormData({
+                ...question,
+                metadata: {
+                    polarity: question.metadata?.polarity || '+'
+                },
+                weight: question.weight || 1,
+                version: question.version || '1.0.0',
+                active: question.active ?? true
+            });
         } else {
+            // Reset per nuova domanda
             setFormData({
                 testo: '',
                 categoria: '',
                 metadata: { polarity: '+' },
                 version: '1.0.0',
                 active: true,
-                weight: 1  // Reset al valore predefinito
+                weight: 1
             });
         }
     }, [question]);
 
-   
-const handleChange = (e) => {
-    const { name, value, checked } = e.target;
-    
-    // Log di debug
-    console.log('Handling change:', { name, value, checked });
+    const handleChange = (e) => {
+        const { name, value, checked } = e.target;
+        
+        switch(name) {
+            case 'polarity':
+                setFormData(prev => ({
+                    ...prev,
+                    metadata: { ...prev.metadata, polarity: value }
+                }));
+                break;
+            
+            case 'weight':
+                let weightValue = value;
+                if (weightValue < 0.1) weightValue = 0.1;
+                if (weightValue > 10) weightValue = 10;
+                setFormData(prev => ({
+                    ...prev,
+                    weight: weightValue
+                }));
+                break;
+            
+            case 'active':
+                setFormData(prev => ({
+                    ...prev,
+                    active: checked
+                }));
+                break;
+            
+            default:
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: value
+                }));
+        }
+    };
 
-    if (name === 'polarity') {
-        setFormData(prev => ({
-            ...prev,
-            metadata: { ...prev.metadata, polarity: value }
-        }));
-    } 
-    else if (name === 'weight') {
-        // Assicurati che il peso sia un numero tra 0.1 e 10
-        const numValue = Math.min(Math.max(parseFloat(value) || 0.1, 0.1), 10);
-        setFormData(prev => ({
-            ...prev,
-            weight: numValue
-        }));
-    }
-    else if (name === 'active') {
-        setFormData(prev => ({
-            ...prev,
-            active: checked
-        }));
-    }
-    else {
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    }
-};
-
-    // Modifichiamo handleSubmit per validare i dati prima dell'invio
     const handleSubmit = () => {
-        // Validazione base
-        if (!formData.testo || !formData.categoria || !formData.metadata?.polarity) {
-            console.error('Validation failed:', formData);
+        if (!formData.testo.trim()) {
+            alert('Inserisci il testo della domanda');
             return;
         }
 
-        // Assicuriamoci che tutti i campi necessari siano presenti
+        if (!formData.categoria) {
+            alert('Seleziona una categoria');
+            return;
+        }
+
         const dataToSubmit = {
             ...formData,
             id: formData.id,
+            metadata: {
+                polarity: formData.metadata.polarity
+            },
             weight: parseFloat(formData.weight) || 1,
             version: formData.version || '1.0.0',
             active: Boolean(formData.active)
         };
 
-        console.log('Submitting data:', dataToSubmit); // Debug log
         onSave(dataToSubmit);
     };
 
@@ -107,6 +122,7 @@ const handleChange = (e) => {
                 <Stack spacing={3} sx={{ mt: 2 }}>
                     <TextField
                         fullWidth
+                        required
                         label="Testo della domanda"
                         name="testo"
                         value={formData.testo}
@@ -115,7 +131,7 @@ const handleChange = (e) => {
                         rows={3}
                     />
 
-                    <FormControl fullWidth>
+                    <FormControl fullWidth required>
                         <InputLabel>Categoria</InputLabel>
                         <Select
                             name="categoria"
@@ -152,7 +168,6 @@ const handleChange = (e) => {
                             max: 10,
                             step: 0.1
                         }}
-                        helperText="Inserisci un valore tra 0.1 e 10"
                     />
 
                     <TextField
@@ -170,7 +185,7 @@ const handleChange = (e) => {
                                 onChange={(e) => handleChange({
                                     target: {
                                         name: 'active',
-                                        value: e.target.checked
+                                        checked: e.target.checked
                                     }
                                 })}
                             />
@@ -181,11 +196,7 @@ const handleChange = (e) => {
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose}>Annulla</Button>
-                <Button 
-                    onClick={handleSubmit} 
-                    variant="contained"
-                    color="primary"
-                >
+                <Button onClick={handleSubmit} variant="contained" color="primary">
                     Salva
                 </Button>
             </DialogActions>

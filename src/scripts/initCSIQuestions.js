@@ -1,4 +1,5 @@
-// scripts/initCSIQuestions.js
+// scripts/initCSIQuestions.js $ node scr/scripts/initCSIQuestions
+
 require('dotenv').config({ path: '.env.development' });
 const mongoose = require('mongoose');
 const CSIQuestion = require('../engines/CSI/models/CSIQuestion');

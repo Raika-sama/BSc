@@ -53,7 +53,7 @@ const Sidebar = ({ open, drawerWidth }) => {
                     width: drawerWidth,
                     boxSizing: 'border-box',
                     bgcolor: customTheme.palette.mode === 'dark' 
-                        ? 'rgba(0, 0, 0, 0.2)' 
+                        ? 'rgba(30, 30, 30, 0.95)'  // Un grigio scuro più soft invece del nero puro
                         : 'background.paper',
                     borderRight: `1px solid ${
                         customTheme.palette.mode === 'dark'
@@ -63,7 +63,7 @@ const Sidebar = ({ open, drawerWidth }) => {
                     mt: 8,
                     color: 'text.primary',
                     boxShadow: customTheme.palette.mode === 'dark'
-                        ? '2px 0 8px rgba(0, 0, 0, 0.3)'
+                        ? '2px 0 8px rgba(0, 0, 0, 0.2)'
                         : '2px 0 8px rgba(100, 181, 246, 0.08)',
                     transform: open ? 'none' : `translateX(-${drawerWidth}px)`,
                 }
@@ -96,18 +96,27 @@ const Sidebar = ({ open, drawerWidth }) => {
                                         transition: 'all 0.3s ease',
                                         '&:hover': {
                                             backgroundColor: customTheme.palette.mode === 'dark'
-                                                ? 'rgba(255, 255, 255, 0.05)'
+                                                ? 'rgba(100, 181, 246, 0.08)'  // Un blu più sottile per l'hover in dark mode
                                                 : 'rgba(100, 181, 246, 0.08)',
                                         },
                                         '&.Mui-selected': {
                                             backgroundColor: customTheme.palette.mode === 'dark'
-                                                ? 'rgba(100, 181, 246, 0.15)'
+                                                ? 'rgba(100, 181, 246, 0.2)'   // Un blu più intenso per l'elemento selezionato in dark mode
                                                 : 'rgba(100, 181, 246, 0.12)',
+                                            '&:hover': {
+                                                backgroundColor: customTheme.palette.mode === 'dark'
+                                                    ? 'rgba(100, 181, 246, 0.25)'  // Effetto hover più intenso per l'elemento selezionato
+                                                    : 'rgba(100, 181, 246, 0.15)',
+                                            }
                                         }
                                     }}
                                 >
                                     <ListItemIcon sx={{
-                                        color: isSelected ? 'primary.main' : 'text.secondary',
+                                        color: isSelected 
+                                            ? 'primary.main' 
+                                            : customTheme.palette.mode === 'dark'
+                                                ? 'rgba(255, 255, 255, 0.7)'  // Icone più visibili in dark mode
+                                                : 'text.secondary',
                                         minWidth: 35,
                                         marginRight: 1
                                     }}>
@@ -119,7 +128,12 @@ const Sidebar = ({ open, drawerWidth }) => {
                                             sx: {
                                                 fontSize: '0.95rem',
                                                 fontWeight: isSelected ? 600 : 400,
-                                                color: isSelected ? 'primary.main' : 'text.primary',
+                                                color: isSelected 
+                                                    ? 'primary.main' 
+                                                    : customTheme.palette.mode === 'dark'
+                                                        ? 'rgba(255, 255, 255, 0.85)'  // Testo più leggibile in dark mode
+                                                        : 'text.primary',
+                                                letterSpacing: '0.02em'  // Migliora la leggibilità
                                             }
                                         }}
                                     />

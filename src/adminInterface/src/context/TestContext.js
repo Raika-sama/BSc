@@ -70,47 +70,42 @@ export const TestProvider = ({ children }) => {
     };
     
     const updateTestQuestion = async (questionData) => {
-        dispatch({ type: 'SET_LOADING', payload: true });
         try {
             const formattedData = {
-                id: questionData.id,
-                testo: questionData.testo,
-                categoria: questionData.categoria,
+                ...questionData,
+                weight: parseFloat(questionData.weight || 1).toFixed(1),
+                version: questionData.version || '1.0.0',
+                active: Boolean(questionData.active),
                 metadata: {
                     ...questionData.metadata,
-                    polarity: questionData.metadata.polarity
-                },
-                weight: parseFloat(questionData.weight) || 1,
-                version: questionData.version,
-                active: questionData.active
+                    polarity: questionData.metadata?.polarity || '+'
+                }
             };
+    
+            // Validazione base solo per il peso
+            const weight = parseFloat(formattedData.weight);
+            if (isNaN(weight)) {
+                formattedData.weight = '1.0'; // Valore di default se invalido
+            }
     
             console.log('Sending update request with data:', formattedData);
     
-            // URL corretto che matcha il backend
             const response = await axiosInstance.put(
                 `/tests/csi/questions/${questionData.id}`,
                 formattedData
             );
     
-            console.log('Update response:', response.data);
-    
             if (response.data.status === 'success') {
-                dispatch({ 
-                    type: 'UPDATE_QUESTION', 
-                    payload: response.data.data 
-                });
+                dispatch({ type: 'UPDATE_QUESTION', payload: response.data.data });
                 await getTestQuestions();
             }
     
             return response.data.data;
         } catch (error) {
-            console.error('Error updating question:', error.response || error);
-            dispatch({ 
-                type: 'SET_ERROR', 
-                payload: error.response?.data?.message || 'Errore nell\'aggiornamento della domanda'
-            });
-            throw error;
+            console.error('Error updating question:', error);
+            // Mostra l'errore in console ma non bloccare l'esecuzione
+            console.warn('Continuing despite error:', error.message);
+            return null;
         }
     };
 

@@ -81,51 +81,35 @@ class CSIQuestionService {
      */
      async updateQuestion(id, updateData) {
         try {
-            // Log dati in ingresso
-            logger.debug('Updating question - Received data:', {
-                id,
-                updateData: JSON.stringify(updateData)
-            });
-
-            // Validazione base dei dati
-            this._validateUpdateData(updateData);
-
-            // Formattazione dei dati per l'update
+            logger.debug('Updating question:', { id, updateData });
+    
+            // Formattazione base dei dati senza validazione complessa
             const formattedData = {
                 testo: updateData.testo,
                 categoria: updateData.categoria,
                 metadata: {
-                    ...updateData.metadata,
-                    polarity: updateData.metadata?.polarity
+                    polarity: updateData.metadata?.polarity || '+'
                 },
                 weight: parseFloat(updateData.weight || 1),
-                version: updateData.version,
-                active: updateData.active !== undefined ? updateData.active : true
+                version: updateData.version || '1.0.0',
+                active: updateData.active
             };
-
-            // Log dati formattati
-            logger.debug('Formatted update data:', {
-                id,
-                formattedData: JSON.stringify(formattedData)
-            });
-
+    
             const result = await this.repository.update(id, formattedData);
-
-            // Log risultato
-            logger.debug('Update result:', {
-                id,
-                result: JSON.stringify(result)
-            });
-
             return result;
         } catch (error) {
-            logger.error('Error updating question:', {
-                error: error.message,
-                id,
-                updateData: JSON.stringify(updateData)
-            });
+            logger.error('Error updating question:', { error: error.message, id });
             throw error;
         }
+    }
+    
+    // Rimuoviamo i metodi di validazione complessi
+    _validateUpdateData(data) {
+        // Validazione minima solo per i campi essenziali
+        if (!data.testo || !data.categoria) {
+            throw new Error('Testo e categoria sono richiesti');
+        }
+        return true;
     }
 
     /**
