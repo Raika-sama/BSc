@@ -14,6 +14,8 @@ import {
     DialogActions,
     alpha
 } from '@mui/material';
+import { ContentLayout } from '../common/commonIndex';
+
 import { DataGrid } from '@mui/x-data-grid';
 import {
     Delete as DeleteIcon,
@@ -245,39 +247,35 @@ const StudentList = () => {
     ], [navigate]);
 
     return (
-        <Box sx={{ p: 3, bgcolor: '#f8f9fa', minHeight: '100vh' }}>
-            {/* Header */}
-            <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                        Gestione Studenti
-                    </Typography>
-                    <Box display="flex" gap={2}>
-                        <Button
-                            variant="outlined"
-                            startIcon={<SchoolIcon />}
-                            onClick={() => navigate('/admin/students/assign-school')}
-                        >
-                            Assegna a Scuola
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<CloudUploadIcon />}
-                            onClick={() => setImportFormOpen(true)}
-                        >
-                            Import Excel
-                        </Button>
-                        <Button
-                            variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={() => navigate('/admin/students/new')}
-                        >
-                            Nuovo Studente
-                        </Button>
-                    </Box>
+        <ContentLayout
+            title="Gestione Studenti"
+            subtitle="Gestisci gli studenti e i loro dati"
+            actions={
+                <Box display="flex" gap={2}>
+                    <Button
+                        variant="outlined"
+                        startIcon={<SchoolIcon />}
+                        onClick={() => navigate('/admin/students/assign-school')}
+                    >
+                        Assegna a Scuola
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<CloudUploadIcon />}
+                        onClick={() => setImportFormOpen(true)}
+                    >
+                        Import Excel
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<AddIcon />}
+                        onClick={() => navigate('/admin/students/new')}
+                    >
+                        Nuovo Studente
+                    </Button>
                 </Box>
-            </Paper>
-
+            }
+        >
             {/* Stat Cards */}
             <StatCards students={students} />
 
@@ -361,7 +359,7 @@ const StudentList = () => {
                     loadStudents();
                 }}
             />
-        </Box>
+        </ContentLayout>
     );
 };
 

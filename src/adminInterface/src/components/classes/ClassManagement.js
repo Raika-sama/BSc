@@ -17,6 +17,7 @@ import {
     Chip,
     Tooltip,
 } from '@mui/material';
+import { ContentLayout } from '../common/commonIndex';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { useClass } from '../../context/ClassContext';
 import { useAuth } from '../../context/AuthContext';
@@ -358,44 +359,28 @@ const ClassManagement = () => {
         );
     }
 
-    return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-        >
-            <Box sx={{ p: 3, height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
-                {/* Header con titolo */}
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
-                    <Typography
-                        variant="h5"
-                        color="primary"
-                        sx={{
-                            mb: 3,
-                            fontSize: '1.2rem',
-                            fontWeight: 600
-                        }}
-                    >
-                        {isAdmin ? 'Gestione Classi (Admin)' : 'Gestione Classi'}
-                    </Typography>
-                </motion.div>
+return (
+    <ContentLayout
+    title={isAdmin ? 'Gestione Classi (Admin)' : 'Gestione Classi'}
+    subtitle="Gestisci le classi e i loro studenti"
+    actions={
+        <Box sx={{ display: 'flex', gap: 2 }}>
+            {/* Add your action buttons here */}
+        </Box>
+    }
+>
+    {/* StatCards */}
+    <StatCards classes={currentClasses} />
 
-                {/* Stat Cards */}
-                <StatCards classes={currentClasses} />
-
-                {/* Main Content */}
-                <Paper sx={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    minHeight: 0,
-                    borderRadius: 2,
-                    overflow: 'hidden',
-                    boxShadow: theme => theme.shadows[3]
-                }}>
+    {/* Main Content */}
+    <Paper sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        borderRadius: 2,
+        overflow: 'hidden'
+    }}>
                     {/* Toolbar Filtri */}
                     <FilterToolbar
                         schoolFilter={schoolFilter}
@@ -500,9 +485,8 @@ const ClassManagement = () => {
                         </Button>
                     </DialogActions>
                 </Dialog>
-            </Box>
-        </motion.div>
-    );
-};
+                </ContentLayout>
+            );
+        };
 
 export default ClassManagement;

@@ -1,8 +1,17 @@
 // src/components/users/UserManagement.jsx
 import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { Box, Fab } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+import { 
+    Box, 
+    Fab, 
+    Button,
+    alpha 
+} from '@mui/material';
+import { 
+    Add as AddIcon,
+    FilterList as FilterListIcon 
+} from '@mui/icons-material';
+import { ContentLayout } from '../common/commonIndex';
 import UsersList from './list/UsersList';
 import UserDetails from './details/UserDetails';
 import UserForm from './UserForm';
@@ -34,34 +43,64 @@ const UserManagement = () => {
     };
 
     return (
-        <Box sx={{ height: '100%', position: 'relative' }}>
-            <Fab 
-                color="primary" 
-                aria-label="add user"
-                onClick={handleOpenForm}
-                sx={{
-                    position: 'fixed',
-                    bottom: 32,
-                    right: 32,
-                    zIndex: 1000
-                }}
-            >
-                <AddIcon />
-            </Fab>
+        <ContentLayout
+            title="Gestione Utenti"
+            subtitle="Gestisci gli account e i permessi degli utenti"
+            actions={
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button 
+                        variant="outlined" 
+                        startIcon={<FilterListIcon />}
+                        onClick={() => {/* Aggiungere logica filtri */}}
+                    >
+                        Filtri
+                    </Button>
+                    <Button 
+                        variant="outlined" 
+                        startIcon={<AddIcon />}
+                        onClick={handleOpenForm}
+                    >
+                        Nuovo Utente
+                    </Button>
+                </Box>
+            }
+        >
+            <Box sx={{ height: '100%', position: 'relative' }}>
+                <Routes>
+                    <Route index element={<UsersList />} />
+                    <Route path=":id" element={<UserDetails />} />
+                </Routes>
 
-            <UserForm
-                open={isFormOpen}
-                onClose={handleCloseForm}
-                onSave={handleCreateUser}
-                initialData={null}
-                isLoading={false}
-            />
+                <UserForm
+                    open={isFormOpen}
+                    onClose={handleCloseForm}
+                    onSave={handleCreateUser}
+                    initialData={null}
+                    isLoading={false}
+                />
 
-            <Routes>
-                <Route index element={<UsersList />} />
-                <Route path=":id" element={<UserDetails />} />
-            </Routes>
-        </Box>
+                {/* FAB per nuovo utente - ora stilizzato meglio */}
+                <Fab 
+                    color="primary" 
+                    aria-label="add user"
+                    onClick={handleOpenForm}
+                    sx={{
+                        position: 'fixed',
+                        bottom: 32,
+                        right: 32,
+                        zIndex: 1000,
+                        boxShadow: theme => `0 8px 16px ${alpha(theme.palette.primary.main, 0.24)}`,
+                        '&:hover': {
+                            transform: 'scale(1.05)',
+                            boxShadow: theme => `0 10px 20px ${alpha(theme.palette.primary.main, 0.3)}`,
+                        },
+                        transition: 'all 0.2s ease-in-out'
+                    }}
+                >
+                    <AddIcon />
+                </Fab>
+            </Box>
+        </ContentLayout>
     );
 };
 

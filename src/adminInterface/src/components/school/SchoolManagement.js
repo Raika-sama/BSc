@@ -11,7 +11,8 @@ import {
     Grid,
     IconButton,
     Tooltip,
-    Pagination
+    Pagination,
+    Collapse
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -20,6 +21,7 @@ import {
     LocationOn as LocationIcon,
     Class as ClassIcon
 } from '@mui/icons-material';
+import { ContentLayout } from '../common/commonIndex';
 import { useNotification } from '../../context/NotificationContext';
 import { useSchool } from '../../context/SchoolContext';
 import SchoolList from './SchoolList';
@@ -106,28 +108,29 @@ const SchoolManagement = () => {
     ];
 
     return (
-        <Container maxWidth={false} sx={{ mt: 4, mb: 4, px: 3 }}> 
-            {/* Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h4" component="h1">
-                    Gestione Scuole
-                </Typography>
+        <ContentLayout
+            title="Gestione Scuole"
+            subtitle="Gestisci le scuole e le loro informazioni"
+            actions={
                 <Box sx={{ display: 'flex', gap: 2 }}>
                     <Tooltip title="Filtri">
-                        <IconButton onClick={() => setIsFilterOpen(!isFilterOpen)}>
+                        <IconButton 
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            sx={{ color: 'inherit' }}
+                        >
                             <FilterListIcon />
                         </IconButton>
                     </Tooltip>
                     <Button
-                        variant="contained"
+                        variant="outlined"
                         startIcon={<AddIcon />}
                         onClick={() => navigate('/admin/schools/create')}
                     >
                         Nuova Scuola
                     </Button>
                 </Box>
-            </Box>
-
+            }
+        >
             {/* Stats Cards */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 {statsCards.map((card, index) => (
@@ -175,23 +178,23 @@ const SchoolManagement = () => {
                 ))}
             </Grid>
 
-            {/* Filtri */}
-            {isFilterOpen && (
-                <Box sx={{ mb: 3 }}>
+             {/* Filtri Collassabili */}
+             <Collapse in={isFilterOpen}>
+                <Paper sx={{ p: 2, borderRadius: 2 }}>
                     <SchoolFilters
                         filters={filters}
                         onChange={setFilters}
-                        onReset={() => setFilters({ 
-                            region: '', 
-                            schoolType: '', 
-                            institutionType: '' 
+                        onReset={() => setFilters({
+                            region: '',
+                            schoolType: '',
+                            institutionType: ''
                         })}
                     />
-                </Box>
-            )}
+                </Paper>
+            </Collapse>
 
             {/* Lista Scuole */}
-            <Paper elevation={2} sx={{ mb: 3 }}>
+            <Paper elevation={2}>
                 <SchoolList
                     schools={schools}
                     loading={loading}
@@ -215,7 +218,7 @@ const SchoolManagement = () => {
                     />
                 </Box>
             )}
-        </Container>
+        </ContentLayout>
     );
 };
 

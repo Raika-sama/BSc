@@ -131,6 +131,13 @@ export const themes = {
     getCustomTheme
 };
 
+// Esporta anche le funzioni di utilità
+export {
+    lightenColor,
+    darkenColor,
+    getContrastText
+};
+
 // Utility per verificare se un tema è valido
 export const isValidTheme = (themeName) => {
     return ['light', 'dark'].includes(themeName);

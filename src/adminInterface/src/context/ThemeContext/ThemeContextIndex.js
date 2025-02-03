@@ -1,3 +1,9 @@
 // src/context/ThemeContext/ThemeContextIndex.js
 export { ThemeProvider, useTheme } from './ThemeContext';
-export { themes, defaultTheme } from './themes';
+export { 
+    themes, 
+    defaultTheme,
+    lightenColor,
+    darkenColor,
+    getContrastText 
+} from './themes';

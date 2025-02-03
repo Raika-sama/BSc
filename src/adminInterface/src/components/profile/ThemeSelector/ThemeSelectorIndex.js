@@ -10,10 +10,14 @@ import {
     FormControlLabel,
 } from '@mui/material';
 import { LightMode, DarkMode, Palette } from '@mui/icons-material';
-import { useTheme } from '../../../context/ThemeContext/ThemeContextIndex';
+import { 
+    useTheme,
+    lightenColor,
+    darkenColor,
+    getContrastText 
+} from '../../../context/ThemeContext/ThemeContextIndex';
 import ThemePreview from './ThemePreview';
 import { motion } from 'framer-motion';
-
 
 const ThemeSelectorIndex = () => {
     const { currentTheme, changeTheme, customColor, setCustomThemeColor } = useTheme();
