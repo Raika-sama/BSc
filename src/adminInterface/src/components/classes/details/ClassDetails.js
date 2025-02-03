@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
     Box, 
     Alert,
@@ -6,115 +6,37 @@ import {
     Paper,
     Tab,
     Tabs,
-    Button
+    Button,
+    Typography  // Aggiungi questa riga
 } from '@mui/material';
 import {
-    ArrowBack as ArrowBackIcon,
-    People as PeopleIcon,
-    GroupAdd as GroupAddIcon,
+    Group as GroupIcon,
     Quiz as QuizIcon,
     School as SchoolIcon,
-    Settings as SettingsIcon
+    Settings as SettingsIcon,
+    ArrowBack as ArrowBackIcon,
+    People as PeopleIcon,
+    CheckCircle as CheckCircleIcon,
+    Warning as WarningIcon,
+    GroupAdd as GroupAddIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useClass } from '../../../context/ClassContext';
+import { alpha } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
+import TeacherManagement from './detailscomponents/TeacherManagement';
 
 // Components
 import HeaderSection from './detailscomponents/HeaderSection';
 import InfoSection from './detailscomponents/InfoSection';
 import StudentsList from './detailscomponents/StudentsList';
 import ClassPopulate from './ClassPopulate';
-import ClassTests from '../ClassTests';
+import ClassTests from './detailscomponents/ClassTests';
 import TeacherForm from './forms/TeacherForm';
 import ClassSettings from './detailscomponents/ClassSettings';
 import ContentLayout from '../../common/ContentLayout';
 
 
-// TeacherManagement Component
-const TeacherManagement = ({ classData, onUpdate }) => {
-    const [isTeacherFormOpen, setIsTeacherFormOpen] = useState(false);
-
-    return (
-        <Box sx={{ p: 3 }}>
-            <Paper 
-                elevation={0}
-                sx={{ 
-                    p: 3, 
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: 2
-                }}
-            >
-                <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    mb: 3 
-                }}>
-                    <Typography variant="h6">
-                        Gestione Docenti
-                    </Typography>
-                    <Button
-                        variant="contained"
-                        onClick={() => setIsTeacherFormOpen(true)}
-                    >
-                        Aggiungi Docente
-                    </Button>
-                </Box>
-
-                {/* Lista docenti attuali */}
-                <Box>
-                    {/* Docente principale */}
-                    <Typography variant="subtitle1" color="primary" gutterBottom>
-                        Docente Principale
-                    </Typography>
-                    {classData.mainTeacher ? (
-                        <TeacherCard 
-                            teacher={classData.mainTeacher}
-                            isMain
-                            onRemove={async () => {
-                                // Implementa la rimozione
-                                onUpdate();
-                            }}
-                        />
-                    ) : (
-                        <Alert severity="info">
-                            Nessun docente principale assegnato
-                        </Alert>
-                    )}
-
-                    {/* Altri docenti */}
-                    <Typography variant="subtitle1" color="primary" sx={{ mt: 3, mb: 2 }}>
-                        Altri Docenti
-                    </Typography>
-                    <Grid container spacing={2}>
-                        {classData.teachers?.map(teacher => (
-                            <Grid item xs={12} md={6} key={teacher._id}>
-                                <TeacherCard 
-                                    teacher={teacher}
-                                    onRemove={async () => {
-                                        // Implementa la rimozione
-                                        onUpdate();
-                                    }}
-                                />
-                            </Grid>
-                        ))}
-                    </Grid>
-                </Box>
-            </Paper>
-
-            <TeacherForm 
-                open={isTeacherFormOpen}
-                onClose={(shouldRefresh) => {
-                    setIsTeacherFormOpen(false);
-                    if (shouldRefresh) onUpdate();
-                }}
-                classData={classData}
-                isMainTeacher={!classData.mainTeacher}
-            />
-        </Box>
-    );
-};
 
 // Custom Tab Panel
 function TabPanel({ children, value, index, ...other }) {
@@ -138,6 +60,8 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 const ClassDetails = () => {
+    const theme = useTheme(); // Aggiungi questa riga
+
     const { classId } = useParams();
     const navigate = useNavigate();
     const { getClassDetails } = useClass();
@@ -148,6 +72,8 @@ const ClassDetails = () => {
     const [expandedInfo, setExpandedInfo] = useState(false);
     const [activeTab, setActiveTab] = useState(0);
     const [pageSize, setPageSize] = useState(25);
+
+     
 
     const fetchData = async () => {
         try {
@@ -172,6 +98,20 @@ const ClassDetails = () => {
         setActiveTab(newValue);
     };
 
+     // Handlers per HeaderSection
+     const handlePopulate = () => {
+        setActiveTab(1); // Switch alla tab di popolamento
+    };
+
+    const handleTests = () => {
+        setActiveTab(2); // Switch alla tab dei test
+    };
+
+    const handleSendTest = () => {
+        // Implementazione futura
+        console.log('Send test functionality not implemented yet');
+    };
+
     if (localLoading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -188,45 +128,54 @@ const ClassDetails = () => {
         return <Alert severity="info">Nessun dato disponibile per questa classe.</Alert>;
     }
 
+    
+
     return (
         <ContentLayout
-            title={`Classe ${classData.year}${classData.section}`}
-            subtitle={`Anno Accademico: ${classData.academicYear}`}
             actions={
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                        variant="outlined"
-                        startIcon={<ArrowBackIcon />}
-                        onClick={() => navigate('/admin/classes')}
-                    >
-                        Indietro
-                    </Button>
-                </Box>
+                <Button
+                    variant="outlined"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={() => navigate('/admin/classes')}
+                >
+                    Indietro
+                </Button>
             }
+
+            
         >
             <Box sx={{ 
                 display: 'flex', 
                 flexDirection: 'column', 
                 height: '100%',
-                gap: 2
+                gap: 2,
+                //p: 3
             }}>
-                {/* Info Section */}
-                <Paper 
+
+                 
+
+              {/* Header Section */}
+              <Paper 
                     elevation={0} 
                     sx={{ 
-                        p: 2, 
-                        border: '1px solid', 
+                        p: 2,
+                        border: '1px solid',
                         borderColor: 'divider',
                         borderRadius: 2
                     }}
                 >
-                    <InfoSection 
-                        expandedInfo={expandedInfo}
+                    <HeaderSection 
                         classData={classData}
-                        onAddMainTeacher={() => setActiveTab(3)}
+                        expandedInfo={expandedInfo}
+                        setExpandedInfo={setExpandedInfo}
+                        onBack={() => navigate('/admin/classes')}
+                        onPopulate={handlePopulate}
+                        onTests={handleTests}
+                        onSendTest={handleSendTest}
                     />
                 </Paper>
 
+               
                 {/* Tabs */}
                 <Paper 
                     elevation={0} 

@@ -2,39 +2,26 @@ import React from 'react';
 import {
     Box,
     Typography,
-    Button,
     Chip,
-    Tooltip,
-    IconButton
+    IconButton,
 } from '@mui/material';
 import {
-    ArrowBack as ArrowBackIcon,
-    GroupAdd as GroupAddIcon,
-    Quiz as QuizIcon,
-    Send as SendIcon,
     ExpandLess as ExpandLessIcon,
     ExpandMore as ExpandMoreIcon,
     AccessTime as AccessTimeIcon,
-    School as SchoolIcon
+    School as SchoolIcon,
+    Person as PersonIcon,
+    Email as EmailIcon  // Era usata direttamente Email invece di EmailIcon
 } from '@mui/icons-material';
 
 const HeaderSection = ({ 
     classData, 
     expandedInfo, 
-    setExpandedInfo, 
-    onBack,
-    onPopulate,
-    onTests,
-    onSendTest 
+    setExpandedInfo
 }) => {
-    const canPopulateClass = (classData) => {
-        return classData.isActive && 
-            (classData.status === 'active' || classData.status === 'planned');
-    };
-
     return (
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Box display="flex" alignItems="center" gap={4}>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+            <Box display="flex" alignItems="flex-start" gap={4}>
                 <Box>
                     <Typography variant="h5" color="primary" gutterBottom={false}>
                         Classe {classData.year}{classData.section}
@@ -57,64 +44,30 @@ const HeaderSection = ({
                         size="small"
                     />
                 </Box>
+                {classData.mainTeacher && (
+                    <Box display="flex" alignItems="center" gap={2}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                            <PersonIcon color="action" fontSize="small" />
+                            <Typography variant="body2">
+                                {classData.mainTeacher.firstName} {classData.mainTeacher.lastName}
+                            </Typography>
+                        </Box>
+                        <Box display="flex" alignItems="center" gap={1}>
+                            <EmailIcon color="action" fontSize="small" /> {/* Corretto qui */}
+                            <Typography variant="body2" color="text.secondary">
+                                {classData.mainTeacher.email}
+                            </Typography>
+                        </Box>
+                    </Box>
+                )}
             </Box>
 
-            <Box display="flex" alignItems="center">
-                <Button
-                    variant="outlined"
-                    startIcon={<ArrowBackIcon />}
-                    onClick={onBack}
-                    sx={{ mr: 1 }}
-                    size="small"
-                >
-                    Indietro
-                </Button>
-                <Tooltip title={
-                    !canPopulateClass(classData)
-                        ? "La classe deve essere attiva per poter essere popolata"
-                        : "Aggiungi studenti alla classe"
-                }>
-                    <span>
-                        <Button
-                            variant="contained"
-                            startIcon={<GroupAddIcon />}
-                            onClick={onPopulate}
-                            disabled={!canPopulateClass(classData)}
-                            sx={{ mr: 1 }}
-                            size="small"
-                        >
-                            Popola
-                        </Button>
-                    </span>
-                </Tooltip>
-                <Button
-                    variant="contained"
-                    startIcon={<QuizIcon />}
-                    onClick={onTests}
-                    sx={{ mr: 2 }}
-                    size="small"
-                    disabled
-                >
-                    Test
-                </Button>
-                <Button
-                    variant="contained"
-                    color="secondary"
-                    startIcon={<SendIcon />}
-                    onClick={onSendTest}
-                    sx={{ mr: 2 }}
-                    size="small"
-                    disabled
-                >
-                    Invia Test
-                </Button>
-                <IconButton 
-                    onClick={() => setExpandedInfo(!expandedInfo)}
-                    size="small"
-                >
-                    {expandedInfo ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                </IconButton>
-            </Box>
+            <IconButton 
+                onClick={() => setExpandedInfo(!expandedInfo)}
+                size="small"
+            >
+                {expandedInfo ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </IconButton>
         </Box>
     );
 };

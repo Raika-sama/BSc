@@ -40,27 +40,6 @@ const StudentsList = ({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Definizione delle stat cards
-    const statsCards = useMemo(() => [
-        {
-            title: 'Totale Studenti',
-            value: classData.students.length,
-            icon: <GroupIcon />,
-            color: 'primary.main'
-        },
-        {
-            title: 'Capacità',
-            value: `${classData.students.length}/${classData.capacity}`,
-            icon: <WarningIcon />,
-            color: classData.students.length >= classData.capacity ? 'error.main' : 'success.main'
-        },
-        {
-            title: 'Studenti Attivi',
-            value: classData.students.filter(s => s.status === 'active').length,
-            icon: <CheckCircleIcon />,
-            color: 'success.main'
-        }
-    ], [classData]);
 
     const handleRemoveStudents = async () => {
         try {
@@ -206,7 +185,6 @@ const StudentsList = ({
     return (
         <>
             <ListLayout
-                statsCards={statsCards}
                 rows={rows}
                 columns={columns}
                 getRowId={(row) => row.id}

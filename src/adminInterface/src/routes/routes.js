@@ -5,7 +5,7 @@ import SchoolManagement from '../components/school/SchoolManagement';
 import SchoolDetails from '../components/school/SchoolDetails';
 import ClassManagement from '../components/classes/ClassManagement';    // Importa la pagina delle classi
 import ClassDetails from '../components/classes/details/ClassDetails';    // Nuovo componente
-import ClassTests from '../components/classes/ClassTests';        // Nuovo componente
+import ClassTests from '../components/classes/details/detailscomponents/ClassTests';        // Nuovo componente
 import SchoolWizard from '../components/school/wizard/SchoolWizard';
 import SchoolUsersManagement from '../components/school/schoolComponents/SchoolUsersManagement'; // Aggiungi questo import
 import StudentList from '../components/students/StudentList'; // Aggiungi questo import
