@@ -18,18 +18,14 @@ class CSIQuestionController {
      */
     getActiveQuestions = async (req, res) => {
         try {
-            logger.debug('Getting active questions', { 
-                version: req.query.version,
-                user: req.user?.id 
-            });
-    
             const { version } = req.query;
             const questions = await this.service.getTestQuestions(version);
-    
-            logger.debug('Retrieved questions', { 
-                count: questions.length 
+
+            logger.debug('Retrieved questions:', {
+                count: questions.length,
+                version: version || 'default'
             });
-    
+
             res.json({
                 status: 'success',
                 data: questions
@@ -39,7 +35,7 @@ class CSIQuestionController {
                 error: error.message,
                 version: req.query.version
             });
-    
+
             res.status(error.statusCode || 500).json({
                 status: 'error',
                 error: {
@@ -49,6 +45,7 @@ class CSIQuestionController {
             });
         }
     };
+
 
     /**
      * Crea una nuova domanda
