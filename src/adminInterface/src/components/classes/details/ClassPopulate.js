@@ -6,7 +6,8 @@ import {
     Button,
     Alert,
     CircularProgress,
-    Chip
+    Chip,
+    alpha
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useStudent } from '../../../context/StudentContext';
@@ -14,14 +15,12 @@ import { useClass } from '../../../context/ClassContext';
 import { DataGrid } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import { useTheme } from '@mui/material/styles';
 
 
-const ClassPopulate = () => {
-    const { classId } = useParams();
-    const navigate = useNavigate();
-    const { getClassDetails } = useClass();
+const ClassPopulate = ({ classData, onUpdate }) => {
+    const theme = useTheme(); // Aggiungi questa riga all'inizio del componente
     const { fetchUnassignedStudents, batchAssignStudents } = useStudent();
-    const [classData, setClassData] = useState(null);
     const [unassignedStudents, setUnassignedStudents] = useState([]);
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -29,124 +28,81 @@ const ClassPopulate = () => {
     const [assigning, setAssigning] = useState(false);
 
     useEffect(() => {
-        let isMounted = true;
+        loadUnassignedStudents();
+    }, [classData?.schoolId?._id]);
+
     
-        const loadData = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-        
-                // 1. Verifica classId
-                console.log('Loading data for classId:', classId);
-        
-                // 2. Ottieni dettagli classe
-                const details = await getClassDetails(classId);
-                console.log('Class details:', details);
-        
-                if (!details) {
-                    throw new Error('Impossibile recuperare i dettagli della classe');
-                }
-                 // Assicuriamoci che i dati dei docenti siano completi
-                if (!details.mainTeacher || !details.mainTeacher._id) {
-                    console.warn('Warning: mainTeacher data incomplete');
-                }
-        
-                setClassData(details);
-        
-                // 3. Estrai schoolId
-                const schoolId = details.schoolId?._id || details.schoolId;
-                console.log('Extracted schoolId:', schoolId);
-        
-                if (!schoolId) {
-                    throw new Error('SchoolId non trovato nei dettagli della classe');
-                }
-        
-                // 4. Recupera studenti non assegnati
-                const students = await fetchUnassignedStudents(schoolId);
-                console.log('Unassigned students response:', students);
-        
-                if (!Array.isArray(students)) {
-                    console.error('Unexpected students data format:', students);
-                    throw new Error('Formato dati studenti non valido');
-                }
-        
-                // 5. Normalizza i dati degli studenti
-                const validStudents = students.map(student => {
-                    const normalizedStudent = {
-                        ...student,
-                        id: student._id || student.id, // Assicurati che ci sia sempre un ID
-                        firstName: student.firstName || '',
-                        lastName: student.lastName || '',
-                        email: student.email || '',
-                        gender: student.gender || ''
-                    };
-                    console.log('Normalized student:', normalizedStudent);
-                    return normalizedStudent;
-                });
-        
+    const loadUnassignedStudents = async () => {
+        if (!classData?.schoolId?._id) return;
+
+        try {
+            setLoading(true);
+            setError(null);
+            
+            const students = await fetchUnassignedStudents(classData.schoolId._id);
+            
+            if (Array.isArray(students)) {
+                const validStudents = students.map(student => ({
+                    ...student,
+                    id: student._id || student.id,
+                    firstName: student.firstName || '',
+                    lastName: student.lastName || '',
+                    email: student.email || '',
+                    gender: student.gender || ''
+                }));
                 setUnassignedStudents(validStudents);
-            } catch (err) {
-                console.error('Error in loadData:', err);
-                setError(err.message || 'Errore nel caricamento dei dati');
-            } finally {
-                setLoading(false);
             }
-        };
-    
-        if (classId) {
-            loadData();
+        } catch (err) {
+            setError(err.message || 'Errore nel caricamento degli studenti');
+        } finally {
+            setLoading(false);
         }
-    
-        return () => {
-            isMounted = false;
-        };
-    }, [classId]);
+    };
 
     const handleAssignStudents = async () => {
         try {
-            if (!classId) {
+            if (!classData?._id) {
                 throw new Error('ID classe mancante');
             }
-
+    
             if (!classData?.academicYear) {
                 throw new Error('Anno accademico mancante');
             }
-
+    
             if (!selectedStudents || selectedStudents.length === 0) {
                 throw new Error('Nessuno studente selezionato');
             }
-
+    
             setAssigning(true);
             setError(null);
-
-            // Debug logs
-            console.log('Selected Students IDs:', selectedStudents);
-            console.log('Unassigned Students:', unassignedStudents);
-            console.log('Class Data:', classData);
-
+    
             // Verifica che tutti gli ID selezionati esistano in unassignedStudents
             const validStudents = selectedStudents.filter(selectedId => 
                 unassignedStudents.some(student => 
                     (student._id === selectedId || student.id === selectedId)
                 )
             );
-
+    
             if (validStudents.length !== selectedStudents.length) {
                 throw new Error('Alcuni studenti selezionati non sono validi');
             }
-
-            console.log('Valid Students to assign:', validStudents);
-
+    
             // Chiamata API con gli ID validati
             const result = await batchAssignStudents(
                 validStudents,
-                classId,
+                classData._id, // Usa classData._id invece di classId
                 classData.academicYear
             );
-
-            console.log('Assignment Result:', result);
-
-            navigate(`/admin/classes/${classId}`);
+    
+            if (result) {
+                // Resetta la selezione
+                setSelectedStudents([]);
+                // Ricarica gli studenti non assegnati
+                await loadUnassignedStudents();
+                // Aggiorna i dati della classe nel componente padre
+                onUpdate();
+            }
+            
         } catch (err) {
             console.error('Error in handleAssignStudents:', err);
             setError(err.message || 'Errore nell\'assegnazione degli studenti');
@@ -213,27 +169,41 @@ const ClassPopulate = () => {
     });
  
     return (
-        <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: '1200px', margin: '0 auto' }}>
+        <Box sx={{ 
+            p: 3, 
+            height: '100%', // Assicuriamo che il container principale occupi tutto lo spazio disponibile
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3
+        }}>
             {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
+                <Alert 
+                    severity="error" 
+                    sx={{ 
+                        borderRadius: 2,
+                        '& .MuiAlert-message': { fontSize: '0.875rem' }
+                    }}
+                >
                     {error}
                 </Alert>
             )}
-    <Paper 
-                elevation={3} 
+
+            {/* Header Card */}
+            <Paper 
+                elevation={0} 
                 sx={{ 
-                    p: 3, 
-                    mb: 3, 
+                    p: 3,
                     borderRadius: 2,
-                    background: 'linear-gradient(to right, #ffffff, #f8f9fa)'
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    bgcolor: 'background.paper' // Usa bgcolor invece di background
                 }}
             >
                 <Typography 
                     variant="h5" 
-                    component="h1" 
                     sx={{ 
                         mb: 2,
-                        color: '#1976d2',
+                        color: 'primary.main',
                         fontWeight: 600
                     }}
                 >
@@ -243,46 +213,50 @@ const ClassPopulate = () => {
                 <Box sx={{ 
                     display: 'flex', 
                     flexWrap: 'wrap', 
-                    gap: 2, 
-                    mb: 2 
+                    gap: 2
                 }}>
                     <Chip
                         label={`Anno Accademico: ${classData?.academicYear}`}
                         variant="outlined"
                         color="primary"
+                        sx={{ 
+                            borderRadius: 1,
+                            '& .MuiChip-label': { px: 2 }
+                        }}
                     />
                     <Chip
                         label={`Studenti: ${classData?.students?.length || 0}/${classData?.capacity || 0}`}
                         variant="outlined"
-                        color={
-                            (classData?.students?.length || 0) >= (classData?.capacity || 0) 
-                                ? 'error' 
-                                : 'success'
-                        }
+                        color={(classData?.students?.length || 0) >= (classData?.capacity || 0) ? 'error' : 'success'}
+                        sx={{ 
+                            borderRadius: 1,
+                            '& .MuiChip-label': { px: 2 }
+                        }}
                     />
                 </Box>
             </Paper>
 
+            {/* DataGrid Container */}
             <Paper 
-                elevation={3} 
+                elevation={0} 
                 sx={{ 
-                    height: 500, 
-                    width: '100%',
+                    flex: 1, // Questo farà espandere il Paper per occupare lo spazio rimanente
+                    display: 'flex', // Importante per la propagazione dell'altezza
+                    flexDirection: 'column',
+                    minHeight: 400, // Altezza minima di fallback
                     borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
                     overflow: 'hidden'
                 }}
             >
-                {/* Debug Info */}
-                <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" color="textSecondary">
-                        Studenti non assegnati caricati: {unassignedStudents?.length || 0}
-                    </Typography>
-                    {unassignedStudents?.length === 0 && !loading && (
-                        <Alert severity="info" sx={{ mt: 1 }}>
-                            Non ci sono studenti da assegnare per questa classe
-                        </Alert>
-                    )}
-                </Box>
+                <Box sx={{ 
+                    flex: 1, // Importante per l'espansione
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%', // Occupa tutto lo spazio disponibile
+                    minHeight: 400 // Altezza minima di fallback
+                }}>
                     <DataGrid
                         rows={unassignedStudents || []}
                         columns={columns}
@@ -290,19 +264,24 @@ const ClassPopulate = () => {
                         rowsPerPageOptions={[10, 25, 50]}
                         checkboxSelection
                         disableSelectionOnClick
-                        getRowId={(row) => {
-                            console.log('GetRowId called with:', row);
-                            return row._id || row.id;
-                        }}
+                        getRowId={getRowId}
                         onSelectionModelChange={(newSelectionModel) => {
-                            console.log('Selection Model Change:', newSelectionModel);
                             setSelectedStudents(newSelectionModel);
                         }}
                         selectionModel={selectedStudents}
+                        autoHeight={false} // Importante: non usare autoHeight
                         components={{
                             NoRowsOverlay: () => (
-                                <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                                    <Typography color="textSecondary">
+                                <Box 
+                                    display="flex" 
+                                    justifyContent="center" 
+                                    alignItems="center" 
+                                    height="100%"
+                                >
+                                    <Typography 
+                                        color="text.secondary"
+                                        sx={{ fontSize: '0.875rem' }}
+                                    >
                                         {loading ? 'Caricamento...' : 
                                         unassignedStudents?.length === 0 ? 'Nessuno studente non assegnato trovato' :
                                         'Nessun risultato'}
@@ -310,22 +289,52 @@ const ClassPopulate = () => {
                                 </Box>
                             )
                         }}
+                        sx={{
+                            flex: 1,
+                            width: '100%',
+                            height: '100%', // Importante
+                            '& .MuiDataGrid-main': { // Assicura che il contenuto si espanda correttamente
+                                flex: '1 1 auto'
+                            },
+                            border: 'none',
+                            '& .MuiDataGrid-cell': {
+                                fontSize: '0.875rem',
+                                py: 1
+                            },
+                            '& .MuiDataGrid-columnHeaders': {
+                                backgroundColor: alpha(theme.palette.primary.main, 0.02),
+                                borderBottom: 1,
+                                borderColor: 'divider'
+                            },
+                            '& .MuiDataGrid-row': {
+                                '&:hover': {
+                                    backgroundColor: alpha(theme.palette.primary.main, 0.04)
+                                }
+                            }
+                        }}
                     />
+                </Box>
             </Paper>
 
+            {/* Actions */}
             <Box sx={{ 
-                mt: 3, 
                 display: 'flex', 
                 justifyContent: 'space-between',
-                gap: 2
+                gap: 2,
+                mt: 'auto' // Spinge i bottoni in fondo
             }}>
                 <Button
                     variant="outlined"
                     startIcon={<ArrowBackIcon />}
-                    onClick={() => navigate('/admin/classes')}
+                    onClick={() => onUpdate()} // Modificato per usare onUpdate invece di navigate
                     sx={{
+                        borderRadius: 2,
                         textTransform: 'none',
-                        borderRadius: 2
+                        borderColor: alpha(theme.palette.primary.main, 0.5),
+                        '&:hover': {
+                            borderColor: theme.palette.primary.main,
+                            backgroundColor: alpha(theme.palette.primary.main, 0.04)
+                        }
                     }}
                 >
                     Indietro
@@ -337,15 +346,24 @@ const ClassPopulate = () => {
                     onClick={handleAssignStudents}
                     disabled={assigning || selectedStudents.length === 0}
                     sx={{
-                        textTransform: 'none',
                         borderRadius: 2,
-                        background: 'linear-gradient(45deg, #1976d2 30%, #2196f3 90%)',
-                        boxShadow: '0 3px 5px 2px rgba(33, 150, 243, .3)'
+                        textTransform: 'none',
+                        boxShadow: 'none',
+                        '&:hover': {
+                            boxShadow: 'none',
+                            backgroundColor: alpha(theme.palette.primary.main, 0.8)
+                        }
                     }}
                 >
                     {assigning ? (
                         <>
-                            <CircularProgress size={20} sx={{ mr: 1, color: 'white' }}/>
+                            <CircularProgress 
+                                size={20} 
+                                sx={{ 
+                                    mr: 1, 
+                                    color: 'common.white'
+                                }}
+                            />
                             Assegnazione in corso...
                         </>
                     ) : (

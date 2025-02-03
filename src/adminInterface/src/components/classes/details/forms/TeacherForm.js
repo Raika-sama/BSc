@@ -76,28 +76,21 @@ const TeacherForm = ({ open, onClose, classData, isMainTeacher = true }) => {
             setLoading(true);
             setError(null);
     
-            console.log('Updating main teacher:', {
-                classId: classData._id,
-                teacherId: selectedTeacher._id,
-                teacherName: `${selectedTeacher.firstName} ${selectedTeacher.lastName}`
+            const endpoint = isMainTeacher 
+                ? `/classes/${classData._id}/update-main-teacher`
+                : `/classes/${classData._id}/add-teacher`;
+    
+            const response = await axiosInstance.post(endpoint, {
+                teacherId: selectedTeacher._id
             });
-    
-            const response = await axiosInstance.post(
-                `/classes/${classData._id}/update-main-teacher`,
-                { teacherId: selectedTeacher._id }
-            );
-    
-            console.log('Update response:', response.data);
     
             if (response.data.status === 'success') {
-                onClose(true);  // Trigger refresh dei dati
+                onClose(true);
             }
         } catch (err) {
-            console.error('Error details:', {
-                message: err.message,
-                response: err.response?.data
-            });
-            setError(err.response?.data?.message || 'Errore durante l\'aggiornamento del docente principale');
+            console.error('Error details:', err);
+            setError(err.response?.data?.message || 
+                `Errore durante ${isMainTeacher ? "l'aggiornamento del docente principale" : "l'aggiunta del docente"}`);
         } finally {
             setLoading(false);
         }

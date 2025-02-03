@@ -1,8 +1,8 @@
 import React from 'react';
-import { Box, Typography, Paper, Divider } from '@mui/material';
+import { Box, Typography, Paper, Divider, alpha } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import CognitiveGauge from './CognitiveGauge';
 
-// Mapping dimensioni cognitive con relativi colori e descrizioni
 const DIMENSION_MAPPING = {
   'analitico': { 
     left: 'Analitico', 
@@ -37,7 +37,8 @@ const DIMENSION_MAPPING = {
 };
 
 const TestResultsView = ({ test }) => {
-  // Se non c'è nessun test selezionato, mostra un messaggio
+  const theme = useTheme();
+
   if (!test) {
     return (
       <Box 
@@ -46,10 +47,11 @@ const TestResultsView = ({ test }) => {
           justifyContent: 'center', 
           alignItems: 'center',
           height: '100%',
-          p: 3
+          color: 'text.secondary',
+          bgcolor: 'background.paper'
         }}
       >
-        <Typography color="text.secondary">
+        <Typography variant="body1">
           Seleziona un test per visualizzarne i dettagli
         </Typography>
       </Box>
@@ -70,36 +72,55 @@ const TestResultsView = ({ test }) => {
     <Box 
       sx={{ 
         height: '100%',
-        overflow: 'auto',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        bgcolor: 'background.paper'
       }}
     >
       {/* Header */}
-      <Paper 
-        elevation={0}
+      <Box 
         sx={{ 
-          p: 3, 
-          borderBottom: 1, 
+          p: 2.5, 
+          borderBottom: '1px solid',
           borderColor: 'divider',
-          backgroundColor: 'background.default'
+          bgcolor: alpha(theme.palette.primary.main, 0.02)
         }}
       >
-        <Typography variant="h6" color="primary" gutterBottom>
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            color: 'primary.main',
+            fontWeight: 600,
+            mb: 0.5
+          }}
+        >
           Risultati Test {test.test?.tipo || test.tipo}
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Completato il {formatDate(test.dataCompletamento)}
         </Typography>
-      </Paper>
+      </Box>
 
-      {/* Profilo Cognitivo */}
-      <Box sx={{ p: 3, flex: 1 }}>
-        <Typography variant="h6" gutterBottom>
+      {/* Content */}
+      <Box 
+        sx={{ 
+          flex: 1,
+          overflow: 'auto',
+          p: 3
+        }}
+      >
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            mb: 3,
+            color: 'text.primary',
+            fontWeight: 600
+          }}
+        >
           Profilo Cognitivo
         </Typography>
         
-        {/* Grid di Gauge */}
+        {/* Gauges Grid */}
         <Box 
           sx={{ 
             display: 'grid',
@@ -108,8 +129,7 @@ const TestResultsView = ({ test }) => {
               sm: '1fr 1fr',
               md: '1fr 1fr 1fr'
             },
-            gap: 4,
-            mt: 3
+            gap: 4
           }}
         >
           {test.punteggi && Object.entries(test.punteggi).map(([dimension, value]) => {
@@ -117,7 +137,16 @@ const TestResultsView = ({ test }) => {
             if (!mapping) return null;
 
             return (
-              <Box key={dimension} sx={{ mb: 2 }}>
+              <Paper
+                key={dimension}
+                elevation={0}
+                sx={{ 
+                  p: 2.5,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2
+                }}
+              >
                 <CognitiveGauge
                   value={value}
                   leftLabel={mapping.left}
@@ -125,55 +154,61 @@ const TestResultsView = ({ test }) => {
                   color={mapping.color}
                   description={mapping.description}
                 />
-              </Box>
+              </Paper>
             );
           })}
         </Box>
 
-        {/* Raccomandazioni */}
+        {/* Recommendations */}
         {test.metadata?.profile?.recommendations && (
-          <>
-            <Divider sx={{ my: 4 }} />
-            <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                Raccomandazioni
-              </Typography>
-              <Box 
-                sx={{ 
-                  display: 'grid',
-                  gap: 2,
-                  mt: 2,
-                  p: 3,
-                  backgroundColor: 'background.default',
-                  borderRadius: 1
-                }}
-              >
-                {test.metadata.profile.recommendations.map((rec, index) => (
+          <Box sx={{ mt: 4 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                mb: 3,
+                color: 'text.primary',
+                fontWeight: 600
+              }}
+            >
+              Raccomandazioni
+            </Typography>
+            <Paper
+              elevation={0}
+              sx={{ 
+                p: 2.5,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2
+              }}
+            >
+              {test.metadata.profile.recommendations.map((rec, index) => (
+                <Box 
+                  key={index} 
+                  sx={{ 
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 1.5,
+                    '&:not(:last-child)': {
+                      mb: 2
+                    }
+                  }}
+                >
                   <Box 
-                    key={index} 
                     sx={{ 
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 1
-                    }}
-                  >
-                    <Box 
-                      sx={{ 
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        backgroundColor: 'primary.main',
-                        mt: 1
-                      }} 
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      {rec}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          </>
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      backgroundColor: 'primary.main',
+                      mt: 1
+                    }} 
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    {rec}
+                  </Typography>
+                </Box>
+              ))}
+            </Paper>
+          </Box>
         )}
       </Box>
     </Box>

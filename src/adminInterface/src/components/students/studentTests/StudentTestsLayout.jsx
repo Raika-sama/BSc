@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Box, Paper, Typography, Breadcrumbs, Link, Button } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CompletedTestsList from './components/CompletedTestsList';
@@ -8,6 +8,7 @@ import { useStudentTest } from './hooks/useStudentTest';
 import { axiosInstance } from '../../../services/axiosConfig';
 import { useNotification } from '../../../context/NotificationContext';
 import TestLinkDialog from './components/TestLinkDialog';
+import ContentLayout from '../../common/ContentLayout';
 
 const StudentTestsLayout = () => {
     const { studentId } = useParams();
@@ -77,57 +78,77 @@ const StudentTestsLayout = () => {
         }
     };
 
-    return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', p: 3 }}>
-            {/* Header */}
-            <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Box>
-                        <Breadcrumbs>
-                            <Link 
-                                component="button"
-                                variant="body2"
-                                onClick={() => navigate('/students')}
-                                sx={{ cursor: 'pointer' }}
-                            >
-                                Studenti
-                            </Link>
-                            <Typography variant="body2" color="text.primary">
-                                Gestione Test
-                            </Typography>
-                        </Breadcrumbs>
-                        <Typography variant="h5" color="primary">
-                            Gestione Test Studente
-                        </Typography>
-                    </Box>
-                    <Button
-                        variant="outlined"
-                        startIcon={<ArrowBackIcon />}
-                        onClick={() => navigate('/admin/students')}
-                    >
-                        Torna alla lista
-                    </Button>
-                </Box>
-            </Box>
+    const actions = (
+        <Button
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/admin/students')}
+        >
+            Torna alla lista
+        </Button>
+    );
 
+    const breadcrumbLinks = [
+        {
+            text: 'Studenti',
+            onClick: () => navigate('/students')
+        }
+    ];
+
+    return (
+        <ContentLayout
+            title="Gestione Test Studente"
+            subtitle="Visualizza e gestisci i test dello studente"
+            actions={actions}
+            contentProps={{
+                sx: { p: 0 } // Rimuove il padding predefinito per il contenuto principale
+            }}
+        >
             {/* Main Content */}
-            <Box sx={{ display: 'flex', gap: 3, flex: 1, minHeight: 0 }}>
+            <Box 
+                sx={{ 
+                    display: 'flex', 
+                    gap: 3, 
+                    height: 'calc(100vh - 180px)', // Adjust based on your header height
+                    p: 3 
+                }}
+            >
                 {/* Sidebar */}
-                <Paper sx={{ width: '300px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <Box 
+                    sx={{ 
+                        width: '300px',
+                        bgcolor: 'background.paper',
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}
+                >
                     <CompletedTestsList 
                         tests={completedTests}
                         selectedTest={selectedTest}
                         onTestSelect={handleTestSelect}
                         onCreateTest={handleCreateTest}
                     />
-                </Paper>
+                </Box>
 
                 {/* Main Content Area */}
-                <Paper sx={{ flex: 1, overflow: 'hidden' }}>
+                <Box 
+                    sx={{ 
+                        flex: 1,
+                        bgcolor: 'background.paper',
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        overflow: 'hidden'
+                    }}
+                >
                     <TestResultsView 
                         test={selectedTest}
                     />
-                </Paper>
+                </Box>
             </Box>
 
             {/* Test Link Dialog */}
@@ -136,7 +157,7 @@ const StudentTestsLayout = () => {
                 onClose={() => setDialogOpen(false)}
                 testLink={testLink}
             />
-        </Box>
+        </ContentLayout>
     );
 };
 

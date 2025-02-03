@@ -8,9 +8,11 @@ import {
   Chip,
   Divider,
   Button,
-  Box
+  Box,
+  alpha
 } from '@mui/material';
 import QuizIcon from '@mui/icons-material/Quiz';
+import { useTheme } from '@mui/material/styles';
 
 const CompletedTestsList = ({
   tests = [],
@@ -18,7 +20,8 @@ const CompletedTestsList = ({
   onTestSelect,
   onCreateTest
 }) => {
-  // Funzione per formattare le date in formato italiano
+  const theme = useTheme();
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('it-IT', {
       day: '2-digit',
@@ -30,10 +33,31 @@ const CompletedTestsList = ({
   };
 
   return (
-    <>
-      {/* Header con pulsante nuovo test */}
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Typography variant="subtitle1" sx={{ mb: 2 }}>
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        height: '100%',
+        bgcolor: 'background.paper',
+      }}
+    >
+      {/* Header */}
+      <Box 
+        sx={{ 
+          p: 2.5,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          bgcolor: alpha(theme.palette.primary.main, 0.02)
+        }}
+      >
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            mb: 2,
+            color: 'primary.main',
+            fontWeight: 600
+          }}
+        >
           Test Disponibili
         </Typography>
         <Button
@@ -41,46 +65,45 @@ const CompletedTestsList = ({
           variant="contained"
           startIcon={<QuizIcon />}
           onClick={onCreateTest}
-          size="medium"
+          sx={{
+            boxShadow: 'none',
+            '&:hover': {
+              boxShadow: 'none'
+            }
+          }}
         >
           Somministra CSI
         </Button>
       </Box>
 
-      {/* Lista test completati */}
+      {/* Lista test */}
       <List
         sx={{
           flex: 1,
           overflow: 'auto',
-          '& .MuiListItemButton-root.Mui-selected': {
-            backgroundColor: 'primary.light',
+          px: 1,
+          py: 1.5,
+          '& .MuiListItemButton-root': {
+            borderRadius: 1,
+            mb: 0.5,
+            '&.Mui-selected': {
+              backgroundColor: alpha(theme.palette.primary.main, 0.08),
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.12),
+              }
+            },
             '&:hover': {
-              backgroundColor: 'primary.light',
+              backgroundColor: alpha(theme.palette.primary.main, 0.04),
             }
           }
         }}
-        component="nav"
       >
-        <ListItem sx={{ backgroundColor: 'grey.100', position: 'sticky', top: 0, zIndex: 1 }}>
-          <ListItemText 
-            primary={<Typography variant="subtitle2">Test Completati</Typography>}
-          />
-        </ListItem>
-        
-        <Divider />
-        
         {tests.length > 0 ? (
           tests.map((test) => (
             <ListItemButton
               key={test._id}
               selected={selectedTest?._id === test._id}
               onClick={() => onTestSelect(test)}
-              sx={{
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  backgroundColor: 'action.hover',
-                }
-              }}
             >
               <ListItemText
                 primary={
@@ -90,7 +113,13 @@ const CompletedTestsList = ({
                     alignItems: 'center',
                     mb: 0.5 
                   }}>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    <Typography 
+                      variant="subtitle2" 
+                      sx={{ 
+                        fontWeight: selectedTest?._id === test._id ? 600 : 500,
+                        color: selectedTest?._id === test._id ? 'primary.main' : 'text.primary'
+                      }}
+                    >
                       Test {test.tipo}
                     </Typography>
                     <Chip 
@@ -108,7 +137,11 @@ const CompletedTestsList = ({
                   </Box>
                 }
                 secondary={
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary"
+                    sx={{ display: 'block' }}
+                  >
                     {formatDate(test.dataCompletamento)}
                   </Typography>
                 }
@@ -116,18 +149,20 @@ const CompletedTestsList = ({
             </ListItemButton>
           ))
         ) : (
-          <ListItem>
-            <ListItemText 
-              secondary="Nessun test completato"
-              sx={{ 
-                textAlign: 'center',
-                py: 2
-              }}
-            />
-          </ListItem>
+          <Box 
+            sx={{ 
+              p: 3, 
+              textAlign: 'center',
+              color: 'text.secondary'
+            }}
+          >
+            <Typography variant="body2">
+              Nessun test completato
+            </Typography>
+          </Box>
         )}
       </List>
-    </>
+    </Box>
   );
 };
 

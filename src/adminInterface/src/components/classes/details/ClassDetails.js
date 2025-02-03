@@ -1,220 +1,175 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
     Box, 
     Alert,
     CircularProgress, 
     Paper,
-    IconButton,
-    Tooltip,
-    Button, 
-    Chip, 
-    Typography
- } from '@mui/material';
- import {
-    Visibility as VisibilityIcon,
-    Edit as EditIcon,
+    Tab,
+    Tabs,
+    Button
+} from '@mui/material';
+import {
+    ArrowBack as ArrowBackIcon,
+    People as PeopleIcon,
+    GroupAdd as GroupAddIcon,
     Quiz as QuizIcon,
-    Group as GroupIcon,
-    CheckCircle as CheckCircleIcon,
-    HourglassEmpty as PendingIcon,
-    Groups as GroupsIcon,
-    GroupAdd as GroupAddIcon
+    School as SchoolIcon,
+    Settings as SettingsIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useClass } from '../../../context/ClassContext';
-import ListLayout from '../../common/ListLayout';
 
 // Components
 import HeaderSection from './detailscomponents/HeaderSection';
 import InfoSection from './detailscomponents/InfoSection';
-import StudentDetailsDialog from './detailscomponents/StudentDetailsDialog';
-import StudentForm from '../../students/StudentForm';
-import StudentClassForm from './forms/StudentClassForm';
-import TeacherForm from './forms/TeacherForm'; // Aggiungi questo import
+import StudentsList from './detailscomponents/StudentsList';
+import ClassPopulate from './ClassPopulate';
+import ClassTests from '../ClassTests';
+import TeacherForm from './forms/TeacherForm';
+import ClassSettings from './detailscomponents/ClassSettings';
+import ContentLayout from '../../common/ContentLayout';
+
+
+// TeacherManagement Component
+const TeacherManagement = ({ classData, onUpdate }) => {
+    const [isTeacherFormOpen, setIsTeacherFormOpen] = useState(false);
+
+    return (
+        <Box sx={{ p: 3 }}>
+            <Paper 
+                elevation={0}
+                sx={{ 
+                    p: 3, 
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 2
+                }}
+            >
+                <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    mb: 3 
+                }}>
+                    <Typography variant="h6">
+                        Gestione Docenti
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        onClick={() => setIsTeacherFormOpen(true)}
+                    >
+                        Aggiungi Docente
+                    </Button>
+                </Box>
+
+                {/* Lista docenti attuali */}
+                <Box>
+                    {/* Docente principale */}
+                    <Typography variant="subtitle1" color="primary" gutterBottom>
+                        Docente Principale
+                    </Typography>
+                    {classData.mainTeacher ? (
+                        <TeacherCard 
+                            teacher={classData.mainTeacher}
+                            isMain
+                            onRemove={async () => {
+                                // Implementa la rimozione
+                                onUpdate();
+                            }}
+                        />
+                    ) : (
+                        <Alert severity="info">
+                            Nessun docente principale assegnato
+                        </Alert>
+                    )}
+
+                    {/* Altri docenti */}
+                    <Typography variant="subtitle1" color="primary" sx={{ mt: 3, mb: 2 }}>
+                        Altri Docenti
+                    </Typography>
+                    <Grid container spacing={2}>
+                        {classData.teachers?.map(teacher => (
+                            <Grid item xs={12} md={6} key={teacher._id}>
+                                <TeacherCard 
+                                    teacher={teacher}
+                                    onRemove={async () => {
+                                        // Implementa la rimozione
+                                        onUpdate();
+                                    }}
+                                />
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Box>
+            </Paper>
+
+            <TeacherForm 
+                open={isTeacherFormOpen}
+                onClose={(shouldRefresh) => {
+                    setIsTeacherFormOpen(false);
+                    if (shouldRefresh) onUpdate();
+                }}
+                classData={classData}
+                isMainTeacher={!classData.mainTeacher}
+            />
+        </Box>
+    );
+};
+
+// Custom Tab Panel
+function TabPanel({ children, value, index, ...other }) {
+    return (
+        <Box
+            role="tabpanel"
+            hidden={value !== index}
+            id={`class-tabpanel-${index}`}
+            aria-labelledby={`class-tab-${index}`}
+            sx={{ 
+                flex: 1,
+                overflow: 'auto',
+                display: value === index ? 'block' : 'none',
+                height: '100%'
+            }}
+            {...other}
+        >
+            {value === index && children}
+        </Box>
+    );
+}
 
 const ClassDetails = () => {
     const { classId } = useParams();
     const navigate = useNavigate();
-    const { getClassDetails, removeMainTeacher } = useClass(); // Aggiungi removeMainTeacher
+    const { getClassDetails } = useClass();
+    
     const [classData, setClassData] = useState(null);
     const [localError, setLocalError] = useState(null);
     const [localLoading, setLocalLoading] = useState(true);
     const [expandedInfo, setExpandedInfo] = useState(false);
-    const [selectedStudent, setSelectedStudent] = useState(null);
-    const [formOpen, setFormOpen] = useState(false);
-    const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState(0);
     const [pageSize, setPageSize] = useState(25);
-    const [studentFormOpen, setStudentFormOpen] = useState(false);
-    const [teacherFormOpen, setTeacherFormOpen] = useState(false); // Nuovo stato per il form docente
 
-    const handleViewDetails = (student) => {
-        setSelectedStudent(student);
-        setDetailsDialogOpen(true);
-    };
-
-    const handleEdit = (student) => {
-        setSelectedStudent(student);
-        setFormOpen(true);
-    };
-
-    const handleNavigateToTests = (studentId) => {
-        navigate(`/admin/students/${studentId}/tests`);
-    };
-
-    // Poi definiamo le colonne con useMemo
-    const studentColumns = useMemo(() => [
-        {
-            field: 'fullName',
-            headerName: 'Nome Completo',
-            width: 180,
-            flex: 1,
-            valueGetter: (params) => 
-                `${params.row.firstName || ''} ${params.row.lastName || ''}`.trim() || 'N/D',
-            renderCell: (params) => (
-                <Typography sx={{ fontSize: '0.875rem' }}>
-                    {params.value}
-                </Typography>
-            )
-        },
-        {
-            field: 'gender',
-            headerName: 'Genere',
-            width: 90,
-            renderCell: (params) => (
-                <Typography sx={{ fontSize: '0.875rem' }}>
-                    {params.row.gender === 'M' ? 'Maschio' : 
-                     params.row.gender === 'F' ? 'Femmina' : 'N/D'}
-                </Typography>
-            )
-        },
-        {
-            field: 'email',
-            headerName: 'Email',
-            width: 200,
-            flex: 1,
-            renderCell: (params) => (
-                <Typography sx={{ fontSize: '0.875rem', color: '#1976d2' }}>
-                    {params.value || 'N/D'}
-                </Typography>
-            )
-        },
-        {
-            field: 'status',
-            headerName: 'Stato',
-            width: 120,
-            renderCell: (params) => {
-                const statusConfig = {
-                    active: { color: 'success', label: 'Attivo' },
-                    pending: { color: 'warning', label: 'In Attesa' },
-                    inactive: { color: 'default', label: 'Inattivo' }
-                };
-                const config = statusConfig[params.value] || { color: 'default', label: params.value };
-                
-                return (
-                    <Chip
-                        label={config.label}
-                        color={config.color}
-                        size="small"
-                        sx={{ height: '24px', fontSize: '0.75rem' }}
-                    />
-                );
-            }
-        },
-        {
-            field: 'actions',
-            headerName: 'Azioni',
-            width: 130,
-            renderCell: (params) => (
-                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    <Tooltip title="Test Studente">
-                        <IconButton 
-                            onClick={() => handleNavigateToTests(params.row.id)}
-                            size="small"
-                            disabled
-                        >
-                            <QuizIcon sx={{ fontSize: '1.1rem' }} />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Visualizza Dettagli">
-                        <IconButton 
-                            onClick={() => handleViewDetails(params.row)}
-                            size="small"
-                        >
-                            <VisibilityIcon sx={{ fontSize: '1.1rem' }} />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Modifica Studente">
-                        <IconButton 
-                            onClick={() => handleEdit(params.row)}
-                            size="small"
-                        >
-                            <EditIcon sx={{ fontSize: '1.1rem' }} />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-            )
-        }
-    ], [handleNavigateToTests, handleViewDetails, handleEdit, navigate]);
-
-
-     // Funzione per caricare i dati della classe
-     const loadClassData = async () => {
-        if (!classId) {
-            setLocalError("ID classe non fornito");
-            setLocalLoading(false);
-            return;
-        }
-        
+    const fetchData = async () => {
         try {
             setLocalLoading(true);
             const response = await getClassDetails(classId);
             setClassData(response);
             setLocalError(null);
         } catch (err) {
-            setLocalError(err.message || 'Errore nel caricamento dei dati della classe');
-            console.error('Errore nel caricamento:', err);
+            setLocalError(err.message);
         } finally {
             setLocalLoading(false);
         }
     };
 
     useEffect(() => {
-        let isMounted = true;
-
-        const initializeData = async () => {
-            if (isMounted) {
-                await loadClassData();
-            }
-        };
-
-        initializeData();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [classId, getClassDetails]);
-
-  
-
-   // Nuove funzioni per gestire il docente principale
-   const handleAddMainTeacher = () => {
-    setTeacherFormOpen(true);
-    };
-
-    const handleRemoveMainTeacher = async () => {
-        try {
-            const confirmed = window.confirm(
-                'Sei sicuro di voler rimuovere il docente principale?'
-            );
-    
-            if (confirmed) {
-                await removeMainTeacher(classId);
-                await loadClassData();
-            }
-        } catch (error) {
-            setLocalError('Errore durante la rimozione del docente principale');
-            console.error('Error removing main teacher:', error);
+        if (classId) {
+            fetchData();
         }
+    }, [classId]);
+
+    const handleTabChange = (event, newValue) => {
+        setActiveTab(newValue);
     };
 
     if (localLoading) {
@@ -233,132 +188,129 @@ const ClassDetails = () => {
         return <Alert severity="info">Nessun dato disponibile per questa classe.</Alert>;
     }
 
-      // Configurazione delle stat cards per la lista studenti
-      const statsCards = [
-        {
-            title: 'Totale Studenti',
-            value: classData?.students?.length || 0,
-            icon: <GroupIcon />,
-            color: 'primary.main'
-        },
-        {
-            title: 'Studenti Attivi',
-            value: classData?.students?.filter(s => s.status === 'active').length || 0,
-            icon: <CheckCircleIcon />,
-            color: 'success.main'
-        },
-        {
-            title: 'In Attesa',
-            value: classData?.students?.filter(s => s.status === 'pending').length || 0,
-            icon: <PendingIcon />,
-            color: 'warning.main'
-        },
-        {
-            title: 'Capacità',
-            value: `${classData?.students?.length || 0}/${classData?.capacity || 0}`,
-            icon: <GroupsIcon />,
-            color: 'info.main'
-        }
-    ];
-
-
     return (
-        <Box p={3}>
-            {/* Header e Info Section rimangono uguali */}
-            <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
-                <HeaderSection
-                    classData={classData}
-                    expandedInfo={expandedInfo}
-                    setExpandedInfo={setExpandedInfo}
-                    onBack={() => navigate('/admin/classes')}
-                    onPopulate={() => navigate(`/admin/classes/${classId}/populate`)}
-                    onTests={() => navigate(`/admin/classes/${classId}/tests`)}
-                    onSendTest={() => {}}
-                />
-                
-                <InfoSection 
-                    expandedInfo={expandedInfo}
-                    classData={classData}
-                    onAddMainTeacher={handleAddMainTeacher}
-                    onRemoveMainTeacher={handleRemoveMainTeacher}
-                />
-            </Paper>
-
-            {/* Sostituiamo StudentsList con ListLayout */}
-            <ListLayout
-                statsCards={statsCards}
-                rows={classData?.students?.map(student => ({
-                    id: student.studentId._id,
-                    firstName: student.studentId.firstName,
-                    lastName: student.studentId.lastName,
-                    email: student.studentId.email,
-                    status: student.status,
-                    gender: student.studentId.gender,
-                    joinedAt: student.joinedAt
-                })) || []}
-                columns={studentColumns}
-                getRowId={(row) => row.id}
-                pageSize={pageSize}
-                onPageSizeChange={setPageSize}
-                loading={localLoading} 
-                headerActions={
+        <ContentLayout
+            title={`Classe ${classData.year}${classData.section}`}
+            subtitle={`Anno Accademico: ${classData.academicYear}`}
+            actions={
+                <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
-                        variant="contained"
-                        startIcon={<GroupAddIcon />}
-                        onClick={() => setStudentFormOpen(true)}
-                        size="small"
+                        variant="outlined"
+                        startIcon={<ArrowBackIcon />}
+                        onClick={() => navigate('/admin/classes')}
                     >
-                        Aggiungi Studente
+                        Indietro
                     </Button>
-                }
-            />
+                </Box>
+            }
+        >
+            <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                height: '100%',
+                gap: 2
+            }}>
+                {/* Info Section */}
+                <Paper 
+                    elevation={0} 
+                    sx={{ 
+                        p: 2, 
+                        border: '1px solid', 
+                        borderColor: 'divider',
+                        borderRadius: 2
+                    }}
+                >
+                    <InfoSection 
+                        expandedInfo={expandedInfo}
+                        classData={classData}
+                        onAddMainTeacher={() => setActiveTab(3)}
+                    />
+                </Paper>
 
-            {/* Dialog e Form rimangono uguali */}
-            <StudentDetailsDialog 
-                open={detailsDialogOpen}
-                onClose={() => {
-                    setDetailsDialogOpen(false);
-                    setSelectedStudent(null);
-                }}
-                student={selectedStudent}
-            />
+                {/* Tabs */}
+                <Paper 
+                    elevation={0} 
+                    sx={{ 
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        minHeight: 0 // Importante per il corretto scrolling
+                    }}
+                >
+                    <Tabs 
+                        value={activeTab} 
+                        onChange={handleTabChange}
+                        sx={{ 
+                            borderBottom: 1, 
+                            borderColor: 'divider',
+                            minHeight: 48
+                        }}
+                    >
+                        <Tab 
+                            icon={<PeopleIcon />} 
+                            label="Studenti" 
+                            sx={{ minHeight: 48 }}
+                        />
+                        <Tab 
+                            icon={<GroupAddIcon />} 
+                            label="Popolamento" 
+                            sx={{ minHeight: 48 }}
+                        />
+                        <Tab 
+                            icon={<QuizIcon />} 
+                            label="Test" 
+                            sx={{ minHeight: 48 }}
+                        />
+                        <Tab 
+                            icon={<SchoolIcon />} 
+                            label="Docenti" 
+                            sx={{ minHeight: 48 }}
+                        />
+                        <Tab 
+                            icon={<SettingsIcon />} 
+                            label="Impostazioni" 
+                            sx={{ minHeight: 48 }}
+                        />
+                    </Tabs>
 
-            <StudentForm
-                open={formOpen}
-                onClose={() => {
-                    setFormOpen(false);
-                    setSelectedStudent(null);
-                    loadClassData();
-                }}
-                student={selectedStudent}
-            />
+                    <Box sx={{ 
+                        flex: 1, 
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}>
+                        <TabPanel value={activeTab} index={0}>
+                            <StudentsList
+                                classData={classData}
+                                pageSize={pageSize}
+                                setPageSize={setPageSize}
+                                fetchData={fetchData}
+                            />
+                        </TabPanel>
 
-            <StudentClassForm 
-                open={studentFormOpen}
-                onClose={(shouldRefresh) => {
-                    setStudentFormOpen(false);
-                    if (shouldRefresh) {
-                        loadClassData();
-                    }
-                }}
-                classData={classData}
-            />
+                        <TabPanel value={activeTab} index={1}>
+                            <ClassPopulate classData={classData} onUpdate={fetchData} />
+                        </TabPanel>
 
-            <TeacherForm 
-                open={teacherFormOpen}
-                onClose={(shouldRefresh) => {
-                    setTeacherFormOpen(false);
-                    if (shouldRefresh) {
-                        loadClassData();
-                    }
-                }}
-                classData={{
-                    ...classData,
-                    schoolId: classData?.schoolId
-                }}                
-                isMainTeacher={true}
-            />
-        </Box>
+                        <TabPanel value={activeTab} index={2}>
+                            <ClassTests classData={classData} />
+                        </TabPanel>
+
+                        <TabPanel value={activeTab} index={3}>
+                            <TeacherManagement classData={classData} onUpdate={fetchData} />
+                        </TabPanel>
+
+                        <TabPanel value={activeTab} index={4}>
+                            <ClassSettings classData={classData} onUpdate={fetchData} />
+                        </TabPanel>
+                    </Box>
+                </Paper>
+            </Box>
+        </ContentLayout>
     );
 };
 
