@@ -61,7 +61,13 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                     ? '0 2px 8px rgba(0, 0, 0, 0.3)'
                     : '0 2px 8px rgba(100, 181, 246, 0.2)',
                 zIndex: muiTheme.zIndex.drawer + 1,
-                transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: theme => theme.transitions.create(
+                    ['background-color', 'box-shadow', 'background-image'],
+                    {
+                        duration: theme.transitions.duration.standard,
+                        easing: theme.transitions.easing.easeInOut,
+                    }
+                ),
             }}
         >
             <Toolbar>

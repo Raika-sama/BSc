@@ -31,18 +31,23 @@ export const ThemeProvider = ({ children }) => {
 
     // Genera il tema Material-UI
     const theme = React.useMemo(() => {
-        const themeConfig = currentTheme === 'custom' 
-            ? themes.getCustomTheme(customColor)
-            : themes[currentTheme];
-        
-        return createTheme(themeConfig);
+        if (currentTheme === 'custom') {
+            // Per il tema personalizzato, passa anche la modalità corrente
+            const mode = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
+            return createTheme(themes.getCustomTheme(customColor, mode));
+        }
+        return createTheme(themes[currentTheme]);
     }, [currentTheme, customColor]);
 
     // Funzione per cambiare tema
     const changeTheme = (newTheme) => {
-        if (isValidTheme(newTheme) || newTheme === 'custom') {
-            setCurrentTheme(newTheme);
+        if (newTheme === 'dark' || newTheme === 'light') {
+            // Salva la modalità
             localStorage.setItem('theme', newTheme);
+            setCurrentTheme(newTheme);
+        } else if (newTheme === 'custom') {
+            // Per il tema personalizzato, mantieni la modalità corrente
+            setCurrentTheme('custom');
         }
     };
 
@@ -67,6 +72,17 @@ export const ThemeProvider = ({ children }) => {
         return () => window.removeEventListener('storage', handleStorageChange);
     }, [currentTheme]);
 
+    useEffect(() => {
+        // Applica il tema anche al body
+        document.body.style.backgroundColor = theme.palette.background.default;
+        document.body.style.color = theme.palette.text.primary;
+        
+        return () => {
+            document.body.style.backgroundColor = '';
+            document.body.style.color = '';
+        };
+    }, [theme]);
+
     const value = {
         theme,                  // Il tema Material-UI corrente
         currentTheme,          // Nome del tema corrente ('light', 'dark', 'custom')
@@ -82,3 +98,5 @@ export const ThemeProvider = ({ children }) => {
         </ThemeContext.Provider>
     );
 };
+
+// Non c'è bisogno di ri-esportare useTheme qui dato che è già esportato sopra

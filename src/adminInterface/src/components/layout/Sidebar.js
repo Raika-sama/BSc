@@ -172,11 +172,16 @@ const Sidebar = ({ open, drawerWidth, onDrawerToggle }) => {
                                     <ListItemText 
                                         primary={item.title}
                                         sx={{
-                                            '& .MuiTypography-root': {
-                                                fontSize: '0.9rem',
-                                                fontWeight: isSelected ? 500 : 400,
-                                                color: isSelected ? 'primary.dark' : 'text.primary',
-                                                transition: 'all 0.3s ease',
+                                            '& .MuiDrawer-paper': {
+                                                // ... altre proprietà ...
+                                                transition: theme =>
+                                                    theme.transitions.create(
+                                                        ['transform', 'box-shadow', 'background-color', 'border-color'],
+                                                        {
+                                                            easing: theme.transitions.easing.easeInOut,
+                                                            duration: theme.transitions.duration.standard,
+                                                        }
+                                                    ),
                                             }
                                         }}
                                     />

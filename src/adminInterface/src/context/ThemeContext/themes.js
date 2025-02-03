@@ -1,4 +1,72 @@
 // src/context/ThemeContext/themes.js
+// Aggiungiamo le utility functions per il colore
+const lightenColor = (color, amount) => {
+    try {
+        // Rimuoviamo il carattere # se presente
+        const hex = color.replace('#', '');
+        
+        // Convertiamo in RGB
+        let r = parseInt(hex.substring(0, 2), 16);
+        let g = parseInt(hex.substring(2, 4), 16);
+        let b = parseInt(hex.substring(4, 6), 16);
+        
+        // Schiarisce i valori RGB
+        r = Math.min(255, Math.round(r + (255 - r) * amount));
+        g = Math.min(255, Math.round(g + (255 - g) * amount));
+        b = Math.min(255, Math.round(b + (255 - b) * amount));
+        
+        // Converti di nuovo in hex
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    } catch (e) {
+        console.error('Error in lightenColor:', e);
+        return color; // Ritorna il colore originale in caso di errore
+    }
+};
+
+const darkenColor = (color, amount) => {
+    try {
+        // Rimuoviamo il carattere # se presente
+        const hex = color.replace('#', '');
+        
+        // Convertiamo in RGB
+        let r = parseInt(hex.substring(0, 2), 16);
+        let g = parseInt(hex.substring(2, 4), 16);
+        let b = parseInt(hex.substring(4, 6), 16);
+        
+        // Scurisce i valori RGB
+        r = Math.max(0, Math.round(r * (1 - amount)));
+        g = Math.max(0, Math.round(g * (1 - amount)));
+        b = Math.max(0, Math.round(b * (1 - amount)));
+        
+        // Converti di nuovo in hex
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    } catch (e) {
+        console.error('Error in darkenColor:', e);
+        return color; // Ritorna il colore originale in caso di errore
+    }
+};
+
+const getContrastText = (hexcolor) => {
+    try {
+        // Rimuovi il carattere # se presente
+        const hex = hexcolor.replace('#', '');
+        
+        // Converti in RGB
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        
+        // Calcola la luminosità percepita
+        // Usando la formula: (0.299*R + 0.587*G + 0.114*B)
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        // Se la luminosità è maggiore di 0.5, il testo sarà nero, altrimenti bianco
+        return luminance > 0.5 ? '#000000' : '#FFFFFF';
+    } catch (e) {
+        console.error('Error in getContrastText:', e);
+        return '#FFFFFF'; // Ritorna bianco come fallback
+    }
+};
 
 const lightTheme = {
     palette: {
@@ -44,12 +112,15 @@ const darkTheme = {
     }
 };
 
-const getCustomTheme = (primaryColor) => ({
+const getCustomTheme = (primaryColor, mode = 'light') => ({
     palette: {
-        ...(darkTheme.palette.mode === 'dark' ? darkTheme.palette : lightTheme.palette),
+        ...(mode === 'dark' ? darkTheme.palette : lightTheme.palette),
+        mode: mode,  // Assicuriamoci che la modalità sia correttamente impostata
         primary: {
             main: primaryColor,
-            // Calcolare automaticamente light/dark/contrastText basati sul colore principale
+            light: lightenColor(primaryColor, 0.2),
+            dark: darkenColor(primaryColor, 0.2),
+            contrastText: getContrastText(primaryColor)
         }
     }
 });

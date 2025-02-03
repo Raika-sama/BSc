@@ -23,7 +23,11 @@ const MainLayoutContent = ({ children }) => {
                 display: 'flex',
                 minHeight: '100vh',
                 overflow: 'hidden',
-                bgcolor: 'background.default'
+                bgcolor: 'background.default',
+                transition: theme => theme.transitions.create(['background-color'], {
+                    duration: theme.transitions.duration.standard,
+                    easing: theme.transitions.easing.easeInOut,
+                })
             }}>
                 <CssBaseline />
                 

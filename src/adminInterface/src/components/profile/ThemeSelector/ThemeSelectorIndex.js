@@ -12,6 +12,8 @@ import {
 import { LightMode, DarkMode, Palette } from '@mui/icons-material';
 import { useTheme } from '../../../context/ThemeContext/ThemeContextIndex';
 import ThemePreview from './ThemePreview';
+import { motion } from 'framer-motion';
+
 
 const ThemeSelectorIndex = () => {
     const { currentTheme, changeTheme, customColor, setCustomThemeColor } = useTheme();
@@ -58,19 +60,19 @@ const ThemeSelectorIndex = () => {
         },
         custom: {
             palette: {
-                mode: currentTheme === 'dark' ? 'dark' : 'light',
+                mode: localStorage.getItem('theme') === 'dark' ? 'dark' : 'light',
                 primary: {
                     main: customColor,
-                    light: customColor,
-                    dark: customColor,
-                    contrastText: '#fff'
+                    light: lightenColor(customColor, 0.2),
+                    dark: darkenColor(customColor, 0.2),
+                    contrastText: getContrastText(customColor)
                 },
                 background: {
-                    default: currentTheme === 'dark' ? '#121212' : '#F5F7FA',
-                    paper: currentTheme === 'dark' ? '#1E1E1E' : '#FFFFFF'
+                    default: localStorage.getItem('theme') === 'dark' ? '#121212' : '#F5F7FA',
+                    paper: localStorage.getItem('theme') === 'dark' ? '#1E1E1E' : '#FFFFFF'
                 },
                 text: {
-                    primary: currentTheme === 'dark' ? '#E0E0E0' : '#37474F'
+                    primary: localStorage.getItem('theme') === 'dark' ? '#E0E0E0' : '#37474F'
                 }
             },
             name: 'Personalizzato'
@@ -94,8 +96,19 @@ const ThemeSelectorIndex = () => {
                     <FormControlLabel
                         control={
                             <Switch
-                                checked={currentTheme === 'dark'}
-                                onChange={(e) => changeTheme(e.target.checked ? 'dark' : 'light')}
+                                checked={localStorage.getItem('theme') === 'dark'}
+                                onChange={(e) => {
+                                    const newMode = e.target.checked ? 'dark' : 'light';
+                                    localStorage.setItem('theme', newMode);
+                                    // Se siamo in tema personalizzato, forza un re-render
+                                    if (currentTheme === 'custom') {
+                                        // Forza l'aggiornamento del tema
+                                        const currentColor = localStorage.getItem('customThemeColor') || '#64B5F6';
+                                        setCustomThemeColor(currentColor);
+                                    } else {
+                                        changeTheme(newMode);
+                                    }
+                                }}
                                 color="primary"
                             />
                         }
@@ -126,7 +139,13 @@ const ThemeSelectorIndex = () => {
 
                 {/* Custom Theme Color Picker */}
                 {currentTheme === 'custom' && (
-                    <Box sx={{ mt: 3 }}>
+                    <Box
+                        component={motion.div}
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        sx={{ mt: 3 }}
+                    >
                         <Typography variant="subtitle2" gutterBottom>
                             Colore Personalizzato
                         </Typography>
