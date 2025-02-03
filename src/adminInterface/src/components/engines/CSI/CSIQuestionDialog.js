@@ -1,4 +1,3 @@
-// CSIQuestionDialog.js
 import React, { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -24,7 +23,8 @@ const CSIQuestionDialog = ({ open, question, onClose, onSave }) => {
         categoria: '',
         metadata: { polarity: '+' },
         version: '1.0.0',
-        active: true
+        active: true,
+        weight: 1  // Valore predefinito per il peso
     });
 
     useEffect(() => {
@@ -36,7 +36,8 @@ const CSIQuestionDialog = ({ open, question, onClose, onSave }) => {
                 categoria: '',
                 metadata: { polarity: '+' },
                 version: '1.0.0',
-                active: true
+                active: true,
+                weight: 1  // Reset al valore predefinito
             });
         }
     }, [question]);
@@ -47,6 +48,13 @@ const CSIQuestionDialog = ({ open, question, onClose, onSave }) => {
             setFormData(prev => ({
                 ...prev,
                 metadata: { ...prev.metadata, polarity: value }
+            }));
+        } else if (name === 'weight') {
+            // Assicurati che il peso sia un numero tra 0.1 e 10
+            const numValue = Math.min(Math.max(parseFloat(value) || 0.1, 0.1), 10);
+            setFormData(prev => ({
+                ...prev,
+                [name]: numValue
             }));
         } else {
             setFormData(prev => ({
@@ -101,6 +109,21 @@ const CSIQuestionDialog = ({ open, question, onClose, onSave }) => {
                             <MenuItem value="-">Negativa</MenuItem>
                         </Select>
                     </FormControl>
+
+                    <TextField
+                        fullWidth
+                        label="Peso"
+                        name="weight"
+                        type="number"
+                        value={formData.weight}
+                        onChange={handleChange}
+                        inputProps={{
+                            min: 0.1,
+                            max: 10,
+                            step: 0.1
+                        }}
+                        helperText="Inserisci un valore tra 0.1 e 10"
+                    />
 
                     <TextField
                         fullWidth

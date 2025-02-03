@@ -7,7 +7,6 @@ const { requestLogger, errorLogger } = require('./middleware/loggerMiddleware');
 const errorHandler = require('./middleware/errorHandler');
 const config = require('./config/config');
 const logger = require('./utils/errors/logger/logger');
-const csiQuestionRoutes = require('./engines/CSI/routes/csi.question.routes');
 const createCSIRoutes = require('./engines/CSI/routes/csi.routes');
 
 // Import Models
@@ -30,6 +29,7 @@ const UserService = require('./services/UserService');
 // Import Controllers
 const AuthController = require('./controllers/authController');
 const CSIController = require('./engines/CSI/CSIController');
+const CSIQuestionController = require('./engines/CSI/CSIQuestionController');
 const UserController = require('./controllers/userController');
 const SchoolController = require('./controllers/schoolController');
 const ClassController = require('./controllers/classController');
@@ -93,14 +93,6 @@ const studentBulkImportController = new StudentBulkImportController(
     bulkImportValidation
 );
 
-// Inizializza CSI Controller
-const csiController = new CSIController({
-    testRepository,
-    studentRepository,
-    classRepository,
-    schoolRepository,
-    userService
-});
 
 // Debug middleware in development
 if (config.env === 'development') {
@@ -117,6 +109,15 @@ if (config.env === 'development') {
         next();
     });
 }
+
+// Inizializza CSI Controller
+const csiController = new CSIController({
+    testRepository,
+    studentRepository,
+    classRepository,
+    schoolRepository,
+    userService
+});
 
 // Crea oggetto con tutte le dipendenze
 const dependencies = {
@@ -154,25 +155,20 @@ logger.debug('Dependencies check:', {
     hasLoginLimiter: !!dependencies.authMiddleware?.loginLimiter
 });
 
-// Inizializza le routes
+
+
+// Inizializza le routes CSI
 const csiRoutes = createCSIRoutes({ 
     authMiddleware, 
-    csiController 
+    csiController
 });
 
-
-// Route pubbliche CSI
-app.use('/api/v1/tests/csi/public', csiRoutes.publicRoutes);
-
-// Route protette CSI
+// Monta le rotte CSI
+const csiQuestionRoutes = require('./engines/CSI/routes/csi.question.routes');
+app.use('/api/v1/tests/csi/questions', protect, restrictTo('admin'), csiQuestionRoutes);
+app.use('/api/v1/tests/csi', csiRoutes.publicRoutes);
 app.use('/api/v1/tests/csi', csiRoutes.protectedRoutes);
 
-// Route per la gestione delle domande CSI (solo admin)
-app.use('/api/v1/tests/csi/questions', 
-    authMiddleware.protect, 
-    authMiddleware.restrictTo('admin'), 
-    csiQuestionRoutes
-);
 
 // Altre routes con dipendenze iniettate
 app.use('/api/v1', routes(dependencies));

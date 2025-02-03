@@ -40,14 +40,16 @@ const testReducer = (state, action) => {
 export const TestProvider = ({ children }) => {
     const [state, dispatch] = useReducer(testReducer, initialState);
 
-    const getTestQuestions = async (testType) => {
+    const getTestQuestions = async () => {  // Rimosso testType perché non necessario
         dispatch({ type: 'SET_LOADING', payload: true });
         try {
-            // Aggiorna l'URL per corrispondere alle rotte del backend
+            console.log('Fetching CSI questions...');  // Debug log
             const response = await axiosInstance.get('/tests/csi/questions');
+            console.log('Response:', response.data);  // Debug log
             dispatch({ type: 'SET_QUESTIONS', payload: response.data.data });
             return response.data.data;
         } catch (error) {
+            console.error('Error fetching questions:', error);  // Debug log
             dispatch({ 
                 type: 'SET_ERROR', 
                 payload: error.response?.data?.message || 'Errore nel caricamento delle domande'

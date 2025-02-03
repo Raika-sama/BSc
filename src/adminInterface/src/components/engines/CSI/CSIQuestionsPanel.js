@@ -74,6 +74,7 @@ const QuestionsPanel = () => {
                             <TableCell>Domanda</TableCell>
                             <TableCell>Categoria</TableCell>
                             <TableCell>Polarità</TableCell>
+                            <TableCell>Peso</TableCell>  {/* Nuova colonna */}
                             <TableCell>Versione</TableCell>
                             <TableCell>Stato</TableCell>
                             <TableCell>Azioni</TableCell>
@@ -97,6 +98,14 @@ const QuestionsPanel = () => {
                                         label={question.metadata.polarity === '+' ? 'Positiva' : 'Negativa'}
                                         size="small"
                                         color={question.metadata.polarity === '+' ? 'success' : 'error'}
+                                        variant="outlined"
+                                    />
+                                </TableCell>
+                                <TableCell>  {/* Nuova cella */}
+                                    <Chip 
+                                        label={question.weight || 1}
+                                        size="small"
+                                        color="info"
                                         variant="outlined"
                                     />
                                 </TableCell>

@@ -231,24 +231,24 @@ export const adminRoutes = [
         writePermission: PERMISSIONS.ENGINES.WRITE,
         showInMenu: true
     },
+    // Rotte CSI
     {
-        path: 'engines/csi/*',
+        path: 'engines/csi',
         element: CSITestView,
         title: 'Gestione CSI',
+        icon: AssessmentIcon,
         permissions: [PERMISSIONS.ENGINES.READ],
         writePermission: PERMISSIONS.ENGINES.WRITE,
-        showInMenu: false,
-        children: [
-            {
-                path: '',  // rotta index
-                element: CSITestView
-            },
-            {
-                path: 'questions',
-                element: CSIQuestionsPanel,
-                title: 'Gestione Domande CSI'
-            }
-        ]
+        showInMenu: false
+    },
+    {
+        path: 'engines/csi/questions',
+        element: CSIQuestionsPanel,
+        title: 'Gestione Domande CSI',
+        icon: AssessmentIcon,
+        permissions: [PERMISSIONS.ENGINES.READ],
+        writePermission: PERMISSIONS.ENGINES.WRITE,
+        showInMenu: false
     }
 ];
 // Utility per verificare i permessi delle rotte

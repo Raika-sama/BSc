@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Paper, Tabs, Tab } from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
     Settings as SettingsIcon,
@@ -22,10 +23,25 @@ const TabPanel = ({ children, value, index, ...other }) => (
 );
 
 const CSITestView = () => {
-    const [tabValue, setTabValue] = useState(0);
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [tabValue, setTabValue] = useState(
+        location.pathname.includes('/questions') ? 1 : 0
+    );
 
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue);
+        switch(newValue) {
+            case 0:
+                navigate('/admin/engines/csi');
+                break;
+            case 1:
+                navigate('/admin/engines/csi/questions');
+                break;
+            // Aggiungi altri casi per le altre tab quando necessario
+            default:
+                navigate('/admin/engines/csi');
+        }
     };
 
     return (
@@ -78,21 +94,7 @@ const CSITestView = () => {
                     </Tabs>
                 </Box>
 
-                <TabPanel value={tabValue} index={0}>
-                    <CSIConfigurationPanel />
-                </TabPanel>
-
-                <TabPanel value={tabValue} index={1}>
-                    <CSIQuestionsPanel />
-                </TabPanel>
-
-                <TabPanel value={tabValue} index={2}>
-                    {/* TODO: Implementare ResultsPanel */}
-                </TabPanel>
-
-                <TabPanel value={tabValue} index={3}>
-                    {/* TODO: Implementare SchoolStatsPanel */}
-                </TabPanel>
+              
             </Paper>
         </Box>
     );

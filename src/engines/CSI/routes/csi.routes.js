@@ -24,16 +24,16 @@ const createCSIRoutes = ({ authMiddleware, csiController }) => {
     publicRouter.post('/:token/complete', csiController.completeTest);
 
     // PROTECTED ROUTES (richiede autenticazione)
-    protectedRouter.post('/generate-link', csiController.generateTestLink);
-    protectedRouter.get('/stats/class/:classId', csiController.getClassStats);
-    protectedRouter.get('/stats/school/:schoolId', csiController.getSchoolStats);
-    protectedRouter.get('/results/student/:studentId', csiController.getStudentResults);
-    protectedRouter.get('/:testId/result', csiController.getResult);
-    protectedRouter.post('/:testId/report', csiController.generatePDFReport);
-    protectedRouter.get('/validate/:testId', csiController.validateTestAvailability);
-    protectedRouter.get('/:testId', csiController.getById);
     protectedRouter.get('/', csiController.getAll);
     protectedRouter.post('/init', csiController.initTest);
+    protectedRouter.get('/:testId', csiController.getById);
+    protectedRouter.get('/:testId/result', csiController.getResult);
+    protectedRouter.get('/stats/class/:classId', csiController.getClassStats);
+    protectedRouter.get('/stats/school/:schoolId', csiController.getSchoolStats);
+    protectedRouter.get('/validate/:testId', csiController.validateTestAvailability);
+    protectedRouter.post('/:testId/report', csiController.generatePDFReport);
+    protectedRouter.post('/generate-link', csiController.generateTestLink);
+    protectedRouter.get('/results/student/:studentId', csiController.getStudentResults);
 
     // Gestione errori
     const errorHandler = (err, req, res, next) => {
