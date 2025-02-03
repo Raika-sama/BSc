@@ -5,15 +5,8 @@ import {
     Typography,
     Grid,
     Divider,
-    Collapse,
-    Button,
-    IconButton,
-    Tooltip
+    Collapse
 } from '@mui/material';
-import {
-    PersonAdd as PersonAddIcon,
-    PersonRemove as PersonRemoveIcon
-} from '@mui/icons-material';
 
 const InfoField = ({ label, value, color = "textSecondary" }) => (
     <Box mb={1.5}>
@@ -24,76 +17,66 @@ const InfoField = ({ label, value, color = "textSecondary" }) => (
 
 const InfoSection = ({ 
     expandedInfo, 
-    classData,
-    onAddMainTeacher,  // Nuova prop
-    onRemoveMainTeacher // Nuova prop
+    classData
 }) => {
     return (
         <Collapse in={expandedInfo}>
-            <Divider sx={{ my: 2 }} />
-            <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
-                    <Box>
-                        <Typography variant="subtitle1" color="primary" gutterBottom>
-                            Dettagli Classe
-                        </Typography>
-                        <InfoField label="ID Classe" value={classData._id} />
-                        <InfoField label="ID Scuola" value={classData.schoolId._id} />
-                        <InfoField label="Scuola" value={classData.schoolId.name} />
-                        <InfoField label="Capacità" value={`${classData.students.length}/${classData.capacity}`} />
-                    </Box>
-                </Grid>
-
-                <Grid item xs={12} md={4}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                        <Typography variant="subtitle1" color="primary">
-                            Docente Principale
-                        </Typography>
-                        {classData.mainTeacher ? (
-                            <Tooltip title="Rimuovi docente principale">
-                                <IconButton 
-                                    size="small" 
-                                    color="error"
-                                    onClick={onRemoveMainTeacher}
-                                >
-                                    <PersonRemoveIcon />
-                                </IconButton>
-                            </Tooltip>
-                        ) : (
-                            <Tooltip title="Aggiungi docente principale">
-                                <Button
-                                    variant="outlined"
-                                    size="small"
-                                    startIcon={<PersonAddIcon />}
-                                    onClick={onAddMainTeacher}
-                                >
-                                    Aggiungi
-                                </Button>
-                            </Tooltip>
-                        )}
-                    </Box>
-                    {classData.mainTeacher ? (
+            <Divider />
+            <Box sx={{ p: 2 }}>
+                <Grid container spacing={3}>
+                    {/* Dettagli Classe */}
+                    <Grid item xs={12} md={4}>
                         <Box>
-                            <InfoField 
-                                label="Nome" 
-                                value={`${classData.mainTeacher.firstName} ${classData.mainTeacher.lastName}`} 
-                            />
-                            <InfoField label="Email" value={classData.mainTeacher.email} />
-                            <InfoField label="ID" value={classData.mainTeacher._id} />
+                            <Typography variant="subtitle1" color="primary" gutterBottom>
+                                Dettagli Classe
+                            </Typography>
+                            <InfoField label="ID Classe" value={classData._id} />
+                            <InfoField label="ID Scuola" value={classData.schoolId._id} />
+                            <InfoField label="Scuola" value={classData.schoolId.name} />
+                            <InfoField label="Capacità" value={`${classData.students.length}/${classData.capacity}`} />
                         </Box>
-                    ) : (
-                        <Typography variant="body2" color="text.secondary">
-                            Nessun docente principale assegnato
-                        </Typography>
-                    )}
-                </Grid>
+                    </Grid>
 
-                <Grid item xs={12}>
-                    <Typography variant="caption" color="text.secondary">
-                        Ultima modifica: {new Date(classData.updatedAt).toLocaleString()}
-                    </Typography>
+                    {/* Statistiche */}
+                    <Grid item xs={12} md={4}>
+                        <Box>
+                            <Typography variant="subtitle1" color="primary" gutterBottom>
+                                Statistiche
+                            </Typography>
+                            <InfoField 
+                                label="Studenti Attivi" 
+                                value={classData.students.filter(s => s.status === 'active').length} 
+                            />
+                            <InfoField 
+                                label="Docenti Aggiuntivi" 
+                                value={classData.teachers?.length || 0} 
+                            />
+                            <InfoField 
+                                label="Stato" 
+                                value={classData.status.toUpperCase()} 
+                                color={classData.isActive ? "success" : "error"}
+                            />
+                        </Box>
+                    </Grid>
+
+                    {/* Date */}
+                    <Grid item xs={12} md={4}>
+                        <Box>
+                            <Typography variant="subtitle1" color="primary" gutterBottom>
+                                Date
+                            </Typography>
+                            <InfoField 
+                                label="Data Creazione" 
+                                value={new Date(classData.createdAt).toLocaleString()} 
+                            />
+                            <InfoField 
+                                label="Ultima Modifica" 
+                                value={new Date(classData.updatedAt).toLocaleString()} 
+                            />
+                        </Box>
+                    </Grid>
                 </Grid>
-            </Grid>
+            </Box>
         </Collapse>
     );
 };

@@ -17,8 +17,9 @@ import AssignSchoolPage from '../components/students/AssignSchoolPage';
 import ApiExplorer from '../components/api-explorer/ApiExplorer';
 import StudentIndex from '../components/students/list/details/studentIndex';
 import UserDetails from '../components/users/details/UserDetails';  // Aggiungi questo import
-
-
+import EnginesManagement from '../components/engines/EnginesManagement';
+import { Assessment as AssessmentIcon } from '@mui/icons-material';
+import CSITestView from '../components/engines/CSI/CSITestView';
 // Importa le icone da Material-UI
 import {
     Dashboard as DashboardIcon,
@@ -51,6 +52,10 @@ const PERMISSIONS = {
     RESULTS: {
         READ: 'results:read',
         WRITE: 'results:write'
+    },
+    ENGINES: {
+        READ: 'engines:read',
+        WRITE: 'engines:write'
     }
 };
 export const adminRoutes = [
@@ -214,6 +219,20 @@ export const adminRoutes = [
         permissions: null, // solo admin
         adminOnly: true,
         showInMenu: true
+    },
+    {
+        path: 'engines',
+        element: EnginesManagement,
+        title: 'Gestione Test',
+        icon: AssessmentIcon,
+        permissions: [PERMISSIONS.ENGINES.READ],
+        writePermission: PERMISSIONS.ENGINES.WRITE,
+        showInMenu: true
+    },
+    {
+        path: 'engines/csi/*',
+        element: CSITestView,
+        showInMenu: false
     }
 ];
 // Utility per verificare i permessi delle rotte

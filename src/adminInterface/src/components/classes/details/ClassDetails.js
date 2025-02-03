@@ -64,7 +64,7 @@ const ClassDetails = () => {
 
     const { classId } = useParams();
     const navigate = useNavigate();
-    const { getClassDetails } = useClass();
+    const { getClassDetails, removeMainTeacher } = useClass();
     
     const [classData, setClassData] = useState(null);
     const [localError, setLocalError] = useState(null);
@@ -154,16 +154,17 @@ const ClassDetails = () => {
 
                  
 
-              {/* Header Section */}
-              <Paper 
-                    elevation={0} 
-                    sx={{ 
-                        p: 2,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 2
-                    }}
-                >
+             {/* Header and Info Combined Section */}
+            <Paper 
+                elevation={0} 
+                sx={{ 
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    overflow: 'hidden' // Aggiunto per gestire meglio il collapse
+                }}
+            >
+                <Box sx={{ p: 2 }}>
                     <HeaderSection 
                         classData={classData}
                         expandedInfo={expandedInfo}
@@ -173,9 +174,13 @@ const ClassDetails = () => {
                         onTests={handleTests}
                         onSendTest={handleSendTest}
                     />
-                </Paper>
-
-               
+                </Box>
+                
+                <InfoSection 
+                    expandedInfo={expandedInfo}
+                    classData={classData}
+                />
+            </Paper>
                 {/* Tabs */}
                 <Paper 
                     elevation={0} 
