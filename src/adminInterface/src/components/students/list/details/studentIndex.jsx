@@ -21,7 +21,7 @@ import {
     School as SchoolIcon,
     History as HistoryIcon
 } from '@mui/icons-material';
-
+import { alpha } from '@mui/material/styles';
 import { useStudent } from '../../../../context/StudentContext';
 import { useNotification } from '../../../../context/NotificationContext';
 
@@ -136,34 +136,58 @@ const StudentIndex = ({ initialTab = 'info' }) => {
     const statusConfig = getStatusConfig(student.status);
 
     return (
-        <Box sx={{ p: 3, minHeight: '100vh', bgcolor: '#f8f9fa' }}>
-            {/* Header */}
-            <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-                {/* Breadcrumbs */}
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+        <Box sx={{ p: 3 }}>
+            {/* Header Card */}
+            <Paper 
+                elevation={0}
+                sx={{ 
+                    p: 3, 
+                    mb: 3, 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider'
+                }}
+            >
+                {/* Breadcrumbs e Header */}
+                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
                     <Box>
                         <Breadcrumbs sx={{ mb: 1 }}>
                             <Link 
                                 component="button"
-                                variant="body2"
                                 onClick={() => navigate('/admin/students')}
-                                sx={{ cursor: 'pointer' }}
+                                sx={{ 
+                                    color: 'primary.main',
+                                    textDecoration: 'none',
+                                    '&:hover': {
+                                        textDecoration: 'underline'
+                                    }
+                                }}
                             >
                                 Studenti
                             </Link>
-                            <Typography variant="body2" color="text.primary">
+                            <Typography color="text.secondary">
                                 Dettaglio Studente
                             </Typography>
                         </Breadcrumbs>
                         
                         <Stack direction="row" spacing={2} alignItems="center">
-                            <Typography variant="h5" color="primary.main" sx={{ fontWeight: 600 }}>
+                            <Typography 
+                                variant="h4" 
+                                sx={{ 
+                                    fontWeight: 600,
+                                    color: 'primary.main'
+                                }}
+                            >
                                 {`${student.firstName} ${student.lastName}`}
                             </Typography>
                             <Chip 
                                 label={statusConfig.label}
                                 color={statusConfig.color}
                                 size="small"
+                                sx={{ 
+                                    height: 24,
+                                    '& .MuiChip-label': { px: 2 }
+                                }}
                             />
                         </Stack>
                     </Box>
@@ -172,60 +196,112 @@ const StudentIndex = ({ initialTab = 'info' }) => {
                         variant="outlined"
                         startIcon={<ArrowBackIcon />}
                         onClick={() => navigate('/admin/students')}
+                        size="small"
                     >
                         Torna alla lista
                     </Button>
                 </Stack>
 
-                {/* Info Cards */}
-                <Stack 
-                    direction={{ xs: 'column', sm: 'row' }} 
-                    spacing={3} 
-                    sx={{ mt: 2 }}
+                {/* Info Cards Grid */}
+                <Box 
+                    sx={{ 
+                        display: 'grid',
+                        gridTemplateColumns: {
+                            xs: '1fr',
+                            sm: '1fr 1fr',
+                            md: 'repeat(4, 1fr)'
+                        },
+                        gap: 3,
+                        mt: 3
+                    }}
                 >
-                    <Box>
-                        <Typography variant="body2" color="text.secondary">
+                    <Paper
+                        elevation={0}
+                        sx={{
+                            p: 2,
+                            borderRadius: 2,
+                            bgcolor: 'background.default',
+                            border: '1px solid',
+                            borderColor: 'divider'
+                        }}
+                    >
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
                             Email
                         </Typography>
-                        <Typography variant="body1">
+                        <Typography variant="body1" fontWeight="500">
                             {student.email}
                         </Typography>
-                    </Box>
+                    </Paper>
 
-                    <Box>
-                        <Typography variant="body2" color="text.secondary">
+                    <Paper
+                        elevation={0}
+                        sx={{
+                            p: 2,
+                            borderRadius: 2,
+                            bgcolor: 'background.default',
+                            border: '1px solid',
+                            borderColor: 'divider'
+                        }}
+                    >
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
                             Scuola
                         </Typography>
-                        <Typography variant="body1">
+                        <Typography variant="body1" fontWeight="500">
                             {student.schoolId?.name || 'Non assegnata'}
                         </Typography>
-                    </Box>
+                    </Paper>
 
-                    <Box>
-                        <Typography variant="body2" color="text.secondary">
+                    <Paper
+                        elevation={0}
+                        sx={{
+                            p: 2,
+                            borderRadius: 2,
+                            bgcolor: 'background.default',
+                            border: '1px solid',
+                            borderColor: 'divider'
+                        }}
+                    >
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
                             Classe
                         </Typography>
-                        <Typography variant="body1">
+                        <Typography variant="body1" fontWeight="500">
                             {student.classId ? 
                                 `${student.classId.year}${student.classId.section}` : 
                                 'Non assegnata'
                             }
                         </Typography>
-                    </Box>
+                    </Paper>
 
-                    <Box>
-                        <Typography variant="body2" color="text.secondary">
+                    <Paper
+                        elevation={0}
+                        sx={{
+                            p: 2,
+                            borderRadius: 2,
+                            bgcolor: 'background.default',
+                            border: '1px solid',
+                            borderColor: 'divider'
+                        }}
+                    >
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
                             Test Completati
                         </Typography>
-                        <Typography variant="body1">
+                        <Typography variant="body1" fontWeight="500">
                             {student.testCount || 0}
                         </Typography>
-                    </Box>
-                </Stack>
+                    </Paper>
+                </Box>
             </Paper>
 
-            {/* Tabs and Content */}
-            <Paper sx={{ borderRadius: 2, minHeight: 'calc(100vh - 250px)' }}>
+            {/* Tabs Container */}
+            <Paper 
+                elevation={0}
+                sx={{ 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    overflow: 'hidden'
+                }}
+            >
                 <Tabs 
                     value={activeTab} 
                     onChange={(e, newValue) => setActiveTab(newValue)}
@@ -233,7 +309,7 @@ const StudentIndex = ({ initialTab = 'info' }) => {
                         borderBottom: 1, 
                         borderColor: 'divider',
                         px: 2,
-                        bgcolor: 'background.paper' 
+                        bgcolor: alpha('#1976d2', 0.03)
                     }}
                 >
                     <Tab 
@@ -258,31 +334,21 @@ const StudentIndex = ({ initialTab = 'info' }) => {
                     />
                 </Tabs>
 
-                <TabPanel value={activeTab} index={0}>
-                    <InfoTab 
-                        student={student}
-                        setStudent={setStudent}
-                    />
-                </TabPanel>
-
-                <TabPanel value={activeTab} index={1}>
-                    <TestsTab 
-                        student={student}
-                    />
-                </TabPanel>
-
-                <TabPanel value={activeTab} index={2}>
-                    <SchoolTab 
-                        student={student}
-                        setStudent={setStudent}
-                    />
-                </TabPanel>
-
-                <TabPanel value={activeTab} index={3}>
-                    <HistoryTab 
-                        student={student}
-                    />
-                </TabPanel>
+                {/* Tab Panels */}
+                <Box sx={{ bgcolor: 'background.paper' }}>
+                    <TabPanel value={activeTab} index={0}>
+                        <InfoTab student={student} setStudent={setStudent} />
+                    </TabPanel>
+                    <TabPanel value={activeTab} index={1}>
+                        <TestsTab student={student} />
+                    </TabPanel>
+                    <TabPanel value={activeTab} index={2}>
+                        <SchoolTab student={student} setStudent={setStudent} />
+                    </TabPanel>
+                    <TabPanel value={activeTab} index={3}>
+                        <HistoryTab student={student} />
+                    </TabPanel>
+                </Box>
             </Paper>
         </Box>
     );

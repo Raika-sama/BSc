@@ -6,9 +6,14 @@ import {
     Button,
     IconButton,
     Tooltip,
-    Typography
+    Typography,
+    alpha
 } from '@mui/material';
 import { 
+    Visibility,
+    Edit,
+    Delete,
+    
     Add as AddIcon,
     FilterList as FilterListIcon,
     Person as PersonIcon,
@@ -144,8 +149,67 @@ const UserManagement = () => {
                      'Sospeso'}
                 </Box>
             )
+        },
+        // Aggiungiamo la colonna delle azioni
+        {
+            field: 'actions',
+            headerName: 'Azioni',
+            width: 120,
+            sortable: false,
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Tooltip title="Visualizza Dettagli">
+                        <IconButton
+                            size="small"
+                            onClick={() => navigate(`/admin/users/${params.row._id}`)}
+                            sx={{ 
+                                color: 'primary.main',
+                                '&:hover': {
+                                    bgcolor: alpha('#1976d2', 0.08)
+                                }
+                            }}
+                        >
+                            <Visibility sx={{ fontSize: '1.1rem' }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Modifica">
+                        <IconButton
+                            size="small"
+                            onClick={() => navigate(`/admin/users/${params.row._id}/edit`)}
+                            sx={{ 
+                                color: 'secondary.main',
+                                '&:hover': {
+                                    bgcolor: alpha('#9c27b0', 0.08)
+                                }
+                            }}
+                        >
+                            <Edit sx={{ fontSize: '1.1rem' }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Elimina">
+                        <IconButton
+                            size="small"
+                            onClick={() => handleDeleteUser(params.row)}
+                            sx={{ 
+                                color: 'error.main',
+                                '&:hover': {
+                                    bgcolor: alpha('#d32f2f', 0.08)
+                                }
+                            }}
+                        >
+                            <Delete sx={{ fontSize: '1.1rem' }} />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
+            )
         }
-    ], []);
+    ], [navigate]);
+// Aggiungiamo la funzione per gestire l'eliminazione
+const handleDeleteUser = (user) => {
+    // Implementare la logica di eliminazione
+    // Potrebbe aprire un dialog di conferma
+    console.log('Delete user:', user);
+};
 
     const statsCards = [
         {

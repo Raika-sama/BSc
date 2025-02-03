@@ -1,3 +1,4 @@
+// src/components/students/StudentList.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -7,16 +8,14 @@ import {
     Tooltip,
     Chip,
     Typography,
-    Paper,
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions,
-    alpha
+    DialogActions
 } from '@mui/material';
 import { ContentLayout } from '../common/commonIndex';
+import ListLayout from '../common/ListLayout';
 
-import { DataGrid } from '@mui/x-data-grid';
 import {
     Delete as DeleteIcon,
     Add as AddIcon,
@@ -26,7 +25,8 @@ import {
     CheckCircle as CheckCircleIcon,
     Warning as WarningIcon,
     HourglassEmpty as PendingIcon,
-    Block as BlockIcon
+    Block as BlockIcon,
+    FilterList as FilterListIcon
 } from '@mui/icons-material';
 import { useStudent } from '../../context/StudentContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -39,7 +39,6 @@ const StudentList = () => {
     const {
         students,
         loading,
-        error,
         totalStudents,
         fetchStudents,
         deleteStudent
@@ -50,40 +49,42 @@ const StudentList = () => {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [importFormOpen, setImportFormOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [pageSize, setPageSize] = useState(50);
     const [page, setPage] = useState(0);
 
     // Filtri
-    const [schoolFilter, setSchoolFilter] = useState('');
-    const [classFilter, setClassFilter] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
-    const [specialNeedsFilter, setSpecialNeedsFilter] = useState('');
+    const [filters, setFilters] = useState({
+        search: '',
+        schoolId: '',
+        classFilter: '',
+        status: '',
+        specialNeeds: ''
+    });
 
     // Caricamento dati
     const loadStudents = async () => {
         try {
-            const filters = {
+            const queryFilters = {
                 page: page + 1,
                 limit: pageSize,
-                search: searchTerm.trim(),
-                schoolId: schoolFilter,
-                status: statusFilter,
+                search: filters.search.trim(),
+                schoolId: filters.schoolId,
+                status: filters.status,
             };
 
-            // Aggiungi specialNeeds al filtro solo se è stato effettivamente selezionato
-            if (specialNeedsFilter !== '') {  // o null, dipende dal valore iniziale che usi
-                filters.specialNeeds = specialNeedsFilter === 'true';
+            if (filters.specialNeeds !== '') {
+                queryFilters.specialNeeds = filters.specialNeeds === 'true';
             }
 
-            if (classFilter) {
-                const year = parseInt(classFilter.match(/^\d+/)[0]);
-                const section = classFilter.slice(year.toString().length);
-                filters.year = year;
-                filters.section = section;
+            if (filters.classFilter) {
+                const year = parseInt(filters.classFilter.match(/^\d+/)[0]);
+                const section = filters.classFilter.slice(year.toString().length);
+                queryFilters.year = year;
+                queryFilters.section = section;
             }
 
-            await fetchStudents(filters);
+            await fetchStudents(queryFilters);
         } catch (error) {
             showNotification('Errore nel caricamento degli studenti', 'error');
         }
@@ -91,24 +92,9 @@ const StudentList = () => {
 
     useEffect(() => {
         loadStudents();
-    }, [page, pageSize]);
+    }, [page, pageSize, filters]);
 
     // Handlers
-    const handleSearch = () => {
-        setPage(0);
-        loadStudents();
-    };
-
-    const handleResetFilters = () => {
-        setSearchTerm('');
-        setSchoolFilter('');
-        setClassFilter('');
-        setStatusFilter('');
-        setSpecialNeedsFilter('');
-        setPage(0);
-        loadStudents();
-    };
-
     const handleDeleteClick = (student) => {
         setSelectedStudent(student);
         setDeleteDialogOpen(true);
@@ -203,7 +189,6 @@ const StudentList = () => {
             field: 'testCount',
             headerName: 'Test Completati',
             width: 130,
-            type: 'number',
             renderCell: (params) => {
                 const count = params.row.testCount || 0;
                 return (
@@ -227,7 +212,7 @@ const StudentList = () => {
                     <Tooltip title="Visualizza Dettagli">
                         <IconButton
                             size="small"
-                            onClick={() => navigate(`/admin/students/${params.row.id}`)}
+                            onClick={() => navigate(`/admin/students/${params.row._id}`)}
                         >
                             <VisibilityIcon sx={{ fontSize: '1.1rem' }} />
                         </IconButton>
@@ -252,6 +237,14 @@ const StudentList = () => {
             subtitle="Gestisci gli studenti e i loro dati"
             actions={
                 <Box display="flex" gap={2}>
+                    <Tooltip title="Filtri">
+                        <IconButton 
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            color="primary"
+                        >
+                            <FilterListIcon />
+                        </IconButton>
+                    </Tooltip>
                     <Button
                         variant="outlined"
                         startIcon={<SchoolIcon />}
@@ -267,7 +260,7 @@ const StudentList = () => {
                         Import Excel
                     </Button>
                     <Button
-                        variant="outlined"
+                        variant="contained"
                         startIcon={<AddIcon />}
                         onClick={() => navigate('/admin/students/new')}
                     >
@@ -276,54 +269,33 @@ const StudentList = () => {
                 </Box>
             }
         >
-            {/* Stat Cards */}
-            <StatCards students={students} />
-
-            {/* Filters */}
-            <Paper sx={{ mb: 3, borderRadius: 2 }}>
-                <FilterToolbar
-                    searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                    schoolFilter={schoolFilter}
-                    setSchoolFilter={setSchoolFilter}
-                    classFilter={classFilter}
-                    setClassFilter={setClassFilter}
-                    statusFilter={statusFilter}
-                    setStatusFilter={setStatusFilter}
-                    specialNeedsFilter={specialNeedsFilter}
-                    setSpecialNeedsFilter={setSpecialNeedsFilter}
-                    handleSearch={handleSearch}
-                    handleResetFilters={handleResetFilters}
-                />
-            </Paper>
-
-            {/* DataGrid */}
-            <Paper sx={{ height: 650, borderRadius: 2 }}>
-                <DataGrid
-                    rows={students || []}
-                    columns={columns}
-                    pagination
-                    paginationMode="server"
-                    rowCount={totalStudents}
-                    page={page}
-                    pageSize={pageSize}
-                    rowsPerPageOptions={[10, 25, 50, 100]}
-                    onPageChange={(newPage) => setPage(newPage)}
-                    onPageSizeChange={(newSize) => {
-                        setPageSize(newSize);
-                        setPage(0);
-                    }}
-                    loading={loading}
-                    disableSelectionOnClick
-                    getRowId={(row) => row._id}
-                    sx={{
-                        border: 'none',
-                        '& .MuiDataGrid-columnHeaders': {
-                            bgcolor: alpha('#1976d2', 0.02)
-                        }
-                    }}
-                />
-            </Paper>
+            <ListLayout
+                statsCards={<StatCards students={students} />}
+                isFilterOpen={isFilterOpen}
+                filterComponent={
+                    <FilterToolbar
+                        filters={filters}
+                        setFilters={setFilters}
+                        onReset={() => setFilters({
+                            search: '',
+                            schoolId: '',
+                            classFilter: '',
+                            status: '',
+                            specialNeeds: ''
+                        })}
+                    />
+                }
+                rows={students || []}
+                columns={columns}
+                getRowId={(row) => row._id}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+                paginationMode="server"
+                rowCount={totalStudents}
+                page={page}
+                onPageChange={setPage}
+                loading={loading}
+            />
 
             {/* Delete Dialog */}
             <Dialog

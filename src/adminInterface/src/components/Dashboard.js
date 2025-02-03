@@ -27,6 +27,7 @@ import {
     Warning as WarningIcon,
     Refresh as RefreshIcon,
 } from '@mui/icons-material';
+import { alpha } from '@mui/material/styles';
 import { Line } from 'react-chartjs-2';
 import { useAuth } from '../context/AuthContext';
 import AnimatedStatCard from './AnimatedStatCard';  // Il componente che abbiamo creato prima
@@ -186,13 +187,7 @@ const Dashboard = () => {
     ];
 
     return (
-        <Box sx={{ 
-            width: '100%',
-            height: '100%',
-            bgcolor: 'white',   // Cambiato il background in bianco
-            m: 0,              // Rimosso qualsiasi margine
-            p: 0               // Rimosso qualsiasi padding
-        }}>
+        <Box sx={{ p: 3 }}>
             {/* Header Welcome */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -200,19 +195,27 @@ const Dashboard = () => {
                 transition={{ duration: 0.5 }}
             >
                 <Paper 
-                    elevation={0}  // Rimossa l'ombra
+                    elevation={0}
                     sx={{ 
                         p: 3, 
-                        mb: 3, 
-                        background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.dark} 90%)`,
-                        color: 'white',
-                        borderRadius: 0  // Rimossi i bordi arrotondati
+                        mb: 3,
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        background: theme.palette.mode === 'light' 
+                            ? `linear-gradient(45deg, ${alpha(theme.palette.primary.main, 0.05)} 30%, ${alpha(theme.palette.primary.dark, 0.1)} 90%)`
+                            : 'background.paper'
                     }}
                 >
-                    <Typography variant="h4" gutterBottom>
+                    <Typography 
+                        variant="h4" 
+                        gutterBottom
+                        color="primary"
+                        sx={{ fontWeight: 500 }}
+                    >
                         Benvenuto, {user?.firstName}!
                     </Typography>
-                    <Typography variant="body1">
+                    <Typography variant="body1" color="text.secondary">
                         {new Date().toLocaleDateString('it-IT', {
                             weekday: 'long',
                             year: 'numeric',
@@ -224,7 +227,7 @@ const Dashboard = () => {
             </motion.div>
 
             {/* Stats Grid */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid container spacing={3} sx={{ mb: 3 }}>
                 {statsCards.map((card, index) => (
                     <Grid item xs={12} sm={6} md={3} key={index}>
                         <AnimatedStatCard {...card} />
@@ -233,7 +236,7 @@ const Dashboard = () => {
             </Grid>
 
             {/* Main Content */}
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
                 {/* Chart Section */}
                 <Grid item xs={12} lg={8}>
                     <motion.div
@@ -241,13 +244,35 @@ const Dashboard = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5, delay: 0.2 }}
                     >
-                        <Paper sx={{ p: 3, height: '400px', position: 'relative' }}>
-                            <Typography variant="h6" gutterBottom>
-                                Andamento Test
-                            </Typography>
+                        <Paper 
+                            elevation={0}
+                            sx={{ 
+                                p: 3, 
+                                height: '400px', 
+                                position: 'relative',
+                                borderRadius: 2,
+                                border: '1px solid',
+                                borderColor: 'divider'
+                            }}
+                        >
+                            <Box sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                mb: 2
+                            }}>
+                                <Typography 
+                                    variant="h6" 
+                                    color="primary"
+                                    sx={{ fontWeight: 500 }}
+                                >
+                                    Andamento Test
+                                </Typography>
+                            </Box>
+                            <Divider sx={{ mb: 3 }} />
                             <Box sx={{ 
                                 position: 'relative',
-                                height: 'calc(100% - 40px)',
+                                height: 'calc(100% - 70px)',
                                 width: '100%'
                             }}>
                                 <Line options={chartOptions} data={chartData} />
@@ -263,20 +288,37 @@ const Dashboard = () => {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.5, delay: 0.4 }}
                     >
-                        <Paper sx={{ p: 3, height: '400px', overflow: 'hidden' }}>
+                        <Paper 
+                            elevation={0}
+                            sx={{ 
+                                p: 3, 
+                                height: '400px', 
+                                overflow: 'hidden',
+                                borderRadius: 2,
+                                border: '1px solid',
+                                borderColor: 'divider'
+                            }}
+                        >
                             <Box sx={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 mb: 2
                             }}>
-                                <Typography variant="h6">
+                                <Typography 
+                                    variant="h6"
+                                    color="primary"
+                                    sx={{ fontWeight: 500 }}
+                                >
                                     Attività Recenti
                                 </Typography>
                                 <Button
                                     size="small"
                                     startIcon={<RefreshIcon />}
-                                    sx={{ minWidth: 'auto' }}
+                                    sx={{ 
+                                        minWidth: 'auto',
+                                        color: 'primary.main'
+                                    }}
                                 >
                                     Aggiorna
                                 </Button>
@@ -284,7 +326,7 @@ const Dashboard = () => {
                             <Divider sx={{ mb: 2 }} />
                             <List sx={{ 
                                 overflow: 'auto',
-                                height: 'calc(100% - 60px)'
+                                height: 'calc(100% - 70px)'
                             }}>
                                 {recentActivities.map((activity, index) => (
                                     <ActivityItem key={index} {...activity} index={index} />
@@ -301,31 +343,69 @@ const Dashboard = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.6 }}
                     >
-                        <Paper sx={{ p: 3 }}>
-                            <Typography variant="h6" gutterBottom>
+                        <Paper 
+                            elevation={0}
+                            sx={{ 
+                                p: 3,
+                                borderRadius: 2,
+                                border: '1px solid',
+                                borderColor: 'divider'
+                            }}
+                        >
+                            <Typography 
+                                variant="h6" 
+                                gutterBottom
+                                color="primary"
+                                sx={{ fontWeight: 500 }}
+                            >
                                 Stato del Sistema
                             </Typography>
-                            <Grid container spacing={2}>
+                            <Divider sx={{ mb: 3 }} />
+                            <Grid container spacing={3}>
                                 <Grid item xs={12}>
-                                    <Alert severity="success" sx={{ mb: 1 }}>
+                                    <Alert 
+                                        severity="success" 
+                                        sx={{ 
+                                            mb: 2,
+                                            '& .MuiAlert-message': {
+                                                fontWeight: 500
+                                            }
+                                        }}
+                                    >
                                         Tutti i sistemi sono operativi
                                     </Alert>
                                 </Grid>
                                 <Grid item xs={12} md={6}>
-                                    <Typography variant="body1">
-                                        <strong>Versione:</strong> 1.0.0
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        <strong>Ultimo aggiornamento:</strong> {new Date().toLocaleDateString()}
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                        <Typography variant="body1">
+                                            <Box component="span" sx={{ color: 'text.secondary', mr: 1 }}>
+                                                Versione:
+                                            </Box>
+                                            1.0.0
+                                        </Typography>
+                                        <Typography variant="body1">
+                                            <Box component="span" sx={{ color: 'text.secondary', mr: 1 }}>
+                                                Ultimo aggiornamento:
+                                            </Box>
+                                            {new Date().toLocaleDateString()}
+                                        </Typography>
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={6}>
-                                    <Typography variant="body1">
-                                        <strong>Stato Database:</strong> Connesso
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        <strong>Latenza:</strong> 45ms
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                        <Typography variant="body1">
+                                            <Box component="span" sx={{ color: 'text.secondary', mr: 1 }}>
+                                                Stato Database:
+                                            </Box>
+                                            Connesso
+                                        </Typography>
+                                        <Typography variant="body1">
+                                            <Box component="span" sx={{ color: 'text.secondary', mr: 1 }}>
+                                                Latenza:
+                                            </Box>
+                                            45ms
+                                        </Typography>
+                                    </Box>
                                 </Grid>
                             </Grid>
                         </Paper>
@@ -334,6 +414,7 @@ const Dashboard = () => {
             </Grid>
         </Box>
     );
+
 };
 
 export default Dashboard;

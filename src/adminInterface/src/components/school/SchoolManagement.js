@@ -9,6 +9,7 @@ import {
     Chip
 } from '@mui/material';
 import {
+    Visibility as VisibilityIcon,
     Add as AddIcon,
     FilterList as FilterListIcon,
     School as SchoolIcon,
@@ -70,8 +71,8 @@ const SchoolManagement = () => {
         }
     };
 
-    const handleEditClick = (school) => {
-        navigate(`/admin/schools/${school._id}/edit`);
+    const handleViewDetails = (school) => {
+        navigate(`/admin/schools/${school._id}`);  // Rimuoviamo /edit dal percorso
     };
 
     // Definizione delle colonne per il DataGrid
@@ -117,19 +118,20 @@ const SchoolManagement = () => {
             width: 100,
             getActions: (params) => [
                 <GridActionsCellItem
-                    icon={<EditIcon />}
-                    label="Modifica"
-                    onClick={() => handleEditClick(params.row)}
-                />,
-                <GridActionsCellItem
-                    icon={<DeleteIcon />}
-                    label="Elimina"
-                    onClick={() => handleDeleteSchool(params.row._id)}
-                    sx={{ color: 'error.main' }}
-                />
+                icon={<VisibilityIcon />}  // Cambiamo l'icona
+                label="Visualizza Dettagli"  // Aggiorniamo il label
+                onClick={() => handleViewDetails(params.row)}
+                sx={{ color: 'primary.main' }}  // Aggiungiamo un colore appropriato
+            />,
+            <GridActionsCellItem
+                icon={<DeleteIcon />}
+                label="Elimina"
+                onClick={() => handleDeleteSchool(params.row._id)}
+                sx={{ color: 'error.main' }}
+            />
             ]
         }
-    ], []);
+    ], [navigate]);
 
     const statsCards = [
         { 
