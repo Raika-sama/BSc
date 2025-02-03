@@ -27,7 +27,7 @@ const UserService = require('./services/UserService');
 
 // Import Controllers
 const AuthController = require('./controllers/authController');
-const CSIController = require('./engines/CSI/controllers/CSIController');
+const CSIController = require('./engines/CSI/CSIController');
 const UserController = require('./controllers/userController');
 const SchoolController = require('./controllers/schoolController');
 const ClassController = require('./controllers/classController');

@@ -1,9 +1,9 @@
 // src/engines/CSI/controllers/CSIController.js
 
-const CSIEngine = require('../engine/CSIEngine');
-const { Test, Result } = require('../../../models/Test');
-const { createError, ErrorTypes } = require('../../../utils/errors/errorTypes');
-const logger = require('../../../utils/errors/logger/logger');
+const CSIEngine = require('./engine/CSIEngine');
+const { Test, Result } = require('../../models/Test');
+const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
+const logger = require('../../utils/errors/logger/logger');
 const crypto = require('crypto');
 
 class CSIController {
@@ -257,9 +257,9 @@ getStudentResults = async (req, res) => {
      */
     generateTestLink = async (req, res) => {
         try {
-            const { studentId, testType } = req.body;
+            const { studentId, testType, version } = req.body;
     
-            logger.debug('Generating test link:', { studentId, testType });
+            logger.debug('Generating test link:', { studentId, testType, version });
     
             if (!studentId || !testType) {
                 throw createError(
@@ -268,11 +268,10 @@ getStudentResults = async (req, res) => {
                 );
             }
     
-            // Carica le domande usando il metodo _loadQuestions dell'engine
-            const questions = await this.engine._loadQuestions();
-            
-            logger.debug('Loaded questions for test:', {
-                questionCount: questions.length
+            // Inizializza il test con la versione specificata
+            const testData = await this.engine.initializeTest({
+                studentId,
+                version: version || '1.0.0'
             });
     
             // Genera token sicuro
@@ -281,25 +280,10 @@ getStudentResults = async (req, res) => {
                 .update(`${studentId}-${Date.now()}-${crypto.randomBytes(16).toString('hex')}`)
                 .digest('hex');
     
-            // Crea il test con le domande
-            const test = await Test.create({
-                tipo: testType,
-                domande: questions,  // Aggiungi le domande qui
-                configurazione: {
-                    tempoLimite: 30,
-                    tentativiMax: 1
-                }
-            });
-    
-            logger.debug('Created test with questions:', {
-                testId: test._id,
-                questionCount: test.domande.length
-            });
-    
-            // Crea il result usando solo studentId
+            // Crea il result
             const result = await Result.create({
                 studentId,
-                test: test._id,
+                test: testData.test._id,
                 token,
                 expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
                 used: false,
@@ -308,10 +292,11 @@ getStudentResults = async (req, res) => {
             });
     
             logger.info('Test link generated successfully:', {
-                testId: test._id,
+                testId: testData.test._id,
                 resultId: result._id,
+                version: testData.test.versione,
                 token: token.substring(0, 10) + '...',
-                questionCount: test.domande.length
+                questionCount: testData.test.domande.length
             });
     
             res.json({

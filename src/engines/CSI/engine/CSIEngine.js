@@ -2,6 +2,7 @@
 
 const BaseEngine = require('../../core/BaseEngine');
 const CSIScorer = require('./CSIScorer');
+const CSIQuestionService = require('../CSIQuestionService');  // Aggiungiamo l'import
 const { createError, ErrorTypes } = require('../../../utils/errors/errorTypes');
 const logger = require('../../../utils/errors/logger/logger');
 
@@ -10,6 +11,110 @@ class CSIEngine extends BaseEngine {
         super(Test, Result);
         this.scorer = new CSIScorer();
         this.testType = 'CSI';
+        this.questionService = CSIQuestionService;
+    }
+
+    /**
+     * Carica le domande del test dal database
+     * @param {string} version - Versione delle domande da caricare
+     * @returns {Promise<Array>} Array di domande
+     * @private
+     */
+    async _loadQuestions(version = '1.0.0') {
+        try {
+            // Prima prova a caricare dal database
+            try {
+                const dbQuestions = await this.questionService.getTestQuestions(version);
+                if (dbQuestions && dbQuestions.length > 0) {
+                    logger.debug('Loaded questions from database:', {
+                        version,
+                        count: dbQuestions.length
+                    });
+                    return dbQuestions;
+                }
+            } catch (dbError) {
+                logger.warn('Failed to load questions from database, falling back to hardcoded questions:', {
+                    error: dbError.message
+                });
+            }
+
+            // Fallback alle domande hardcoded
+            return [
+                {
+                    id: 1,
+                    testo: "Prima di iniziare una ricerca, leggo diverse fonti per farmi un'idea generale dell'argomento",
+                    tipo: "likert",
+                    categoria: "Elaborazione",
+                    metadata: { polarity: "-" }
+                },
+                // ... resto delle domande hardcoded ...
+            ];
+        } catch (error) {
+            logger.error('Error loading CSI questions:', error);
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Errore nel caricamento delle domande'
+            );
+        }
+    }
+
+    /**
+     * Inizializza un nuovo test CSI
+     */
+    async initializeTest(params) {
+        try {
+            const { studentId, testId, version } = params;
+    
+            logger.debug('Initializing CSI test:', { studentId, testId, version });
+    
+            // Verifica disponibilità
+            const availability = await this.verifyTestAvailability(studentId);
+            if (!availability.available) {
+                throw createError(
+                    ErrorTypes.VALIDATION.TEST_NOT_AVAILABLE,
+                    availability.message
+                );
+            }
+    
+            // Carica o crea test
+            let test;
+            if (testId) {
+                test = await this.Test.findById(testId);
+                logger.debug('Loaded existing test:', {
+                    testId,
+                    hasQuestions: test?.domande?.length || 0
+                });
+            } else {
+                const questions = await this._loadQuestions(version);
+                
+                test = await this.Test.create({
+                    tipo: this.testType,
+                    domande: questions,
+                    versione: version || '1.0.0',
+                    configurazione: {
+                        tempoLimite: 30,
+                        tentativiMax: 1,
+                        cooldownPeriod: 168,
+                        randomizzaDomande: true,
+                        mostraRisultatiImmediati: false
+                    }
+                });
+    
+                logger.debug('Created new test:', {
+                    testId: test._id,
+                    version: test.versione,
+                    hasQuestions: test.domande?.length || 0
+                });
+            }
+    
+            return { test };
+        } catch (error) {
+            logger.error('Error initializing CSI test:', {
+                error: error.message,
+                params
+            });
+            throw error;
+        }
     }
 
     /**
@@ -39,66 +144,7 @@ class CSIEngine extends BaseEngine {
         }
     }
 
-    /**
-     * Inizializza un nuovo test CSI
-     */
-    async initializeTest(params) {
-        try {
-            const { studentId, testId } = params;
-    
-            logger.debug('Initializing CSI test:', { studentId, testId });
-    
-            // Verifica disponibilità
-            const availability = await this.verifyTestAvailability(studentId);
-            if (!availability.available) {
-                throw createError(
-                    ErrorTypes.VALIDATION.TEST_NOT_AVAILABLE,
-                    availability.message
-                );
-            }
-    
-            // Carica o crea test
-            let test;
-            if (testId) {
-                test = await this.Test.findById(testId);
-                logger.debug('Loaded existing test:', {
-                    testId,
-                    hasQuestions: test?.domande?.length || 0
-                });
-            } else {
-                const questions = await this._loadQuestions();
-                logger.debug('Created new questions:', {
-                    questionCount: questions.length
-                });
-                
-                test = await this.Test.create({
-                    tipo: this.testType,
-                    domande: questions,
-                    configurazione: {
-                        tempoLimite: 30,
-                        tentativiMax: 1,
-                        cooldownPeriod: 168,
-                        randomizzaDomande: true,
-                        mostraRisultatiImmediati: false
-                    }
-                });
-    
-                logger.debug('Created new test:', {
-                    testId: test._id,
-                    hasQuestions: test.domande?.length || 0
-                });
-            }
-    
-            return { test };
-        } catch (error) {
-            logger.error('Error initializing CSI test:', {
-                error: error.message,
-                params
-            });
-            throw error;
-        }
-    }
-
+   
     /**
      * Processa una risposta
      */
@@ -246,7 +292,7 @@ class CSIEngine extends BaseEngine {
 
     /**
      * Carica le domande del test
-     */
+     
     // In CSIEngine.js
 
     async _loadQuestions() {
@@ -471,7 +517,7 @@ class CSIEngine extends BaseEngine {
                 );
             }
         }
-
+*/
     /**
      * Calcola il tempo totale del test
      */
