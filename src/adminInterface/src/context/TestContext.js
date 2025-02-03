@@ -32,6 +32,14 @@ const testReducer = (state, action) => {
             return { ...state, questions: action.payload, loading: false };
         case 'CLEAR_ERROR':
             return { ...state, error: null };
+        case 'UPDATE_QUESTION':
+            return {
+                ...state,
+                questions: state.questions.map(q => 
+                    q.id === action.payload.id ? action.payload : q
+                ),
+                loading: false
+            };
         default:
             return state;
     }
@@ -40,16 +48,19 @@ const testReducer = (state, action) => {
 export const TestProvider = ({ children }) => {
     const [state, dispatch] = useReducer(testReducer, initialState);
 
-    const getTestQuestions = async () => {  // Rimosso testType perché non necessario
+
+
+    const getTestQuestions = async () => {
         dispatch({ type: 'SET_LOADING', payload: true });
         try {
-            console.log('Fetching CSI questions...');  // Debug log
+            console.log('Fetching CSI questions...');
+            // URL corretto che matcha il backend
             const response = await axiosInstance.get('/tests/csi/questions');
-            console.log('Response:', response.data);  // Debug log
+            console.log('Response:', response.data);
             dispatch({ type: 'SET_QUESTIONS', payload: response.data.data });
             return response.data.data;
         } catch (error) {
-            console.error('Error fetching questions:', error);  // Debug log
+            console.error('Error fetching questions:', error);
             dispatch({ 
                 type: 'SET_ERROR', 
                 payload: error.response?.data?.message || 'Errore nel caricamento delle domande'
@@ -57,17 +68,44 @@ export const TestProvider = ({ children }) => {
             return [];
         }
     };
-
+    
     const updateTestQuestion = async (questionData) => {
         dispatch({ type: 'SET_LOADING', payload: true });
         try {
+            const formattedData = {
+                id: questionData.id,
+                testo: questionData.testo,
+                categoria: questionData.categoria,
+                metadata: {
+                    ...questionData.metadata,
+                    polarity: questionData.metadata.polarity
+                },
+                weight: parseFloat(questionData.weight) || 1,
+                version: questionData.version,
+                active: questionData.active
+            };
+    
+            console.log('Sending update request with data:', formattedData);
+    
+            // URL corretto che matcha il backend
             const response = await axiosInstance.put(
                 `/tests/csi/questions/${questionData.id}`,
-                questionData
+                formattedData
             );
-            dispatch({ type: 'UPDATE_QUESTION', payload: response.data.data });
+    
+            console.log('Update response:', response.data);
+    
+            if (response.data.status === 'success') {
+                dispatch({ 
+                    type: 'UPDATE_QUESTION', 
+                    payload: response.data.data 
+                });
+                await getTestQuestions();
+            }
+    
             return response.data.data;
         } catch (error) {
+            console.error('Error updating question:', error.response || error);
             dispatch({ 
                 type: 'SET_ERROR', 
                 payload: error.response?.data?.message || 'Errore nell\'aggiornamento della domanda'

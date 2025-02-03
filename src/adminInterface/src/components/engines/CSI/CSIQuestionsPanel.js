@@ -3,9 +3,6 @@ import {
     IconButton,
     Chip,
     Button,
-    Paper,
-    Typography,
-    Divider,
     Box
 } from '@mui/material';
 import { 
@@ -17,18 +14,15 @@ import CSIQuestionDialog from './CSIQuestionDialog';
 import ListLayout from '../../common/ListLayout';
 
 const QuestionsPanel = () => {
-    // Stati
     const [questions, setQuestions] = useState([]);
     const [selectedQuestion, setSelectedQuestion] = useState(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const { loading, getTestQuestions, updateTestQuestion } = useTest();
 
-    // Effetti
     useEffect(() => {
         fetchQuestions();
     }, []);
 
-    // Handlers
     const fetchQuestions = async () => {
         const data = await getTestQuestions('CSI');
         setQuestions(data);
@@ -50,7 +44,6 @@ const QuestionsPanel = () => {
         handleCloseDialog();
     };
 
-    // Definizione colonne
     const columns = [
         { 
             field: 'id', 
@@ -143,62 +136,36 @@ const QuestionsPanel = () => {
         }
     ];
 
-    // Action button per la toolbar
-    const AddQuestionButton = () => (
+    // Custom actions per la toolbar
+    const customActions = (
         <Button 
             startIcon={<AddIcon />}
             variant="contained" 
             onClick={() => handleEditClick(null)}
-            sx={{ ml: 2 }}
         >
             Nuova Domanda
         </Button>
     );
 
     return (
-        <Paper 
-            elevation={0} 
-            sx={{ 
-                height: '100%',           // Usiamo tutto lo spazio disponibile
-                display: 'flex',          // Organizziamo in flex
-                flexDirection: 'column',  // In colonna
-                p: 3,
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 2
-            }}
-        >
-            <Box sx={{ mb: 3 }}>
-                <Typography variant="h6">
-                    Gestione Domande CSI
-                </Typography>
-            </Box>
-            
-            <Divider sx={{ mb: 3 }} />
-
-            <Box sx={{ 
-                flex: 1,                  // Prende tutto lo spazio rimanente
-                minHeight: 0,             // Importante per il flex!
-                overflow: 'hidden'        // Gestiamo l'overflow qui
-            }}>
-                <ListLayout
-                    rows={questions}
-                    columns={columns}
-                    getRowId={(row) => row.id}
-                    loading={loading}
-                    onRefresh={fetchQuestions}
-                    searchPlaceholder="Cerca domande..."
-                    onSearch={() => {}}
-                    emptyStateMessage="Nessuna domanda disponibile"
-                    sx={{ 
-                        height: '100%',   // Usa tutto lo spazio del contenitore
-                        '& .MuiDataGrid-root': {
-                            border: 'none',
-                            backgroundColor: 'background.paper'
-                        }
-                    }}
-                />
-            </Box>
+        <Box sx={{ height: '100%' }}>
+            <ListLayout
+                rows={questions}
+                columns={columns}
+                getRowId={(row) => row.id}
+                loading={loading}
+                onRefresh={fetchQuestions}
+                searchPlaceholder="Cerca domande..."
+                onSearch={() => {}}
+                customActions={customActions}
+                emptyStateMessage="Nessuna domanda disponibile"
+                sx={{ 
+                    minHeight: 'unset',
+                    '& .MuiBox-root': {
+                        minHeight: 'unset'
+                    }
+                }}
+            />
 
             <CSIQuestionDialog 
                 open={isDialogOpen}
@@ -206,7 +173,8 @@ const QuestionsPanel = () => {
                 onClose={handleCloseDialog}
                 onSave={handleSaveQuestion}
             />
-        </Paper>
+        </Box>
     );
 };
+
 export default QuestionsPanel;

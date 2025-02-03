@@ -1,74 +1,91 @@
 import React, { useState } from 'react';
-import { Box, Paper, Tabs, Tab } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Box, Paper, Tabs, Tab, IconButton } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
     Settings as SettingsIcon,
     Assessment as AssessmentIcon,
     School as SchoolIcon,
-    QuestionAnswer as QuestionIcon
+    QuestionAnswer as QuestionIcon,
+    ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
+import { ContentLayout } from '../../common/commonIndex';
 import CSIConfigurationPanel from './CSIConfigurationPanel';
 import CSIQuestionsPanel from './CSIQuestionsPanel';
 
-const TabPanel = ({ children, value, index, ...other }) => (
-    <Box
-        role="tabpanel"
-        hidden={value !== index}
-        {...other}
-        sx={{ 
-            height: 'calc(100vh - 180px)',
-            display: 'flex',              // Aggiungiamo flex
-            flexDirection: 'column',      // Organizziamo in colonna
-            overflow: 'hidden'            // Cambiamo in hidden
-        }}
-    >
-        {value === index && (
-            <Box sx={{ flex: 1, overflow: 'auto' }}>
+const TabPanel = ({ children, value, index, ...other }) => {
+    if (value !== index) return null;
+    
+    return (
+        <Box
+            role="tabpanel"
+            aria-hidden={value !== index}
+            {...other}
+            className="h-full w-full overflow-auto"
+            sx={{
+                '&::-webkit-scrollbar': {
+                    width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                    backgroundColor: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: '#888',
+                    borderRadius: '4px',
+                },
+            }}
+        >
+            <Box className="p-4 min-h-full">
                 {children}
             </Box>
-        )}
-    </Box>
-);
+        </Box>
+    );
+};
 
 const CSITestView = () => {
     const navigate = useNavigate();
-    const location = useLocation();
-    const [tabValue, setTabValue] = useState(
-        location.pathname.includes('/questions') ? 1 : 0
-    );
+    const [tabValue, setTabValue] = useState(0);
 
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue);
-        switch(newValue) {
-            case 0:
-                navigate('/admin/engines/csi');
-                break;
-            case 1:
-                navigate('/admin/engines/csi/questions');
-                break;
-            // Aggiungi altri casi per le altre tab quando necessario
-            default:
-                navigate('/admin/engines/csi');
-        }
     };
 
+    const handleBack = () => {
+        navigate(-1);
+    };
+
+    const tabs = [
+        { icon: <SettingsIcon />, label: "Configurazione", component: <CSIConfigurationPanel /> },
+        { icon: <QuestionIcon />, label: "Domande", component: <CSIQuestionsPanel /> },
+        { icon: <AssessmentIcon />, label: "Risultati", component: <Box>Risultati - Coming Soon</Box> },
+        { icon: <SchoolIcon />, label: "Statistiche Scuole", component: <Box>Statistiche Scuole - Coming Soon</Box> }
+    ];
+
     return (
-        <Box 
-            component={motion.div}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            sx={{ p: 3 }}
+        <ContentLayout
+            title="Test CSI"
+            subtitle="Gestione del test Cognitive Style Inventory"
+            actions={
+                <IconButton
+                    onClick={handleBack}
+                    component={motion.button}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                >
+                    <ArrowBackIcon />
+                </IconButton>
+            }
         >
             <Paper 
                 elevation={0}
+                className="h-full flex flex-col overflow-hidden"
                 sx={{ 
                     borderRadius: 2,
-                    overflow: 'hidden',
                     border: '1px solid',
                     borderColor: 'divider'
                 }}
             >
+                {/* Tabs Header */}
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <Tabs 
                         value={tabValue} 
@@ -80,49 +97,31 @@ const CSITestView = () => {
                             }
                         }}
                     >
-                        <Tab 
-                            icon={<SettingsIcon />} 
-                            label="Configurazione" 
-                            iconPosition="start"
-                        />
-                        <Tab 
-                            icon={<QuestionIcon />} 
-                            label="Domande" 
-                            iconPosition="start"
-                        />
-                        <Tab 
-                            icon={<AssessmentIcon />} 
-                            label="Risultati" 
-                            iconPosition="start"
-                        />
-                        <Tab 
-                            icon={<SchoolIcon />} 
-                            label="Statistiche Scuole" 
-                            iconPosition="start"
-                        />
+                        {tabs.map((tab, index) => (
+                            <Tab 
+                                key={index}
+                                icon={tab.icon} 
+                                label={tab.label} 
+                                iconPosition="start"
+                            />
+                        ))}
                     </Tabs>
                 </Box>
 
-                {/* Contenuto dei Tab Panel */}
-                <TabPanel value={tabValue} index={0}>
-                    <CSIConfigurationPanel />
-                </TabPanel>
-                
-                <TabPanel value={tabValue} index={1}>
-                    <CSIQuestionsPanel />
-                </TabPanel>
-                
-                <TabPanel value={tabValue} index={2}>
-                    {/* Componente Risultati - da implementare */}
-                    <Box>Risultati - Coming Soon</Box>
-                </TabPanel>
-                
-                <TabPanel value={tabValue} index={3}>
-                    {/* Componente Statistiche Scuole - da implementare */}
-                    <Box>Statistiche Scuole - Coming Soon</Box>
-                </TabPanel>
+                {/* Tabs Content */}
+                <Box className="flex-1 overflow-hidden">
+                    {tabs.map((tab, index) => (
+                        <TabPanel 
+                            key={index} 
+                            value={tabValue} 
+                            index={index}
+                        >
+                            {tab.component}
+                        </TabPanel>
+                    ))}
+                </Box>
             </Paper>
-        </Box>
+        </ContentLayout>
     );
 };
 

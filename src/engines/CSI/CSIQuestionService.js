@@ -4,10 +4,12 @@ const logger = require('../../utils/errors/logger/logger');
 const semver = require('semver');
 
 class CSIQuestionService {
-    constructor(repository) {
+    constructor(repository = CSIQuestionRepository) {
+        if (!repository) {
+            throw new Error('Repository is required');
+        }
         this.repository = repository;
     }
-
     /**
      * Validate question data
      */
@@ -74,28 +76,102 @@ class CSIQuestionService {
         }
     }
 
-    /**
+     /**
      * Update an existing question
      */
-    async updateQuestion(id, updateData) {
+     async updateQuestion(id, updateData) {
         try {
-            if (updateData.version && !semver.valid(updateData.version)) {
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_INPUT,
-                    'Invalid version format'
-                );
-            }
+            // Log dati in ingresso
+            logger.debug('Updating question - Received data:', {
+                id,
+                updateData: JSON.stringify(updateData)
+            });
 
-            return await this.repository.update(id, updateData);
+            // Validazione base dei dati
+            this._validateUpdateData(updateData);
+
+            // Formattazione dei dati per l'update
+            const formattedData = {
+                testo: updateData.testo,
+                categoria: updateData.categoria,
+                metadata: {
+                    ...updateData.metadata,
+                    polarity: updateData.metadata?.polarity
+                },
+                weight: parseFloat(updateData.weight || 1),
+                version: updateData.version,
+                active: updateData.active !== undefined ? updateData.active : true
+            };
+
+            // Log dati formattati
+            logger.debug('Formatted update data:', {
+                id,
+                formattedData: JSON.stringify(formattedData)
+            });
+
+            const result = await this.repository.update(id, formattedData);
+
+            // Log risultato
+            logger.debug('Update result:', {
+                id,
+                result: JSON.stringify(result)
+            });
+
+            return result;
         } catch (error) {
             logger.error('Error updating question:', {
                 error: error.message,
                 id,
-                updateData
+                updateData: JSON.stringify(updateData)
             });
             throw error;
         }
     }
+
+    /**
+     * Validate update data
+     */
+    _validateUpdateData(data) {
+        logger.debug('Validating update data:', { data: JSON.stringify(data) });
+
+        // Validazione campi obbligatori
+        if (!data.testo || !data.categoria) {
+            throw createError(
+                ErrorTypes.VALIDATION.INVALID_INPUT,
+                'Missing required fields: text and category are required'
+            );
+        }
+
+        // Validazione peso
+        if (data.weight !== undefined) {
+            const weight = parseFloat(data.weight);
+            if (isNaN(weight) || weight < 0.1 || weight > 10) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_INPUT,
+                    'Weight must be a number between 0.1 and 10'
+                );
+            }
+        }
+
+        // Validazione versione
+        if (data.version && !semver.valid(data.version)) {
+            throw createError(
+                ErrorTypes.VALIDATION.INVALID_INPUT,
+                'Invalid version format. Must follow semantic versioning (e.g., 1.0.0)'
+            );
+        }
+
+        // Validazione metadata
+        if (data.metadata && !data.metadata.polarity) {
+            throw createError(
+                ErrorTypes.VALIDATION.INVALID_INPUT,
+                'Missing polarity in metadata'
+            );
+        }
+
+        return true;
+    }
+
 
     /**
      * Get all versions with their question counts
@@ -127,4 +203,4 @@ class CSIQuestionService {
     }
 }
 
-module.exports = new CSIQuestionService(CSIQuestionRepository);
+module.exports = CSIQuestionService;

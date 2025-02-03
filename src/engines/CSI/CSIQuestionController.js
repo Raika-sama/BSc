@@ -5,11 +5,11 @@ const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 const logger = require('../../utils/errors/logger/logger');
 
 class CSIQuestionController {
-    constructor() {
-        if (!CSIQuestionService) {
+    constructor(service = CSIQuestionService) {
+        if (!service) {
             throw new Error('CSIQuestionService is required');
         }
-        this.service = CSIQuestionService;
+        this.service = service;
     }
 
 
@@ -158,4 +158,4 @@ class CSIQuestionController {
     };
 }
 
-module.exports = new CSIQuestionController();
+module.exports = CSIQuestionController;

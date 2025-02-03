@@ -42,30 +42,60 @@ const CSIQuestionDialog = ({ open, question, onClose, onSave }) => {
         }
     }, [question]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        if (name === 'polarity') {
-            setFormData(prev => ({
-                ...prev,
-                metadata: { ...prev.metadata, polarity: value }
-            }));
-        } else if (name === 'weight') {
-            // Assicurati che il peso sia un numero tra 0.1 e 10
-            const numValue = Math.min(Math.max(parseFloat(value) || 0.1, 0.1), 10);
-            setFormData(prev => ({
-                ...prev,
-                [name]: numValue
-            }));
-        } else {
-            setFormData(prev => ({
-                ...prev,
-                [name]: value
-            }));
-        }
-    };
+   
+const handleChange = (e) => {
+    const { name, value, checked } = e.target;
+    
+    // Log di debug
+    console.log('Handling change:', { name, value, checked });
 
+    if (name === 'polarity') {
+        setFormData(prev => ({
+            ...prev,
+            metadata: { ...prev.metadata, polarity: value }
+        }));
+    } 
+    else if (name === 'weight') {
+        // Assicurati che il peso sia un numero tra 0.1 e 10
+        const numValue = Math.min(Math.max(parseFloat(value) || 0.1, 0.1), 10);
+        setFormData(prev => ({
+            ...prev,
+            weight: numValue
+        }));
+    }
+    else if (name === 'active') {
+        setFormData(prev => ({
+            ...prev,
+            active: checked
+        }));
+    }
+    else {
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    }
+};
+
+    // Modifichiamo handleSubmit per validare i dati prima dell'invio
     const handleSubmit = () => {
-        onSave(formData);
+        // Validazione base
+        if (!formData.testo || !formData.categoria || !formData.metadata?.polarity) {
+            console.error('Validation failed:', formData);
+            return;
+        }
+
+        // Assicuriamoci che tutti i campi necessari siano presenti
+        const dataToSubmit = {
+            ...formData,
+            id: formData.id,
+            weight: parseFloat(formData.weight) || 1,
+            version: formData.version || '1.0.0',
+            active: Boolean(formData.active)
+        };
+
+        console.log('Submitting data:', dataToSubmit); // Debug log
+        onSave(dataToSubmit);
     };
 
     return (

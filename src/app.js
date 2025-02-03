@@ -156,6 +156,8 @@ logger.debug('Dependencies check:', {
 });
 
 
+// Importa la factory delle rotte delle domande
+const createQuestionRoutes = require('./engines/CSI/routes/csi.question.routes');
 
 // Inizializza le routes CSI
 const csiRoutes = createCSIRoutes({ 
@@ -163,12 +165,13 @@ const csiRoutes = createCSIRoutes({
     csiController
 });
 
-// Monta le rotte CSI
-const csiQuestionRoutes = require('./engines/CSI/routes/csi.question.routes');
-app.use('/api/v1/tests/csi/questions', protect, restrictTo('admin'), csiQuestionRoutes);
+// Inizializza le routes delle domande CSI
+const csiQuestionRouter = createQuestionRoutes({ authMiddleware });
+
+// Monta le rotte - IMPORTANTE: le rotte più specifiche devono venire prima
+app.use('/api/v1/tests/csi/questions', csiQuestionRouter);
 app.use('/api/v1/tests/csi', csiRoutes.publicRoutes);
 app.use('/api/v1/tests/csi', csiRoutes.protectedRoutes);
-
 
 // Altre routes con dipendenze iniettate
 app.use('/api/v1', routes(dependencies));

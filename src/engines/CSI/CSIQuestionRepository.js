@@ -3,8 +3,11 @@ const logger = require('../../utils/errors/logger/logger');
 const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 
 class CSIQuestionRepository {
-    constructor() {
-        this.model = CSIQuestion;
+    constructor(model = CSIQuestion) {
+        if (!model) {
+            throw new Error('Model is required');
+        }
+        this.model = model;
     }
 
     /**
@@ -92,32 +95,55 @@ class CSIQuestionRepository {
     /**
      * Update an existing question
      */
-    async update(id, updateData) {
+     async update(id, updateData) {
         try {
-            const question = await this.model.findOneAndUpdate(
-                { id },
-                updateData,
-                { new: true, runValidators: true }
-            );
+            logger.debug('Repository update - Input data:', {
+                id,
+                updateData: JSON.stringify(updateData)
+            });
 
-            if (!question) {
+            // Verifica se la domanda esiste
+            const existingQuestion = await this.model.findOne({ id });
+            if (!existingQuestion) {
                 throw createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,
                     `Question with ID ${id} not found`
                 );
             }
 
+            // Preparazione dati update
+            const updateObj = {
+                ...updateData,
+                lastUpdated: new Date()
+            };
+
+            logger.debug('Final update object:', {
+                id,
+                updateObj: JSON.stringify(updateObj)
+            });
+
+            const question = await this.model.findOneAndUpdate(
+                { id },
+                updateObj,
+                { 
+                    new: true,
+                    runValidators: true,
+                    context: 'query'
+                }
+            );
+
             logger.info('Updated question:', {
                 id: question.id,
-                version: question.version
+                version: question.version,
+                updatedFields: Object.keys(updateData)
             });
 
             return question;
         } catch (error) {
-            logger.error('Error updating question:', {
+            logger.error('Error updating question in repository:', {
                 error: error.message,
                 id,
-                updateData
+                updateData: JSON.stringify(updateData)
             });
             throw error;
         }
@@ -196,4 +222,4 @@ class CSIQuestionRepository {
     }
 }
 
-module.exports = new CSIQuestionRepository();
+module.exports = CSIQuestionRepository;
