@@ -41,25 +41,23 @@ class CSIQuestionService {
      */
     async getTestQuestions(version = '1.0.0') {
         try {
+            logger.debug('Getting test questions from service', { version });
             const questions = await this.repository.getActiveQuestions(version);
             
             if (!questions || questions.length === 0) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    `No active questions found for version ${version}`
-                );
+                logger.warn('No questions found for version', { version });
+                return [];
             }
-
+    
             return questions;
         } catch (error) {
-            logger.error('Error getting test questions:', {
+            logger.error('Error in service getting questions:', {
                 error: error.message,
                 version
             });
             throw error;
         }
     }
-
     /**
      * Create a new question
      */

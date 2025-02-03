@@ -1,4 +1,4 @@
-// src/components/engines/CSI/components/QuestionsPanel.js
+// CSIQuestionsPanel.js
 import React, { useEffect, useState } from 'react';
 import { 
     Box, 
@@ -11,28 +11,60 @@ import {
     TableRow,
     Typography,
     IconButton,
-    Chip
+    Chip,
+    Dialog,
+    Button,
+    Stack
 } from '@mui/material';
-import { Edit as EditIcon } from '@mui/icons-material';
+import { Edit as EditIcon, Add as AddIcon } from '@mui/icons-material';
 import { useTest } from '../../../context/TestContext';
+import CSIQuestionDialog from './CSIQuestionDialog'; // Nuovo componente
 
 const QuestionsPanel = () => {
     const [questions, setQuestions] = useState([]);
-    const { loading, getTestQuestions } = useTest();
+    const [selectedQuestion, setSelectedQuestion] = useState(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const { loading, getTestQuestions, updateTestQuestion } = useTest();
 
     useEffect(() => {
-        const fetchQuestions = async () => {
-            const data = await getTestQuestions('CSI');
-            setQuestions(data);
-        };
         fetchQuestions();
-    }, [getTestQuestions]);
+    }, []);
+
+    const fetchQuestions = async () => {
+        const data = await getTestQuestions('CSI');
+        setQuestions(data);
+    };
+
+    const handleEditClick = (question) => {
+        setSelectedQuestion(question);
+        setIsDialogOpen(true);
+    };
+
+    const handleCloseDialog = () => {
+        setSelectedQuestion(null);
+        setIsDialogOpen(false);
+    };
+
+    const handleSaveQuestion = async (updatedQuestion) => {
+        await updateTestQuestion(updatedQuestion);
+        await fetchQuestions();
+        handleCloseDialog();
+    };
 
     return (
         <Box>
-            <Typography variant="h6" gutterBottom>
-                Gestione Domande CSI
-            </Typography>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">
+                    Gestione Domande CSI
+                </Typography>
+                <Button 
+                    startIcon={<AddIcon />}
+                    variant="contained" 
+                    onClick={() => handleEditClick(null)}
+                >
+                    Nuova Domanda
+                </Button>
+            </Stack>
             
             <TableContainer component={Paper} elevation={0}>
                 <Table>
@@ -42,6 +74,8 @@ const QuestionsPanel = () => {
                             <TableCell>Domanda</TableCell>
                             <TableCell>Categoria</TableCell>
                             <TableCell>Polarità</TableCell>
+                            <TableCell>Versione</TableCell>
+                            <TableCell>Stato</TableCell>
                             <TableCell>Azioni</TableCell>
                         </TableRow>
                     </TableHead>
@@ -67,7 +101,24 @@ const QuestionsPanel = () => {
                                     />
                                 </TableCell>
                                 <TableCell>
-                                    <IconButton size="small">
+                                    <Chip 
+                                        label={question.version}
+                                        size="small"
+                                        color="info"
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <Chip 
+                                        label={question.active ? 'Attiva' : 'Inattiva'}
+                                        size="small"
+                                        color={question.active ? 'success' : 'default'}
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <IconButton 
+                                        size="small"
+                                        onClick={() => handleEditClick(question)}
+                                    >
                                         <EditIcon fontSize="small" />
                                     </IconButton>
                                 </TableCell>
@@ -76,6 +127,13 @@ const QuestionsPanel = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <CSIQuestionDialog 
+                open={isDialogOpen}
+                question={selectedQuestion}
+                onClose={handleCloseDialog}
+                onSave={handleSaveQuestion}
+            />
         </Box>
     );
 };

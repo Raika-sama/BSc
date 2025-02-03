@@ -3,6 +3,8 @@
 const express = require('express');
 const CSIQuestionController = require('../CSIQuestionController');
 const { protect, restrictTo } = require('../../../middleware/authMiddleware');
+const logger = require('../../../utils/errors/logger/logger');  // Aggiungi questa riga
+
 
 const router = express.Router();
 
@@ -23,14 +25,11 @@ router.use((req, res, next) => {
     next();
 });
 
-router.route('/')
-    .get(asyncHandler(CSIQuestionController.getActiveQuestions))
-    .post(asyncHandler(CSIQuestionController.createQuestion));
-
-router.route('/:id')
-    .put(asyncHandler(CSIQuestionController.updateQuestion))
-    .delete(asyncHandler(CSIQuestionController.deleteQuestion));
-
+// Route per le domande
+router.get('/', asyncHandler(CSIQuestionController.getActiveQuestions));
+router.post('/', asyncHandler(CSIQuestionController.createQuestion));
+router.put('/:id', asyncHandler(CSIQuestionController.updateQuestion));
+router.delete('/:id', asyncHandler(CSIQuestionController.deleteQuestion));
 router.get('/versions/stats', asyncHandler(CSIQuestionController.getVersionStats));
 
 // Aggiungiamo error handler

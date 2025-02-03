@@ -6,17 +6,30 @@ const logger = require('../../utils/errors/logger/logger');
 
 class CSIQuestionController {
     constructor() {
+        if (!CSIQuestionService) {
+            throw new Error('CSIQuestionService is required');
+        }
         this.service = CSIQuestionService;
     }
+
 
     /**
      * Ottiene tutte le domande attive per una versione
      */
     getActiveQuestions = async (req, res) => {
         try {
+            logger.debug('Getting active questions', { 
+                version: req.query.version,
+                user: req.user?.id 
+            });
+    
             const { version } = req.query;
             const questions = await this.service.getTestQuestions(version);
-
+    
+            logger.debug('Retrieved questions', { 
+                count: questions.length 
+            });
+    
             res.json({
                 status: 'success',
                 data: questions
@@ -26,7 +39,7 @@ class CSIQuestionController {
                 error: error.message,
                 version: req.query.version
             });
-
+    
             res.status(error.statusCode || 500).json({
                 status: 'error',
                 error: {

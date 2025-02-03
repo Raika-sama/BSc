@@ -20,6 +20,8 @@ import UserDetails from '../components/users/details/UserDetails';  // Aggiungi 
 import EnginesManagement from '../components/engines/EnginesManagement';
 import { Assessment as AssessmentIcon } from '@mui/icons-material';
 import CSITestView from '../components/engines/CSI/CSITestView';
+import CSIQuestionsPanel from '../components/engines/CSI/CSIQuestionsPanel';
+
 // Importa le icone da Material-UI
 import {
     Dashboard as DashboardIcon,
@@ -232,7 +234,21 @@ export const adminRoutes = [
     {
         path: 'engines/csi/*',
         element: CSITestView,
-        showInMenu: false
+        title: 'Gestione CSI',
+        permissions: [PERMISSIONS.ENGINES.READ],
+        writePermission: PERMISSIONS.ENGINES.WRITE,
+        showInMenu: false,
+        children: [
+            {
+                path: '',  // rotta index
+                element: CSITestView
+            },
+            {
+                path: 'questions',
+                element: CSIQuestionsPanel,
+                title: 'Gestione Domande CSI'
+            }
+        ]
     }
 ];
 // Utility per verificare i permessi delle rotte

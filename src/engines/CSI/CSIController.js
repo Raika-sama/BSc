@@ -297,11 +297,27 @@ getStudentResults = async (req, res) => {
      * Recupera tutti i test
      */
     getAll = async (req, res) => {
-        logger.debug('getAll called');
-        res.status(501).json({
-            status: 'error',
-            message: 'Not implemented yet'
-        });
+        try {
+            logger.debug('Getting all CSI questions');
+            const questions = await this.questionService.getTestQuestions();
+    
+            res.json({
+                status: 'success',
+                data: questions
+            });
+        } catch (error) {
+            logger.error('Error getting all questions:', {
+                error: error.message
+            });
+    
+            res.status(error.statusCode || 500).json({
+                status: 'error',
+                error: {
+                    message: error.message,
+                    code: error.code || 'FETCH_QUESTIONS_ERROR'
+                }
+            });
+        }
     };
 
     /**
