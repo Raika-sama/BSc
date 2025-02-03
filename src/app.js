@@ -7,6 +7,8 @@ const { requestLogger, errorLogger } = require('./middleware/loggerMiddleware');
 const errorHandler = require('./middleware/errorHandler');
 const config = require('./config/config');
 const logger = require('./utils/errors/logger/logger');
+const csiQuestionRoutes = require('./engines/CSI/routes/csi.question.routes');
+const createCSIRoutes = require('./engines/CSI/routes/csi.routes');
 
 // Import Models
 const User = require('./models/User');
@@ -37,7 +39,6 @@ const StudentBulkImportController = require('./controllers/studentBulkImportCont
 
 // Import Routes
 const routes = require('./routes');
-const createCSIRoutes = require('./engines/CSI/routes/csi.routes');
 
 // Import del middleware di auth
 const createAuthMiddleware = require('./middleware/authMiddleware');
@@ -158,11 +159,20 @@ const csiRoutes = createCSIRoutes({
     authMiddleware, 
     csiController 
 });
+
+
 // Route pubbliche CSI
 app.use('/api/v1/tests/csi/public', csiRoutes.publicRoutes);
 
 // Route protette CSI
 app.use('/api/v1/tests/csi', csiRoutes.protectedRoutes);
+
+// Route per la gestione delle domande CSI (solo admin)
+app.use('/api/v1/tests/csi/questions', 
+    authMiddleware.protect, 
+    authMiddleware.restrictTo('admin'), 
+    csiQuestionRoutes
+);
 
 // Altre routes con dipendenze iniettate
 app.use('/api/v1', routes(dependencies));

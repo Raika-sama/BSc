@@ -1,7 +1,8 @@
 // src/engines/CSI/controllers/CSIController.js
 
 const CSIEngine = require('./engine/CSIEngine');
-const { Test, Result } = require('../../models/Test');
+const Test = require('../../models/Test');
+const Result = require('../../models/Result');
 const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 const logger = require('../../utils/errors/logger/logger');
 const crypto = require('crypto');
@@ -259,53 +260,21 @@ getStudentResults = async (req, res) => {
         try {
             const { studentId, testType, version } = req.body;
     
-            logger.debug('Generating test link:', { studentId, testType, version });
-    
-            if (!studentId || !testType) {
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_INPUT,
-                    'studentId e testType sono richiesti'
-                );
-            }
-    
-            // Inizializza il test con la versione specificata
-            const testData = await this.engine.initializeTest({
-                studentId,
-                version: version || '1.0.0'
-            });
-    
-            // Genera token sicuro
-            const token = crypto
-                .createHash('sha256')
-                .update(`${studentId}-${Date.now()}-${crypto.randomBytes(16).toString('hex')}`)
-                .digest('hex');
-    
-            // Crea il result
-            const result = await Result.create({
-                studentId,
-                test: testData.test._id,
-                token,
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-                used: false,
-                completato: false,
-                risposte: []
-            });
-    
-            logger.info('Test link generated successfully:', {
-                testId: testData.test._id,
-                resultId: result._id,
-                version: testData.test.versione,
-                token: token.substring(0, 10) + '...',
-                questionCount: testData.test.domande.length
-            });
-    
-            res.json({
-                status: 'success',
-                data: {
-                    token,
-                    url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/test/csi/${token}`
+            // Carica le domande usando il nuovo sistema
+            const questions = await this.engine._loadQuestions(version);
+            
+            // Crea il test con il nuovo formato delle domande
+            const test = await Test.create({
+                tipo: testType,
+                domande: questions,
+                versione: version || '1.0.0',
+                configurazione: {
+                    tempoLimite: 30,
+                    tentativiMax: 1,
+                    questionVersion: version || '1.0.0'
                 }
             });
+    
         } catch (error) {
             logger.error('Error generating test link:', {
                 error: error.message,

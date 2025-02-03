@@ -1,8 +1,8 @@
 // src/components/engines/CSI/controllers/CSIQuestionController.js
 
 const CSIQuestionService = require('./CSIQuestionService');
-const { createError, ErrorTypes } = require('../../../utils/errors/errorTypes');
-const logger = require('../../../utils/errors/logger/logger');
+const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
+const logger = require('../../utils/errors/logger/logger');
 
 class CSIQuestionController {
     constructor() {

@@ -1,7 +1,8 @@
 // src/repositories/TestRepository.js
 
 const BaseRepository = require('./base/BaseRepository');
-const { Test, Result } = require('../models');
+const Test = require('../models/Test');
+const Result = require('../models/Result');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 

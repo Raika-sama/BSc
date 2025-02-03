@@ -5,6 +5,8 @@ const CSIScorer = require('./CSIScorer');
 const CSIQuestionService = require('../CSIQuestionService');  // Aggiungiamo l'import
 const { createError, ErrorTypes } = require('../../../utils/errors/errorTypes');
 const logger = require('../../../utils/errors/logger/logger');
+const Test = require('../../../models/Test');
+const Result = require('../../../models/Result');
 
 class CSIEngine extends BaseEngine {
     constructor(Test, Result) {
@@ -22,39 +24,23 @@ class CSIEngine extends BaseEngine {
      */
     async _loadQuestions(version = '1.0.0') {
         try {
-            // Prima prova a caricare dal database
-            try {
-                const dbQuestions = await this.questionService.getTestQuestions(version);
-                if (dbQuestions && dbQuestions.length > 0) {
-                    logger.debug('Loaded questions from database:', {
-                        version,
-                        count: dbQuestions.length
-                    });
-                    return dbQuestions;
+            const questions = await this.questionService.getTestQuestions(version);
+            return questions.map(q => ({
+                questionRef: q._id,
+                questionModel: 'CSIQuestion',
+                order: q.id,
+                version: q.version,
+                originalQuestion: {
+                    id: q.id,
+                    testo: q.testo,
+                    tipo: q.tipo,
+                    categoria: q.categoria,
+                    metadata: q.metadata
                 }
-            } catch (dbError) {
-                logger.warn('Failed to load questions from database, falling back to hardcoded questions:', {
-                    error: dbError.message
-                });
-            }
-
-            // Fallback alle domande hardcoded
-            return [
-                {
-                    id: 1,
-                    testo: "Prima di iniziare una ricerca, leggo diverse fonti per farmi un'idea generale dell'argomento",
-                    tipo: "likert",
-                    categoria: "Elaborazione",
-                    metadata: { polarity: "-" }
-                },
-                // ... resto delle domande hardcoded ...
-            ];
+            }));
         } catch (error) {
             logger.error('Error loading CSI questions:', error);
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Errore nel caricamento delle domande'
-            );
+            throw error;
         }
     }
 

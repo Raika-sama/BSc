@@ -1,0 +1,43 @@
+{"level":"info","message":"Connected to MongoDB","timestamp":"2025-02-03T16:29:56.504Z"}
+{"level":"info","message":"Cleared existing questions","timestamp":"2025-02-03T16:29:56.666Z"}
+{"level":"info","message":"Successfully initialized 30 CSI questions","timestamp":"2025-02-03T16:29:56.735Z"}
+{"level":"info","message":"Total questions in database: 30","timestamp":"2025-02-03T16:29:56.754Z"}
+{"0":"_id_","1":"id_1","2":"version_1_active_1","3":"categoria_1","level":"info","message":"Indexes created:","timestamp":"2025-02-03T16:29:56.777Z"}
+{"level":"info","message":"Database connection closed","timestamp":"2025-02-03T16:29:56.779Z"}
+{"level":"info","message":"Connected to MongoDB","timestamp":"2025-02-03T16:37:17.010Z"}
+{"level":"info","message":"Questions before cleanup: 30","timestamp":"2025-02-03T16:37:17.179Z"}
+{"level":"info","message":"Cleared existing questions","timestamp":"2025-02-03T16:37:17.206Z"}
+{"level":"info","message":"Successfully initialized 30 CSI questions","timestamp":"2025-02-03T16:37:17.265Z"}
+{"Autonomia":6,"Creatività":5,"Decisione":6,"Elaborazione":7,"PreferenzaVisiva":6,"level":"info","message":"Questions by category:","timestamp":"2025-02-03T16:37:17.436Z"}
+{"level":"info","message":"Total questions in database: 30","timestamp":"2025-02-03T16:37:17.458Z"}
+{"0":"_id_","1":"id_1","2":"version_1_active_1","3":"categoria_1","level":"info","message":"Indexes created:","timestamp":"2025-02-03T16:37:17.484Z"}
+{"level":"info","message":"Database connection closed","timestamp":"2025-02-03T16:37:17.486Z"}
+{"level":"info","message":"Attempting to connect to: mongodb+srv://[USERNAME]:[PASSWORD]@cluster0.4nf56.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0","timestamp":"2025-02-03T16:40:45.346Z"}
+{"level":"info","message":"Connected to MongoDB","timestamp":"2025-02-03T16:40:45.762Z"}
+{"level":"info","message":"Connected to database: test","timestamp":"2025-02-03T16:40:45.763Z"}
+{"0":"users","1":"csiquestions","level":"info","message":"Available collections:","timestamp":"2025-02-03T16:40:45.954Z"}
+{"level":"info","message":"Questions before cleanup: 30","timestamp":"2025-02-03T16:40:45.978Z"}
+{"level":"info","message":"Cleared existing questions","timestamp":"2025-02-03T16:40:46.002Z"}
+{"level":"info","message":"Successfully initialized 30 CSI questions","timestamp":"2025-02-03T16:40:46.068Z"}
+{"Autonomia":6,"Creatività":5,"Decisione":6,"Elaborazione":7,"PreferenzaVisiva":6,"level":"info","message":"Questions by category:","timestamp":"2025-02-03T16:40:46.233Z"}
+{"level":"info","message":"Total questions in database: 30","timestamp":"2025-02-03T16:40:46.254Z"}
+{"0":"_id_","1":"id_1","2":"version_1_active_1","3":"categoria_1","level":"info","message":"Indexes created:","timestamp":"2025-02-03T16:40:46.275Z"}
+{"level":"info","message":"Database connection closed","timestamp":"2025-02-03T16:40:46.277Z"}
+{"level":"info","message":"Attempting to connect to: mongodb+srv://[USERNAME]:[PASSWORD]@cluster0.4nf56.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0","timestamp":"2025-02-03T16:43:10.804Z"}
+{"level":"error","message":"Error initializing questions:","timestamp":"2025-02-03T16:43:11.200Z"}
+{"level":"info","message":"Attempting to connect to: mongodb+srv://[USERNAME]:[PASSWORD]@cluster0.4nf56.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0","timestamp":"2025-02-03T16:43:36.397Z"}
+{"level":"error","message":"Error initializing questions:","timestamp":"2025-02-03T16:43:36.827Z"}
+{"level":"info","message":"Attempting to connect to: mongodb+srv://[USERNAME]:[PASSWORD]@cluster0.4nf56.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0","timestamp":"2025-02-03T16:44:46.816Z"}
+{"level":"info","message":"Attempting to connect to: mongodb+srv://[USERNAME]:[PASSWORD]@cluster0.4nf56.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0","timestamp":"2025-02-03T16:44:46.835Z"}
+{"level":"error","message":"Cannot read properties of undefined (reading 'databaseName')","name":"TypeError","stack":"TypeError: Cannot read properties of undefined (reading 'databaseName')\n    at initializeQuestions (C:\\Users\\ricca\\desktop\\BSc\\src\\scripts\\initCSIQuestions.js:32:47)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-02-03T16:44:46.842Z"}
+{"level":"info","message":"Connected to database: test","timestamp":"2025-02-03T16:44:47.275Z"}
+{"level":"error","message":"Client must be connected before running operations","name":"MongoNotConnectedError","stack":"MongoNotConnectedError: Client must be connected before running operations\n    at executeOperationAsync (C:\\Users\\ricca\\desktop\\BSc\\node_modules\\mongoose\\node_modules\\mongodb\\lib\\operations\\execute_operation.js:23:19)\n    at C:\\Users\\ricca\\desktop\\BSc\\node_modules\\mongoose\\node_modules\\mongodb\\lib\\operations\\execute_operation.js:12:45\n    at maybeCallback (C:\\Users\\ricca\\desktop\\BSc\\node_modules\\mongoose\\node_modules\\mongodb\\lib\\utils.js:293:21)\n    at executeOperation (C:\\Users\\ricca\\desktop\\BSc\\node_modules\\mongoose\\node_modules\\mongodb\\lib\\operations\\execute_operation.js:12:38)\n    at ListCollectionsCursor._initialize (C:\\Users\\ricca\\desktop\\BSc\\node_modules\\mongoose\\node_modules\\mongodb\\lib\\cursor\\list_collections_cursor.js:28:50)\n    at [kInit] (C:\\Users\\ricca\\desktop\\BSc\\node_modules\\mongoose\\node_modules\\mongodb\\lib\\cursor\\abstract_cursor.js:450:14)\n    at node:internal/util:455:21\n    at new Promise (<anonymous>)\n    at bound [kInit] (node:internal/util:441:12)\n    at next (C:\\Users\\ricca\\desktop\\BSc\\node_modules\\mongoose\\node_modules\\mongodb\\lib\\cursor\\abstract_cursor.js:509:68)","timestamp":"2025-02-03T16:44:47.284Z"}
+{"level":"info","message":"Attempting to connect to: mongodb+srv://[USERNAME]:[PASSWORD]@cluster0.4nf56.mongodb.net/brainScannerDB?retryWrites=true&w=majority&appName=Cluster0","timestamp":"2025-02-03T16:51:01.418Z"}
+{"level":"info","message":"Connected to database: brainScannerDB","timestamp":"2025-02-03T16:51:01.812Z"}
+{"level":"info","message":"Questions before cleanup: 0","timestamp":"2025-02-03T16:51:01.965Z"}
+{"level":"info","message":"Cleared existing questions","timestamp":"2025-02-03T16:51:01.985Z"}
+{"level":"info","message":"Successfully initialized 30 CSI questions","timestamp":"2025-02-03T16:51:02.045Z"}
+{"Autonomia":6,"Creatività":5,"Decisione":6,"Elaborazione":7,"PreferenzaVisiva":6,"level":"info","message":"Questions by category:","timestamp":"2025-02-03T16:51:02.214Z"}
+{"level":"info","message":"Total questions in database: 30","timestamp":"2025-02-03T16:51:02.232Z"}
+{"0":"_id_","1":"id_1","2":"version_1_active_1","3":"categoria_1","level":"info","message":"Indexes created:","timestamp":"2025-02-03T16:51:02.253Z"}
+{"level":"info","message":"Database connection closed","timestamp":"2025-02-03T16:51:02.268Z"}

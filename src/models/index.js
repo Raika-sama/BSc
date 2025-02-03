@@ -14,11 +14,31 @@ const School = require('./School');
 const User = require('./User');
 const Class = require('./Class');
 const Student = require('./Student');
-const { Test, Result } = require('./Test');
+const Test = require('./Test');        // Ora importa solo Test
+const Result = require('./Result');    // Importa Result dal nuovo file
 const UserAudit = require('./UserAudit');  // Aggiungi questa riga
 if (!UserAudit.modelName) {
     throw new Error('UserAudit model failed to initialize');
 }
+// Verifica che tutti i modelli siano stati caricati correttamente
+const models = {
+    School,
+    User,
+    Class,
+    Student,
+    Test,
+    Result,
+    UserAudit
+};
+
+// Verifica che tutti i modelli siano stati caricati correttamente
+Object.entries(models).forEach(([name, model]) => {
+    if (!model || !model.modelName) {
+        throw new Error(`Model ${name} non inizializzato correttamente`);
+    }
+});
+
+console.log('Models loaded:', Object.keys(models));
 
 // Esporta tutti i modelli come oggetto
 module.exports = {
@@ -32,16 +52,7 @@ module.exports = {
 
 };
 
-// Verifica che tutti i modelli siano stati caricati correttamente
-const models = {
-    School,
-    User,
-    Class,
-    Student,
-    Test,
-    Result,
-    UserAudit
-};
+
 
 // Log dei modelli disponibili
 console.log('Models loaded:', Object.keys(models));
