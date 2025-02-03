@@ -16,9 +16,18 @@ const TabPanel = ({ children, value, index, ...other }) => (
         role="tabpanel"
         hidden={value !== index}
         {...other}
-        sx={{ p: 3 }}
+        sx={{ 
+            height: 'calc(100vh - 180px)',
+            display: 'flex',              // Aggiungiamo flex
+            flexDirection: 'column',      // Organizziamo in colonna
+            overflow: 'hidden'            // Cambiamo in hidden
+        }}
     >
-        {value === index && children}
+        {value === index && (
+            <Box sx={{ flex: 1, overflow: 'auto' }}>
+                {children}
+            </Box>
+        )}
     </Box>
 );
 
@@ -94,7 +103,24 @@ const CSITestView = () => {
                     </Tabs>
                 </Box>
 
-              
+                {/* Contenuto dei Tab Panel */}
+                <TabPanel value={tabValue} index={0}>
+                    <CSIConfigurationPanel />
+                </TabPanel>
+                
+                <TabPanel value={tabValue} index={1}>
+                    <CSIQuestionsPanel />
+                </TabPanel>
+                
+                <TabPanel value={tabValue} index={2}>
+                    {/* Componente Risultati - da implementare */}
+                    <Box>Risultati - Coming Soon</Box>
+                </TabPanel>
+                
+                <TabPanel value={tabValue} index={3}>
+                    {/* Componente Statistiche Scuole - da implementare */}
+                    <Box>Statistiche Scuole - Coming Soon</Box>
+                </TabPanel>
             </Paper>
         </Box>
     );

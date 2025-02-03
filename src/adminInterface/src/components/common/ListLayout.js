@@ -281,6 +281,10 @@ const ListLayout = ({
                 elevation={0}
                 sx={{
                     flex: 1,
+                    width: '100%',
+                    '& .MuiDataGrid-root': {
+                        border: 'none'
+                    },
                     display: 'flex',
                     flexDirection: 'column',
                     borderRadius: 2,
