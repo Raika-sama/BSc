@@ -16,6 +16,7 @@ import {
     Alert,
     Chip,
     Tooltip,
+    IconButton
 } from '@mui/material';
 import { ContentLayout } from '../common/commonIndex';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
@@ -27,7 +28,9 @@ import {
     Quiz as QuizIcon,
     School as SchoolIcon,
     Warning as WarningIcon,
-    CheckCircle as CheckCircleIcon
+    CheckCircle as CheckCircleIcon,
+    Add as AddIcon,
+    FilterList as FilterListIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { StatCards } from './classcomponents/StatCards';
@@ -359,57 +362,97 @@ const ClassManagement = () => {
         );
     }
 
-return (
-    <ContentLayout
-    title={isAdmin ? 'Gestione Classi (Admin)' : 'Gestione Classi'}
-    subtitle="Gestisci le classi e i loro studenti"
-    actions={
-        <Box sx={{ display: 'flex', gap: 2 }}>
-            {/* Add your action buttons here */}
-        </Box>
-    }
->
-    {/* StatCards */}
-    <StatCards classes={currentClasses} />
+    return (
+        <ContentLayout
+            title={isAdmin ? 'Gestione Classi (Admin)' : 'Gestione Classi'}
+            subtitle="Gestisci le classi e monitora gli studenti"
+            actions={
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Tooltip title="Filtri">
+                        <IconButton 
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            sx={{ color: 'inherit' }}
+                        >
+                            <FilterListIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => navigate('/admin/classes/create')}
+                        sx={{
+                            backgroundColor: 'primary.main',
+                            '&:hover': {
+                                backgroundColor: 'primary.dark',
+                            }
+                        }}
+                    >
+                        Nuova Classe
+                    </Button>
+                </Box>
+            }
+        >
+            <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                height: 'calc(100vh - 180px)',
+                gap: 3
+            }}>
+                {/* Stat Cards con Animazione */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    <StatCards classes={currentClasses} />
+                </motion.div>
 
-    {/* Main Content */}
-    <Paper sx={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: 0,
-        borderRadius: 2,
-        overflow: 'hidden'
-    }}>
-                    {/* Toolbar Filtri */}
-                    <FilterToolbar
-                        schoolFilter={schoolFilter}
-                        setSchoolFilter={setSchoolFilter}
-                        yearFilter={yearFilter}
-                        setYearFilter={setYearFilter}
-                        sectionFilter={sectionFilter}
-                        setSectionFilter={setSectionFilter}
-                        statusFilter={statusFilter}
-                        setStatusFilter={setStatusFilter}
-                        studentsFilter={studentsFilter}
-                        setStudentsFilter={setStudentsFilter}
-                        handleApplyFilters={handleApplyFilters}
-                        handleResetFilters={handleResetFilters}
-                    />
+                {/* Main Content */}
+                <Paper 
+                    elevation={0}
+                    sx={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        border: '1px solid',
+                        borderColor: 'divider'
+                    }}
+                >
+                    {/* Toolbar Filtri con Animazione */}
+                    <AnimatePresence>
+                        <FilterToolbar
+                            schoolFilter={schoolFilter}
+                            setSchoolFilter={setSchoolFilter}
+                            yearFilter={yearFilter}
+                            setYearFilter={setYearFilter}
+                            sectionFilter={sectionFilter}
+                            setSectionFilter={setSectionFilter}
+                            statusFilter={statusFilter}
+                            setStatusFilter={setStatusFilter}
+                            studentsFilter={studentsFilter}
+                            setStudentsFilter={setStudentsFilter}
+                            handleApplyFilters={handleApplyFilters}
+                            handleResetFilters={handleResetFilters}
+                        />
+                    </AnimatePresence>
 
-                    {/* Tabs e Grid */}
+                    {/* Tabs con Animazione */}
                     {!isAdmin && (
                         <Tabs
                             value={tabValue}
                             onChange={(e, newValue) => setTabValue(newValue)}
                             sx={{
-                                minHeight: '40px',
+                                minHeight: '48px',
                                 borderBottom: 1,
                                 borderColor: 'divider',
+                                bgcolor: 'background.paper',
                                 '& .MuiTab-root': {
-                                    minHeight: '40px',
+                                    minHeight: '48px',
                                     fontSize: '0.875rem',
-                                    textTransform: 'none'
+                                    textTransform: 'none',
+                                    fontWeight: 500
                                 }
                             }}
                         >
@@ -418,8 +461,14 @@ return (
                         </Tabs>
                     )}
 
-                    {/* DataGrid */}
-                    <Box sx={{ flex: 1, minHeight: 0 }}>
+                    {/* DataGrid Container */}
+                    <Box sx={{ 
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        height: '100%',
+                        minHeight: 400
+                    }}>
                         <DataGrid
                             rows={currentClasses}
                             columns={columns}
@@ -444,49 +493,66 @@ return (
                                     '&:hover': {
                                         backgroundColor: 'action.hover'
                                     }
+                                },
+                                '& .MuiDataGrid-footerContainer': {
+                                    borderTop: 2,
+                                    borderColor: 'divider'
                                 }
                             }}
                         />
                     </Box>
                 </Paper>
 
-                {/* Delete Dialog */}
-                <Dialog
-                    open={openDeleteDialog}
-                    onClose={() => setOpenDeleteDialog(false)}
-                    TransitionComponent={motion.div}
-                >
-                    <DialogTitle>Conferma eliminazione</DialogTitle>
-                    <DialogContent>
-                        {deleteError && (
-                            <Alert severity="error" sx={{ mb: 2 }}>
-                                {deleteError}
-                            </Alert>
-                        )}
-                        <Typography>
-                            Sei sicuro di voler eliminare questa classe?
-                            {selectedClass && (
-                                <Typography color="textSecondary" sx={{ mt: 1 }}>
-                                    {`${selectedClass.year}${selectedClass.section} - ${selectedClass.schoolName}`}
-                                </Typography>
-                            )}
-                        </Typography>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setOpenDeleteDialog(false)}>
-                            Annulla
-                        </Button>
-                        <Button 
-                            onClick={handleDeleteConfirm}
-                            color="error"
-                            variant="contained"
+                {/* Delete Dialog con Animazione */}
+                <AnimatePresence>
+                    {openDeleteDialog && (
+                        <Dialog
+                            open={openDeleteDialog}
+                            onClose={() => setOpenDeleteDialog(false)}
+                            PaperComponent={motion.div}
+                            PaperProps={{
+                                initial: { opacity: 0, y: 20 },
+                                animate: { opacity: 1, y: 0 },
+                                exit: { opacity: 0, y: 20 },
+                                transition: { duration: 0.2 }
+                            }}
                         >
-                            Elimina
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-                </ContentLayout>
-            );
-        };
+                            <DialogTitle>Conferma eliminazione</DialogTitle>
+                            <DialogContent>
+                                {deleteError && (
+                                    <Alert severity="error" sx={{ mb: 2 }}>
+                                        {deleteError}
+                                    </Alert>
+                                )}
+                                <Typography>
+                                    Sei sicuro di voler eliminare questa classe?
+                                    {selectedClass && (
+                                        <Typography color="textSecondary" sx={{ mt: 1 }}>
+                                            {`${selectedClass.year}${selectedClass.section} - ${selectedClass.schoolName}`}
+                                        </Typography>
+                                    )}
+                                </Typography>
+                            </DialogContent>
+                            <DialogActions>
+                                <Button onClick={() => setOpenDeleteDialog(false)}>
+                                    Annulla
+                                </Button>
+                                <Button 
+                                    onClick={handleDeleteConfirm}
+                                    color="error"
+                                    variant="contained"
+                                >
+                                    Elimina
+                                </Button>
+                            </DialogActions>
+                        </Dialog>
+                    )}
+                </AnimatePresence>
+            </Box>
+        </ContentLayout>
+    );
+};
+
+
 
 export default ClassManagement;

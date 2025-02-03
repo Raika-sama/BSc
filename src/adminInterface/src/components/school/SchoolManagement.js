@@ -1,18 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Container,
-    Paper,
-    Typography,
     Box,
     Button,
-    Card,
-    CardContent,
-    Grid,
     IconButton,
     Tooltip,
-    Pagination,
-    Collapse
+    Pagination
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -21,13 +14,17 @@ import {
     LocationOn as LocationIcon,
     Class as ClassIcon
 } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 import { ContentLayout } from '../common/commonIndex';
+import ListLayout from '../common/ListLayout';
 import { useNotification } from '../../context/NotificationContext';
 import { useSchool } from '../../context/SchoolContext';
 import SchoolList from './SchoolList';
 import SchoolFilters from './schoolComponents/SchoolFilters';
+import StatCard from './schoolComponents/StatCard'; // Assumiamo di aver spostato StatCard in un file separato
 
 const ITEMS_PER_PAGE = 10;
+
 
 const SchoolManagement = () => {
     const navigate = useNavigate();
@@ -108,117 +105,75 @@ const SchoolManagement = () => {
     ];
 
     return (
-        <ContentLayout
-            title="Gestione Scuole"
-            subtitle="Gestisci le scuole e le loro informazioni"
-            actions={
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Tooltip title="Filtri">
-                        <IconButton 
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
-                            sx={{ color: 'inherit' }}
-                        >
-                            <FilterListIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Button
-                        variant="outlined"
-                        startIcon={<AddIcon />}
-                        onClick={() => navigate('/admin/schools/create')}
-                    >
-                        Nuova Scuola
-                    </Button>
-                </Box>
-            }
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
         >
-            {/* Stats Cards */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-                {statsCards.map((card, index) => (
-                    <Grid item xs={12} sm={6} md={3} key={index}>
-                        <Card elevation={2}>
-                            <CardContent sx={{ 
-                                p: 2,
-                                '&:last-child': { pb: 2 }
+            <ContentLayout
+                title="Gestione Scuole"
+                subtitle="Gestisci le scuole e le loro informazioni"
+                actions={
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Tooltip title="Filtri">
+                            <IconButton 
+                                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                sx={{ color: 'inherit' }}
+                            >
+                                <FilterListIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => navigate('/admin/schools/create')}
+                        >
+                            Nuova Scuola
+                        </Button>
+                    </Box>
+                }
+            >
+                <ListLayout
+                    statsCards={statsCards}
+                    isFilterOpen={isFilterOpen}
+                    filterComponent={
+                        <SchoolFilters
+                            filters={filters}
+                            onChange={setFilters}
+                            onReset={() => setFilters({
+                                region: '',
+                                schoolType: '',
+                                institutionType: ''
+                            })}
+                        />
+                    }
+                    listComponent={
+                        <SchoolList
+                            schools={schools}
+                            loading={loading}
+                            onEdit={handleEditClick}
+                            onDelete={handleDeleteSchool}
+                        />
+                    }
+                    paginationComponent={
+                        !loading && totalSchools > ITEMS_PER_PAGE && (
+                            <Box sx={{ 
+                                mt: 3, 
+                                display: 'flex', 
+                                justifyContent: 'center' 
                             }}>
-                                <Box sx={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: 2
-                                }}>
-                                    <Box sx={{ 
-                                        color: card.color,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        bgcolor: `${card.color}15`,
-                                        borderRadius: 1,
-                                        p: 1
-                                    }}>
-                                        {card.icon}
-                                    </Box>
-                                    <Box>
-                                        <Typography 
-                                            variant="body2" 
-                                            color="textSecondary"
-                                            gutterBottom
-                                        >
-                                            {card.title}
-                                        </Typography>
-                                        <Typography 
-                                            variant="h5" 
-                                            sx={{ color: card.color }}
-                                        >
-                                            {card.value}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                ))}
-            </Grid>
-
-             {/* Filtri Collassabili */}
-             <Collapse in={isFilterOpen}>
-                <Paper sx={{ p: 2, borderRadius: 2 }}>
-                    <SchoolFilters
-                        filters={filters}
-                        onChange={setFilters}
-                        onReset={() => setFilters({
-                            region: '',
-                            schoolType: '',
-                            institutionType: ''
-                        })}
-                    />
-                </Paper>
-            </Collapse>
-
-            {/* Lista Scuole */}
-            <Paper elevation={2}>
-                <SchoolList
-                    schools={schools}
-                    loading={loading}
-                    onEdit={handleEditClick}
-                    onDelete={handleDeleteSchool}
+                                <Pagination
+                                    count={Math.ceil(totalSchools / ITEMS_PER_PAGE)}
+                                    page={page}
+                                    onChange={handlePageChange}
+                                    color="primary"
+                                />
+                            </Box>
+                        )
+                    }
                 />
-            </Paper>
-
-            {/* Paginazione */}
-            {!loading && totalSchools > ITEMS_PER_PAGE && (
-                <Box sx={{ 
-                    mt: 3, 
-                    display: 'flex', 
-                    justifyContent: 'center' 
-                }}>
-                    <Pagination
-                        count={Math.ceil(totalSchools / ITEMS_PER_PAGE)}
-                        page={page}
-                        onChange={handlePageChange}
-                        color="primary"
-                    />
-                </Box>
-            )}
-        </ContentLayout>
+            </ContentLayout>
+        </motion.div>
     );
 };
 

@@ -1,11 +1,19 @@
+// src/components/common/ContentLayout.js
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Box, Paper, Typography } from '@mui/material';
-import { alpha } from '@mui/material/styles';
+import { alpha, Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
-const ContentLayout = ({ title, subtitle, children, headerProps, contentProps }) => {
+const ContentLayout = ({ 
+    title, 
+    subtitle, 
+    actions,
+    children, 
+    headerProps, 
+    contentProps 
+}) => {
     const customTheme = useTheme();
+    const isDarkMode = customTheme.palette.mode === 'dark';
 
     return (
         <Box
@@ -16,58 +24,83 @@ const ContentLayout = ({ title, subtitle, children, headerProps, contentProps })
                 ...contentProps
             }}
         >
-            {/* Header Section */}
-            <Paper
-                elevation={0}
+            {/* Header Section - Versione semplificata */}
+            <Box
                 sx={{
-                    p: 3,
-                    borderRadius: 2,
-                    background: `linear-gradient(135deg, ${customTheme.palette.primary.light}, ${customTheme.palette.primary.main})`,
-                    color: 'white',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        bottom: 0,
-                        left: 0,
-                        background: `radial-gradient(circle at top right, ${alpha(customTheme.palette.primary.light, 0.1)}, transparent 70%)`,
-                    },
+                    mb: 4,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
                     ...headerProps
                 }}
             >
-                <Box 
-                    sx={{
-                        display: "flex",
-                        justifyContent: "space-between", 
-                        alignItems: "center",
-                        position: "relative",
-                        zIndex: 1
-                    }}
-                >
-                    <Box>
-                        <Typography
-                            variant="h4"
-                            sx={{
-                                fontWeight: 600,
-                                color: 'inherit'
+                <Box>
+                    <Typography
+                        variant="h4"
+                        sx={{
+                            fontWeight: 600,
+                            color: isDarkMode 
+                                ? customTheme.palette.primary.light 
+                                : customTheme.palette.primary.main,
+                            mb: subtitle ? 1 : 0,
+                            transition: 'color 0.3s ease'
+                        }}
+                    >
+                        {title}
+                    </Typography>
+                    {subtitle && (
+                        <Typography 
+                            variant="subtitle1" 
+                            sx={{ 
+                                color: 'text.secondary',
+                                opacity: 0.8,
+                                transition: 'color 0.3s ease'
                             }}
                         >
-                            {title}
+                            {subtitle}
                         </Typography>
-                        {subtitle && (
-                            <Typography variant="subtitle1" color="inherit" sx={{ mt: 1, opacity: 0.8 }}>
-                                {subtitle}
-                            </Typography>
-                        )}
-                    </Box>
+                    )}
                 </Box>
-            </Paper>
+                
+                {/* Area Azioni */}
+                {actions && (
+                    <Box 
+                        sx={{ 
+                            display: 'flex', 
+                            gap: 2,
+                            '& .MuiButton-outlined': {
+                                borderColor: isDarkMode 
+                                    ? alpha(customTheme.palette.primary.main, 0.5)
+                                    : customTheme.palette.primary.main,
+                                color: isDarkMode
+                                    ? customTheme.palette.primary.light
+                                    : customTheme.palette.primary.main,
+                                '&:hover': {
+                                    borderColor: customTheme.palette.primary.main,
+                                    backgroundColor: isDarkMode
+                                        ? alpha(customTheme.palette.primary.main, 0.1)
+                                        : alpha(customTheme.palette.primary.main, 0.05)
+                                }
+                            },
+                            '& .MuiIconButton-root': {
+                                color: isDarkMode
+                                    ? customTheme.palette.primary.light
+                                    : customTheme.palette.primary.main
+                            }
+                        }}
+                    >
+                        {actions}
+                    </Box>
+                )}
+            </Box>
             
             {/* Content Section */}
-            <Box sx={{ mt: 3 }}>
+            <Box 
+                sx={{ 
+                    height: 'calc(100% - 80px)',  // sottrai l'altezza dell'header
+                    overflow: 'auto'
+                }}
+            >
                 {children}
             </Box>
         </Box>
@@ -77,6 +110,7 @@ const ContentLayout = ({ title, subtitle, children, headerProps, contentProps })
 ContentLayout.propTypes = {
     title: PropTypes.string.isRequired,
     subtitle: PropTypes.string,
+    actions: PropTypes.node,
     children: PropTypes.node,
     headerProps: PropTypes.object,
     contentProps: PropTypes.object
