@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     Box,
     Typography,
@@ -6,24 +6,23 @@ import {
     IconButton,
     Button,
     Tooltip,
-    Paper,
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions,
-    Alert
+    DialogActions
 } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
 import {
     Group as GroupIcon,
     GroupAdd as GroupAddIcon,
     Quiz as QuizIcon,
     Visibility as VisibilityIcon,
     Edit as EditIcon,
-    Delete as DeleteIcon
+    Delete as DeleteIcon,
+    CheckCircle as CheckCircleIcon,
+    Warning as WarningIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import { useClass } from '../../../../context/ClassContext';
+import ListLayout from '../../../common/ListLayout';
 
 const StudentsList = ({ 
     classData, 
@@ -35,26 +34,42 @@ const StudentsList = ({
     onNavigateToTests,
     fetchData
 }) => {
-    const navigate = useNavigate();
     const { removeStudentsFromClass } = useClass();
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // Definizione delle stat cards
+    const statsCards = useMemo(() => [
+        {
+            title: 'Totale Studenti',
+            value: classData.students.length,
+            icon: <GroupIcon />,
+            color: 'primary.main'
+        },
+        {
+            title: 'Capacità',
+            value: `${classData.students.length}/${classData.capacity}`,
+            icon: <WarningIcon />,
+            color: classData.students.length >= classData.capacity ? 'error.main' : 'success.main'
+        },
+        {
+            title: 'Studenti Attivi',
+            value: classData.students.filter(s => s.status === 'active').length,
+            icon: <CheckCircleIcon />,
+            color: 'success.main'
+        }
+    ], [classData]);
 
-    const handleSelectionChange = (newSelection) => {
-        setSelectedStudents(newSelection);
-    };
-
-        const handleRemoveStudents = async () => {
+    const handleRemoveStudents = async () => {
         try {
             setLoading(true);
             setError(null);
             await removeStudentsFromClass(classData._id, selectedStudents);
             setConfirmDialogOpen(false);
             setSelectedStudents([]);
-            fetchData(); // Ricarica i dati della classe
+            fetchData();
         } catch (err) {
             setError(err.message);
         } finally {
@@ -62,82 +77,53 @@ const StudentsList = ({
         }
     };
 
-    const getStatusLabel = (status) => {
-        const statusLabels = {
-            pending: 'In Attesa',
-            active: 'Attivo',
-            inactive: 'Inattivo',
-            transferred: 'Trasferito',
-            graduated: 'Diplomato'
-        };
-        return statusLabels[status] || status;
-    };
-
-    const getStatusColor = (status) => {
-        const statusColors = {
-            pending: '#fff3e0',
-            active: '#e8f5e9',
-            inactive: '#f5f5f5',
-            transferred: '#e3f2fd',
-            graduated: '#f3e5f5'
-        };
-        return statusColors[status] || '#f5f5f5';
-    };
-
-    const studentColumns = [
+    // Definizione delle colonne
+    const columns = useMemo(() => [
         {
             field: 'fullName',
             headerName: 'Nome Completo',
             width: 180,
             flex: 1,
             valueGetter: (params) => 
-                `${params.row.firstName || ''} ${params.row.lastName || ''}`.trim() || 'N/D',
-            renderCell: (params) => (
-                <Typography sx={{ fontSize: '0.875rem' }}>
-                    {params.value}
-                </Typography>
-            )
+                `${params.row.firstName || ''} ${params.row.lastName || ''}`.trim() || 'N/D'
         },
         {
             field: 'gender',
             headerName: 'Genere',
             width: 90,
-            renderCell: (params) => (
-                <Typography sx={{ fontSize: '0.875rem' }}>
-                    {params.row.gender === 'M' ? 'Maschio' : 
-                     params.row.gender === 'F' ? 'Femmina' : 'N/D'}
-                </Typography>
-            )
+            valueFormatter: (params) => 
+                params.value === 'M' ? 'Maschio' : 
+                params.value === 'F' ? 'Femmina' : 'N/D'
         },
         {
             field: 'email',
             headerName: 'Email',
             width: 200,
-            flex: 1,
-            renderCell: (params) => (
-                <Typography sx={{ fontSize: '0.875rem', color: '#1976d2' }}>
-                    {params.value || 'N/D'}
-                </Typography>
-            )
+            flex: 1
         },
         {
             field: 'status',
             headerName: 'Stato',
             width: 120,
-            renderCell: (params) => (
-                <Chip
-                    label={getStatusLabel(params.value)}
-                    size="small"
-                    sx={{
-                        height: '24px',
-                        fontSize: '0.75rem',
-                        backgroundColor: getStatusColor(params.value),
-                        '& .MuiChip-label': {
-                            px: 1.5
-                        }
-                    }}
-                />
-            )
+            renderCell: (params) => {
+                const statusConfig = {
+                    pending: { label: 'In Attesa', color: 'warning' },
+                    active: { label: 'Attivo', color: 'success' },
+                    inactive: { label: 'Inattivo', color: 'default' },
+                    transferred: { label: 'Trasferito', color: 'info' },
+                    graduated: { label: 'Diplomato', color: 'secondary' }
+                };
+                const config = statusConfig[params.value] || { label: params.value, color: 'default' };
+                
+                return (
+                    <Chip
+                        label={config.label}
+                        color={config.color}
+                        size="small"
+                        variant="outlined"
+                    />
+                );
+            }
         },
         {
             field: 'actions',
@@ -152,7 +138,7 @@ const StudentsList = ({
                                 size="small"
                                 disabled
                             >
-                                <QuizIcon sx={{ fontSize: '1.1rem' }} />
+                                <QuizIcon fontSize="small" />
                             </IconButton>
                         </span>
                     </Tooltip>
@@ -161,7 +147,7 @@ const StudentsList = ({
                             onClick={() => onViewDetails(params.row)}
                             size="small"
                         >
-                            <VisibilityIcon sx={{ fontSize: '1.1rem' }} />
+                            <VisibilityIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title="Modifica Studente">
@@ -169,122 +155,76 @@ const StudentsList = ({
                             onClick={() => onEdit(params.row)}
                             size="small"
                         >
-                            <EditIcon sx={{ fontSize: '1.1rem' }} />
+                            <EditIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
                 </Box>
             )
         }
-    ];
+    ], [onNavigateToTests, onViewDetails, onEdit]);
 
-    const rows = classData.students.map(student => {
-        const studentData = student.studentId || student;
-        return {
-            id: studentData._id,
-            firstName: studentData.firstName || 'N/D',
-            lastName: studentData.lastName || 'N/D',
-            email: studentData.email || 'N/D',
-            status: student.status || 'N/D',
-            joinedAt: student.joinedAt || 'N/D',
-            gender: studentData.gender || 'N/D'
-        };
-    });
+    // Preparazione dei dati
+    const rows = useMemo(() => 
+        classData.students.map(student => {
+            const studentData = student.studentId || student;
+            return {
+                id: studentData._id,
+                firstName: studentData.firstName || 'N/D',
+                lastName: studentData.lastName || 'N/D',
+                email: studentData.email || 'N/D',
+                status: student.status || 'N/D',
+                joinedAt: student.joinedAt || 'N/D',
+                gender: studentData.gender || 'N/D'
+            };
+        }), [classData.students]);
+
+    // Azioni personalizzate
+    const customActions = useMemo(() => (
+        <Box sx={{ display: 'flex', gap: 1 }}>
+            {selectedStudents.length > 0 && (
+                <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<DeleteIcon />}
+                    onClick={() => setConfirmDialogOpen(true)}
+                    size="small"
+                >
+                    Rimuovi {selectedStudents.length} studenti
+                </Button>
+            )}
+            <Button
+                variant="contained"
+                startIcon={<GroupAddIcon />}
+                onClick={onAddStudent}
+                size="small"
+            >
+                Aggiungi Studente
+            </Button>
+        </Box>
+    ), [selectedStudents.length, onAddStudent]);
 
     return (
         <>
-            <Paper elevation={3} sx={{ p: 3 }}>
-                <Box sx={{ 
-                    mb: 2, 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between' 
-                }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Typography 
-                            variant="h6" 
-                            color="primary" 
-                            sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center',
-                                fontSize: '1.1rem',
-                                fontWeight: 500 
-                            }}
-                        >
-                            <GroupIcon sx={{ mr: 1 }} />
-                            Lista Studenti
-                            <Chip 
-                                label={`${classData.students.length}/${classData.capacity} studenti`}
-                                color={classData.students.length > 0 ? "primary" : "warning"}
-                                size="small"
-                                sx={{ ml: 2 }}
-                            />
-                        </Typography>
-                        {selectedStudents.length > 0 && (
-                            <Button
-                                variant="outlined"
-                                color="error"
-                                startIcon={<DeleteIcon />}
-                                onClick={() => setConfirmDialogOpen(true)}
-                                size="small"
-                            >
-                                Rimuovi {selectedStudents.length} studenti
-                            </Button>
-                        )}
-                    </Box>
-                    <Button
-                        variant="contained"
-                        startIcon={<GroupAddIcon />}
-                        onClick={onAddStudent}
-                        size="small"
-                    >
-                        Aggiungi Studente
-                    </Button>
-                </Box>
-
-                {error && (
-                    <Alert severity="error" sx={{ mb: 2 }}>
-                        {error}
-                    </Alert>
-                )}
-
-                <Box sx={{ height: 600, width: '100%' }}>
-                    <DataGrid
-                        rows={rows}
-                        columns={studentColumns}
-                        pageSize={pageSize}
-                        rowsPerPageOptions={[25, 50, 100]}
-                        onPageSizeChange={setPageSize}
-                        disableSelectionOnClick={false}
-                        checkboxSelection
-                        onSelectionModelChange={handleSelectionChange}
-                        selectionModel={selectedStudents}
-                        density="compact"
-                        sx={{
-                            border: 'none',
-                            '& .MuiDataGrid-cell': {
-                                fontSize: '0.875rem',
-                                py: 0.5
-                            },
-                            '& .MuiDataGrid-columnHeaders': {
-                                fontSize: '0.875rem',
-                                minHeight: '45px !important',
-                                maxHeight: '45px !important',
-                                backgroundColor: '#f5f5f5'
-                            },
-                            '& .MuiDataGrid-row': {
-                                minHeight: '40px !important',
-                                maxHeight: '40px !important',
-                                '&:nth-of-type(odd)': {
-                                    backgroundColor: '#fafafa'
-                                },
-                                '&:hover': {
-                                    backgroundColor: '#f5f5f5'
-                                }
-                            }
-                        }}
-                    />
-                </Box>
-            </Paper>
+            <ListLayout
+                statsCards={statsCards}
+                rows={rows}
+                columns={columns}
+                getRowId={(row) => row.id}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+                loading={loading}
+                error={error}
+                customActions={customActions}
+                emptyStateMessage="Nessuno studente presente in questa classe"
+                checkboxSelection
+                onSelectionModelChange={setSelectedStudents}
+                selectionModel={selectedStudents}
+                sx={{
+                    '& .MuiDataGrid-row': {
+                        cursor: 'pointer'
+                    }
+                }}
+            />
 
             <Dialog
                 open={confirmDialogOpen}
