@@ -1,9 +1,9 @@
-// src/components/common/layouts/ListLayout.js
+// src/components/common/ListLayout.js
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Box, Paper, Collapse, Grid } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
-import StatCard from '../school/schoolComponents/StatCard'; // Aggiorna il path in base alla tua struttura
+import StatCard from '../school/schoolComponents/StatCard';
 
 const ListLayout = ({
     statsCards,
@@ -17,15 +17,15 @@ const ListLayout = ({
         <Box 
             sx={{ 
                 display: 'flex', 
-                flexDirection: 'column', 
-                height: 'calc(100vh - 180px)',
+                flexDirection: 'column',
+                height: '100%',
                 gap: 3,
                 ...sx
             }}
         >
-            {/* Stats Cards con Animazione */}
+            {/* Stats Cards */}
             {statsCards && statsCards.length > 0 && (
-                <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid container spacing={2}>
                     {statsCards.map((cardProps, index) => (
                         <Grid item xs={12} sm={6} md={3} key={index}>
                             <motion.div
@@ -40,29 +40,21 @@ const ListLayout = ({
                 </Grid>
             )}
 
-            {/* Filtri Collassabili con Animazione */}
+            {/* Filtri Collassabili */}
             <AnimatePresence>
                 {isFilterOpen && filterComponent && (
                     <Collapse in={isFilterOpen}>
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.3 }}
+                        <Paper 
+                            elevation={0}
+                            sx={{ 
+                                p: 2, 
+                                borderRadius: 2,
+                                border: '1px solid',
+                                borderColor: 'divider'
+                            }}
                         >
-                            <Paper 
-                                elevation={0}
-                                sx={{ 
-                                    p: 2, 
-                                    borderRadius: 2,
-                                    border: '1px solid',
-                                    borderColor: 'divider',
-                                    mb: 2
-                                }}
-                            >
-                                {filterComponent}
-                            </Paper>
-                        </motion.div>
+                            {filterComponent}
+                        </Paper>
                     </Collapse>
                 )}
             </AnimatePresence>
@@ -70,10 +62,6 @@ const ListLayout = ({
             {/* Lista Component */}
             <Paper 
                 elevation={0}
-                component={motion.div}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
                 sx={{
                     flex: 1,
                     display: 'flex',
@@ -81,22 +69,15 @@ const ListLayout = ({
                     borderRadius: 2,
                     overflow: 'hidden',
                     border: '1px solid',
-                    borderColor: 'divider'
+                    borderColor: 'divider',
+                    minHeight: 400
                 }}
             >
                 {listComponent}
             </Paper>
 
             {/* Paginazione */}
-            {paginationComponent && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
-                >
-                    {paginationComponent}
-                </motion.div>
-            )}
+            {paginationComponent}
         </Box>
     );
 };

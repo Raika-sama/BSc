@@ -5,7 +5,8 @@ import {
     Button,
     IconButton,
     Tooltip,
-    Pagination
+    Pagination,
+    CircularProgress
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -104,34 +105,50 @@ const SchoolManagement = () => {
         }
     ];
 
-    return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-        >
+    if (loading) {
+        return (
             <ContentLayout
                 title="Gestione Scuole"
-                subtitle="Gestisci le scuole e le loro informazioni"
-                actions={
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Tooltip title="Filtri">
-                            <IconButton 
-                                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                sx={{ color: 'inherit' }}
-                            >
-                                <FilterListIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Button
-                            variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={() => navigate('/admin/schools/create')}
+                subtitle="Caricamento in corso..."
+            >
+                <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                    <CircularProgress />
+                </Box>
+            </ContentLayout>
+        );
+    }
+
+    return (
+        <ContentLayout
+            title="Gestione Scuole"
+            subtitle="Gestisci le scuole e monitora le statistiche"
+            actions={
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Tooltip title="Filtri">
+                        <IconButton 
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            color="primary"
                         >
-                            Nuova Scuola
-                        </Button>
-                    </Box>
-                }
+                            <FilterListIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => navigate('/admin/schools/create')}
+                    >
+                        Nuova Scuola
+                    </Button>
+                </Box>
+            }
+        >
+            <Box 
+                sx={{ 
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 3
+                }}
             >
                 <ListLayout
                     statsCards={statsCards}
@@ -156,24 +173,30 @@ const SchoolManagement = () => {
                         />
                     }
                     paginationComponent={
-                        !loading && totalSchools > ITEMS_PER_PAGE && (
+                        totalSchools > ITEMS_PER_PAGE && (
                             <Box sx={{ 
-                                mt: 3, 
+                                mt: 2,
                                 display: 'flex', 
-                                justifyContent: 'center' 
+                                justifyContent: 'center',
+                                pb: 2
                             }}>
                                 <Pagination
                                     count={Math.ceil(totalSchools / ITEMS_PER_PAGE)}
                                     page={page}
                                     onChange={handlePageChange}
                                     color="primary"
+                                    size="medium"
                                 />
                             </Box>
                         )
                     }
+                    sx={{
+                        height: '100%',
+                        overflow: 'hidden'
+                    }}
                 />
-            </ContentLayout>
-        </motion.div>
+            </Box>
+        </ContentLayout>
     );
 };
 
