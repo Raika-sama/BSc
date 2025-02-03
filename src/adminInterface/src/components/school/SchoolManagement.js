@@ -1,35 +1,35 @@
-import React, { useState, useEffect } from 'react';
+// src/components/school/SchoolManagement.js
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Box,
     Button,
     IconButton,
     Tooltip,
-    Pagination,
-    CircularProgress
+    Chip
 } from '@mui/material';
 import {
     Add as AddIcon,
     FilterList as FilterListIcon,
     School as SchoolIcon,
     LocationOn as LocationIcon,
-    Class as ClassIcon
+    Class as ClassIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon
 } from '@mui/icons-material';
-import { motion } from 'framer-motion';
 import { ContentLayout } from '../common/commonIndex';
 import ListLayout from '../common/ListLayout';
 import { useNotification } from '../../context/NotificationContext';
 import { useSchool } from '../../context/SchoolContext';
-import SchoolList from './SchoolList';
 import SchoolFilters from './schoolComponents/SchoolFilters';
-import StatCard from './schoolComponents/StatCard'; // Assumiamo di aver spostato StatCard in un file separato
+import { GridActionsCellItem } from '@mui/x-data-grid';
 
 const ITEMS_PER_PAGE = 10;
-
 
 const SchoolManagement = () => {
     const navigate = useNavigate();
     const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(25);
     const [filters, setFilters] = useState({
         region: '',
         schoolType: '',
@@ -74,9 +74,62 @@ const SchoolManagement = () => {
         navigate(`/admin/schools/${school._id}/edit`);
     };
 
-    const handlePageChange = (event, newPage) => {
-        setPage(newPage);
-    };
+    // Definizione delle colonne per il DataGrid
+    const columns = useMemo(() => [
+        {
+            field: 'name',
+            headerName: 'Nome Scuola',
+            flex: 1,
+            minWidth: 200,
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <SchoolIcon sx={{ fontSize: '1.1rem', color: 'primary.main' }} />
+                    <span>{params.value}</span>
+                </Box>
+            )
+        },
+        {
+            field: 'schoolType',
+            headerName: 'Tipo',
+            width: 150,
+            renderCell: (params) => (
+                <Chip 
+                    label={params.value === 'middle_school' ? 'Media' : 'Superiore'}
+                    color={params.value === 'middle_school' ? 'primary' : 'secondary'}
+                    size="small"
+                />
+            )
+        },
+        {
+            field: 'region',
+            headerName: 'Regione',
+            width: 130
+        },
+        {
+            field: 'city',
+            headerName: 'Città',
+            width: 130
+        },
+        {
+            field: 'actions',
+            type: 'actions',
+            headerName: 'Azioni',
+            width: 100,
+            getActions: (params) => [
+                <GridActionsCellItem
+                    icon={<EditIcon />}
+                    label="Modifica"
+                    onClick={() => handleEditClick(params.row)}
+                />,
+                <GridActionsCellItem
+                    icon={<DeleteIcon />}
+                    label="Elimina"
+                    onClick={() => handleDeleteSchool(params.row._id)}
+                    sx={{ color: 'error.main' }}
+                />
+            ]
+        }
+    ], []);
 
     const statsCards = [
         { 
@@ -105,19 +158,6 @@ const SchoolManagement = () => {
         }
     ];
 
-    if (loading) {
-        return (
-            <ContentLayout
-                title="Gestione Scuole"
-                subtitle="Caricamento in corso..."
-            >
-                <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                    <CircularProgress />
-                </Box>
-            </ContentLayout>
-        );
-    }
-
     return (
         <ContentLayout
             title="Gestione Scuole"
@@ -142,60 +182,26 @@ const SchoolManagement = () => {
                 </Box>
             }
         >
-            <Box 
-                sx={{ 
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 3
-                }}
-            >
-                <ListLayout
-                    statsCards={statsCards}
-                    isFilterOpen={isFilterOpen}
-                    filterComponent={
-                        <SchoolFilters
-                            filters={filters}
-                            onChange={setFilters}
-                            onReset={() => setFilters({
-                                region: '',
-                                schoolType: '',
-                                institutionType: ''
-                            })}
-                        />
-                    }
-                    listComponent={
-                        <SchoolList
-                            schools={schools}
-                            loading={loading}
-                            onEdit={handleEditClick}
-                            onDelete={handleDeleteSchool}
-                        />
-                    }
-                    paginationComponent={
-                        totalSchools > ITEMS_PER_PAGE && (
-                            <Box sx={{ 
-                                mt: 2,
-                                display: 'flex', 
-                                justifyContent: 'center',
-                                pb: 2
-                            }}>
-                                <Pagination
-                                    count={Math.ceil(totalSchools / ITEMS_PER_PAGE)}
-                                    page={page}
-                                    onChange={handlePageChange}
-                                    color="primary"
-                                    size="medium"
-                                />
-                            </Box>
-                        )
-                    }
-                    sx={{
-                        height: '100%',
-                        overflow: 'hidden'
-                    }}
-                />
-            </Box>
+            <ListLayout
+                statsCards={statsCards}
+                isFilterOpen={isFilterOpen}
+                filterComponent={
+                    <SchoolFilters
+                        filters={filters}
+                        onChange={setFilters}
+                        onReset={() => setFilters({
+                            region: '',
+                            schoolType: '',
+                            institutionType: ''
+                        })}
+                    />
+                }
+                rows={schools || []}
+                columns={columns}
+                getRowId={(row) => row._id}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+            />
         </ContentLayout>
     );
 };

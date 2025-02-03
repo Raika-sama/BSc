@@ -1,18 +1,56 @@
 // src/components/common/ListLayout.js
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Box, Paper, Collapse, Grid } from '@mui/material';
+import { Box, Paper, Collapse, Grid, alpha } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import StatCard from '../school/schoolComponents/StatCard';
+import { DataGrid } from '@mui/x-data-grid';
 
 const ListLayout = ({
     statsCards,
     isFilterOpen,
     filterComponent,
-    listComponent,
-    paginationComponent,
+    rows,
+    columns,
+    getRowId,
+    pageSize,
+    onPageSizeChange,
+    tabsComponent,
+    paginationMode = "client",
+    rowCount,
+    page,
+    onPageChange,
+    loading,
     sx
 }) => {
+    const standardDataGridStyle = {
+        border: 'none',
+        '& .MuiDataGrid-cell': {
+            fontSize: '0.875rem',
+            py: 1
+        },
+        '& .MuiDataGrid-columnHeaders': {
+            backgroundColor: alpha('#1976d2', 0.02),
+            borderBottom: 2,
+            borderColor: 'divider'
+        },
+        '& .MuiDataGrid-row': {
+            '&:hover': {
+                backgroundColor: alpha('#1976d2', 0.04)
+            }
+        },
+        '& .MuiDataGrid-footerContainer': {
+            borderTop: 2,
+            borderColor: 'divider'
+        },
+        '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
+            outline: 'none'
+        },
+        '& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within': {
+            outline: 'none'
+        }
+    };
+
     return (
         <Box 
             sx={{ 
@@ -50,7 +88,8 @@ const ListLayout = ({
                                 p: 2, 
                                 borderRadius: 2,
                                 border: '1px solid',
-                                borderColor: 'divider'
+                                borderColor: 'divider',
+                                bgcolor: 'background.paper'
                             }}
                         >
                             {filterComponent}
@@ -59,25 +98,48 @@ const ListLayout = ({
                 )}
             </AnimatePresence>
 
-            {/* Lista Component */}
+            {/* Main Content con Tabs e DataGrid */}
             <Paper 
                 elevation={0}
                 sx={{
-                    flex: 1,
+                    height: 650,
                     display: 'flex',
                     flexDirection: 'column',
                     borderRadius: 2,
                     overflow: 'hidden',
                     border: '1px solid',
                     borderColor: 'divider',
-                    minHeight: 400
+                    bgcolor: 'background.paper'
                 }}
             >
-                {listComponent}
-            </Paper>
+                {/* Tabs Section */}
+                {tabsComponent}
 
-            {/* Paginazione */}
-            {paginationComponent}
+                {/* DataGrid Section */}
+                <Box sx={{ 
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: tabsComponent ? 'calc(100% - 48px)' : '100%'
+                }}>
+                    <DataGrid
+                        rows={rows}
+                        columns={columns}
+                        getRowId={getRowId}
+                        pageSize={pageSize}
+                        rowsPerPageOptions={[10, 25, 50, 100]}
+                        onPageSizeChange={onPageSizeChange}
+                        paginationMode={paginationMode}
+                        rowCount={rowCount}
+                        page={page}
+                        onPageChange={onPageChange}
+                        loading={loading}
+                        disableSelectionOnClick
+                        sx={standardDataGridStyle}
+                        density="comfortable"
+                    />
+                </Box>
+            </Paper>
         </Box>
     );
 };
@@ -91,8 +153,17 @@ ListLayout.propTypes = {
     })),
     isFilterOpen: PropTypes.bool,
     filterComponent: PropTypes.node,
-    listComponent: PropTypes.node.isRequired,
-    paginationComponent: PropTypes.node,
+    rows: PropTypes.array.isRequired,
+    columns: PropTypes.array.isRequired,
+    getRowId: PropTypes.func.isRequired,
+    pageSize: PropTypes.number,
+    onPageSizeChange: PropTypes.func,
+    tabsComponent: PropTypes.node,
+    paginationMode: PropTypes.oneOf(['client', 'server']),
+    rowCount: PropTypes.number,
+    page: PropTypes.number,
+    onPageChange: PropTypes.func,
+    loading: PropTypes.bool,
     sx: PropTypes.object
 };
 

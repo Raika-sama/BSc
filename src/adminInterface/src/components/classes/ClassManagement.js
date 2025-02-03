@@ -1,6 +1,6 @@
 // src/components/ClassManagement/ClassManagement.jsx
 // src/components/classes/ClassManagement.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Box,
     Typography,
@@ -47,6 +47,7 @@ const ClassManagement = () => {
     const [pageSize, setPageSize] = useState(25);
 
     // Stati per i filtri
+    const [isFilterOpen, setIsFilterOpen] = useState(false); // Aggiunto qui
     const [schoolFilter, setSchoolFilter] = useState('');
     const [yearFilter, setYearFilter] = useState('');
     const [sectionFilter, setSectionFilter] = useState('');
@@ -107,7 +108,6 @@ const ClassManagement = () => {
         });
     };
 
-    const columns = createColumns(handleViewDetails, handleTestManagement, handleDeleteClick);
 
     const handleDeleteClick = (classData) => {
         setSelectedClass(classData);
@@ -132,6 +132,13 @@ const ClassManagement = () => {
     const handleTestManagement = (classData) => {
         navigate(`/admin/classes/${classData.classId}/tests`);
     };
+
+    // Usa useMemo per le colonne
+    const columns = useMemo(() => createColumns(
+        handleViewDetails,
+        handleTestManagement,
+        handleDeleteClick
+    ), []);
 
     const filteredMainTeacherClasses = filterClasses(mainTeacherClasses);
     const filteredCoTeacherClasses = filterClasses(coTeacherClasses);
@@ -227,68 +234,32 @@ const ClassManagement = () => {
                             handleResetFilters={handleResetFilters}
                         />
                     }
-                    listComponent={
-                        <Box sx={{ 
-                            flex: 1,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            height: '100%'
-                        }}>
-                            {!isAdmin && (
-                                <Tabs
-                                    value={tabValue}
-                                    onChange={(e, newValue) => setTabValue(newValue)}
-                                    sx={{
-                                        minHeight: '48px',
-                                        borderBottom: 1,
-                                        borderColor: 'divider',
-                                        bgcolor: 'background.paper',
-                                        '& .MuiTab-root': {
-                                            minHeight: '48px',
-                                            fontSize: '0.875rem',
-                                            textTransform: 'none',
-                                            fontWeight: 500
-                                        }
-                                    }}
-                                >
-                                    <Tab label={`Le mie classi (${filteredMainTeacherClasses.length})`} />
-                                    <Tab label={`Classi co-insegnate (${filteredCoTeacherClasses.length})`} />
-                                </Tabs>
-                            )}
-                            <DataGrid
-                                rows={currentClasses}
-                                columns={columns}
-                                getRowId={(row) => row.classId}
-                                pageSize={pageSize}
-                                rowsPerPageOptions={[25, 50, 100]}
-                                onPageSizeChange={setPageSize}
-                                disableSelectionOnClick
-                                density="compact"
-                                sx={{
-                                    border: 'none',
-                                    flex: 1,
-                                    '& .MuiDataGrid-cell': {
-                                        fontSize: '0.875rem',
-                                        py: 1
-                                    },
-                                    '& .MuiDataGrid-columnHeaders': {
-                                        backgroundColor: 'background.default',
-                                        borderBottom: 2,
-                                        borderColor: 'divider'
-                                    },
-                                    '& .MuiDataGrid-row': {
-                                        '&:hover': {
-                                            backgroundColor: 'action.hover'
-                                        }
-                                    },
-                                    '& .MuiDataGrid-footerContainer': {
-                                        borderTop: 2,
-                                        borderColor: 'divider'
-                                    }
-                                }}
-                            />
-                        </Box>
-                    }
+                    tabsComponent={!isAdmin && (
+                        <Tabs
+                            value={tabValue}
+                            onChange={(e, newValue) => setTabValue(newValue)}
+                            sx={{
+                                minHeight: '48px',
+                                borderBottom: 1,
+                                borderColor: 'divider',
+                                bgcolor: 'background.paper',
+                                '& .MuiTab-root': {
+                                    minHeight: '48px',
+                                    fontSize: '0.875rem',
+                                    textTransform: 'none',
+                                    fontWeight: 500
+                                }
+                            }}
+                        >
+                            <Tab label={`Le mie classi (${filteredMainTeacherClasses.length})`} />
+                            <Tab label={`Classi co-insegnate (${filteredCoTeacherClasses.length})`} />
+                        </Tabs>
+                    )}
+                    rows={currentClasses}
+                    columns={columns}
+                    getRowId={(row) => row.classId}
+                    pageSize={pageSize}
+                    onPageSizeChange={setPageSize}
                 />
 
                 {/* Delete Dialog */}
