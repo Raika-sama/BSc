@@ -1,5 +1,5 @@
 // src/components/users/UserManagement.jsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { 
     Box, 
@@ -7,15 +7,15 @@ import {
     IconButton,
     Tooltip,
     Typography,
-    alpha
+    useTheme,
+    alpha,
+    Chip
 } from '@mui/material';
 import { 
     Visibility,
     Edit,
     Delete,
-    
     Add as AddIcon,
-    FilterList as FilterListIcon,
     Person as PersonIcon,
     AdminPanelSettings as AdminIcon,
     SupervisorAccount as TeacherIcon,
@@ -30,6 +30,7 @@ import { useUser } from '../../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 
 const UserManagement = () => {
+    const theme = useTheme();
     const navigate = useNavigate();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -42,15 +43,10 @@ const UserManagement = () => {
         sort: '-createdAt'
     });
 
-    const { 
-        users, 
-        loading, 
-        totalUsers, 
-        createUser, 
-        getUsers 
-    } = useUser();
+    const { users, loading, totalUsers, createUser, getUsers } = useUser();
 
-    const loadUsers = async () => {
+    // Load users
+    const loadUsers = useCallback(async () => {
         try {
             await getUsers({
                 page: page + 1,
@@ -60,29 +56,211 @@ const UserManagement = () => {
         } catch (error) {
             console.error('Error loading users:', error);
         }
-    };
+    }, [page, pageSize, filters, getUsers]);
 
     React.useEffect(() => {
         loadUsers();
-    }, [page, pageSize, filters]);
+    }, [loadUsers]);
 
-    const handleOpenForm = () => setIsFormOpen(true);
-    const handleCloseForm = () => setIsFormOpen(false);
+    // Stats cards configuration
+// In UserManagement.jsx
+const statsCards = useMemo(() => [
+    {
+        title: 'Utenti Totali',
+        icon: <PersonIcon sx={{ fontSize: 24 }} />,
+        centerContent: true,
+        highlighted: true,
+        content: (
+            <Box sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+            }}>
+                {/* Colonna sinistra */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'flex-start'
+                }}>
+                    <Typography variant="caption" color="text.secondary">
+                        Totale
+                    </Typography>
+                    <Typography 
+                        variant="h5" 
+                        sx={{ 
+                            fontWeight: 600,
+                            backgroundImage: theme => 
+                                `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                            backgroundClip: 'text',
+                            WebkitBackgroundClip: 'text',
+                            color: 'transparent',
+                        }}
+                    >
+                        {totalUsers || 0}
+                    </Typography>
+                </Box>
+                {/* Colonna destra */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'flex-end'
+                }}>
+                    <Typography variant="caption" color="text.secondary">
+                        Attivi
+                    </Typography>
+                    <Chip 
+                        label={`100%`}
+                        color="primary"
+                        size="small"
+                        sx={{ height: 24 }}
+                    />
+                </Box>
+            </Box>
+        )
+    },
+    {
+        title: 'Amministratori',
+        icon: <AdminIcon sx={{ fontSize: 24 }} />,
+        centerContent: true,
+        content: (
+            <Box sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+            }}>
+                {/* Colonna sinistra */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'flex-start'
+                }}>
+                    <Typography variant="caption" color="text.secondary">
+                        Totale Admin
+                    </Typography>
+                    <Typography 
+                        variant="h5" 
+                        sx={{ fontWeight: 600, color: 'error.main' }}
+                    >
+                        {users?.filter(u => u.role === 'admin').length || 0}
+                    </Typography>
+                </Box>
+                {/* Colonna destra */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'flex-end'
+                }}>
+                    <Typography variant="caption" color="text.secondary">
+                        Percentuale
+                    </Typography>
+                    <Chip 
+                        label={`${((users?.filter(u => u.role === 'admin').length || 0) / (totalUsers || 1) * 100).toFixed(1)}%`}
+                        color="error"
+                        size="small"
+                        sx={{ height: 24 }}
+                    />
+                </Box>
+            </Box>
+        )
+    },
+    {
+        title: 'Docenti',
+        icon: <TeacherIcon sx={{ fontSize: 24 }} />,
+        centerContent: true,
+        content: (
+            <Box sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+            }}>
+                {/* Colonna sinistra */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'flex-start'
+                }}>
+                    <Typography variant="caption" color="text.secondary">
+                        Totale Docenti
+                    </Typography>
+                    <Typography 
+                        variant="h5" 
+                        sx={{ fontWeight: 600, color: 'success.main' }}
+                    >
+                        {users?.filter(u => u.role === 'teacher').length || 0}
+                    </Typography>
+                </Box>
+                {/* Colonna destra */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'flex-end'
+                }}>
+                    <Typography variant="caption" color="text.secondary">
+                        Percentuale
+                    </Typography>
+                    <Chip 
+                        label={`${((users?.filter(u => u.role === 'teacher').length || 0) / (totalUsers || 1) * 100).toFixed(1)}%`}
+                        color="success"
+                        size="small"
+                        sx={{ height: 24 }}
+                    />
+                </Box>
+            </Box>
+        )
+    },
+    {
+        title: 'Admin Scuola',
+        icon: <SchoolIcon sx={{ fontSize: 24 }} />,
+        centerContent: true,
+        content: (
+            <Box sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+            }}>
+                {/* Colonna sinistra */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'flex-start'
+                }}>
+                    <Typography variant="caption" color="text.secondary">
+                        Totale Admin Scuola
+                    </Typography>
+                    <Typography 
+                        variant="h5" 
+                        sx={{ fontWeight: 600, color: 'secondary.main' }}
+                    >
+                        {users?.filter(u => u.role === 'school_admin').length || 0}
+                    </Typography>
+                </Box>
+                {/* Colonna destra */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'flex-end'
+                }}>
+                    <Typography variant="caption" color="text.secondary">
+                        Percentuale
+                    </Typography>
+                    <Chip 
+                        label={`${((users?.filter(u => u.role === 'school_admin').length || 0) / (totalUsers || 1) * 100).toFixed(1)}%`}
+                        color="secondary"
+                        size="small"
+                        sx={{ height: 24 }}
+                    />
+                </Box>
+            </Box>
+        )
+    }
+], [users, totalUsers, theme]);
 
-    const handleCreateUser = async (userData) => {
-        try {
-            await createUser(userData);
-            handleCloseForm();
-            loadUsers();
-        } catch (error) {
-            console.error('Error creating user:', error);
-        }
-    };
 
-    const handleViewDetails = (userId) => {
-        navigate(`/admin/users/${userId}`);
-    };
-
+    // Table columns configuration
     const columns = useMemo(() => [
         {
             field: 'fullName',
@@ -150,7 +328,6 @@ const UserManagement = () => {
                 </Box>
             )
         },
-        // Aggiungiamo la colonna delle azioni
         {
             field: 'actions',
             headerName: 'Azioni',
@@ -158,16 +335,11 @@ const UserManagement = () => {
             sortable: false,
             renderCell: (params) => (
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Tooltip title="Visualizza Dettagli">
+                    <Tooltip title="Visualizza">
                         <IconButton
                             size="small"
                             onClick={() => navigate(`/admin/users/${params.row._id}`)}
-                            sx={{ 
-                                color: 'primary.main',
-                                '&:hover': {
-                                    bgcolor: alpha('#1976d2', 0.08)
-                                }
-                            }}
+                            sx={{ color: 'primary.main' }}
                         >
                             <Visibility sx={{ fontSize: '1.1rem' }} />
                         </IconButton>
@@ -176,12 +348,7 @@ const UserManagement = () => {
                         <IconButton
                             size="small"
                             onClick={() => navigate(`/admin/users/${params.row._id}/edit`)}
-                            sx={{ 
-                                color: 'secondary.main',
-                                '&:hover': {
-                                    bgcolor: alpha('#9c27b0', 0.08)
-                                }
-                            }}
+                            sx={{ color: 'secondary.main' }}
                         >
                             <Edit sx={{ fontSize: '1.1rem' }} />
                         </IconButton>
@@ -190,12 +357,7 @@ const UserManagement = () => {
                         <IconButton
                             size="small"
                             onClick={() => handleDeleteUser(params.row)}
-                            sx={{ 
-                                color: 'error.main',
-                                '&:hover': {
-                                    bgcolor: alpha('#d32f2f', 0.08)
-                                }
-                            }}
+                            sx={{ color: 'error.main' }}
                         >
                             <Delete sx={{ fontSize: '1.1rem' }} />
                         </IconButton>
@@ -204,62 +366,47 @@ const UserManagement = () => {
             )
         }
     ], [navigate]);
-// Aggiungiamo la funzione per gestire l'eliminazione
-const handleDeleteUser = (user) => {
-    // Implementare la logica di eliminazione
-    // Potrebbe aprire un dialog di conferma
-    console.log('Delete user:', user);
-};
 
-    const statsCards = [
-        {
-            title: 'Utenti Totali',
-            value: totalUsers || 0,
-            icon: <PersonIcon />,
-            color: 'primary.main'
-        },
-        {
-            title: 'Amministratori',
-            value: users?.filter(u => u.role === 'admin').length || 0,
-            icon: <AdminIcon />,
-            color: 'error.main'
-        },
-        {
-            title: 'Docenti',
-            value: users?.filter(u => u.role === 'teacher').length || 0,
-            icon: <TeacherIcon />,
-            color: 'success.main'
-        },
-        {
-            title: 'Admin Scuola',
-            value: users?.filter(u => u.role === 'school_admin').length || 0,
-            icon: <SchoolIcon />,
-            color: 'secondary.main'
+    // Handlers
+    const handleCreateUser = async (userData) => {
+        try {
+            await createUser(userData);
+            setIsFormOpen(false);
+            loadUsers();
+        } catch (error) {
+            console.error('Error creating user:', error);
         }
+    };
+
+    const handleSearch = (value) => {
+        setFilters(prev => ({ ...prev, search: value }));
+    };
+
+    const handleDeleteUser = (user) => {
+        console.log('Delete user:', user);
+        // Implementare logica eliminazione
+    };
+
+    // Breadcrumbs configuration
+    const breadcrumbs = [
+        { text: 'Dashboard', path: '/admin' },
+        { text: 'Utenti', path: '/admin/users' }
     ];
 
     return (
         <ContentLayout
             title="Gestione Utenti"
             subtitle="Gestisci gli account e i permessi degli utenti"
+            breadcrumbs={breadcrumbs}
             actions={
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Tooltip title="Filtri">
-                        <IconButton 
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
-                            color="primary"
-                        >
-                            <FilterListIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={handleOpenForm}
-                    >
-                        Nuovo Utente
-                    </Button>
-                </Box>
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => setIsFormOpen(true)}
+                    sx={{ borderRadius: 2 }}
+                >
+                    Nuovo Utente
+                </Button>
             }
         >
             <Routes>
@@ -285,6 +432,10 @@ const handleDeleteUser = (user) => {
                             rowCount={totalUsers}
                             page={page}
                             onPageChange={setPage}
+                            onSearch={handleSearch}
+                            onRefresh={loadUsers}
+                            searchPlaceholder="Cerca utenti..."
+                            emptyStateMessage="Nessun utente trovato"
                         />
                     } 
                 />
@@ -293,7 +444,7 @@ const handleDeleteUser = (user) => {
 
             <UserForm
                 open={isFormOpen}
-                onClose={handleCloseForm}
+                onClose={() => setIsFormOpen(false)}
                 onSave={handleCreateUser}
                 initialData={null}
                 isLoading={false}

@@ -77,7 +77,7 @@ const EnginesManagement = () => {
             )
         },
         {
-            title: 'Test Memoria',
+            title: 'Capacità di Memoria',
             description: 'Test per la valutazione delle capacità mnemoniche',
             icon: <Memory sx={{ fontSize: 50 }} />,
             centerContent: true, // Aggiungi questa prop

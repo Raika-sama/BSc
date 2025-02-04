@@ -88,7 +88,7 @@ const CSITestView = () => {
 
     return (
         <ContentLayout
-            title="Test CSI"
+            title="CSI - Cognitive Style Index"
             subtitle="Gestione del test Cognitive Style Inventory"
             actions={
                 <IconButton

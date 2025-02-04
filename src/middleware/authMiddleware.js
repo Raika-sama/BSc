@@ -5,7 +5,7 @@ const logger = require('../utils/errors/logger/logger');
 
 // Rate Limiter per tentativi di login
 const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minuti
+    windowMs: 60 * 60 * 1000, // 60 minuti
     max: 5, // limite di 5 tentativi
     message: 'Troppi tentativi di login. Riprova più tardi.',
     standardHeaders: true,

@@ -27,6 +27,8 @@ import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { useTheme } from '@mui/material/styles';
+import CardsLayout from './ui/CardsLayout'; // Importiamo il nuovo CardsLayout
+
 
 const ListLayout = ({
     statsCards,
@@ -168,27 +170,20 @@ const ListLayout = ({
 
     return (
         <Box sx={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                gap: 3, 
-                height: '100%',
-                minHeight: '100vh' // Questo assicura che il container occupi almeno tutta l'altezza della viewport
-            }}>            
-            {/* Stat Cards */}
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: 3, 
+            height: '100%',
+            minHeight: '100vh'
+        }}>            
+            {/* Stats Cards - Usiamo il nuovo CardsLayout */}
             {statsCards?.length > 0 && (
-                <Grid container spacing={2}>
-                    {statsCards.map((cardProps, index) => (
-                        <Grid item xs={12} sm={6} md={3} key={index}>
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.3, delay: index * 0.1 }}
-                            >
-                                <StatCard {...cardProps} />
-                            </motion.div>
-                        </Grid>
-                    ))}
-                </Grid>
+                <CardsLayout 
+                    cards={statsCards}
+                    gap={2}
+                    minWidth={250}
+                    loading={loading}
+                />
             )}
 
             {/* Toolbar */}

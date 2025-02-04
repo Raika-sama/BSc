@@ -9,8 +9,8 @@ const MotionCard = motion(Card);
 
 const CardsLayout = ({ 
     cards, 
-    gap = 3, 
-    minWidth = 300, 
+    gap = 2, 
+    minWidth = 200, 
     maxWidth,
     loading = false 
 }) => {
@@ -66,7 +66,8 @@ const CardsLayout = ({
                     item 
                     xs={12} 
                     sm={6} 
-                    md={4} 
+                    md={3}  // Manteniamo 4 cards per riga su desktop
+                    lg={3}
                     key={index}
                     sx={{
                         minWidth: minWidth,
