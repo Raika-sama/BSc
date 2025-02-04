@@ -27,7 +27,8 @@ import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { useTheme } from '@mui/material/styles';
-import CardsLayout from './ui/CardsLayout'; // Importiamo il nuovo CardsLayout
+//import CardsLayout from './ui/CardsLayout'; // Importiamo il nuovo CardsLayout
+import  StatsCardsLayout  from './ui/StatsCardsLayout';
 
 
 const ListLayout = ({
@@ -178,11 +179,11 @@ const ListLayout = ({
         }}>            
             {/* Stats Cards - Usiamo il nuovo CardsLayout */}
             {statsCards?.length > 0 && (
-                <CardsLayout 
+                <StatsCardsLayout 
                     cards={statsCards}
-                    gap={2}
-                    minWidth={250}
                     loading={loading}
+                    spacing={3}
+                    maxColumns={4}
                 />
             )}
 

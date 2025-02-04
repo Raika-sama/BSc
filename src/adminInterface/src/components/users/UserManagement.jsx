@@ -1,5 +1,5 @@
 // src/components/users/UserManagement.jsx
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, userCounts } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { 
     Box, 
@@ -46,221 +46,123 @@ const UserManagement = () => {
     const { users, loading, totalUsers, createUser, getUsers } = useUser();
 
     // Load users
-    const loadUsers = useCallback(async () => {
-        try {
-            await getUsers({
-                page: page + 1,
-                limit: pageSize,
-                ...filters
-            });
-        } catch (error) {
-            console.error('Error loading users:', error);
-        }
-    }, [page, pageSize, filters, getUsers]);
+// Load users
+const loadUsers = useCallback(async () => {
+    try {
+        await getUsers({
+            page: page + 1,
+            limit: pageSize,
+            ...filters
+        });
+    } catch (error) {
+        console.error('Error loading users:', error);
+    }
+}, [page, pageSize, filters, getUsers]);
+
 
     React.useEffect(() => {
         loadUsers();
     }, [loadUsers]);
 
-    // Stats cards configuration
-// In UserManagement.jsx
+    const calculateTrendData = useCallback((roleFilter = null) => {
+        try {
+            if (!users?.length) return null;
+    
+            const filteredUsers = roleFilter 
+                ? users.filter(u => u.role === roleFilter)
+                : users;
+    
+            const groupedData = filteredUsers.reduce((acc, user) => {
+                if (!user?.createdAt) return acc;
+                
+                const date = new Date(user.createdAt);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                
+                acc[monthKey] = (acc[monthKey] || 0) + 1;
+                return acc;
+            }, {});
+    
+            const last6Months = Object.keys(groupedData)
+                .sort()
+                .slice(-6);
+    
+            return {
+                labels: last6Months.map(date => {
+                    const [year, month] = date.split('-');
+                    return new Date(year, month - 1).toLocaleDateString('it-IT', { month: 'short' });
+                }),
+                data: last6Months.map(month => groupedData[month] || 0)
+            };
+        } catch (error) {
+            console.error('Error calculating trend data:', error);
+            return null;
+        }
+    }, [users]);
+    
+    // Calcola il trend percentuale con gestione null-safe
+    const calculateTrend = useCallback((roleFilter = null) => {
+        try {
+            if (!users?.length) return 0;
+    
+            const currentCount = roleFilter 
+                ? users.filter(u => u.role === roleFilter)?.length ?? 0
+                : users.length;
+            
+            const trendData = calculateTrendData(roleFilter);
+            if (!trendData?.data?.length || trendData.data.length < 2) return 0;
+    
+            const previousCount = trendData.data[trendData.data.length - 2] || 0;
+            if (previousCount === 0) return 0;
+    
+            return ((currentCount - previousCount) / previousCount * 100).toFixed(1);
+        } catch (error) {
+            console.error('Error calculating trend:', error);
+            return 0;
+        }
+    }, [users, calculateTrendData]);
+
+// Memorizza i conteggi filtrati con valori di default
+const userCounts = useMemo(() => ({
+    admin: users?.filter(u => u.role === 'admin')?.length ?? 0,
+    teacher: users?.filter(u => u.role === 'teacher')?.length ?? 0,
+    school_admin: users?.filter(u => u.role === 'school_admin')?.length ?? 0,
+    total: totalUsers ?? 0
+}), [users, totalUsers]);
+
+
 const statsCards = useMemo(() => [
     {
         title: 'Utenti Totali',
-        icon: <PersonIcon sx={{ fontSize: 24 }} />,
-        centerContent: true,
-        highlighted: true,
-        content: (
-            <Box sx={{ 
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                width: '100%',
-            }}>
-                {/* Colonna sinistra */}
-                <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'flex-start'
-                }}>
-                    <Typography variant="caption" color="text.secondary">
-                        Totale
-                    </Typography>
-                    <Typography 
-                        variant="h5" 
-                        sx={{ 
-                            fontWeight: 600,
-                            backgroundImage: theme => 
-                                `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
-                            backgroundClip: 'text',
-                            WebkitBackgroundClip: 'text',
-                            color: 'transparent',
-                        }}
-                    >
-                        {totalUsers || 0}
-                    </Typography>
-                </Box>
-                {/* Colonna destra */}
-                <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'flex-end'
-                }}>
-                    <Typography variant="caption" color="text.secondary">
-                        Attivi
-                    </Typography>
-                    <Chip 
-                        label={`100%`}
-                        color="primary"
-                        size="small"
-                        sx={{ height: 24 }}
-                    />
-                </Box>
-            </Box>
-        )
+        value: userCounts.total,
+        icon: PersonIcon,
+        color: 'primary',
+        description: 'Numero totale degli utenti nel sistema'
     },
     {
         title: 'Amministratori',
-        icon: <AdminIcon sx={{ fontSize: 24 }} />,
-        centerContent: true,
-        content: (
-            <Box sx={{ 
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                width: '100%',
-            }}>
-                {/* Colonna sinistra */}
-                <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'flex-start'
-                }}>
-                    <Typography variant="caption" color="text.secondary">
-                        Totale Admin
-                    </Typography>
-                    <Typography 
-                        variant="h5" 
-                        sx={{ fontWeight: 600, color: 'error.main' }}
-                    >
-                        {users?.filter(u => u.role === 'admin').length || 0}
-                    </Typography>
-                </Box>
-                {/* Colonna destra */}
-                <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'flex-end'
-                }}>
-                    <Typography variant="caption" color="text.secondary">
-                        Percentuale
-                    </Typography>
-                    <Chip 
-                        label={`${((users?.filter(u => u.role === 'admin').length || 0) / (totalUsers || 1) * 100).toFixed(1)}%`}
-                        color="error"
-                        size="small"
-                        sx={{ height: 24 }}
-                    />
-                </Box>
-            </Box>
-        )
+        value: userCounts.admin,
+        icon: AdminIcon,
+        color: 'error',
+        description: 'Amministratori di sistema'
     },
     {
         title: 'Docenti',
-        icon: <TeacherIcon sx={{ fontSize: 24 }} />,
-        centerContent: true,
-        content: (
-            <Box sx={{ 
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                width: '100%',
-            }}>
-                {/* Colonna sinistra */}
-                <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'flex-start'
-                }}>
-                    <Typography variant="caption" color="text.secondary">
-                        Totale Docenti
-                    </Typography>
-                    <Typography 
-                        variant="h5" 
-                        sx={{ fontWeight: 600, color: 'success.main' }}
-                    >
-                        {users?.filter(u => u.role === 'teacher').length || 0}
-                    </Typography>
-                </Box>
-                {/* Colonna destra */}
-                <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'flex-end'
-                }}>
-                    <Typography variant="caption" color="text.secondary">
-                        Percentuale
-                    </Typography>
-                    <Chip 
-                        label={`${((users?.filter(u => u.role === 'teacher').length || 0) / (totalUsers || 1) * 100).toFixed(1)}%`}
-                        color="success"
-                        size="small"
-                        sx={{ height: 24 }}
-                    />
-                </Box>
-            </Box>
-        )
+        value: userCounts.teacher,
+        icon: TeacherIcon,
+        color: 'success',
+        description: 'Docenti registrati nel sistema'
     },
     {
         title: 'Admin Scuola',
-        icon: <SchoolIcon sx={{ fontSize: 24 }} />,
-        centerContent: true,
-        content: (
-            <Box sx={{ 
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                width: '100%',
-            }}>
-                {/* Colonna sinistra */}
-                <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'flex-start'
-                }}>
-                    <Typography variant="caption" color="text.secondary">
-                        Totale Admin Scuola
-                    </Typography>
-                    <Typography 
-                        variant="h5" 
-                        sx={{ fontWeight: 600, color: 'secondary.main' }}
-                    >
-                        {users?.filter(u => u.role === 'school_admin').length || 0}
-                    </Typography>
-                </Box>
-                {/* Colonna destra */}
-                <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'flex-end'
-                }}>
-                    <Typography variant="caption" color="text.secondary">
-                        Percentuale
-                    </Typography>
-                    <Chip 
-                        label={`${((users?.filter(u => u.role === 'school_admin').length || 0) / (totalUsers || 1) * 100).toFixed(1)}%`}
-                        color="secondary"
-                        size="small"
-                        sx={{ height: 24 }}
-                    />
-                </Box>
-            </Box>
-        )
+        value: userCounts.school_admin,
+        icon: SchoolIcon,
+        color: 'secondary',
+        description: 'Amministratori delle scuole'
     }
-], [users, totalUsers, theme]);
+], [userCounts, calculateTrend, calculateTrendData]);
 
+// Table columns configuration
 
-    // Table columns configuration
     const columns = useMemo(() => [
         {
             field: 'fullName',

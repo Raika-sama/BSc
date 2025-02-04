@@ -149,26 +149,26 @@ const ClassManagement = () => {
             { 
                 title: 'Totale Classi', 
                 value: mainTeacherClasses.length + coTeacherClasses.length,
-                icon: <SchoolIcon />,
-                color: 'primary.main' 
+                icon: SchoolIcon,
+                color: 'primary' 
             },
             { 
                 title: 'Classi Insegnate', 
                 value: mainTeacherClasses.length,
-                icon: <ClassIcon />,
-                color: 'secondary.main' 
+                icon: ClassIcon,
+                color: 'secondary' 
             },
             { 
                 title: 'Classi Co-Insegnate', 
                 value: coTeacherClasses.length,
-                icon: <GroupIcon />,
-                color: 'success.main' 
+                icon: GroupIcon,
+                color: 'success' 
             },
             { 
                 title: 'Test Attivi', 
                 value: currentClasses.reduce((acc, curr) => acc + (curr.activeTests || 0), 0),
-                icon: <AssessmentIcon />,
-                color: 'info.main' 
+                icon: AssessmentIcon,
+                color: 'info' 
             }
         ];
 

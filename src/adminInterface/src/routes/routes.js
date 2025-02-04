@@ -13,7 +13,7 @@ import ClassPopulate from '../components/classes/details/ClassPopulate';    // A
 import Profile from '../components/profile/Profile'; // Aggiungi questo import
 import PersonalTest from '../components/profile/PersonalTest';  // Aggiungi questo import
 import SectionManagement from '../components/school/schoolComponents/SectionManagement';
-import AssignSchoolPage from '../components/students/AssignSchoolPage';
+import AssignSchoolDialog from '../components/students/AssignSchoolDialog';
 import ApiExplorer from '../components/api-explorer/ApiExplorer';
 import StudentIndex from '../components/students/list/details/studentIndex';
 import UserDetails from '../components/users/details/UserDetails';  // Aggiungi questo import
@@ -177,7 +177,7 @@ export const adminRoutes = [
     },
     {
         path: 'students/assign-school',
-        element: AssignSchoolPage,
+        element: AssignSchoolDialog,
         title: 'Assegnazione Studenti',
         icon: PersonIcon,
         permissions: [PERMISSIONS.STUDENTS.WRITE, PERMISSIONS.SCHOOLS.READ],

@@ -133,32 +133,36 @@ const SchoolManagement = () => {
         }
     ], [navigate]);
 
-    const statsCards = [
+    const statsCards = useMemo(() => [
         { 
             title: 'Scuole Totali', 
             value: totalSchools || 0,
-            icon: <SchoolIcon />,
-            color: 'primary.main' 
+            icon: SchoolIcon,
+            color: 'primary',
+            description: 'Totale delle scuole registrate'
         },
         { 
             title: 'Scuole Medie', 
             value: schools?.filter(s => s?.schoolType === 'middle_school')?.length || 0,
-            icon: <ClassIcon />,
-            color: 'secondary.main' 
+            icon: ClassIcon,
+            color: 'secondary',
+            description: 'Totale delle scuole medie'
         },
         { 
             title: 'Scuole Superiori', 
             value: schools?.filter(s => s?.schoolType === 'high_school')?.length || 0,
-            icon: <SchoolIcon />,
-            color: 'success.main' 
+            icon: SchoolIcon,
+            color: 'success',
+            description: 'Totale delle scuole superiori'
         },
         { 
             title: 'Regioni', 
             value: [...new Set(schools?.map(s => s?.region))].length || 0,
-            icon: <LocationIcon />,
-            color: 'info.main' 
+            icon: LocationIcon,
+            color: 'info',
+            description: 'Numero di regioni con scuole registrate'
         }
-    ];
+    ], [schools, totalSchools]);
 
     return (
         <ContentLayout

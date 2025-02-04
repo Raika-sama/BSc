@@ -17,8 +17,10 @@ import {
     DialogActions,
     Card,
     CardContent,
-    Stack
+    Stack,
+    IconButton
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { DataGrid } from '@mui/x-data-grid';
 import { useStudent } from '../../context/StudentContext';
 import { useSchool } from '../../context/SchoolContext';
@@ -27,7 +29,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import SchoolIcon from '@mui/icons-material/School';
 import PeopleIcon from '@mui/icons-material/People';
 
-const AssignSchoolPage = () => {
+const AssignSchoolDialog = ({ open, onClose }) => {
     const navigate = useNavigate();
     const { 
         students, 
@@ -125,7 +127,7 @@ const AssignSchoolPage = () => {
         try {
             setAssigning(true);
             await batchAssignToSchool(selectedStudents, selectedSchool);
-            navigate('/admin/students');
+            onClose(true); // Passa true per indicare che è stato fatto un aggiornamento
         } catch (error) {
             console.error('Error assigning students:', error);
         } finally {
@@ -141,18 +143,29 @@ const AssignSchoolPage = () => {
     console.log('Current loading state:', loading);
 
     return (
-        <Box sx={{ p: 3, maxWidth: '100%', bgcolor: '#f5f5f5', minHeight: '100vh' }}>
-            <Paper sx={{ p: 3, mb: 3 }}>
-                <Typography variant="h5" component="h1" gutterBottom sx={{ mb: 3 }}>
-                    Assegnazione Studenti alla Scuola
-                </Typography>
-
+        <Dialog
+            open={open}
+            onClose={() => onClose(false)}
+            maxWidth="lg"
+            fullWidth
+        >
+            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                Assegnazione Studenti alla Scuola
+                <IconButton
+                    aria-label="close"
+                    onClick={() => onClose(false)}
+                    size="small"
+                >
+                    <CloseIcon />
+                </IconButton>
+            </DialogTitle>
+            <DialogContent sx={{ p: 3 }}>
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
                         {error}
                     </Alert>
                 )}
-
+    
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 3 }}>
                     <Card sx={{ flexGrow: 1 }}>
                         <CardContent>
@@ -169,7 +182,7 @@ const AssignSchoolPage = () => {
                             </Stack>
                         </CardContent>
                     </Card>
-
+    
                     <Card sx={{ flexGrow: 1 }}>
                         <CardContent>
                             <Stack direction="row" spacing={2} alignItems="center">
@@ -186,7 +199,7 @@ const AssignSchoolPage = () => {
                         </CardContent>
                     </Card>
                 </Stack>
-
+    
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 3 }}>
                     <TextField
                         fullWidth
@@ -198,7 +211,7 @@ const AssignSchoolPage = () => {
                             startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />
                         }}
                     />
-
+    
                     <FormControl fullWidth>
                         <InputLabel>Seleziona Scuola</InputLabel>
                         <Select
@@ -214,59 +227,61 @@ const AssignSchoolPage = () => {
                         </Select>
                     </FormControl>
                 </Stack>
-
-                <Box sx={{ height: 600, width: '100%' }}>
-                {loading ? (
-                    <CircularProgress />
-                ) : error ? (
-                    <Alert severity="error">{error}</Alert>
-                ) : filteredStudents.length > 0 ? (
-                    <DataGrid
-                        rows={filteredStudents}
-                        columns={columns}
-                        initialState={{
-                            pagination: {
-                                paginationModel: { pageSize: 25, page: 0 },
-                            },
-                        }}
-                        pageSizeOptions={[25, 50, 100]}  // Opzioni per il numero di righe per pagina
-                        checkboxSelection
-                        disableSelectionOnClick
-                        getRowId={(row) => row.id || row._id}
-                        selectionModel={selectedStudents}
-                        onSelectionModelChange={(newSelection) => {
-                            setSelectedStudents(newSelection);
-                        }}
-                        hideFooterSelectedRowCount={false}
-                    />
-                ) : (
-                    <Alert severity="info">
-                        {searchTerm.trim() !== '' 
-                            ? 'Nessuno studente trovato con i criteri di ricerca specificati'
-                            : 'Non ci sono studenti da assegnare a una scuola'}
-                    </Alert>
-                )}
+    
+                <Box sx={{ height: 400, width: '100%' }}> {/* Altezza ridotta per il dialog */}
+                    {loading ? (
+                        <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                            <CircularProgress />
+                        </Box>
+                    ) : error ? (
+                        <Alert severity="error">{error}</Alert>
+                    ) : filteredStudents.length > 0 ? (
+                        <DataGrid
+                            rows={filteredStudents}
+                            columns={columns}
+                            initialState={{
+                                pagination: {
+                                    paginationModel: { pageSize: 25, page: 0 },
+                                },
+                            }}
+                            pageSizeOptions={[25, 50, 100]}
+                            checkboxSelection
+                            disableSelectionOnClick
+                            getRowId={(row) => row.id || row._id}
+                            selectionModel={selectedStudents}
+                            onSelectionModelChange={(newSelection) => {
+                                setSelectedStudents(newSelection);
+                            }}
+                            hideFooterSelectedRowCount={false}
+                        />
+                    ) : (
+                        <Alert severity="info">
+                            {searchTerm.trim() !== '' 
+                                ? 'Nessuno studente trovato con i criteri di ricerca specificati'
+                                : 'Non ci sono studenti da assegnare a una scuola'}
+                        </Alert>
+                    )}
                 </Box>
-
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                    <Button
-                        variant="outlined"
-                        onClick={() => navigate('/admin/students')}
-                        disabled={assigning}
-                    >
-                        Annulla
-                    </Button>
-                    <Button
-                        variant="contained"
-                        onClick={() => setConfirmDialogOpen(true)}
-                        disabled={selectedStudents.length === 0 || !selectedSchool || assigning}
-                        startIcon={assigning ? <CircularProgress size={20} /> : null}
-                    >
-                        {assigning ? 'Assegnazione in corso...' : 'Assegna Studenti'}
-                    </Button>
-                </Box>
-            </Paper>
-
+            </DialogContent>
+            <DialogActions sx={{ p: 3, pt: 0 }}>
+                <Button
+                    variant="outlined"
+                    onClick={() => onClose(false)}
+                    disabled={assigning}
+                >
+                    Annulla
+                </Button>
+                <Button
+                    variant="contained"
+                    onClick={() => setConfirmDialogOpen(true)}
+                    disabled={selectedStudents.length === 0 || !selectedSchool || assigning}
+                    startIcon={assigning ? <CircularProgress size={20} /> : null}
+                >
+                    {assigning ? 'Assegnazione in corso...' : 'Assegna Studenti'}
+                </Button>
+            </DialogActions>
+    
+            {/* Dialog di conferma */}
             <Dialog
                 open={confirmDialogOpen}
                 onClose={() => setConfirmDialogOpen(false)}
@@ -291,8 +306,8 @@ const AssignSchoolPage = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-        </Box>
+        </Dialog>
     );
 };
 
-export default AssignSchoolPage;
+export default AssignSchoolDialog;

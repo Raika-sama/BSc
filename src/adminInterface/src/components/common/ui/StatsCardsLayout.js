@@ -1,4 +1,5 @@
 import React from 'react';
+import { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { 
     Box, 
@@ -40,7 +41,7 @@ const StatCard = ({
     icon: Icon, 
     color = 'primary',
     trend,
-    trendData,
+    trendData = null,
     description,
     loading,
     onClick 
@@ -48,21 +49,30 @@ const StatCard = ({
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
 
-    // Configurazione per il mini grafico
-    const chartData = {
-        labels: trendData?.labels || [],
-        datasets: [{
-            data: trendData?.data || [],
-            fill: true,
-            borderColor: theme.palette[color].main,
-            backgroundColor: alpha(theme.palette[color].main, 0.1),
-            tension: 0.4,
-            borderWidth: 2,
-            pointRadius: 0
-        }]
-    };
+ // Funzione di utility per ottenere il colore in modo sicuro
+ const getColorFromTheme = useCallback((colorName) => {
+    return theme.palette[colorName]?.main || theme.palette.primary.main;
+}, [theme]);
 
-    const chartOptions = {
+// Ottieni il colore in modo sicuro
+const themeColor = getColorFromTheme(color);
+
+// Configurazione per il mini grafico
+const chartData = {
+    labels: trendData?.labels || [],
+    datasets: [{
+        data: trendData?.data || [],
+        fill: true,
+        borderColor: themeColor,
+        backgroundColor: alpha(themeColor, 0.1),
+        tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 0
+    }]
+};
+
+
+    const chartOptions = React.useMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -84,7 +94,7 @@ const StatCard = ({
         interaction: {
             intersect: false,
         },
-    };
+    }), []);
 
     return (
         <motion.div
@@ -104,9 +114,9 @@ const StatCard = ({
                     overflow: 'hidden',
                     border: '1px solid',
                     borderColor: 'divider',
-                    background: theme => `linear-gradient(135deg, 
-                        ${alpha(theme.palette[color].main, isDark ? 0.15 : 0.05)} 0%,
-                        ${alpha(theme.palette[color].main, isDark ? 0.05 : 0.02)} 100%)`,
+                    background: `linear-gradient(135deg, 
+                        ${alpha(themeColor, isDark ? 0.15 : 0.05)} 0%,
+                        ${alpha(themeColor, isDark ? 0.05 : 0.02)} 100%)`,
                     '&::before': {
                         content: '""',
                         position: 'absolute',
@@ -115,9 +125,9 @@ const StatCard = ({
                         right: 0,
                         bottom: 0,
                         background: `linear-gradient(135deg, 
-                            ${alpha(theme.palette[color].main, 0.1)} 0%,
-                            ${alpha(theme.palette[color].main, 0)} 50%,
-                            ${alpha(theme.palette[color].main, 0.05)} 100%)`,
+                            ${alpha(themeColor, 0.1)} 0%,
+                            ${alpha(themeColor, 0)} 50%,
+                            ${alpha(themeColor, 0.05)} 100%)`,
                         opacity: 0,
                         transition: 'opacity 0.3s ease',
                     },
@@ -126,8 +136,8 @@ const StatCard = ({
                     },
                     transition: 'all 0.3s ease',
                     '&:hover': {
-                        boxShadow: theme => `0 4px 20px ${alpha(theme.palette[color].main, 0.15)}`,
-                        borderColor: theme => alpha(theme.palette[color].main, 0.3),
+                        boxShadow: `0 4px 20px ${alpha(themeColor, 0.15)}`,
+                        borderColor: alpha(themeColor, 0.3),
                     }
                 }}
             >
@@ -258,6 +268,7 @@ const StatCard = ({
     );
 };
 
+
 const StatCardsLayout = ({ 
     cards,
     loading = false,
@@ -310,7 +321,7 @@ StatCardsLayout.propTypes = {
     cards: PropTypes.arrayOf(PropTypes.shape({
         title: PropTypes.string.isRequired,
         value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-        icon: PropTypes.elementType,
+        icon: PropTypes.func,
         color: PropTypes.oneOf(['primary', 'secondary', 'success', 'error', 'warning', 'info']),
         trend: PropTypes.number,
         trendData: PropTypes.shape({

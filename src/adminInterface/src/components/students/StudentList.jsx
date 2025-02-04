@@ -33,6 +33,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { StatCards } from './StatCards';
 import { FilterToolbar } from './FilterToolbar';
 import StudentBulkImportForm from './StudentBulkImportForm';
+import AssignSchoolDialog from './AssignSchoolDialog';
 
 const StudentList = () => {
     const navigate = useNavigate();
@@ -52,6 +53,7 @@ const StudentList = () => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [pageSize, setPageSize] = useState(50);
     const [page, setPage] = useState(0);
+    const [assignSchoolOpen, setAssignSchoolOpen] = useState(false);
 
     // Filtri
     const [filters, setFilters] = useState({
@@ -248,8 +250,8 @@ const StudentList = () => {
                     <Button
                         variant="outlined"
                         startIcon={<SchoolIcon />}
-                        onClick={() => navigate('/admin/students/assign-school')}
-                    >
+                        onClick={() => setAssignSchoolOpen(true)}
+                        >
                         Assegna a Scuola
                     </Button>
                     <Button
@@ -329,6 +331,15 @@ const StudentList = () => {
                 onClose={() => {
                     setImportFormOpen(false);
                     loadStudents();
+                }}
+            />
+            <AssignSchoolDialog
+                open={assignSchoolOpen}
+                onClose={(needsRefresh) => {
+                    setAssignSchoolOpen(false);
+                    if (needsRefresh) {
+                        loadStudents(); // Ricarica la lista se sono state fatte modifiche
+                    }
                 }}
             />
         </ContentLayout>
