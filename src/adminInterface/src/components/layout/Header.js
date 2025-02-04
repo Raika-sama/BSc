@@ -19,6 +19,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext/ThemeContextIndex';
+import { alpha } from '@mui/material/styles';
 
 const Header = ({ open, drawerWidth, onDrawerToggle }) => {
     const { user, logout } = useAuth();
@@ -52,41 +53,92 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
 
     return (
         <AppBar
-            position="fixed"
-            sx={{
-                width: '100%',
-                bgcolor: 'primary.main',
-                backgroundImage: `linear-gradient(to right, ${customTheme.palette.primary.light}, ${customTheme.palette.primary.main})`,
+        position="fixed"
+        sx={{
+            width: '100%',
+            bgcolor: 'primary.main',
+            // Gradiente potenziato con più colori e maggiore opacità
+            backgroundImage: customTheme.palette.mode === 'dark'
+                ? `linear-gradient(135deg, 
+                    ${alpha(customTheme.palette.primary.dark, 0.95)} 0%,
+                    ${alpha(customTheme.palette.primary.main, 0.90)} 30%,
+                    ${alpha(customTheme.palette.primary.light, 0.85)} 70%,
+                    ${alpha(customTheme.palette.primary.main, 0.95)} 100%)`
+                : `linear-gradient(135deg, 
+                    ${alpha(customTheme.palette.primary.light, 0.95)} 0%,
+                    ${alpha(customTheme.palette.primary.main, 1)} 40%,
+                    ${alpha(customTheme.palette.primary.dark, 0.9)} 80%,
+                    ${alpha(customTheme.palette.primary.main, 0.95)} 100%)`,
+            boxShadow: customTheme.palette.mode === 'dark'
+                ? '0 2px 12px rgba(0, 0, 0, 0.4)'
+                : '0 2px 12px rgba(100, 181, 246, 0.3)',
+            zIndex: muiTheme.zIndex.drawer + 1,
+            transition: theme => theme.transitions.create(
+                ['background-color', 'box-shadow', 'background-image', 'transform'],
+                {
+                    duration: theme.transitions.duration.standard,
+                    easing: theme.transitions.easing.easeInOut,
+                }
+            ),
+            // Effetto hover potenziato
+            '&:hover': {
+                backgroundImage: customTheme.palette.mode === 'dark'
+                    ? `linear-gradient(135deg, 
+                        ${alpha(customTheme.palette.primary.dark, 1)} 0%,
+                        ${alpha(customTheme.palette.primary.main, 0.95)} 35%,
+                        ${alpha(customTheme.palette.primary.light, 0.9)} 65%,
+                        ${alpha(customTheme.palette.primary.dark, 1)} 100%)`
+                    : `linear-gradient(135deg, 
+                        ${alpha(customTheme.palette.primary.light, 1)} 0%,
+                        ${alpha(customTheme.palette.primary.main, 0.95)} 45%,
+                        ${alpha(customTheme.palette.primary.dark, 0.95)} 75%,
+                        ${alpha(customTheme.palette.primary.main, 1)} 100%)`,
                 boxShadow: customTheme.palette.mode === 'dark'
-                    ? '0 2px 8px rgba(0, 0, 0, 0.3)'
-                    : '0 2px 8px rgba(100, 181, 246, 0.2)',
-                zIndex: muiTheme.zIndex.drawer + 1,
-                transition: theme => theme.transitions.create(
-                    ['background-color', 'box-shadow', 'background-image'],
-                    {
-                        duration: theme.transitions.duration.standard,
-                        easing: theme.transitions.easing.easeInOut,
-                    }
-                ),
-            }}
-        >
+                    ? '0 4px 15px rgba(0, 0, 0, 0.5)'
+                    : '0 4px 15px rgba(100, 181, 246, 0.4)',
+                '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: `linear-gradient(45deg, 
+                        ${alpha(customTheme.palette.primary.main, 0)} 30%, 
+                        ${alpha(customTheme.palette.primary.light, 0.1)} 50%,
+                        ${alpha(customTheme.palette.primary.main, 0)} 70%)`,
+                    animation: 'shimmer 2s infinite',
+                },
+            },
+            // Aggiungiamo un'animazione di shimmer
+            '@keyframes shimmer': {
+                '0%': {
+                    transform: 'translateX(-100%)',
+                },
+                '100%': {
+                    transform: 'translateX(100%)',
+                },
+            },
+        }}
+    >
             <Toolbar>
                 <IconButton
-                    color="inherit"
-                    aria-label="open drawer"
-                    edge="start"
-                    onClick={onDrawerToggle}
-                    sx={{ 
-                        mr: 2,
-                        '&:hover': {
-                            backgroundColor: 'rgba(255,255,255,0.15)',
-                            transform: 'scale(1.05)',
-                        },
-                        transition: 'all 0.2s ease-in-out'
-                    }}
-                >
-                    <MenuIcon />
-                </IconButton>
+                color="inherit"
+                aria-label="open drawer"
+                edge="start"
+                onClick={onDrawerToggle}
+                sx={{ 
+                    mr: 2,
+                    '&:hover': {
+                        backgroundColor: 'rgba(255,255,255,0.15)',
+                        transform: 'scale(1.1)',
+                        boxShadow: '0 0 10px rgba(255,255,255,0.2)',
+                    },
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+            >
+                <MenuIcon />
+            </IconButton>
                 <Typography 
                     variant="h6" 
                     noWrap 
@@ -111,9 +163,13 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                         sx={{
                             '&:hover': {
                                 backgroundColor: 'rgba(255,255,255,0.15)',
-                                transform: 'scale(1.05)',
+                                transform: 'scale(1.1)',
+                                '& .MuiAvatar-root': {
+                                    borderColor: 'rgba(255,255,255,1)',
+                                    transform: 'rotate(360deg)',
+                                }
                             },
-                            transition: 'all 0.2s ease-in-out'
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                         }}
                     >
                         <Avatar 
@@ -125,7 +181,8 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                                     : customTheme.palette.primary.dark,
                                 fontSize: '1rem',
                                 fontWeight: 500,
-                                border: '2px solid rgba(255,255,255,0.8)'
+                                border: '2px solid rgba(255,255,255,0.8)',
+                                transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
                             }}
                         >
                             {user?.firstName?.[0]}{user?.lastName?.[0]}

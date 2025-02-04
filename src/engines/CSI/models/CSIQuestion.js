@@ -29,6 +29,7 @@ const csiQuestionSchema = new mongoose.Schema({
         },
         weight: {
             type: Number,
+            required: true,
             default: 1
         }
     },

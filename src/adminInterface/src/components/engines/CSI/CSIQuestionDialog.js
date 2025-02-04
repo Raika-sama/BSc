@@ -90,26 +90,29 @@ const CSIQuestionDialog = ({ open, question, onClose, onSave }) => {
 
     const handleSubmit = () => {
         if (!formData.testo.trim()) {
-            alert('Inserisci il testo della domanda');
+            alert('Il testo della domanda è obbligatorio');
             return;
         }
-
+    
         if (!formData.categoria) {
-            alert('Seleziona una categoria');
+            alert('La categoria è obbligatoria');
             return;
         }
-
+    
+        // Strutturiamo i dati nello stesso formato in cui li riceviamo
         const dataToSubmit = {
-            ...formData,
             id: formData.id,
+            testo: formData.testo,
+            categoria: formData.categoria,
             metadata: {
-                polarity: formData.metadata.polarity
+                polarity: formData.metadata.polarity,
+                weight: parseFloat(formData.weight) || 1  // Mettiamo il weight dentro metadata
             },
-            weight: parseFloat(formData.weight) || 1,
             version: formData.version || '1.0.0',
-            active: Boolean(formData.active)
+            active: formData.active
         };
-
+    
+        console.log('Submitting data:', dataToSubmit); // Log per debug
         onSave(dataToSubmit);
     };
 

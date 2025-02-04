@@ -15,7 +15,8 @@ import {
     Menu,
     MenuItem,
     Tooltip,
-    CircularProgress
+    CircularProgress,
+    Fade
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import StatCard from '../school/schoolComponents/StatCard';
@@ -88,21 +89,45 @@ const ListLayout = ({
         border: 'none',
         '& .MuiDataGrid-cell': {
             fontSize: '0.875rem',
-            py: 1
+            py: 1,
+            transition: 'all 0.2s ease'
         },
         '& .MuiDataGrid-columnHeaders': {
-            backgroundColor: alpha(theme.palette.primary.main, 0.02),
+            backgroundColor: theme => theme.palette.mode === 'dark' 
+                ? alpha(theme.palette.primary.main, 0.15)
+                : alpha(theme.palette.primary.main, 0.08),
+            backgroundImage: theme => `linear-gradient(135deg, 
+                ${alpha(theme.palette.primary.main, 0.12)} 0%,
+                ${alpha(theme.palette.primary.light, 0.08)} 50%,
+                ${alpha(theme.palette.primary.main, 0.12)} 100%)`,
             borderBottom: 1,
             borderColor: 'divider'
         },
         '& .MuiDataGrid-row': {
+            transition: 'all 0.2s ease',
+            '&:nth-of-type(even)': {
+                backgroundColor: theme => theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.primary.main, 0.05)
+                    : alpha(theme.palette.primary.light, 0.05),
+            },
             '&:hover': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.04)
+                backgroundColor: theme => theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.primary.main, 0.12)
+                    : alpha(theme.palette.primary.light, 0.12),
+                transform: 'translateY(-1px)',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
             }
         },
-        '& .MuiDataGrid-footerContainer': {
-            borderTop: 1,
-            borderColor: 'divider'
+        // Qui aggiungiamo lo stile per le righe selezionate
+        '& .MuiDataGrid-row.Mui-selected': {
+            backgroundColor: theme => theme.palette.mode === 'dark'
+                ? alpha(theme.palette.primary.main, 0.2)
+                : alpha(theme.palette.primary.light, 0.2),
+            '&:hover': {
+                backgroundColor: theme => theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.primary.main, 0.25)
+                    : alpha(theme.palette.primary.light, 0.25),
+            }
         },
         '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
             outline: 'none'
@@ -112,6 +137,34 @@ const ListLayout = ({
         },
         ...sx
     };
+
+    const loadingOverlay = {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: alpha(theme.palette.background.paper, 0.7),
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1,
+        backdropFilter: 'blur(4px)',
+        transition: 'all 0.3s ease'
+    };
+
+    const toolbarButton = {
+        transition: 'all 0.2s ease',
+        borderRadius: 2,
+        '&:hover': {
+            backgroundColor: theme => alpha(theme.palette.primary.main, 0.08),
+            transform: 'translateY(-1px)',
+        },
+        '&:active': {
+            transform: 'translateY(0)'
+        }
+    };
+    
 
     return (
         <Box sx={{ 
@@ -198,14 +251,21 @@ const ListLayout = ({
                     {customActions}
 
                     {onRefresh && (
-                        <Tooltip title="Aggiorna">
-                            <IconButton 
-                                onClick={onRefresh}
-                                disabled={loading}
-                            >
-                                <RefreshIcon />
-                            </IconButton>
-                        </Tooltip>
+                        <IconButton 
+                            onClick={onRefresh}
+                            disabled={loading}
+                            sx={{
+                                ...toolbarButton,
+                                '& svg': {
+                                    transition: 'transform 0.3s ease',
+                                },
+                                '&:hover svg': {
+                                    transform: 'rotate(180deg)'
+                                }
+                            }}
+                        >
+                            <RefreshIcon />
+                        </IconButton>
                     )}
 
                     <Tooltip title="Gestisci colonne">
@@ -227,18 +287,37 @@ const ListLayout = ({
             {/* Filters */}
             <AnimatePresence>
                 {isFilterOpen && filterComponent && (
-                    <Collapse in={isFilterOpen}>
-                        <Paper 
-                            elevation={0}
-                            sx={{ 
-                                p: 2, 
-                                borderRadius: 2,
-                                border: '1px solid',
-                                borderColor: 'divider'
-                            }}
+                    <Collapse 
+                        in={isFilterOpen}
+                        timeout={300}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.3 }}
                         >
-                            {filterComponent}
-                        </Paper>
+                            <Paper 
+                                elevation={0}
+                                sx={{ 
+                                    p: 2, 
+                                    borderRadius: 2,
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    background: theme => `linear-gradient(135deg, 
+                                        ${alpha(theme.palette.background.paper, 0.95)} 0%,
+                                        ${alpha(theme.palette.background.paper, 1)} 50%,
+                                        ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+                                    backdropFilter: 'blur(8px)',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+                                    }
+                                }}
+                            >
+                                {filterComponent}
+                            </Paper>
+                        </motion.div>
                     </Collapse>
                 )}
             </AnimatePresence>
@@ -248,11 +327,27 @@ const ListLayout = ({
                 anchorEl={columnsMenu}
                 open={Boolean(columnsMenu)}
                 onClose={() => setColumnsMenu(null)}
+                TransitionComponent={Fade}
                 PaperProps={{
                     sx: {
                         maxHeight: 300,
                         width: 250,
-                        borderRadius: 2
+                        borderRadius: 2,
+                        backdropFilter: 'blur(8px)',
+                        backgroundColor: theme => alpha(theme.palette.background.paper, 0.95),
+                        boxShadow: theme => theme.palette.mode === 'dark'
+                            ? '0 4px 20px rgba(0,0,0,0.3)'
+                            : '0 4px 20px rgba(100, 181, 246, 0.2)',
+                        '& .MuiMenuItem-root': {
+                            borderRadius: 1,
+                            mx: 1,
+                            my: 0.5,
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                                backgroundColor: theme => alpha(theme.palette.primary.main, 0.08),
+                                transform: 'translateX(4px)'
+                            }
+                        }
                     }
                 }}
             >
@@ -322,6 +417,25 @@ const ListLayout = ({
                         disableSelectionOnClick
                         autoHeight={false} // Importante: non usiamo autoHeight
                         components={{
+                            LoadingOverlay: () => (
+                                <Box sx={loadingOverlay}>
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        <CircularProgress
+                                            size={40}
+                                            sx={{
+                                                color: 'primary.main',
+                                                '& circle': {
+                                                    strokeLinecap: 'round'
+                                                }
+                                            }}
+                                        />
+                                    </motion.div>
+                                </Box>
+                            ),
                             NoRowsOverlay: () => (
                                 <Box 
                                     display="flex" 

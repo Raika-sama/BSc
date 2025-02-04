@@ -66,6 +66,7 @@ const EnginesManagement = () => {
             title: 'CSI - Cognitive Style Index',
             description: 'Test per la valutazione dello stile cognitivo',
             icon: <Psychology sx={{ fontSize: 50 }} />,
+            centerContent: true, // Aggiungi questa prop
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -79,6 +80,7 @@ const EnginesManagement = () => {
             title: 'Test Memoria',
             description: 'Test per la valutazione delle capacità mnemoniche',
             icon: <Memory sx={{ fontSize: 50 }} />,
+            centerContent: true, // Aggiungi questa prop
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -92,6 +94,7 @@ const EnginesManagement = () => {
             title: 'Intelligenza Emotiva (EQ)',
             description: 'Valutazione delle competenze emotive',
             icon: <Favorite sx={{ fontSize: 50 }} />,
+            centerContent: true, // Aggiungi questa prop
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -105,6 +108,7 @@ const EnginesManagement = () => {
             title: 'Intelligenze Multiple',
             description: 'Test delle Intelligenze Multiple di Gardner',
             icon: <Extension sx={{ fontSize: 50 }} />,
+            centerContent: true, // Aggiungi questa prop
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -118,6 +122,7 @@ const EnginesManagement = () => {
             title: 'Problem Solving',
             description: 'Valutazione capacità di risoluzione problemi',
             icon: <LightbulbOutlined sx={{ fontSize: 50 }} />,
+            centerContent: true, // Aggiungi questa prop
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -131,6 +136,7 @@ const EnginesManagement = () => {
             title: 'Abitudini di Studio',
             description: 'Analisi delle metodologie di studio',
             icon: <MenuBook sx={{ fontSize: 50 }} />,
+            centerContent: true, // Aggiungi questa prop
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -144,6 +150,7 @@ const EnginesManagement = () => {
             title: 'Big Five Personality',
             description: 'Test dei cinque grandi fattori della personalità',
             icon: <Mood sx={{ fontSize: 50 }} />,
+            centerContent: true, // Aggiungi questa prop
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -157,6 +164,7 @@ const EnginesManagement = () => {
             title: 'MBTI',
             description: 'Myers-Briggs Type Indicator',
             icon: <Person sx={{ fontSize: 50 }} />,
+            centerContent: true, // Aggiungi questa prop
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -170,6 +178,7 @@ const EnginesManagement = () => {
             title: 'Test QI',
             description: 'Test del Quoziente Intellettivo',
             icon: <School sx={{ fontSize: 50 }} />,
+            centerContent: true, // Aggiungi questa prop
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>

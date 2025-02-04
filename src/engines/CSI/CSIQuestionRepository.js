@@ -15,28 +15,35 @@ class CSIQuestionRepository {
      */
     async getActiveQuestions(version = '1.0.0') {
         try {
+            console.log('Fetching active questions with version:', version);
+
+            // Modifichiamo la query per includere esplicitamente tutti i campi necessari
             const questions = await this.model
                 .find({
                     version,
                     active: true
                 })
-                .sort({ id: 1 });
+                .select({
+                    id: 1,
+                    testo: 1,
+                    categoria: 1,
+                    metadata: 1,
+                    weight: 1,    // Esplicitamente incluso
+                    version: 1,   // Esplicitamente incluso
+                    active: 1     // Esplicitamente incluso
+                })
+                .lean(); // Usiamo lean() per ottenere plain JavaScript objects
 
-            logger.debug('Retrieved active questions:', {
-                version,
-                count: questions.length
-            });
-
+            // Log per debug
+            console.log('Questions from DB:', questions);
+    
             return questions;
         } catch (error) {
             logger.error('Error retrieving active questions:', {
                 error: error.message,
                 version
             });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_ERROR,
-                'Error retrieving questions'
-            );
+            throw error;
         }
     }
 
@@ -95,56 +102,30 @@ class CSIQuestionRepository {
     /**
      * Update an existing question
      */
-     async update(id, updateData) {
+    async update(id, updateData) {
         try {
-            logger.debug('Repository update - Input data:', {
-                id,
-                updateData: JSON.stringify(updateData)
-            });
+            console.log('Repository received update data:', updateData);
 
             // Verifica se la domanda esiste
             const existingQuestion = await this.model.findOne({ id });
             if (!existingQuestion) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    `Question with ID ${id} not found`
-                );
+                throw new Error(`Question with ID ${id} not found`);
             }
 
-            // Preparazione dati update
-            const updateObj = {
-                ...updateData,
-                lastUpdated: new Date()
-            };
-
-            logger.debug('Final update object:', {
-                id,
-                updateObj: JSON.stringify(updateObj)
-            });
-
+            // Usiamo $set per assicurarci che i campi non specificati non vengano rimossi
             const question = await this.model.findOneAndUpdate(
                 { id },
-                updateObj,
+                { $set: updateData },
                 { 
                     new: true,
-                    runValidators: true,
-                    context: 'query'
+                    runValidators: true
                 }
             );
 
-            logger.info('Updated question:', {
-                id: question.id,
-                version: question.version,
-                updatedFields: Object.keys(updateData)
-            });
-
+            console.log('Updated question:', question);
             return question;
         } catch (error) {
-            logger.error('Error updating question in repository:', {
-                error: error.message,
-                id,
-                updateData: JSON.stringify(updateData)
-            });
+            logger.error('Error updating question:', error);
             throw error;
         }
     }

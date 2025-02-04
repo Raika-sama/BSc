@@ -5,6 +5,7 @@ import {
     ListItem,
     ListItemIcon,
     ListItemText,
+    alpha,
 } from '@mui/material';
 import {
     Dashboard as DashboardIcon,
@@ -15,7 +16,7 @@ import {
     Api as ApiIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext/ThemeContextIndex';
 import { adminRoutes, hasRoutePermission } from '../../routes/routes';
@@ -28,8 +29,8 @@ const Sidebar = ({ open, drawerWidth }) => {
 
     // Filtra gli elementi del menu
     const filteredMenuItems = adminRoutes.filter(route => {
-        const basePath = route.path.split('/')[0]; // Prende solo la prima parte del path
-        const currentPath = location.pathname.split('/')[2]; // Prende il secondo segmento dopo /admin/
+        const basePath = route.path.split('/')[0];
+        const currentPath = location.pathname.split('/')[2];
         
         if (!route.showInMenu) return false;
         if (route.adminOnly && user?.role !== 'admin') return false;
@@ -37,8 +38,25 @@ const Sidebar = ({ open, drawerWidth }) => {
     });
 
     const handleNavigation = (path) => {
-        const basePath = path.split('/')[0]; // Naviga solo alla root del path
+        const basePath = path.split('/')[0];
         navigate(`/admin/${basePath}`);
+    };
+
+    // Animazione container
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    // Animazione item
+    const itemVariants = {
+        hidden: { x: -20, opacity: 0 },
+        show: { x: 0, opacity: 1 }
     };
 
     return (
@@ -52,95 +70,155 @@ const Sidebar = ({ open, drawerWidth }) => {
                 '& .MuiDrawer-paper': {
                     width: drawerWidth,
                     boxSizing: 'border-box',
-                    bgcolor: customTheme.palette.mode === 'dark' 
-                        ? 'rgba(30, 30, 30, 0.95)'  // Un grigio scuro più soft invece del nero puro
-                        : 'background.paper',
-                    borderRight: `1px solid ${
-                        customTheme.palette.mode === 'dark'
-                            ? 'rgba(255, 255, 255, 0.05)'
-                            : 'rgba(100, 181, 246, 0.12)'
+                    bgcolor: 'transparent',
+                    backgroundImage: theme => theme.palette.mode === 'dark'
+                        ? `linear-gradient(135deg, 
+                            ${alpha(theme.palette.background.paper, 0.98)} 0%,
+                            ${alpha(theme.palette.background.paper, 0.95)} 50%,
+                            ${alpha(theme.palette.background.paper, 0.92)} 100%)`
+                        : `linear-gradient(135deg, 
+                            ${alpha(theme.palette.background.paper, 0.98)} 0%,
+                            ${alpha(theme.palette.background.paper, 0.95)} 50%,
+                            ${alpha(theme.palette.background.paper, 0.92)} 100%)`,
+                    borderRight: theme => `1px solid ${
+                        theme.palette.mode === 'dark'
+                            ? alpha(theme.palette.primary.main, 0.15)
+                            : alpha(theme.palette.primary.main, 0.12)
                     }`,
                     mt: 8,
-                    color: 'text.primary',
-                    boxShadow: customTheme.palette.mode === 'dark'
-                        ? '2px 0 8px rgba(0, 0, 0, 0.2)'
-                        : '2px 0 8px rgba(100, 181, 246, 0.08)',
-                    transform: open ? 'none' : `translateX(-${drawerWidth}px)`,
+                    height: 'calc(100% - 64px)', // Altezza calcolata sottraendo l'altezza dell'header
+                    overflow: 'hidden', // Nascondiamo l'overflow principale
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: theme => theme.palette.mode === 'dark'
+                        ? '4px 0 20px rgba(0,0,0,0.35)'
+                        : '4px 0 20px rgba(100, 181, 246, 0.15)',
+                    transition: 'all 0.3s ease-in-out',
+                    position: 'relative',
+                    '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: theme => `linear-gradient(45deg, 
+                            ${alpha(theme.palette.primary.main, 0)} 30%, 
+                            ${alpha(theme.palette.primary.light, 0.05)} 50%,
+                            ${alpha(theme.palette.primary.main, 0)} 70%)`,
+                        animation: 'shimmerSidebar 3s infinite',
+                        pointerEvents: 'none'
+                    },
+                    '@keyframes shimmerSidebar': {
+                        '0%': { transform: 'translateY(-100%)' },
+                        '100%': { transform: 'translateY(100%)' }
+                    }
                 }
             }}
         >
-            <motion.div initial="hidden" animate="show">
-                <List sx={{ pt: 1 }}>
-                    {filteredMenuItems.map((route) => {
-                        const basePath = route.path.split('/')[0];
-                        const isSelected = location.pathname.startsWith(`/admin/${basePath}`);
-                        const Icon = route.icon || DashboardIcon; // Usa l'icona della rotta se presente
-                        
-                        return (
-                            <motion.div key={route.path}>
-                                <ListItem
-                                    component={motion.button}
-                                    whileHover={{ scale: 1.02 }}
+        <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                style={{ 
+                    height: '100%',
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    '&::-webkit-scrollbar': {
+                        width: '4px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                        background: 'transparent',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                        background: theme => alpha(theme.palette.primary.main, 0.2),
+                        borderRadius: '4px',
+                        '&:hover': {
+                            background: theme => alpha(theme.palette.primary.main, 0.3),
+                        },
+                    },
+                }}
+            >
+                <List sx={{ 
+                    pt: 1,
+                    pb: 2, // Aggiungiamo padding bottom per evitare che l'ultimo elemento sia troppo vicino al bordo
+                }}>
+                    <AnimatePresence>
+                        {filteredMenuItems.map((route) => {
+                            const basePath = route.path.split('/')[0];
+                            const isSelected = location.pathname.startsWith(`/admin/${basePath}`);
+                            const Icon = route.icon || DashboardIcon;
+                            
+                            return (
+                                <motion.div
+                                    key={route.path}
+                                    variants={itemVariants}
+                                    whileHover={{ scale: 1.02, x: 5 }}
                                     whileTap={{ scale: 0.98 }}
-                                    onClick={() => handleNavigation(route.path)}
-                                    selected={isSelected}
-                                    sx={{
-                                        border: 'none',
-                                        width: '90%',
-                                        textAlign: 'left',
-                                        py: 1.2,
-                                        my: 0.5,
-                                        mx: 'auto',
-                                        backgroundColor: 'transparent',
-                                        borderRadius: 2,
-                                        transition: 'all 0.3s ease',
-                                        '&:hover': {
-                                            backgroundColor: customTheme.palette.mode === 'dark'
-                                                ? 'rgba(100, 181, 246, 0.08)'  // Un blu più sottile per l'hover in dark mode
-                                                : 'rgba(100, 181, 246, 0.08)',
-                                        },
-                                        '&.Mui-selected': {
-                                            backgroundColor: customTheme.palette.mode === 'dark'
-                                                ? 'rgba(100, 181, 246, 0.2)'   // Un blu più intenso per l'elemento selezionato in dark mode
-                                                : 'rgba(100, 181, 246, 0.12)',
-                                            '&:hover': {
-                                                backgroundColor: customTheme.palette.mode === 'dark'
-                                                    ? 'rgba(100, 181, 246, 0.25)'  // Effetto hover più intenso per l'elemento selezionato
-                                                    : 'rgba(100, 181, 246, 0.15)',
-                                            }
-                                        }
-                                    }}
                                 >
-                                    <ListItemIcon sx={{
-                                        color: isSelected 
-                                            ? 'primary.main' 
-                                            : customTheme.palette.mode === 'dark'
-                                                ? 'rgba(255, 255, 255, 0.7)'  // Icone più visibili in dark mode
-                                                : 'text.secondary',
-                                        minWidth: 35,
-                                        marginRight: 1
-                                    }}>
-                                        <Icon />
-                                    </ListItemIcon>
-                                    <ListItemText 
-                                        primary={route.title}
-                                        primaryTypographyProps={{
-                                            sx: {
-                                                fontSize: '0.95rem',
-                                                fontWeight: isSelected ? 600 : 400,
+                                    <ListItem
+                                        onClick={() => handleNavigation(route.path)}
+                                        selected={isSelected}
+                                        sx={{
+                                            border: 'none',
+                                            width: '90%',
+                                            py: 1.2,
+                                            my: 0.5,
+                                            mx: 'auto',
+                                            borderRadius: 2,
+                                            background: isSelected
+                                                ? theme => `linear-gradient(135deg, 
+                                                    ${alpha(theme.palette.primary.main, 0.15)} 0%,
+                                                    ${alpha(theme.palette.primary.light, 0.12)} 50%,
+                                                    ${alpha(theme.palette.primary.main, 0.15)} 100%)`
+                                                : 'transparent',
+                                            '&:hover': {
+                                                background: theme => theme.palette.mode === 'dark'
+                                                    ? `linear-gradient(135deg, 
+                                                        ${alpha(theme.palette.primary.main, 0.18)} 0%,
+                                                        ${alpha(theme.palette.primary.light, 0.15)} 50%,
+                                                        ${alpha(theme.palette.primary.main, 0.18)} 100%)`
+                                                    : `linear-gradient(135deg, 
+                                                        ${alpha(theme.palette.primary.main, 0.12)} 0%,
+                                                        ${alpha(theme.palette.primary.light, 0.09)} 50%,
+                                                        ${alpha(theme.palette.primary.main, 0.12)} 100%)`,
+                                                '& .MuiListItemIcon-root': {
+                                                    transform: 'scale(1.1) translateX(2px)',
+                                                }
+                                            },
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        <ListItemIcon 
+                                            sx={{
                                                 color: isSelected 
                                                     ? 'primary.main' 
-                                                    : customTheme.palette.mode === 'dark'
-                                                        ? 'rgba(255, 255, 255, 0.85)'  // Testo più leggibile in dark mode
+                                                    : 'text.secondary',
+                                                minWidth: 35,
+                                                marginRight: 1,
+                                                transition: 'all 0.3s ease'
+                                            }}
+                                        >
+                                            <Icon />
+                                        </ListItemIcon>
+                                        <ListItemText 
+                                            primary={route.title}
+                                            primaryTypographyProps={{
+                                                sx: {
+                                                    fontSize: '0.95rem',
+                                                    fontWeight: isSelected ? 600 : 400,
+                                                    color: isSelected 
+                                                        ? 'primary.main' 
                                                         : 'text.primary',
-                                                letterSpacing: '0.02em'  // Migliora la leggibilità
-                                            }
-                                        }}
-                                    />
-                                </ListItem>
-                            </motion.div>
-                        );
-                    })}
+                                                    letterSpacing: '0.02em',
+                                                    transition: 'all 0.3s ease'
+                                                }
+                                            }}
+                                        />
+                                    </ListItem>
+                                </motion.div>
+                            );
+                        })}
+                    </AnimatePresence>
                 </List>
             </motion.div>
         </Drawer>

@@ -7,11 +7,15 @@ import {
     Assessment as AssessmentIcon,
     School as SchoolIcon,
     QuestionAnswer as QuestionIcon,
-    ArrowBack as ArrowBackIcon
+    ArrowBack as ArrowBackIcon,
+    Analytics as AnalyticsIcon,
+    Psychology as PsychologyIcon
 } from '@mui/icons-material';
 import { ContentLayout } from '../../common/commonIndex';
 import CSIConfigurationPanel from './CSIConfigurationPanel';
 import CSIQuestionsPanel from './CSIQuestionsPanel';
+import CSIResultsPanel from './CSIResultsPanel';
+import CSIPsychometricAnalysis from './CSIPsychometricAnalysis';
 
 const TabPanel = ({ children, value, index, ...other }) => {
     if (value !== index) return null;
@@ -55,10 +59,31 @@ const CSITestView = () => {
     };
 
     const tabs = [
-        { icon: <SettingsIcon />, label: "Configurazione", component: <CSIConfigurationPanel /> },
-        { icon: <QuestionIcon />, label: "Domande", component: <CSIQuestionsPanel /> },
-        { icon: <AssessmentIcon />, label: "Risultati", component: <Box>Risultati - Coming Soon</Box> },
-        { icon: <SchoolIcon />, label: "Statistiche Scuole", component: <Box>Statistiche Scuole - Coming Soon</Box> }
+        { 
+            icon: <SettingsIcon />, 
+            label: "Configurazione", 
+            component: <CSIConfigurationPanel /> 
+        },
+        { 
+            icon: <QuestionIcon />, 
+            label: "Domande", 
+            component: <CSIQuestionsPanel /> 
+        },
+        { 
+            icon: <AssessmentIcon />, 
+            label: "Risultati", 
+            component: <CSIResultsPanel /> 
+        },
+        { 
+            icon: <PsychologyIcon />, 
+            label: "Analisi Psicometrica", 
+            component: <CSIPsychometricAnalysis /> 
+        },
+        { 
+            icon: <SchoolIcon />, 
+            label: "Statistiche Scuole", 
+            component: <Box>Statistiche Scuole - Coming Soon</Box> 
+        }
     ];
 
     return (
@@ -90,6 +115,8 @@ const CSITestView = () => {
                     <Tabs 
                         value={tabValue} 
                         onChange={handleTabChange}
+                        variant="scrollable"
+                        scrollButtons="auto"
                         sx={{
                             '& .MuiTab-root': {
                                 minHeight: 64,

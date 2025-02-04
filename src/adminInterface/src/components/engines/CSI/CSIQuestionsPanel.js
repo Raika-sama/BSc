@@ -3,6 +3,9 @@ import {
     IconButton,
     Chip,
     Button,
+    Paper,
+    Typography,
+    Divider,
     Box
 } from '@mui/material';
 import { 
@@ -14,17 +17,21 @@ import CSIQuestionDialog from './CSIQuestionDialog';
 import ListLayout from '../../common/ListLayout';
 
 const QuestionsPanel = () => {
+    // Stati
     const [questions, setQuestions] = useState([]);
     const [selectedQuestion, setSelectedQuestion] = useState(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const { loading, getTestQuestions, updateTestQuestion } = useTest();
 
+    // Effetti
     useEffect(() => {
         fetchQuestions();
     }, []);
 
+    // Handlers
     const fetchQuestions = async () => {
         const data = await getTestQuestions('CSI');
+        console.log('Questions received:', data); // Aggiungiamo questo log
         setQuestions(data);
     };
 
@@ -39,11 +46,12 @@ const QuestionsPanel = () => {
     };
 
     const handleSaveQuestion = async (updatedQuestion) => {
+        console.log('Saving question with data:', updatedQuestion); // Log per debug
         await updateTestQuestion(updatedQuestion);
         await fetchQuestions();
         handleCloseDialog();
     };
-
+    // Definizione colonne
     const columns = [
         { 
             field: 'id', 
@@ -87,9 +95,13 @@ const QuestionsPanel = () => {
             field: 'weight',
             headerName: 'Peso',
             width: 100,
+            valueGetter: (params) => {
+                // Accediamo al weight attraverso metadata
+                return params.row.metadata?.weight || 1;
+            },
             renderCell: (params) => (
                 <Chip 
-                    label={params.value || 1}
+                    label={params.value}
                     size="small"
                     color="info"
                     variant="outlined"
@@ -100,6 +112,10 @@ const QuestionsPanel = () => {
             field: 'version',
             headerName: 'Versione',
             width: 120,
+            // Aggiungiamo log per vedere cosa riceviamo
+            valueGetter: (params) => {
+                return params.row.version || '1.0.0';
+            },
             renderCell: (params) => (
                 <Chip 
                     label={params.value}
@@ -112,6 +128,10 @@ const QuestionsPanel = () => {
             field: 'active',
             headerName: 'Stato',
             width: 120,
+            // Aggiungiamo log per vedere cosa riceviamo
+            valueGetter: (params) => {
+                return params.row.active ?? true;
+            },
             renderCell: (params) => (
                 <Chip 
                     label={params.value ? 'Attiva' : 'Inattiva'}
@@ -136,36 +156,56 @@ const QuestionsPanel = () => {
         }
     ];
 
-    // Custom actions per la toolbar
-    const customActions = (
+    // Action button per la toolbar
+    const AddQuestionButton = () => (
         <Button 
             startIcon={<AddIcon />}
             variant="contained" 
             onClick={() => handleEditClick(null)}
+            sx={{ ml: 2 }}
         >
             Nuova Domanda
         </Button>
     );
 
     return (
-        <Box sx={{ height: '100%' }}>
-            <ListLayout
-                rows={questions}
-                columns={columns}
-                getRowId={(row) => row.id}
-                loading={loading}
-                onRefresh={fetchQuestions}
-                searchPlaceholder="Cerca domande..."
-                onSearch={() => {}}
-                customActions={customActions}
-                emptyStateMessage="Nessuna domanda disponibile"
-                sx={{ 
-                    minHeight: 'unset',
-                    '& .MuiBox-root': {
-                        minHeight: 'unset'
-                    }
-                }}
-            />
+        <Paper 
+            elevation={0} 
+            sx={{ 
+                p: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                height: '100%'
+            }}
+        >
+            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h6">
+                    Gestione Domande CSI
+                </Typography>
+                <AddQuestionButton />
+            </Box>
+            
+            <Divider sx={{ mb: 3 }} />
+
+            <Box sx={{ height: 'calc(100vh - 380px)' }}>
+                <ListLayout
+                    rows={questions}
+                    columns={columns}
+                    getRowId={(row) => row.id}
+                    loading={loading}
+                    onRefresh={fetchQuestions}
+                    searchPlaceholder="Cerca domande..."
+                    onSearch={() => {}} // Implementare se necessario
+                    emptyStateMessage="Nessuna domanda disponibile"
+                    sx={{ 
+                        '& .MuiDataGrid-root': {
+                            border: 'none',
+                            backgroundColor: 'background.paper'
+                        }
+                    }}
+                />
+            </Box>
 
             <CSIQuestionDialog 
                 open={isDialogOpen}
@@ -173,7 +213,7 @@ const QuestionsPanel = () => {
                 onClose={handleCloseDialog}
                 onSave={handleSaveQuestion}
             />
-        </Box>
+        </Paper>
     );
 };
 

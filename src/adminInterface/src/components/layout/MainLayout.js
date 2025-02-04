@@ -46,6 +46,9 @@ const MainLayoutContent = ({ children }) => {
                 <Box
                     component={motion.main}
                     layout
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
                     sx={{
                         position: 'fixed',
                         left: open ? drawerWidth : 0,
@@ -54,17 +57,28 @@ const MainLayoutContent = ({ children }) => {
                         bottom: 0,
                         overflow: 'auto',
                         bgcolor: 'background.default',
-                        transition: theme => theme.transitions.create(['left', 'width'], {
-                            easing: theme.transitions.easing.sharp,
-                            duration: theme.transitions.duration.leavingScreen,
-                        }),
-                        padding: '16px',
+                        transition: theme => theme.transitions.create(
+                            ['left', 'width', 'background-color'],
+                            {
+                                easing: theme.transitions.easing.easeInOut,
+                                duration: theme.transitions.duration.standard,
+                            }
+                        ),
+                        padding: '20px',
                         '& > *': {
                             bgcolor: 'background.paper',
                             minHeight: '100%',
                             padding: '24px',
-                            borderRadius: '8px',
-                            boxShadow: '0 2px 4px rgba(100, 181, 246, 0.1)',
+                            borderRadius: '12px',
+                            boxShadow: theme => theme.palette.mode === 'dark'
+                                ? '0 4px 20px 0 rgba(0,0,0,0.3)'
+                                : '0 4px 20px 0 rgba(100, 181, 246, 0.12)',
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                                boxShadow: theme => theme.palette.mode === 'dark'
+                                    ? '0 6px 25px 0 rgba(0,0,0,0.4)'
+                                    : '0 6px 25px 0 rgba(100, 181, 246, 0.18)',
+                            }
                         }
                     }}
                 >

@@ -25,6 +25,10 @@ class CSIScorer {
             low: 33,    // Sotto il 33% = livello basso
             medium: 66  // Tra 33% e 66% = livello medio, sopra 66% = livello alto
         };
+        this.responseRange = {
+            min: 1,  // Punteggio minimo per domanda
+            max: 5   // Punteggio massimo per domanda
+        };
     }
 
     /**
@@ -42,7 +46,8 @@ class CSIScorer {
                     categoria: this.categoryMapping[answer.question.categoria] || answer.question.categoria
                 }
             }));
-
+    
+            // Calcola i punteggi per ogni dimensione
             const scores = {
                 analitico: this._calculateDimensionScore(mappedAnswers, 'analitico'),
                 sistematico: this._calculateDimensionScore(mappedAnswers, 'sistematico'),
@@ -50,13 +55,8 @@ class CSIScorer {
                 impulsivo: this._calculateDimensionScore(mappedAnswers, 'impulsivo'),
                 dipendente: this._calculateDimensionScore(mappedAnswers, 'dipendente')
             };
-
-            // Normalizza i punteggi
-            Object.keys(scores).forEach(dim => {
-                scores[dim] = this._normalizeScore(scores[dim]);
-            });
-
-            return scores;
+    
+            return scores;  // Rimuoviamo la normalizzazione qui perché è già fatta in _calculateDimensionScore
         } catch (error) {
             logger.error('Error calculating CSI scores', { error });
             throw error;
@@ -74,7 +74,8 @@ class CSIScorer {
 
         if (dimensionAnswers.length === 0) return 0;
 
-        const score = dimensionAnswers.reduce((total, answer) => {
+        // Calcola il punteggio come somma dei valori pesati
+        const rawScore = dimensionAnswers.reduce((total, answer) => {
             const value = answer.question.polarity === '+' ? 
                 answer.value : 
                 (6 - answer.value); // Inverti punteggio per domande negative
@@ -82,15 +83,28 @@ class CSIScorer {
             return total + (value * (answer.question.peso || 1));
         }, 0);
 
-        return score / dimensionAnswers.length;
+        // Calcola il range teorico per questa dimensione
+        const theoreticalRange = this._calculateTheoreticalRange(dimensionAnswers.length);
+
+        // Normalizza il punteggio sul range teorico
+        return this._normalizeScore(rawScore, theoreticalRange);
+    }
+
+    _calculateTheoreticalRange(numberOfQuestions) {
+        return {
+            min: this.responseRange.min * numberOfQuestions, // Somma dei minimi possibili
+            max: this.responseRange.max * numberOfQuestions  // Somma dei massimi possibili
+        };
     }
 
     /**
      * Normalizza un punteggio su scala 0-100
      * @private
      */
-    _normalizeScore(score) {
-        return Math.round((score / 5) * 100);
+    _normalizeScore(score, range) {
+        // Normalizza il punteggio sulla scala 0-100 usando il range teorico
+        const normalized = ((score - range.min) / (range.max - range.min)) * 100;
+        return Math.round(normalized);
     }
 
     /**

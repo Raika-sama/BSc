@@ -80,6 +80,8 @@ class CSIQuestionController {
     updateQuestion = async (req, res) => {
         try {
             const { id } = req.params;
+            console.log('Update request received:', { id, body: req.body }); // Log dei dati ricevuti
+
             const question = await this.service.updateQuestion(parseInt(id), req.body);
 
             res.json({
@@ -87,18 +89,10 @@ class CSIQuestionController {
                 data: question
             });
         } catch (error) {
-            logger.error('Error updating question:', {
-                error: error.message,
-                id: req.params.id,
-                data: req.body
-            });
-
-            res.status(error.statusCode || 400).json({
+            logger.error('Error updating question:', { error: error.message });
+            res.status(400).json({
                 status: 'error',
-                error: {
-                    message: error.message,
-                    code: error.code || 'UPDATE_QUESTION_ERROR'
-                }
+                error: { message: error.message }
             });
         }
     };
