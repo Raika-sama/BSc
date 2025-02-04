@@ -10,6 +10,8 @@ const logger = require('./utils/errors/logger/logger');
 const { setupCSIDependencies, createCSIController } = require('./engines/CSI/config/setupDependencies');
 const createCSIRoutes = require('./engines/CSI/routes/csi.routes');
 const createTestRouter = require('./routes/testRoutes');
+const createQuestionRoutes = require('./engines/CSI/routes/csi.question.routes');
+
 
 // Import Models
 const User = require('./models/User');
@@ -74,7 +76,7 @@ const studentBulkImportRepository = new StudentBulkImportRepository();
 
 // Inizializza Services (ordine corretto per evitare dipendenze circolari)
 const sessionService = new SessionService(userRepository);
-const authService = new AuthService(authRepository, sessionService, userRepository);  // Aggiunto userRepository
+const authService = new AuthService(authRepository, sessionService, userRepository);
 const userService = new UserService(userRepository, authService, sessionService);
 
 // Inizializza il middleware di autenticazione
@@ -82,7 +84,7 @@ const { protect, restrictTo, loginLimiter } = createAuthMiddleware(authService, 
 const authMiddleware = { protect, restrictTo, loginLimiter };
 const bulkImportValidation = new BulkImportValidation();
 
-// Inizializza Controllers
+// Inizializza Controllers base
 const authController = new AuthController(authService, userService, sessionService);
 const userController = new UserController(userService, authService);
 const schoolController = new SchoolController(schoolRepository, userService);
@@ -93,7 +95,6 @@ const studentBulkImportController = new StudentBulkImportController(
     studentBulkImportRepository,
     bulkImportValidation
 );
-
 
 // Debug middleware in development
 if (config.env === 'development') {
@@ -111,13 +112,35 @@ if (config.env === 'development') {
     });
 }
 
+// Inizializza le dipendenze CSI
+logger.debug('Initializing CSI dependencies...');
 
-// Inizializza CSI Controller con tutte le dipendenze necessarie
-// Modifica la sezione di inizializzazione CSI
+// Setup iniziale CSI
+const csiSetup = setupCSIDependencies();
+
+// Inizializza CSIQuestionController con le sue dipendenze
+const csiQuestionController = new CSIQuestionController(
+    csiSetup.csiQuestionService // assicurati che questo venga restituito da setupCSIDependencies
+);
+
+// Verifica inizializzazione
+logger.debug('CSIQuestionController initialization:', {
+    hasController: !!csiQuestionController,
+    controllerMethods: csiQuestionController ? Object.getOwnPropertyNames(Object.getPrototypeOf(csiQuestionController)) : []
+});
+
+// Crea il controller CSI con le dipendenze esterne
 const { controller: csiController, dependencies: csiDependencies } = createCSIController({
-    userService, // passa il userService esistente
-    testRepository, // passa il testRepository esistente
-    studentRepository // passa lo studentRepository esistente
+    userService,
+    testRepository,
+    studentRepository,
+    ...csiSetup // Includi le dipendenze base CSI
+});
+
+// Debug log per verificare l'inizializzazione del controller
+logger.debug('CSI Controller initialization:', {
+    hasController: !!csiController,
+    controllerMethods: csiController ? Object.getOwnPropertyNames(Object.getPrototypeOf(csiController)) : []
 });
 
 // Crea oggetto con tutte le dipendenze
@@ -128,10 +151,12 @@ const dependencies = {
     schoolController,
     classController,
     studentController,
-    studentBulkImportController, // Aggiunto il controller per bulk import
+    studentBulkImportController,
     testController,
     csiController,
+    // CSI Dependencies
     ...csiDependencies,
+    csiQuestionController,
     // Services
     authService,
     userService,
@@ -144,40 +169,59 @@ const dependencies = {
     classRepository,
     schoolRepository,
     studentRepository,
-    studentBulkImportRepository, // Aggiunto il repository per bulk import
+    studentBulkImportRepository,
     testRepository
 };
 
-// Prima di inizializzare le routes
+// Verifica delle dipendenze prima delle routes
 logger.debug('Dependencies check:', {
     hasAuthMiddleware: !!dependencies.authMiddleware,
     authMiddlewareMethods: dependencies.authMiddleware ? Object.keys(dependencies.authMiddleware) : [],
     hasProtect: !!dependencies.authMiddleware?.protect,
     hasRestrictTo: !!dependencies.authMiddleware?.restrictTo,
-    hasLoginLimiter: !!dependencies.authMiddleware?.loginLimiter
+    hasLoginLimiter: !!dependencies.authMiddleware?.loginLimiter,
+    hasCsiController: !!dependencies.csiController
 });
 
 
-// Importa la factory delle rotte delle domande
-const createQuestionRoutes = require('./engines/CSI/routes/csi.question.routes');
 
-// Inizializza le routes CSI
-const { publicRoutes: csiPublicRoutes, protectedRoutes: csiProtectedRoutes } = createCSIRoutes({
+// Verifica che sia tutto inizializzato correttamente
+if (!csiController || !csiQuestionController) {
+    throw new Error('CSI Controllers non inizializzati correttamente');
+}
+
+// Inizializza e monta le routes CSI
+const csiRoutes = createCSIRoutes({
     authMiddleware,
     csiController
 });
 
-// Monta le rotte CSI
-app.use('/api/v1/tests/csi', csiPublicRoutes);    // Rotte pubbliche CSI
-app.use('/api/v1/tests/csi', csiProtectedRoutes); // Rotte protette CSI
+// Inizializza le routes delle domande CSI
+const csiQuestionRoutes = createQuestionRoutes({
+    authMiddleware,
+    csiQuestionController  // passa il controller delle domande
+});
+
+if (!csiQuestionRoutes) {
+    throw new Error('CSI Question Routes non inizializzate correttamente');
+}
+
+// Mount delle rotte CSI con logging
+logger.debug('Mounting CSI routes...');
+
+app.use('/api/v1/tests/csi', csiRoutes.publicRoutes);
+app.use('/api/v1/tests/csi', csiRoutes.protectedRoutes);
+app.use('/api/v1/tests/csi/questions', csiQuestionRoutes);
+
+logger.debug('CSI routes mounted successfully');
 
 // Monta le altre rotte dei test
 const testRouter = createTestRouter({
     authMiddleware,
     testController
 });
-app.use('/api/v1/tests', testRouter);
 
+app.use('/api/v1/tests', testRouter);
 
 // Altre routes con dipendenze iniettate
 app.use('/api/v1', routes(dependencies));
@@ -203,11 +247,9 @@ app.use((req, res) => {
 // Gestione connessione DB e avvio server
 const startServer = async () => {
     try {
-        // Connessione al database
         await connectDB();
         logger.info('Database connesso con successo');
 
-        // Avvio server
         app.listen(config.server.port, () => {
             logger.info(`Server in esecuzione su ${config.server.host}:${config.server.port}`);
             logger.info(`Ambiente: ${config.env}`);

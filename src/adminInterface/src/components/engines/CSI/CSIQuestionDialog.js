@@ -1,3 +1,4 @@
+// CSIQuestionDialog.js
 import React, { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -12,30 +13,34 @@ import {
     MenuItem,
     FormControlLabel,
     Switch,
-    Stack
+    Stack,
+    Alert
 } from '@mui/material';
 
 const CATEGORIES = ['Elaborazione', 'Creatività', 'Preferenza Visiva', 'Decisione', 'Autonomia'];
 
-const CSIQuestionDialog = ({ open, question, onClose, onSave }) => {
+const CSIQuestionDialog = ({ open, question, onClose, onSave, error }) => {
     const [formData, setFormData] = useState({
         testo: '',
         categoria: '',
-        metadata: { polarity: '+' },
+        metadata: {
+            polarity: '+',
+            weight: 1,
+            difficultyLevel: 'medio'
+        },
         version: '1.0.0',
-        active: true,
-        weight: 1
+        active: true
     });
 
     useEffect(() => {
         if (question) {
-            // Se stiamo modificando una domanda esistente
             setFormData({
                 ...question,
                 metadata: {
-                    polarity: question.metadata?.polarity || '+'
+                    polarity: question.metadata?.polarity || '+',
+                    weight: question.metadata?.weight || 1,
+                    difficultyLevel: question.metadata?.difficultyLevel || 'medio'
                 },
-                weight: question.weight || 1,
                 version: question.version || '1.0.0',
                 active: question.active ?? true
             });
@@ -44,10 +49,13 @@ const CSIQuestionDialog = ({ open, question, onClose, onSave }) => {
             setFormData({
                 testo: '',
                 categoria: '',
-                metadata: { polarity: '+' },
+                metadata: {
+                    polarity: '+',
+                    weight: 1,
+                    difficultyLevel: 'medio'
+                },
                 version: '1.0.0',
-                active: true,
-                weight: 1
+                active: true
             });
         }
     }, [question]);
@@ -64,15 +72,22 @@ const CSIQuestionDialog = ({ open, question, onClose, onSave }) => {
                 break;
             
             case 'weight':
-                let weightValue = value;
+                let weightValue = parseFloat(value);
                 if (weightValue < 0.1) weightValue = 0.1;
-                if (weightValue > 10) weightValue = 10;
+                if (weightValue > 5) weightValue = 5;
                 setFormData(prev => ({
                     ...prev,
-                    weight: weightValue
+                    metadata: { ...prev.metadata, weight: weightValue }
                 }));
                 break;
             
+            case 'difficultyLevel':
+                setFormData(prev => ({
+                    ...prev,
+                    metadata: { ...prev.metadata, difficultyLevel: value }
+                }));
+                break;
+
             case 'active':
                 setFormData(prev => ({
                     ...prev,
@@ -99,21 +114,7 @@ const CSIQuestionDialog = ({ open, question, onClose, onSave }) => {
             return;
         }
     
-        // Strutturiamo i dati nello stesso formato in cui li riceviamo
-        const dataToSubmit = {
-            id: formData.id,
-            testo: formData.testo,
-            categoria: formData.categoria,
-            metadata: {
-                polarity: formData.metadata.polarity,
-                weight: parseFloat(formData.weight) || 1  // Mettiamo il weight dentro metadata
-            },
-            version: formData.version || '1.0.0',
-            active: formData.active
-        };
-    
-        console.log('Submitting data:', dataToSubmit); // Log per debug
-        onSave(dataToSubmit);
+        onSave(formData);
     };
 
     return (
@@ -122,6 +123,9 @@ const CSIQuestionDialog = ({ open, question, onClose, onSave }) => {
                 {question ? 'Modifica Domanda' : 'Nuova Domanda'}
             </DialogTitle>
             <DialogContent>
+                {error && (
+                    <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+                )}
                 <Stack spacing={3} sx={{ mt: 2 }}>
                     <TextField
                         fullWidth
@@ -164,22 +168,27 @@ const CSIQuestionDialog = ({ open, question, onClose, onSave }) => {
                         label="Peso"
                         name="weight"
                         type="number"
-                        value={formData.weight}
+                        value={formData.metadata.weight}
                         onChange={handleChange}
                         inputProps={{
                             min: 0.1,
-                            max: 10,
+                            max: 5,
                             step: 0.1
                         }}
                     />
 
-                    <TextField
-                        fullWidth
-                        label="Versione"
-                        name="version"
-                        value={formData.version}
-                        onChange={handleChange}
-                    />
+                    <FormControl fullWidth>
+                        <InputLabel>Difficoltà</InputLabel>
+                        <Select
+                            name="difficultyLevel"
+                            value={formData.metadata.difficultyLevel}
+                            onChange={handleChange}
+                        >
+                            <MenuItem value="facile">Facile</MenuItem>
+                            <MenuItem value="medio">Medio</MenuItem>
+                            <MenuItem value="difficile">Difficile</MenuItem>
+                        </Select>
+                    </FormControl>
 
                     <FormControlLabel
                         control={

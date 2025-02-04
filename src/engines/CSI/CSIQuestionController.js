@@ -12,18 +12,71 @@ class CSIQuestionController {
         this.service = service;
     }
 
+/**
+     * Aggiorna i metadati di una domanda
+     */
+updateMetadata = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { metadata } = req.body;
+
+        const question = await this.service.updateQuestionMetadata(id, metadata);
+
+        res.json({
+            status: 'success',
+            data: question
+        });
+    } catch (error) {
+        logger.error('Error updating question metadata:', { 
+            error: error.message,
+            questionId: req.params.id 
+        });
+
+        res.status(error.statusCode || 400).json({
+            status: 'error',
+            error: {
+                message: error.message,
+                code: error.code || 'UPDATE_METADATA_ERROR'
+            }
+        });
+    }
+};
+
+/**
+ * Recupera tutti i tag disponibili
+ */
+getAvailableTags = async (req, res) => {
+    try {
+        const tags = await this.service.getAllTags();
+
+        res.json({
+            status: 'success',
+            data: { tags }
+        });
+    } catch (error) {
+        logger.error('Error getting available tags:', { 
+            error: error.message 
+        });
+
+        res.status(error.statusCode || 500).json({
+            status: 'error',
+            error: {
+                message: error.message,
+                code: error.code || 'GET_TAGS_ERROR'
+            }
+        });
+    }
+};
 
     /**
-     * Ottiene tutte le domande attive per una versione
+     * Ottiene tutte le domande attive
      */
     getActiveQuestions = async (req, res) => {
         try {
-            const { version } = req.query;
-            const questions = await this.service.getTestQuestions(version);
+            const questions = await this.service.getTestQuestions();
 
             logger.debug('Retrieved questions:', {
-                count: questions.length,
-                version: version || 'default'
+                count: questions.length
             });
 
             res.json({
@@ -32,8 +85,7 @@ class CSIQuestionController {
             });
         } catch (error) {
             logger.error('Error getting active questions:', {
-                error: error.message,
-                version: req.query.version
+                error: error.message
             });
 
             res.status(error.statusCode || 500).json({

@@ -12,32 +12,70 @@ class CSIQuestionService {
     }
  
     /**
-     * Get questions for test initialization
+     * Ottiene le domande per il test
      */
-    async getTestQuestions(version = '1.0.0') {
+    async getTestQuestions() {
         try {
-            console.log('Getting questions for version:', version);
-            const questions = await this.repository.getActiveQuestions(version);
-            console.log('Questions from repository:', questions);
+            logger.debug('Getting test questions');
             
-            const formattedQuestions = questions.map(q => ({
-                ...q,
-                metadata: {
-                    ...q.metadata,
-                    weight: q.metadata?.weight ?? 1
-                }
-            }));
-            console.log('Formatted questions:', formattedQuestions);
+            const questions = await this.repository.getLatestActiveQuestions();
+            
+            if (!questions || questions.length === 0) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'No active questions found'
+                );
+            }
 
-            return formattedQuestions;
+            return questions;
         } catch (error) {
             logger.error('Error in service getting questions:', {
-                error: error.message,
-                version
+                error: error.message
             });
             throw error;
         }
     }
+
+    /**
+     * Aggiorna i metadati di una domanda
+     */
+    async updateQuestionMetadata(id, metadata) {
+        try {
+            const question = await this.repository.findById(id);
+            if (!question) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Domanda non trovata'
+                );
+            }
+
+            await question.updateMetadata(metadata);
+            return question;
+        } catch (error) {
+            logger.error('Error updating question metadata:', { 
+                error: error.message,
+                id 
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Recupera tutti i tag utilizzati
+     */
+    async getAllTags() {
+        try {
+            const tags = await this.repository.model.distinct('metadata.tags');
+            return tags;
+        } catch (error) {
+            logger.error('Error getting all tags:', { 
+                error: error.message 
+            });
+            throw error;
+        }
+    }
+
+    
     /**
      * Create a new question
      */

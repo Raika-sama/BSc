@@ -1,3 +1,4 @@
+// CSIQuestionsPanel.js
 import React, { useEffect, useState } from 'react';
 import { 
     IconButton,
@@ -6,7 +7,8 @@ import {
     Paper,
     Typography,
     Divider,
-    Box
+    Box,
+    Alert
 } from '@mui/material';
 import { 
     Edit as EditIcon, 
@@ -17,22 +19,23 @@ import CSIQuestionDialog from './CSIQuestionDialog';
 import ListLayout from '../../common/ListLayout';
 
 const QuestionsPanel = () => {
-    // Stati
     const [questions, setQuestions] = useState([]);
     const [selectedQuestion, setSelectedQuestion] = useState(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const { loading, getTestQuestions, updateTestQuestion } = useCSITest(); // Changed from useTest to useCSITest
+    const { loading, error, getTestQuestions, updateTestQuestion, createTestQuestion } = useCSITest();
 
-    // Effetti
     useEffect(() => {
         fetchQuestions();
     }, []);
 
-    // Handlers
     const fetchQuestions = async () => {
-        const data = await getTestQuestions();
-        console.log('Questions received:', data); // Aggiungiamo questo log
-        setQuestions(data);
+        try {
+            const data = await getTestQuestions();
+            console.log('Questions received:', data);
+            setQuestions(data || []); // Aggiunto fallback a array vuoto
+        } catch (err) {
+            console.error('Error fetching questions:', err);
+        }
     };
 
     const handleEditClick = (question) => {
@@ -45,13 +48,20 @@ const QuestionsPanel = () => {
         setIsDialogOpen(false);
     };
 
-    const handleSaveQuestion = async (updatedQuestion) => {
-        console.log('Saving question with data:', updatedQuestion); // Log per debug
-        await updateTestQuestion(updatedQuestion);
-        await fetchQuestions();
-        handleCloseDialog();
+    const handleSaveQuestion = async (questionData) => {
+        try {
+            if (questionData.id) {
+                await updateTestQuestion(questionData);
+            } else {
+                await createTestQuestion(questionData);
+            }
+            await fetchQuestions();
+            handleCloseDialog();
+        } catch (err) {
+            console.error('Error saving question:', err);
+        }
     };
-    // Definizione colonne
+
     const columns = [
         { 
             field: 'id', 
@@ -78,7 +88,7 @@ const QuestionsPanel = () => {
             )
         },
         {
-            field: 'polarity',
+            field: 'metadata',
             headerName: 'Polarità',
             width: 120,
             valueGetter: (params) => params.row.metadata?.polarity,
@@ -95,10 +105,7 @@ const QuestionsPanel = () => {
             field: 'weight',
             headerName: 'Peso',
             width: 100,
-            valueGetter: (params) => {
-                // Accediamo al weight attraverso metadata
-                return params.row.metadata?.weight || 1;
-            },
+            valueGetter: (params) => params.row.metadata?.weight || 1,
             renderCell: (params) => (
                 <Chip 
                     label={params.value}
@@ -109,18 +116,15 @@ const QuestionsPanel = () => {
             )
         },
         {
-            field: 'version',
-            headerName: 'Versione',
+            field: 'difficultyLevel',
+            headerName: 'Difficoltà',
             width: 120,
-            // Aggiungiamo log per vedere cosa riceviamo
-            valueGetter: (params) => {
-                return params.row.version || '1.0.0';
-            },
+            valueGetter: (params) => params.row.metadata?.difficultyLevel || 'medio',
             renderCell: (params) => (
                 <Chip 
                     label={params.value}
                     size="small"
-                    color="info"
+                    color="default"
                 />
             )
         },
@@ -128,10 +132,7 @@ const QuestionsPanel = () => {
             field: 'active',
             headerName: 'Stato',
             width: 120,
-            // Aggiungiamo log per vedere cosa riceviamo
-            valueGetter: (params) => {
-                return params.row.active ?? true;
-            },
+            valueGetter: (params) => params.row.active ?? true,
             renderCell: (params) => (
                 <Chip 
                     label={params.value ? 'Attiva' : 'Inattiva'}
@@ -156,18 +157,6 @@ const QuestionsPanel = () => {
         }
     ];
 
-    // Action button per la toolbar
-    const AddQuestionButton = () => (
-        <Button 
-            startIcon={<AddIcon />}
-            variant="contained" 
-            onClick={() => handleEditClick(null)}
-            sx={{ ml: 2 }}
-        >
-            Nuova Domanda
-        </Button>
-    );
-
     return (
         <Paper 
             elevation={0} 
@@ -183,8 +172,20 @@ const QuestionsPanel = () => {
                 <Typography variant="h6">
                     Gestione Domande CSI
                 </Typography>
-                <AddQuestionButton />
+                <Button 
+                    startIcon={<AddIcon />}
+                    variant="contained" 
+                    onClick={() => handleEditClick(null)}
+                >
+                    Nuova Domanda
+                </Button>
             </Box>
+            
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {error.message}
+                </Alert>
+            )}
             
             <Divider sx={{ mb: 3 }} />
 
@@ -193,10 +194,10 @@ const QuestionsPanel = () => {
                     rows={questions}
                     columns={columns}
                     getRowId={(row) => row.id}
-                    loading={loading}
+                    loading={loading.questions} // Modificato qui per usare il corretto stato loading
                     onRefresh={fetchQuestions}
                     searchPlaceholder="Cerca domande..."
-                    onSearch={() => {}} // Implementare se necessario
+                    onSearch={() => {}}
                     emptyStateMessage="Nessuna domanda disponibile"
                     sx={{ 
                         '& .MuiDataGrid-root': {
@@ -212,6 +213,7 @@ const QuestionsPanel = () => {
                 question={selectedQuestion}
                 onClose={handleCloseDialog}
                 onSave={handleSaveQuestion}
+                error={loading.saving ? 'Salvataggio in corso...' : error?.message}
             />
         </Paper>
     );

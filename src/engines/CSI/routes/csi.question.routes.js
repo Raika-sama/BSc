@@ -1,59 +1,66 @@
-// src/engines/CSI/routes/csi.question.routes.js
-
+// csi.question.routes.js
 const express = require('express');
-const CSIQuestionController = require('../CSIQuestionController');
-const CSIQuestionService = require('../CSIQuestionService');
-const CSIQuestionRepository = require('../CSIQuestionRepository');
+const CSIQuestionValidator = require('../utils/CSIQuestionValidator');
 const logger = require('../../../utils/errors/logger/logger');
 
-const createQuestionRoutes = ({ authMiddleware }) => {
+const createQuestionRoutes = ({ authMiddleware, csiQuestionController }) => {
     if (!authMiddleware) throw new Error('authMiddleware is required');
-    
+    if (!csiQuestionController) throw new Error('csiQuestionController is required');
+
+    logger.debug('Creating CSI question routes with controller:', {
+        hasController: !!csiQuestionController,
+        methods: Object.getOwnPropertyNames(Object.getPrototypeOf(csiQuestionController))
+    });
+
     const { protect, restrictTo } = authMiddleware;
     const router = express.Router();
 
-    // Inizializza le dipendenze
-    const repository = new CSIQuestionRepository();
-    const service = new CSIQuestionService(repository);
-    const controller = new CSIQuestionController(service);
+    // Middleware di validazione
+    const validateQuestionData = (req, res, next) => {
+        try {
+            CSIQuestionValidator.validate(req.body);
+            next();
+        } catch (error) {
+            next(error);
+        }
+    };
 
-    // Middleware di logging
-    router.use((req, res, next) => {
-        logger.debug('CSI Question Route Called:', {
-            method: req.method,
-            path: req.path,
-            body: req.body,
-            userId: req.user?.id,
-            timestamp: new Date().toISOString()
-        });
-        next();
-    });
+    // Routes con middleware di validazione aggiornati
+    router.get('/', 
+        protect, 
+        csiQuestionController.getActiveQuestions.bind(csiQuestionController)
+    );
 
-    // Routes
-    router.get('/', controller.getActiveQuestions.bind(controller));
-    router.post('/', controller.createQuestion.bind(controller));
-    router.put('/:id', controller.updateQuestion.bind(controller));
-    router.delete('/:id', controller.deleteQuestion.bind(controller));
-    router.get('/versions/stats', controller.getVersionStats.bind(controller));
+    router.post('/', 
+        protect, 
+        restrictTo('admin', 'teacher'),
+        validateQuestionData,
+        csiQuestionController.createQuestion.bind(csiQuestionController)
+    );
+    
+    router.put('/:id', 
+        protect,
+        restrictTo('admin', 'teacher'),
+        validateQuestionData,
+        csiQuestionController.updateQuestion.bind(csiQuestionController)
+    );
+    
+    router.delete('/:id',
+        protect,
+        restrictTo('admin'),
+        csiQuestionController.deleteQuestion.bind(csiQuestionController)
+    );
 
-    // Error handler
-    router.use((err, req, res, next) => {
-        logger.error('CSI Question Route Error:', {
-            error: err.message,
-            stack: err.stack,
-            path: req.path,
-            method: req.method,
-            userId: req.user?.id
-        });
+    router.get('/metadata/tags',
+        protect,
+        csiQuestionController.getAvailableTags.bind(csiQuestionController)
+    );
 
-        res.status(err.statusCode || 500).json({
-            status: 'error',
-            error: {
-                message: err.message,
-                code: err.code || 'CSI_QUESTION_ERROR'
-            }
-        });
-    });
+    router.patch('/:id/metadata',
+        protect,
+        restrictTo('admin', 'teacher'),
+        csiQuestionController.updateMetadata.bind(csiQuestionController)
+    );
 
     return router;
 };

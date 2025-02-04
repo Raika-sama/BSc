@@ -3,11 +3,70 @@ const logger = require('../../utils/errors/logger/logger');
 const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 
 class CSIQuestionRepository {
-    constructor(model = CSIQuestion) {
+    constructor(model, validator) {
         if (!model) {
-            throw new Error('Model is required');
+            throw new Error('CSIQuestion model is required');
+        }
+        if (!validator) {
+            throw new Error('CSIQuestionValidator is required');
         }
         this.model = model;
+        this.validator = validator;
+    }
+
+    /**
+     * Ottiene le domande attive più recenti
+     * @returns {Promise<Array>} Questions array
+     */
+    async getLatestActiveQuestions() {
+        try {
+            logger.debug('Getting latest active questions');
+            
+            // Verifichiamo che il modello sia definito
+            if (!this.model || !this.model.aggregate) {
+                throw new Error('Invalid model configuration');
+            }
+            
+            const questions = await this.model.aggregate([
+                { $match: { active: true } },
+                { $sort: { version: -1 } },
+                { $group: {
+                    _id: '$id',
+                    doc: { $first: '$$ROOT' }
+                }},
+                { $replaceRoot: { newRoot: '$doc' } },
+                { $sort: { id: 1 } }
+            ]);
+
+            // Aggiungi log per debug
+            logger.debug('Retrieved questions:', { 
+                count: questions?.length,
+                model: this.model?.modelName,
+                hasAggregate: !!this.model?.aggregate
+            });
+
+            return questions.map(q => ({
+                id: q.id,
+                testo: q.testo,
+                categoria: q.categoria,
+                tipo: 'CSI',
+                metadata: {
+                    polarity: q.metadata?.polarity || '+',
+                    weight: q.metadata?.weight || 1
+                }
+            }));
+
+        } catch (error) {
+            logger.error('Error retrieving latest questions:', {
+                error: error.message,
+                stack: error.stack
+            });
+            throw createError(
+                ErrorTypes.DATABASE.QUERY_ERROR,
+                'Error retrieving latest questions',
+                { originalError: error }
+            );
+        }
     }
 
     /**
