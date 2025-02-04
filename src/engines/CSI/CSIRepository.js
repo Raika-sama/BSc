@@ -1,14 +1,14 @@
 // src/engines/CSI/repositories/CSIRepository.js
 
 const CSIQuestion = require('./models/CSIQuestion');
-const { Result, CSIResult } = require('../../models/Result'); // Importa entrambi i modelli
+const { Result, CSIResult } = require('../../models'); // usa l'index.js centralizzato
 const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 const logger = require('../../utils/errors/logger/logger');
 
 class CSIRepository {
     constructor() {
         this.questionModel = CSIQuestion;
-        this.resultModel = CSIResult; // Usa CSIResult invece di Result
+        this.CSIResult = CSIResult; // Cambia il nome della proprietà
     }
 
 

@@ -10639,3 +10639,5 @@
 {"error":"Cannot read properties of undefined (reading 'findOne')","level":"error","message":"Error verifying CSI token:","timestamp":"2025-02-04T18:13:29.462Z","token":"4971b9c995..."}
 {"error":"Cannot read properties of undefined (reading 'findOne')","level":"error","message":"Error verifying CSI token:","timestamp":"2025-02-04T18:14:12.724Z","token":"5fa169b486..."}
 {"error":"Cannot read properties of undefined (reading 'findOne')","level":"error","message":"Error verifying CSI token:","timestamp":"2025-02-04T18:27:40.128Z","token":"29b331913d..."}
+{"error":"Cannot read properties of undefined (reading 'findOne')","level":"error","message":"Error verifying CSI token:","timestamp":"2025-02-04T18:35:21.992Z","token":"7efcfb8d29..."}
+{"error":"this.csiRepository.getTestConfiguration is not a function","level":"error","message":"Error starting CSI test:","timestamp":"2025-02-04T18:41:59.768Z","token":"f773210c29..."}

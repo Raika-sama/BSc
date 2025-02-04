@@ -7,8 +7,8 @@ const { requestLogger, errorLogger } = require('./middleware/loggerMiddleware');
 const errorHandler = require('./middleware/errorHandler');
 const config = require('./config/config');
 const logger = require('./utils/errors/logger/logger');
+const { setupCSIDependencies, createCSIController } = require('./engines/CSI/config/setupDependencies');
 const createCSIRoutes = require('./engines/CSI/routes/csi.routes');
-const setupCSIDependencies = require('./engines/CSI/config/setupDependencies');
 const createTestRouter = require('./routes/testRoutes');
 
 // Import Models
@@ -30,7 +30,6 @@ const UserService = require('./services/UserService');
 
 // Import Controllers
 const AuthController = require('./controllers/authController');
-const CSIController = require('./engines/CSI/CSIController');
 const CSIQuestionController = require('./engines/CSI/CSIQuestionController');
 const UserController = require('./controllers/userController');
 const SchoolController = require('./controllers/schoolController');
@@ -112,16 +111,13 @@ if (config.env === 'development') {
     });
 }
 
-// Inizializza le dipendenze CSI
-const csiDependencies = setupCSIDependencies();
 
 // Inizializza CSI Controller con tutte le dipendenze necessarie
-const csiController = new CSIController({
-    testRepository,
-    studentRepository,
-    userService,
-    csiQuestionService: csiDependencies.csiQuestionService,
-    csiRepository: csiDependencies.csiRepository
+// Modifica la sezione di inizializzazione CSI
+const { controller: csiController, dependencies: csiDependencies } = createCSIController({
+    userService, // passa il userService esistente
+    testRepository, // passa il testRepository esistente
+    studentRepository // passa lo studentRepository esistente
 });
 
 // Crea oggetto con tutte le dipendenze
@@ -135,6 +131,7 @@ const dependencies = {
     studentBulkImportController, // Aggiunto il controller per bulk import
     testController,
     csiController,
+    ...csiDependencies,
     // Services
     authService,
     userService,

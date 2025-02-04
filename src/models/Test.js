@@ -77,6 +77,11 @@ const testSchema = new mongoose.Schema({
             type: String,
             required: true,
             default: '1.0.0'
+        },
+        // Aggiungi questo campo
+        configRef: {
+            type: mongoose.Schema.Types.ObjectId,
+            refPath: 'tipo'
         }
     },
     versione: {
@@ -108,15 +113,28 @@ testSchema.pre(/^find/, function(next) {
 });
 
 // Middleware di validazione
-testSchema.pre('save', function(next) {
-    if (this.tipo === 'CSI' && !this.configurazione.metadataSchema) {
-        this.configurazione.metadataSchema = {
-            categorie: ['Analitico/Globale', 'Sistematico/Intuitivo', 
-                       'Verbale/Visivo', 'Impulsivo/Riflessivo', 
-                       'Dipendente/Indipendente'],
-            scaleLikert: 5,
-            pesoDefault: 1
-        };
+testSchema.pre('save', async function(next) {
+    if (this.tipo === 'CSI') {
+        try {
+            const CSIConfig = mongoose.model('CSIConfig');
+            const config = await CSIConfig.getActiveConfig();
+            
+            if (!config) {
+                throw new Error('Nessuna configurazione CSI attiva trovata');
+            }
+
+            // Salva il riferimento alla configurazione
+            this.configurazione.configRef = config._id;
+            
+            // Imposta i metadati di base dalla configurazione
+            this.configurazione.metadataSchema = {
+                categorie: config.scoring.categorie.map(c => c.nome),
+                scaleLikert: config.scoring.categorie[0].max,
+                pesoDefault: config.scoring.categorie[0].pesoDefault
+            };
+        } catch (error) {
+            next(error);
+        }
     }
     next();
 });

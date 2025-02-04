@@ -1,56 +1,146 @@
 // src/engines/CSI/routes/csi.routes.js
 const express = require('express');
 const logger = require('../../../utils/errors/logger/logger');
+const { createError, ErrorTypes } = require('../../../utils/errors/errorTypes');
 
 const createCSIRoutes = ({ authMiddleware, csiController }) => {
+    // Validazione dipendenze
     if (!authMiddleware) throw new Error('authMiddleware is required');
     if (!csiController) throw new Error('csiController is required');
 
     const { protect } = authMiddleware;
     
-    // Router per le route pubbliche (accesso via token)
+    // Routers
     const publicRouter = express.Router();
-
-    // Router per le route protette (accesso admin/insegnanti)
     const protectedRouter = express.Router();
 
-    // Middleware di protezione per tutte le route protette
-    protectedRouter.use(protect);
-
-    // PUBLIC ROUTES (accesso via token)
-    publicRouter.get('/verify/:token', csiController.verifyTestToken);
-    publicRouter.post('/start/:token', csiController.startTestWithToken);
-    publicRouter.post('/:token/answer', csiController.submitAnswer);
-    publicRouter.post('/:token/complete', csiController.completeTest);
-
-    // PROTECTED ROUTES (richiede autenticazione)
-    protectedRouter.post('/generate-link', csiController.generateTestLink);
-
-    // Rimuovi questa route se getStudentResults non è implementato nel controller
-    // protectedRouter.get('/results/student/:studentId', csiController.getStudentResults);
-
-    // Error handler
-    const errorHandler = (err, req, res, next) => {
-        logger.error('CSI route error:', {
-            error: err.message,
-            stack: err.stack,
-            path: req.path,
-            method: req.method
-        });
-
-        res.status(err.statusCode || 500).json({
-            status: 'error',
-            error: {
-                code: err.code || 'INTERNAL_SERVER_ERROR',
-                message: err.message,
-                ...(process.env.NODE_ENV === 'development' && { 
-                    stack: err.stack,
-                    details: err.details 
-                })
-            }
-        });
+    // Middleware di validazione token
+    const validateToken = (req, res, next) => {
+        const { token } = req.params;
+        if (!token) {
+            return next(createError(
+                ErrorTypes.VALIDATION.INVALID_INPUT,
+                'Token non fornito'
+            ));
+        }
+        next();
     };
 
+    // Middleware di validazione risposta
+    const validateAnswer = (req, res, next) => {
+        const { questionId, value, timeSpent } = req.body;
+        
+        if (!questionId || typeof value !== 'number' || !timeSpent) {
+            return next(createError(
+                ErrorTypes.VALIDATION.INVALID_INPUT,
+                'Dati risposta incompleti o non validi'
+            ));
+        }
+
+        if (value < 1 || value > 5) {
+            return next(createError(
+                ErrorTypes.VALIDATION.INVALID_INPUT,
+                'Valore risposta non valido (deve essere tra 1 e 5)'
+            ));
+        }
+
+        if (timeSpent < 0) {
+            return next(createError(
+                ErrorTypes.VALIDATION.INVALID_INPUT,
+                'Tempo risposta non valido'
+            ));
+        }
+
+        next();
+    };
+
+    // Middleware di logging
+    const logRequest = (req, res, next) => {
+        logger.debug('CSI route request:', {
+            path: req.path,
+            method: req.method,
+            params: req.params,
+            query: req.query,
+            body: req.body
+        });
+        next();
+    };
+
+    // Applica middleware di base
+    publicRouter.use(logRequest);
+    protectedRouter.use(protect, logRequest);
+
+    // PUBLIC ROUTES (accesso via token)
+    publicRouter.get('/verify/:token',
+        validateToken,
+        csiController.verifyTestToken
+    );
+
+    publicRouter.post('/:token/start',
+        validateToken,
+        csiController.startTestWithToken
+    );
+
+    publicRouter.post('/:token/answer',
+        validateToken,
+        validateAnswer,
+        csiController.submitAnswer
+    );
+
+    publicRouter.post('/:token/complete',
+        validateToken,
+        csiController.completeTest
+    );
+
+    // PROTECTED ROUTES (richiede autenticazione)
+    protectedRouter.post('/generate-link',
+        express.json(),
+        (req, res, next) => {
+            const { studentId } = req.body;
+            if (!studentId) {
+                return next(createError(
+                    ErrorTypes.VALIDATION.INVALID_INPUT,
+                    'StudentId non fornito'
+                ));
+            }
+            next();
+        },
+        csiController.generateTestLink
+    );
+
+    // Error handler migliorato
+    const errorHandler = (err, req, res, next) => {
+        const statusCode = err.statusCode || 500;
+        const errorCode = err.code || 'INTERNAL_SERVER_ERROR';
+        
+        logger.error('CSI route error:', {
+            error: err.message,
+            code: errorCode,
+            stack: err.stack,
+            path: req.path,
+            method: req.method,
+            params: req.params,
+            body: req.body
+        });
+
+        const errorResponse = {
+            status: 'error',
+            error: {
+                code: errorCode,
+                message: err.message
+            }
+        };
+
+        // Aggiungi dettagli extra solo in development
+        if (process.env.NODE_ENV === 'development') {
+            errorResponse.error.stack = err.stack;
+            errorResponse.error.details = err.details;
+        }
+
+        res.status(statusCode).json(errorResponse);
+    };
+
+    // Applica error handler
     publicRouter.use(errorHandler);
     protectedRouter.use(errorHandler);
 

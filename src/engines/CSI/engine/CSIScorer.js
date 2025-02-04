@@ -14,40 +14,94 @@ class CSIScorer {
             'Autonomia': 'dipendente'
         };
 
-        this.dimensions = {
-            ANALITICO: 'Analitico/Globale',
-            SISTEMATICO: 'Sistematico/Intuitivo',
-            VERBALE: 'Verbale/Visivo',
-            IMPULSIVO: 'Impulsivo/Riflessivo',
-            DIPENDENTE: 'Dipendente/Indipendente'
+         // Soglie per l'interpretazione
+         this.thresholds = {
+            veryLow: 20,    // Sotto il 20%
+            low: 40,        // 20-40%
+            medium: 60,     // 40-60%
+            high: 80        // 60-80%, sopra 80% = molto alto
         };
-        this.thresholds = {
-            low: 33,    // Sotto il 33% = livello basso
-            medium: 66  // Tra 33% e 66% = livello medio, sopra 66% = livello alto
-        };
+
+        // Range risposte
         this.responseRange = {
-            min: 1,  // Punteggio minimo per domanda
-            max: 5   // Punteggio massimo per domanda
+            min: 1,
+            max: 5
+        };
+
+        // Tempo risposte (ms)
+        this.responseTime = {
+            min: 2000,      // 2 secondi
+            max: 300000,    // 5 minuti
+            suspicious: 1000 // risposte sotto 1 secondo sono sospette
         };
     }
 
+/**
+     * Calcola il risultato completo del test
+     */
+calculateTestResult(answers) {
+    try {
+        logger.debug('Calculating complete test result', {
+            answersCount: answers.length
+        });
+
+        const scores = this.calculateScores(answers);
+        const pattern = this.analyzeResponsePattern(answers);
+        const profile = this.generateProfile(scores);
+
+        return {
+            punteggiDimensioni: {
+                elaborazione: this._formatDimensionScore('elaborazione', scores.analitico),
+                creativita: this._formatDimensionScore('creativita', scores.sistematico),
+                preferenzaVisiva: this._formatDimensionScore('preferenzaVisiva', scores.verbale),
+                decisione: this._formatDimensionScore('decisione', scores.impulsivo),
+                autonomia: this._formatDimensionScore('autonomia', scores.dipendente)
+            },
+            metadataCSI: {
+                versioneAlgoritmo: this.version,
+                calcolatoIl: new Date(),
+                pattern,
+                profiloCognitivo: profile
+            }
+        };
+    } catch (error) {
+        logger.error('Error calculating test result:', { error });
+        throw createError(
+            ErrorTypes.PROCESSING.CALCULATION_ERROR,
+            'Errore nel calcolo del risultato del test',
+            { originalError: error.message }
+        );
+    }
+}
+
+/**
+     * Analizza il pattern di risposta
+     */
+analyzeResponsePattern(answers) {
+    try {
+        const timePattern = this._analyzeTimePattern(answers);
+        const consistency = this._calculateConsistency(answers);
+        const validity = this._validateResponses(answers);
+
+        return {
+            isValid: validity.isValid,
+            consistency,
+            timePattern,
+            warnings: [...validity.warnings, ...timePattern.warnings]
+        };
+    } catch (error) {
+        logger.error('Error analyzing response pattern:', { error });
+        throw error;
+    }
+}
+
     /**
-     * Calcola il punteggio per ogni dimensione
-     * @param {Array} answers - Array di risposte con riferimenti alle domande
-     * @returns {Object} Punteggi per ogni dimensione
+     * Calcola i punteggi per ogni dimensione
      */
     calculateScores(answers) {
         try {
-            // Mappa le risposte alle dimensioni corrette
-            const mappedAnswers = answers.map(answer => ({
-                ...answer,
-                question: {
-                    ...answer.question,
-                    categoria: this.categoryMapping[answer.question.categoria] || answer.question.categoria
-                }
-            }));
-    
-            // Calcola i punteggi per ogni dimensione
+            const mappedAnswers = this._mapAnswersToCategories(answers);
+            
             const scores = {
                 analitico: this._calculateDimensionScore(mappedAnswers, 'analitico'),
                 sistematico: this._calculateDimensionScore(mappedAnswers, 'sistematico'),
@@ -55,13 +109,27 @@ class CSIScorer {
                 impulsivo: this._calculateDimensionScore(mappedAnswers, 'impulsivo'),
                 dipendente: this._calculateDimensionScore(mappedAnswers, 'dipendente')
             };
-    
-            return scores;  // Rimuoviamo la normalizzazione qui perché è già fatta in _calculateDimensionScore
+
+            logger.debug('Scores calculated:', { scores });
+            return scores;
         } catch (error) {
-            logger.error('Error calculating CSI scores', { error });
+            logger.error('Error calculating scores:', { error });
             throw error;
         }
     }
+
+    /**
+     * Formatta il punteggio di una dimensione
+     */
+    _formatDimensionScore(dimension, score) {
+        const level = this._determineLevel(score);
+        return {
+            score,
+            level,
+            interpretation: this._getInterpretation(dimension, level)
+        };
+    }
+
 
     /**
      * Calcola il punteggio per una singola dimensione
@@ -107,46 +175,22 @@ class CSIScorer {
         return Math.round(normalized);
     }
 
-    /**
-     * Genera il profilo dello studente basato sui punteggi
-     * @param {Object} scores - Punteggi calcolati
-     * @returns {Object} Profilo dettagliato
-     */
-    generateProfile(scores) {
-        const profile = {
-            dimensions: {},
-            dominantStyle: this._determineDominantStyle(scores),
-            recommendations: []
-        };
 
-        // Genera le dimensioni del profilo con valori numerici
-        Object.entries(scores).forEach(([dimension, score]) => {
-            profile.dimensions[dimension] = {
-                score: score, // Assicuriamoci che sia un numero
-                level: this._determineLevel(score),
-                interpretation: this._getInterpretation(dimension, score)
-            };
-        });
-
-        // Aggiungi raccomandazioni
-        Object.entries(scores).forEach(([dimension, score]) => {
-            profile.recommendations.push(
-                ...this._getRecommendations(dimension, score)
-            );
-        });
-
-        return profile;
-    }
 
     /**
      * Determina il livello per un punteggio
      * @private
      */
-    _determineLevel(score) {
-        if (score <= this.thresholds.low) return 'basso';
-        if (score <= this.thresholds.medium) return 'medio';
-        return 'alto';
-    }
+/**
+     * Determina il livello in base al punteggio
+     */
+_determineLevel(score) {
+    if (score >= this.thresholds.high) return 'Alto';
+    if (score >= this.thresholds.medium) return 'Medio-Alto';
+    if (score >= this.thresholds.low) return 'Medio';
+    if (score >= this.thresholds.veryLow) return 'Medio-Basso';
+    return 'Basso';
+}
 
     /**
      * Determina lo stile dominante
@@ -218,25 +262,26 @@ class CSIScorer {
         };
     }
     
-    // Implementiamo _analyzeTimePattern
-    _analyzeTimePattern(answers) {
-        if (!answers || answers.length === 0) {
-            return { averageTime: 0, suspicious: true };
-        }
-    
-        const times = answers.map(a => a.timeSpent);
+     /**
+     * Analizza il pattern temporale delle risposte
+     */
+     _analyzeTimePattern(answers) {
+        const times = answers.map(a => a.tempoRisposta);
         const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
-        
-        // Identifica risposte troppo veloci (< 1 secondo)
-        const tooFastResponses = times.filter(t => t < 1).length;
-        const tooFastPercentage = (tooFastResponses / times.length) * 100;
-    
+        const tooFastResponses = times.filter(t => t < this.responseTime.suspicious).length;
+        const warnings = [];
+
+        if (tooFastResponses > answers.length * 0.2) {
+            warnings.push('Troppe risposte rapide rilevate');
+        }
+
         return {
             averageTime: avgTime,
-            suspicious: tooFastPercentage > 20, // Suspicious se più del 20% delle risposte sono troppo veloci
+            suspicious: tooFastResponses > 5,
             tooFastResponses,
+            warnings,
             pattern: {
-                consistent: Math.max(...times) - Math.min(...times) < avgTime * 2,
+                consistent: this._checkTimeConsistency(times),
                 avgTimePerQuestion: avgTime
             }
         };
@@ -269,40 +314,49 @@ class CSIScorer {
         return recommendations[dimension]?.[level] || [];
     }
 
-    /**
-     * Analizza il pattern di risposta per validità
-     * @param {Array} answers - Array di risposte
-     * @returns {Object} Analisi della validità
-     */
-    analyzeResponsePattern(answers) {
-        return {
-            isValid: true, // Implementa logica di validazione
-            consistency: this._calculateConsistency(answers),
-            timePattern: this._analyzeTimePattern(answers),
-            warnings: [] // Array di possibili warning
-        };
-    }
 
-    /**
+
+   /**
      * Calcola la consistenza delle risposte
-     * @private
      */
     _calculateConsistency(answers) {
-        // Implementa logica per verificare la consistenza delle risposte
-        return true;
+        const values = answers.map(a => a.value);
+        const hasVariation = new Set(values).size > 1;
+        const hasExtremesOnly = values.every(v => v === 1 || v === 5);
+        const timeConsistency = this._checkTimeConsistency(answers.map(a => a.tempoRisposta));
+
+        return {
+            isConsistent: !hasExtremesOnly && hasVariation,
+            timeConsistency,
+            confidence: hasVariation ? 1 : 0.5
+        };
     }
 
     /**
-     * Analizza il pattern temporale delle risposte
-     * @private
+     * Verifica la consistenza dei tempi
      */
-    _analyzeTimePattern(answers) {
-        // Implementa analisi dei tempi di risposta
+    _checkTimeConsistency(times) {
+        const avg = times.reduce((a, b) => a + b, 0) / times.length;
+        const stdDev = Math.sqrt(
+            times.reduce((sq, n) => sq + Math.pow(n - avg, 2), 0) / times.length
+        );
+        return stdDev < avg * 0.5;
+    }
+
+    /**
+     * Genera il profilo cognitivo
+     */
+    generateProfile(scores) {
+        const dominantStyles = this._determineDominantStyles(scores);
+        const recommendations = this._generateRecommendations(scores);
+
         return {
-            averageTime: 0,
-            suspicious: false
+            stiliDominanti: dominantStyles,
+            raccomandazioni: recommendations,
+            interpretazioneGlobale: this._generateGlobalInterpretation(scores, dominantStyles)
         };
     }
+
 }
 
 module.exports = CSIScorer;
