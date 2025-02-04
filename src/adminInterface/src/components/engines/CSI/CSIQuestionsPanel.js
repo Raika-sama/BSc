@@ -12,7 +12,7 @@ import {
     Edit as EditIcon, 
     Add as AddIcon 
 } from '@mui/icons-material';
-import { useTest } from '../../../context/TestContext';
+import { useCSITest } from '../../../context/TestContext/CSITestContext';
 import CSIQuestionDialog from './CSIQuestionDialog';
 import ListLayout from '../../common/ListLayout';
 
@@ -21,7 +21,7 @@ const QuestionsPanel = () => {
     const [questions, setQuestions] = useState([]);
     const [selectedQuestion, setSelectedQuestion] = useState(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const { loading, getTestQuestions, updateTestQuestion } = useTest();
+    const { loading, getTestQuestions, updateTestQuestion } = useCSITest(); // Changed from useTest to useCSITest
 
     // Effetti
     useEffect(() => {
@@ -30,7 +30,7 @@ const QuestionsPanel = () => {
 
     // Handlers
     const fetchQuestions = async () => {
-        const data = await getTestQuestions('CSI');
+        const data = await getTestQuestions();
         console.log('Questions received:', data); // Aggiungiamo questo log
         setQuestions(data);
     };

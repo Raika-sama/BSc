@@ -2,30 +2,24 @@
 
 const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 const logger = require('../../utils/errors/logger/logger');
-const CSIRepository = require('./CSIRepository');
 
 class CSIController {
     constructor(dependencies) {
         const { 
             testRepository,
             studentRepository,
-            classRepository,
-            schoolRepository,
-            userService 
+            userService,
+            csiQuestionService // Ora questo avrà già il suo repository
         } = dependencies;
 
-        if (!testRepository || !studentRepository) {
+        if (!testRepository || !studentRepository || !csiQuestionService) {
             throw new Error('Required dependencies missing');
         }
 
         this.testRepository = testRepository;
         this.studentRepository = studentRepository;
-        this.classRepository = classRepository;
-        this.schoolRepository = schoolRepository;
         this.userService = userService;
-        
-        // Inizializza CSIRepository
-        this.csiRepository = new CSIRepository();
+        this.csiQuestionService = csiQuestionService;
     }
 
     /**
@@ -35,26 +29,23 @@ class CSIController {
         const { token } = req.params;
         
         try {
-            logger.debug('Verifying CSI test token:', { 
-                token: token ? token.substring(0, 10) + '...' : 'undefined'
-            });
-
-            // Usa testRepository per verifica base token
+            // 1. Verifica token tramite TestRepository
             const result = await this.testRepository.verifyToken(token);
-
-            // Verifica che sia un test CSI
-            if (result.test.tipo !== 'CSI') {
+            
+            if (!result || result.test.tipo !== 'CSI') {
                 throw createError(
                     ErrorTypes.VALIDATION.INVALID_TOKEN,
                     'Token non valido per test CSI'
                 );
             }
-
+    
+            // 2. Restituisci le informazioni necessarie
             res.json({
                 status: 'success',
                 data: {
                     valid: true,
                     testType: 'CSI',
+                    questions: result.test.domande,
                     expiresAt: result.expiresAt
                 }
             });
@@ -221,8 +212,8 @@ class CSIController {
     generateTestLink = async (req, res) => {
         try {
             const { studentId } = req.body;
-
-            // Verifica disponibilità
+    
+            // 1. Verifica disponibilità
             const availability = await this.testRepository.checkTestAvailability(studentId, 'CSI');
             if (!availability.available) {
                 throw createError(
@@ -231,16 +222,34 @@ class CSIController {
                     { nextAvailable: availability.nextAvailableDate }
                 );
             }
-
-            // Genera token
+    
+            // 2. Recupera le domande usando il service
+            const questions = await this.csiQuestionService.getTestQuestions();
+            
+            // 3. Prepara le domande in un formato più semplice
+            const simplifiedQuestions = questions.map(q => ({
+                id: q.id,
+                testo: q.testo,
+                categoria: q.categoria,
+                metadata: q.metadata,
+                version: q.version,
+                tipo: q.tipo
+            }));
+    
+            // 4. Genera token con le domande incluse
             const token = await this.testRepository.saveTestToken({
                 studentId,
-                testType: 'CSI'
+                testType: 'CSI',
+                test: {
+                    tipo: 'CSI',
+                    domande: simplifiedQuestions,
+                    version: questions[0]?.version || '1.0.0'
+                }
             });
-
-            // Costruisci URL
+    
+            // 5. Costruisci URL
             const testUrl = `${process.env.FRONTEND_URL}/test/csi/${token.token}`;
-
+    
             res.json({
                 status: 'success',
                 data: {
@@ -254,7 +263,7 @@ class CSIController {
                 error: error.message,
                 studentId: req.body.studentId
             });
-
+    
             res.status(400).json({
                 status: 'error',
                 error: {

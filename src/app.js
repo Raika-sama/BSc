@@ -8,6 +8,7 @@ const errorHandler = require('./middleware/errorHandler');
 const config = require('./config/config');
 const logger = require('./utils/errors/logger/logger');
 const createCSIRoutes = require('./engines/CSI/routes/csi.routes');
+const setupCSIDependencies = require('./engines/CSI/config/setupDependencies');
 
 // Import Models
 const User = require('./models/User');
@@ -110,13 +111,16 @@ if (config.env === 'development') {
     });
 }
 
-// Inizializza CSI Controller
+// Inizializza le dipendenze CSI
+const csiDependencies = setupCSIDependencies();
+
+// Inizializza CSI Controller con tutte le dipendenze necessarie
 const csiController = new CSIController({
     testRepository,
     studentRepository,
-    classRepository,
-    schoolRepository,
-    userService
+    userService,
+    csiQuestionService: csiDependencies.csiQuestionService,
+    csiRepository: csiDependencies.csiRepository
 });
 
 // Crea oggetto con tutte le dipendenze

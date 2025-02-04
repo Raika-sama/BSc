@@ -15,9 +15,6 @@ class CSIQuestionRepository {
      */
     async getActiveQuestions(version = '1.0.0') {
         try {
-            console.log('Fetching active questions with version:', version);
-
-            // Modifichiamo la query per includere esplicitamente tutti i campi necessari
             const questions = await this.model
                 .find({
                     version,
@@ -28,16 +25,19 @@ class CSIQuestionRepository {
                     testo: 1,
                     categoria: 1,
                     metadata: 1,
-                    weight: 1,    // Esplicitamente incluso
-                    version: 1,   // Esplicitamente incluso
-                    active: 1     // Esplicitamente incluso
+                    weight: 1,
+                    version: 1
                 })
-                .lean(); // Usiamo lean() per ottenere plain JavaScript objects
-
-            // Log per debug
-            console.log('Questions from DB:', questions);
+                .lean();
     
-            return questions;
+            return questions.map(q => ({
+                ...q,
+                tipo: 'CSI',
+                metadata: {
+                    ...q.metadata,
+                    weight: q.metadata?.weight || 1
+                }
+            }));
         } catch (error) {
             logger.error('Error retrieving active questions:', {
                 error: error.message,

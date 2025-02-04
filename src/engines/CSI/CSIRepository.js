@@ -1,192 +1,214 @@
 // src/engines/CSI/repositories/CSIRepository.js
 
 const CSIQuestion = require('./models/CSIQuestion');
-const Result = require('../../models/Result');
+const { Result, CSIResult } = require('../../models/Result'); // Importa entrambi i modelli
 const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 const logger = require('../../utils/errors/logger/logger');
 
 class CSIRepository {
     constructor() {
         this.questionModel = CSIQuestion;
-        this.resultModel = Result;
+        this.resultModel = CSIResult; // Usa CSIResult invece di Result
     }
 
-    // Il resto dei metodi rimane uguale ma aggiungiamo log più dettagliati
-    async getQuestions(version = '1.0.0') {
-        try {
-            logger.debug('CSIRepository: Fetching questions', { version });
-            // ... resto del codice ...
-        } catch (error) {
-            logger.error('CSIRepository: Error fetching questions', {
-                error: error.message,
-                version
-            });
-            throw error;
-        }
-    }
-    /**
-     * Recupera le domande attive per una specifica versione
-     * @param {string} version - Versione delle domande da recuperare
-     * @returns {Promise<Array>} Array di domande
-     */
-    async getQuestions(version = '1.0.0') {
-        try {
-            logger.debug('Fetching CSI questions:', { version });
 
-            const questions = await this.questionModel
-                .find({
-                    version,
-                    active: true
-                })
-                .select({
-                    id: 1,
-                    testo: 1,
-                    categoria: 1,
-                    tipo: 1,
-                    metadata: 1,
-                    weight: 1,
-                    version: 1
-                })
-                .sort({ id: 1 })
-                .lean();
-
-            logger.debug('Retrieved questions:', { 
-                count: questions.length,
-                version 
-            });
-
-            return questions;
-        } catch (error) {
-            logger.error('Error fetching CSI questions:', {
-                error: error.message,
-                version
-            });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nel recupero delle domande CSI',
-                { originalError: error.message }
-            );
-        }
-    }
-
-    /**
+  /**
      * Salva i risultati di un test CSI
-     * @param {Object} resultData - Dati del risultato da salvare
-     * @returns {Promise<Object>} Risultato salvato
      */
-    async saveResults(resultData) {
-        try {
-            logger.debug('Saving CSI test results:', { 
-                studentId: resultData.studentId,
-                testId: resultData.testId 
-            });
+  async saveResults(resultData) {
+    try {
+        logger.debug('Saving CSI test results:', { 
+            studentId: resultData.studentId,
+            testId: resultData._id 
+        });
 
-            const result = await this.resultModel.create({
-                ...resultData,
-                tipo: 'CSI',
-                dataCompletamento: new Date()
-            });
-
-            logger.debug('CSI results saved successfully:', {
-                resultId: result._id
-            });
-
-            return result;
-        } catch (error) {
-            logger.error('Error saving CSI results:', {
-                error: error.message,
-                resultData
-            });
-            throw createError(
-                ErrorTypes.DATABASE.SAVE_ERROR,
-                'Errore nel salvataggio dei risultati CSI',
-                { originalError: error.message }
-            );
-        }
-    }
-
-    /**
-     * Recupera la configurazione del test CSI
-     * @returns {Promise<Object>} Configurazione del test
-     */
-    async getTestConfiguration() {
-        return {
-            timeLimit: 30, // minuti
-            questionLimit: 30,
-            minQuestions: 25,
-            scoreRange: {
-                min: 0,
-                max: 100
+        // Adatta i dati al nuovo schema
+        const csiResultData = {
+            ...resultData,
+            tipo: 'CSI', // Necessario per il discriminatore
+            punteggiDimensioni: {
+                creativita: this._formatDimensionScore(resultData.scores.creativita),
+                elaborazione: this._formatDimensionScore(resultData.scores.elaborazione),
+                decisione: this._formatDimensionScore(resultData.scores.decisione),
+                preferenzaVisiva: this._formatDimensionScore(resultData.scores.preferenzaVisiva),
+                autonomia: this._formatDimensionScore(resultData.scores.autonomia)
             },
-            categories: [
-                'Elaborazione',
-                'Creatività',
-                'Preferenza Visiva',
-                'Decisione',
-                'Autonomia'
-            ],
-            version: '1.0.0'
+            metadataCSI: {
+                versioneAlgoritmo: '1.0.0',
+                calcolatoIl: new Date(),
+                pattern: this._analyzePattern(resultData.risposte),
+                profiloCognitivo: this._determineProfile(resultData.scores)
+            }
         };
-    }
 
-    /**
-     * Calcola i punteggi CSI per le risposte date
-     * @param {Array} answers - Array di risposte
-     * @returns {Promise<Object>} Punteggi calcolati
-     */
-    async calculateScores(answers) {
-        try {
-            logger.debug('Calculating CSI scores:', { 
-                answersCount: answers.length 
-            });
+        const result = await this.resultModel.create(csiResultData);
 
-            // Implementazione del calcolo punteggi
-            // Nota: questa è una versione semplificata, il calcolo reale
-            // dovrebbe essere implementato secondo le specifiche del test CSI
-            const scores = {
-                elaborazione: this._calculateCategoryScore(answers, 'Elaborazione'),
-                creativita: this._calculateCategoryScore(answers, 'Creatività'),
-                preferenzaVisiva: this._calculateCategoryScore(answers, 'Preferenza Visiva'),
-                decisione: this._calculateCategoryScore(answers, 'Decisione'),
-                autonomia: this._calculateCategoryScore(answers, 'Autonomia')
-            };
+        logger.debug('CSI results saved successfully:', {
+            resultId: result._id
+        });
 
-            logger.debug('Scores calculated successfully:', { scores });
-
-            return scores;
-        } catch (error) {
-            logger.error('Error calculating CSI scores:', {
-                error: error.message,
-                answersCount: answers.length
-            });
-            throw createError(
-                ErrorTypes.PROCESSING.CALCULATION_ERROR,
-                'Errore nel calcolo dei punteggi CSI',
-                { originalError: error.message }
-            );
-        }
-    }
-
-    /**
-     * Calcola il punteggio per una specifica categoria
-     * @private
-     */
-    _calculateCategoryScore(answers, category) {
-        const categoryAnswers = answers.filter(a => a.question.categoria === category);
-        if (categoryAnswers.length === 0) return 0;
-
-        const totalScore = categoryAnswers.reduce((sum, answer) => {
-            const value = answer.value;
-            const weight = answer.question.metadata?.weight || 1;
-            return sum + (value * weight);
-        }, 0);
-
-        return (totalScore / categoryAnswers.length) * 20; // Normalizza su scala 0-100
+        return result;
+    } catch (error) {
+        logger.error('Error saving CSI results:', {
+            error: error.message,
+            resultData
+        });
+        throw createError(
+            ErrorTypes.DATABASE.SAVE_ERROR,
+            'Errore nel salvataggio dei risultati CSI',
+            { originalError: error.message }
+        );
     }
 }
 
+/**
+ * Calcola i punteggi CSI per le risposte date
+ */
+async calculateScores(answers) {
+    try {
+        logger.debug('Calculating CSI scores:', { 
+            answersCount: answers.length 
+        });
+
+        const rawScores = {
+            elaborazione: this._calculateCategoryScore(answers, 'Elaborazione'),
+            creativita: this._calculateCategoryScore(answers, 'Creatività'),
+            preferenzaVisiva: this._calculateCategoryScore(answers, 'Preferenza Visiva'),
+            decisione: this._calculateCategoryScore(answers, 'Decisione'),
+            autonomia: this._calculateCategoryScore(answers, 'Autonomia')
+        };
+
+        // Interpreta i punteggi
+        const interpretedScores = {
+            elaborazione: this._interpretScore(rawScores.elaborazione),
+            creativita: this._interpretScore(rawScores.creativita),
+            preferenzaVisiva: this._interpretScore(rawScores.preferenzaVisiva),
+            decisione: this._interpretScore(rawScores.decisione),
+            autonomia: this._interpretScore(rawScores.autonomia)
+        };
+
+        logger.debug('Scores calculated and interpreted:', { 
+            rawScores,
+            interpretedScores 
+        });
+
+        return interpretedScores;
+    } catch (error) {
+        logger.error('Error calculating CSI scores:', {
+            error: error.message,
+            answersCount: answers.length
+        });
+        throw createError(
+            ErrorTypes.PROCESSING.CALCULATION_ERROR,
+            'Errore nel calcolo dei punteggi CSI',
+            { originalError: error.message }
+        );
+    }
+}
+
+/**
+ * Formatta il punteggio di una dimensione
+ * @private
+ */
+_formatDimensionScore(score) {
+    return {
+        score: score.value,
+        level: score.level,
+        interpretation: score.interpretation
+    };
+}
+
+/**
+ * Interpreta un punteggio numerico
+ * @private
+ */
+_interpretScore(score) {
+    let level, interpretation;
+
+    if (score >= 80) {
+        level = 'Alto';
+        interpretation = 'Forte predisposizione';
+    } else if (score >= 60) {
+        level = 'Medio-Alto';
+        interpretation = 'Buona predisposizione';
+    } else if (score >= 40) {
+        level = 'Medio';
+        interpretation = 'Predisposizione nella media';
+    } else if (score >= 20) {
+        level = 'Medio-Basso';
+        interpretation = 'Predisposizione limitata';
+    } else {
+        level = 'Basso';
+        interpretation = 'Scarsa predisposizione';
+    }
+
+    return {
+        value: score,
+        level,
+        interpretation
+    };
+}
+
+/**
+ * Analizza il pattern delle risposte
+ * @private
+ */
+_analyzePattern(risposte) {
+    const tempiRisposta = risposte.map(r => r.tempoRisposta);
+    const avgTime = tempiRisposta.reduce((a, b) => a + b, 0) / tempiRisposta.length;
+    const tooFastResponses = tempiRisposta.filter(t => t < 2000).length; // risposte sotto i 2 secondi
+
+    return {
+        isValid: tooFastResponses < 5,
+        consistency: true, // implementa la logica di consistenza
+        timePattern: {
+            averageTime: avgTime,
+            suspicious: tooFastResponses > 5,
+            tooFastResponses,
+            pattern: {
+                consistent: this._checkTimeConsistency(tempiRisposta),
+                avgTimePerQuestion: avgTime
+            }
+        }
+    };
+}
+
+/**
+ * Determina il profilo cognitivo
+ * @private
+ */
+_determineProfile(scores) {
+    const stiliDominanti = Object.entries(scores)
+        .filter(([_, score]) => score.value >= 70)
+        .map(([dimensione]) => dimensione);
+
+    return {
+        stiliDominanti,
+        raccomandazioni: this._generateRecommendations(scores)
+    };
+}
+
+/**
+ * Verifica la consistenza dei tempi di risposta
+ * @private
+ */
+_checkTimeConsistency(tempi) {
+    const avg = tempi.reduce((a, b) => a + b, 0) / tempi.length;
+    const stdDev = Math.sqrt(
+        tempi.reduce((sq, n) => sq + Math.pow(n - avg, 2), 0) / tempi.length
+    );
+    return stdDev < avg * 0.5; // consideriamo consistente se la deviazione standard è < 50% della media
+}
+
+/**
+ * Genera raccomandazioni basate sui punteggi
+ * @private
+ */
+_generateRecommendations(scores) {
+    const recommendations = [];
+    // Implementa la logica per generare raccomandazioni basate sui punteggi
+    return recommendations;
+}
+}
+
 module.exports = CSIRepository;
-
-
-//il metodo calculateScores() è una versione semplificata - andrà implementato secondo le specifiche esatte del test CSI.
-

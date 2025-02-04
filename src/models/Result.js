@@ -1,15 +1,11 @@
 // src/models/Result.js
 const mongoose = require('mongoose');
 
-const resultSchema = new mongoose.Schema({
+// Schema base comune a tutti i risultati
+const baseResultSchema = new mongoose.Schema({
     studentId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Student',
-        required: true
-    },
-    test: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Test',
         required: true
     },
     classe: {
@@ -19,61 +15,6 @@ const resultSchema = new mongoose.Schema({
     scuola: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'School'
-    },
-    risposte: [{
-        domanda: {
-            type: Number,
-            required: true
-        },
-        risposta: {
-            type: mongoose.Schema.Types.Mixed,
-            required: true
-        },
-        tempoRisposta: Number
-    }],
-    punteggi: {
-        type: Map,
-        of: mongoose.Schema.Types.Mixed,
-        required: function() { return this.completato; }
-    },
-    analytics: {
-        tempoTotale: Number,
-        domandePerse: Number,
-        pattern: [Number],
-        metadata: {
-            type: Map,
-            of: mongoose.Schema.Types.Mixed
-        }
-    },
-    metadata: {
-        versioneAlgoritmo: String,
-        calcolatoIl: Date,
-        pattern: {
-            isValid: Boolean,
-            consistency: Boolean,
-            timePattern: {
-                averageTime: Number,
-                suspicious: Boolean,
-                tooFastResponses: Number,
-                pattern: {
-                    consistent: Boolean,
-                    avgTimePerQuestion: Number
-                }
-            }
-        },
-        profile: {
-            dimensions: {
-                type: Map,
-                of: {
-                    score: Number,
-                    level: String,
-                    interpretation: String
-                }
-            },
-            dominantStyle: [String],
-            recommendations: [String]
-        },
-        warnings: [String]
     },
     token: {
         type: String,
@@ -95,20 +36,30 @@ const resultSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    dataCompletamento: Date
-}, {
-    timestamps: true
+    dataCompletamento: Date,
+    analytics: {
+        tempoTotale: Number,
+        domandePerse: Number,
+        pattern: [Number],
+        metadata: {
+            type: Map,
+            of: mongoose.Schema.Types.Mixed
+        }
+    }
+}, { 
+    discriminatorKey: 'tipo',
+    timestamps: true 
 });
 
-// Indici
-resultSchema.index({ test: 1, dataCompletamento: -1 });
-resultSchema.index({ classe: 1, test: 1 });
-resultSchema.index({ scuola: 1, test: 1 });
-resultSchema.index({ studentId: 1, test: 1 });
-resultSchema.index({ token: 1 }, { sparse: true });
+// Indici comuni
+baseResultSchema.index({ tipo: 1, dataCompletamento: -1 });
+baseResultSchema.index({ classe: 1, tipo: 1 });
+baseResultSchema.index({ scuola: 1, tipo: 1 });
+baseResultSchema.index({ studentId: 1, tipo: 1 });
+baseResultSchema.index({ token: 1 }, { sparse: true });
 
-// Middleware di validazione
-resultSchema.pre('save', function(next) {
+// Middleware di validazione base
+baseResultSchema.pre('save', function(next) {
     if ((this.token && !this.expiresAt) || (!this.token && this.expiresAt)) {
         next(new Error('Token e expiresAt devono essere presenti insieme'));
     }
@@ -119,10 +70,84 @@ resultSchema.pre('save', function(next) {
 });
 
 // Virtual per stato completamento
-resultSchema.virtual('isCompleto').get(function() {
+baseResultSchema.virtual('isCompleto').get(function() {
     return this.completato && this.dataCompletamento;
 });
 
-const Result = mongoose.model('Result', resultSchema);
+// Schema specifico per CSI
+const csiResultSchema = new mongoose.Schema({
+    risposte: [{
+        domanda: {
+            id: Number,
+            categoria: String,
+            testo: String
+        },
+        valore: {
+            type: Number,
+            required: true,
+            min: 1,
+            max: 5
+        },
+        tempoRisposta: Number
+    }],
+    punteggiDimensioni: {
+        creativita: {
+            score: Number,
+            level: String,
+            interpretation: String
+        },
+        elaborazione: {
+            score: Number,
+            level: String,
+            interpretation: String
+        },
+        decisione: {
+            score: Number,
+            level: String,
+            interpretation: String
+        },
+        preferenzaVisiva: {
+            score: Number,
+            level: String,
+            interpretation: String
+        },
+        autonomia: {
+            score: Number,
+            level: String,
+            interpretation: String
+        }
+    },
+    metadataCSI: {
+        versioneAlgoritmo: String,
+        calcolatoIl: Date,
+        pattern: {
+            isValid: Boolean,
+            consistency: Boolean,
+            timePattern: {
+                averageTime: Number,
+                suspicious: Boolean,
+                tooFastResponses: Number,
+                pattern: {
+                    consistent: Boolean,
+                    avgTimePerQuestion: Number
+                }
+            }
+        },
+        profiloCognitivo: {
+            stiliDominanti: [String],
+            raccomandazioni: [String]
+        },
+        warnings: [String]
+    }
+});
 
-module.exports = Result;
+// Crea il modello base
+const Result = mongoose.model('Result', baseResultSchema);
+
+// Crea il discriminatore per CSI
+const CSIResult = Result.discriminator('CSI', csiResultSchema);
+
+module.exports = {
+    Result,
+    CSIResult
+};
