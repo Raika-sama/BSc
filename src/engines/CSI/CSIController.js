@@ -1,54 +1,65 @@
 // src/engines/CSI/controllers/CSIController.js
 
-const CSIEngine = require('./engine/CSIEngine');
-const Test = require('../../models/Test');
-const Result = require('../../models/Result');
 const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 const logger = require('../../utils/errors/logger/logger');
-const crypto = require('crypto');
+const CSIRepository = require('./CSIRepository');
 
 class CSIController {
     constructor(dependencies) {
-        if (!dependencies) {
-            throw new Error('Dependencies object is required');
+        const { 
+            testRepository,
+            studentRepository,
+            classRepository,
+            schoolRepository,
+            userService 
+        } = dependencies;
+
+        if (!testRepository || !studentRepository) {
+            throw new Error('Required dependencies missing');
         }
-        
-        const { testRepository, studentRepository, classRepository, schoolRepository, userService } = dependencies;
-        
-        // Salva le dependencies
+
         this.testRepository = testRepository;
         this.studentRepository = studentRepository;
         this.classRepository = classRepository;
         this.schoolRepository = schoolRepository;
         this.userService = userService;
-
-        // Inizializza l'engine con i modelli corretti
-        this.engine = new CSIEngine(Test, Result);
+        
+        // Inizializza CSIRepository
+        this.csiRepository = new CSIRepository();
     }
 
     /**
-     * Verifica validità del token test
+     * Verifica token test CSI
      */
     verifyTestToken = async (req, res) => {
         const { token } = req.params;
         
         try {
-            logger.debug('Verifying test token:', { 
+            logger.debug('Verifying CSI test token:', { 
                 token: token ? token.substring(0, 10) + '...' : 'undefined'
             });
 
-            const test = await this.engine.verifyToken(token);
-            
+            // Usa testRepository per verifica base token
+            const result = await this.testRepository.verifyToken(token);
+
+            // Verifica che sia un test CSI
+            if (result.test.tipo !== 'CSI') {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_TOKEN,
+                    'Token non valido per test CSI'
+                );
+            }
+
             res.json({
                 status: 'success',
                 data: {
                     valid: true,
-                    testType: test.test.tipo,
-                    expiresAt: test.expiresAt
+                    testType: 'CSI',
+                    expiresAt: result.expiresAt
                 }
             });
         } catch (error) {
-            logger.error('Error verifying test token:', {
+            logger.error('Error verifying CSI token:', {
                 error: error.message,
                 token: token ? token.substring(0, 10) + '...' : 'undefined'
             });
@@ -64,65 +75,45 @@ class CSIController {
     };
 
     /**
-     * Inizia il test con token
+     * Inizia test CSI con token
      */
     startTestWithToken = async (req, res) => {
         const { token } = req.params;
         
         try {
-            logger.debug('Starting test with token:', { 
+            logger.debug('Starting CSI test with token:', { 
                 token: token ? token.substring(0, 10) + '...' : 'undefined'
             });
 
-            // Verifica e recupera info test
-            const result = await this.engine.verifyToken(token);
+            // Verifica token
+            const result = await this.testRepository.verifyToken(token);
             
-            logger.debug('Token verification result:', {
+            // Recupera domande dal repository CSI
+            const questions = await this.csiRepository.getQuestions();
+            
+            // Recupera configurazione test
+            const config = await this.csiRepository.getTestConfiguration();
+
+            logger.debug('CSI test initialized:', {
                 studentId: result.studentId,
-                testId: result.test._id,
-                hasQuestions: result.test.domande ? result.test.domande.length : 0
+                questionsCount: questions.length
             });
-
-            if (result.used) {
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_TOKEN,
-                    'Questo test è già stato completato'
-                );
-            }
-
-            // Marca il token come utilizzato
-            // await this.engine.markTokenAsUsed(token);
-
-            // Inizializza il test
-            const testData = await this.engine.initializeTest({
-                studentId: result.studentId,
-                testId: result.test._id
-            });
-
-            logger.debug('Test initialized:', {
-                testId: testData.test._id,
-                hasQuestions: testData.test.domande ? testData.test.domande.length : 0,
-                questions: testData.test.domande
-            });
-    
 
             res.json({
                 status: 'success',
                 data: {
-                    testId: testData.test._id,
-                    questions: testData.test.domande,
-                    timeLimit: testData.test.configurazione.tempoLimite,
-                    instructions: testData.test.configurazione.istruzioni
+                    questions,
+                    config,
+                    testId: result.test._id
                 }
             });
         } catch (error) {
-            logger.error('Error starting test:', {
+            logger.error('Error starting CSI test:', {
                 error: error.message,
                 token: token ? token.substring(0, 10) + '...' : 'undefined'
             });
 
-            const statusCode = error.statusCode || 500;
-            res.status(statusCode).json({
+            res.status(400).json({
                 status: 'error',
                 error: {
                     message: error.message,
@@ -133,18 +124,18 @@ class CSIController {
     };
 
     /**
-     * Gestisce le risposte del test
+     * Processa risposta test CSI
      */
     submitAnswer = async (req, res) => {
         const { token } = req.params;
         const { questionIndex, value, timeSpent } = req.body;
 
         try {
-            // Verifica token e recupera test
-            const result = await this.engine.verifyToken(token);
+            // Verifica token
+            const result = await this.testRepository.verifyToken(token);
             
-            // Processa la risposta
-            const updatedResult = await this.engine.processAnswer(result.test._id, {
+            // Salva risposta
+            const updatedResult = await this.csiRepository.saveAnswer(result._id, {
                 questionIndex,
                 value: parseInt(value),
                 timeSpent
@@ -154,40 +145,52 @@ class CSIController {
                 status: 'success',
                 data: {
                     answered: updatedResult.risposte.length,
-                    total: result.test.domande.length
+                    remaining: result.test.domande.length - updatedResult.risposte.length
                 }
             });
-            } catch (error) {
-                logger.error('Error submitting answer:', {
-                    error: error.message,
-                    token: token ? token.substring(0, 10) + '...' : 'undefined'
-                });
+        } catch (error) {
+            logger.error('Error submitting CSI answer:', {
+                error: error.message,
+                token: token ? token.substring(0, 10) + '...' : 'undefined'
+            });
 
-                res.status(400).json({
-                    status: 'error',
-                    error: {
-                        message: error.message,
-                        code: error.code || 'SUBMIT_ANSWER_ERROR'
-                    }
-                });
-            }
-        };
+            res.status(400).json({
+                status: 'error',
+                error: {
+                    message: error.message,
+                    code: error.code || 'SUBMIT_ANSWER_ERROR'
+                }
+            });
+        }
+    };
 
     /**
-     * Completa il test
+     * Completa test CSI
      */
     completeTest = async (req, res) => {
         const { token } = req.params;
     
         try {
-            // Verifica token e recupera test
-            const result = await this.engine.verifyToken(token);
+            // Verifica token
+            const result = await this.testRepository.verifyToken(token);
             
-            // Passa sia testId che token
-            const completedResult = await this.engine.completeTest(result.test._id, token);
-     
-            // Non serve più chiamare markTokenAsUsed qui perché lo faremo dentro completeTest
-            // await this.engine.markTokenAsUsed(token);
+            // Calcola punteggi
+            const scores = await this.csiRepository.calculateScores(result.risposte);
+            
+            // Salva risultati finali
+            const completedResult = await this.csiRepository.saveResults({
+                ...result,
+                scores,
+                completedAt: new Date()
+            });
+
+            // Marca token come usato
+            await this.testRepository.markTokenAsUsed(token);
+
+            // Notifica completamento se necessario
+            if (this.userService) {
+                await this.userService.notifyTestComplete(result.studentId, 'CSI');
+            }
     
             res.json({
                 status: 'success',
@@ -197,7 +200,7 @@ class CSIController {
                 }
             });
         } catch (error) {
-            logger.error('Error completing test:', {
+            logger.error('Error completing CSI test:', {
                 error: error.message,
                 token: token ? token.substring(0, 10) + '...' : 'undefined'
             });
@@ -213,74 +216,45 @@ class CSIController {
     };
 
     /**
- * Recupera tutti i test completati di uno studente
- */
-getStudentResults = async (req, res) => {
-    const { studentId } = req.params;
-
-    try {
-        logger.debug('Fetching student test results:', { studentId });
-
-        const results = await Result.find({
-            studentId,
-            completato: true
-        })
-        .populate('test', 'tipo')
-        .sort({ dataCompletamento: -1 });
-
-        logger.debug('Found student results:', {
-            count: results.length,
-            studentId
-        });
-
-        res.json({
-            status: 'success',
-            data: results
-        });
-    } catch (error) {
-        logger.error('Error fetching student results:', {
-            error: error.message,
-            studentId
-        });
-
-        res.status(500).json({
-            status: 'error',
-            error: {
-                message: 'Errore nel recupero dei risultati',
-                code: error.code || 'FETCH_RESULTS_ERROR'
-            }
-        });
-    }
-};
-
-    /**
-     * Genera un link univoco per il test
+     * Genera link per test CSI
      */
     generateTestLink = async (req, res) => {
         try {
-            const { studentId, testType, version } = req.body;
-    
-            // Carica le domande usando il nuovo sistema
-            const questions = await this.engine._loadQuestions(version);
-            
-            // Crea il test con il nuovo formato delle domande
-            const test = await Test.create({
-                tipo: testType,
-                domande: questions,
-                versione: version || '1.0.0',
-                configurazione: {
-                    tempoLimite: 30,
-                    tentativiMax: 1,
-                    questionVersion: version || '1.0.0'
+            const { studentId } = req.body;
+
+            // Verifica disponibilità
+            const availability = await this.testRepository.checkTestAvailability(studentId, 'CSI');
+            if (!availability.available) {
+                throw createError(
+                    ErrorTypes.VALIDATION.TEST_NOT_AVAILABLE,
+                    'Test non disponibile',
+                    { nextAvailable: availability.nextAvailableDate }
+                );
+            }
+
+            // Genera token
+            const token = await this.testRepository.saveTestToken({
+                studentId,
+                testType: 'CSI'
+            });
+
+            // Costruisci URL
+            const testUrl = `${process.env.FRONTEND_URL}/test/csi/${token.token}`;
+
+            res.json({
+                status: 'success',
+                data: {
+                    token: token.token,
+                    url: testUrl,
+                    expiresAt: token.expiresAt
                 }
             });
-    
         } catch (error) {
-            logger.error('Error generating test link:', {
+            logger.error('Error generating CSI test link:', {
                 error: error.message,
                 studentId: req.body.studentId
             });
-    
+
             res.status(400).json({
                 status: 'error',
                 error: {
@@ -290,120 +264,6 @@ getStudentResults = async (req, res) => {
             });
         }
     };
-
-    // Aggiungi questi metodi alla classe CSIController
-
-    /**
-     * Recupera tutti i test
-     */
-    getAll = async (req, res) => {
-        try {
-            logger.debug('Getting all CSI questions');
-            const questions = await this.questionService.getTestQuestions();
-    
-            res.json({
-                status: 'success',
-                data: questions
-            });
-        } catch (error) {
-            logger.error('Error getting all questions:', {
-                error: error.message
-            });
-    
-            res.status(error.statusCode || 500).json({
-                status: 'error',
-                error: {
-                    message: error.message,
-                    code: error.code || 'FETCH_QUESTIONS_ERROR'
-                }
-            });
-        }
-    };
-
-    /**
-     * Inizializza un nuovo test
-     */
-    initTest = async (req, res) => {
-        logger.debug('initTest called');
-        res.status(501).json({
-            status: 'error',
-            message: 'Not implemented yet'
-        });
-    };
-
-    /**
-     * Recupera un test per ID
-     */
-    getById = async (req, res) => {
-        const { testId } = req.params;
-        logger.debug('getById called', { testId });
-        res.status(501).json({
-            status: 'error',
-            message: 'Not implemented yet'
-        });
-    };
-
-    /**
-     * Recupera il risultato di un test
-     */
-    getResult = async (req, res) => {
-        const { testId } = req.params;
-        logger.debug('getResult called', { testId });
-        res.status(501).json({
-            status: 'error',
-            message: 'Not implemented yet'
-        });
-    };
-
-    /**
-     * Recupera statistiche per classe
-     */
-    getClassStats = async (req, res) => {
-        const { classId } = req.params;
-        logger.debug('getClassStats called', { classId });
-        res.status(501).json({
-            status: 'error',
-            message: 'Not implemented yet'
-        });
-    };
-
-    /**
-     * Recupera statistiche per scuola
-     */
-    getSchoolStats = async (req, res) => {
-        const { schoolId } = req.params;
-        logger.debug('getSchoolStats called', { schoolId });
-        res.status(501).json({
-            status: 'error',
-            message: 'Not implemented yet'
-        });
-    };
-
-    /**
-     * Verifica disponibilità test
-     */
-    validateTestAvailability = async (req, res) => {
-        const { testId } = req.params;
-        logger.debug('validateTestAvailability called', { testId });
-        res.status(501).json({
-            status: 'error',
-            message: 'Not implemented yet'
-        });
-    };
-
-    /**
-     * Genera report PDF
-     */
-    generatePDFReport = async (req, res) => {
-        const { testId } = req.params;
-        logger.debug('generatePDFReport called', { testId });
-        res.status(501).json({
-            status: 'error',
-            message: 'Not implemented yet'
-        });
-    };
-    
 }
 
-// Esporta la classe
 module.exports = CSIController;

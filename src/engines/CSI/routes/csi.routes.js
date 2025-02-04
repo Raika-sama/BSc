@@ -24,18 +24,12 @@ const createCSIRoutes = ({ authMiddleware, csiController }) => {
     publicRouter.post('/:token/complete', csiController.completeTest);
 
     // PROTECTED ROUTES (richiede autenticazione)
-    protectedRouter.get('/', csiController.getAll);
-    protectedRouter.post('/init', csiController.initTest);
-    protectedRouter.get('/:testId', csiController.getById);
-    protectedRouter.get('/:testId/result', csiController.getResult);
-    protectedRouter.get('/stats/class/:classId', csiController.getClassStats);
-    protectedRouter.get('/stats/school/:schoolId', csiController.getSchoolStats);
-    protectedRouter.get('/validate/:testId', csiController.validateTestAvailability);
-    protectedRouter.post('/:testId/report', csiController.generatePDFReport);
     protectedRouter.post('/generate-link', csiController.generateTestLink);
-    protectedRouter.get('/results/student/:studentId', csiController.getStudentResults);
 
-    // Gestione errori
+    // Rimuovi questa route se getStudentResults non è implementato nel controller
+    // protectedRouter.get('/results/student/:studentId', csiController.getStudentResults);
+
+    // Error handler
     const errorHandler = (err, req, res, next) => {
         logger.error('CSI route error:', {
             error: err.message,
@@ -47,8 +41,12 @@ const createCSIRoutes = ({ authMiddleware, csiController }) => {
         res.status(err.statusCode || 500).json({
             status: 'error',
             error: {
+                code: err.code || 'INTERNAL_SERVER_ERROR',
                 message: err.message,
-                code: err.code || 'INTERNAL_SERVER_ERROR'
+                ...(process.env.NODE_ENV === 'development' && { 
+                    stack: err.stack,
+                    details: err.details 
+                })
             }
         });
     };

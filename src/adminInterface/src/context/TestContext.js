@@ -1,6 +1,6 @@
 // src/context/TestContext/TestContext.js
 import React, { createContext, useContext, useReducer } from 'react';
-import { axiosInstance } from '../services/axiosConfig';  // Importa axiosInstance invece di axios
+import { axiosInstance } from '../services/axiosConfig';
 
 const TestContext = createContext();
 
@@ -9,7 +9,6 @@ const initialState = {
     selectedTest: null,
     results: [],
     statistics: null,
-    questions: [], // Aggiunto stato per le domande
     loading: false,
     error: null
 };
@@ -28,18 +27,8 @@ const testReducer = (state, action) => {
             return { ...state, results: action.payload, loading: false };
         case 'SET_STATISTICS':
             return { ...state, statistics: action.payload, loading: false };
-        case 'SET_QUESTIONS':
-            return { ...state, questions: action.payload, loading: false };
         case 'CLEAR_ERROR':
             return { ...state, error: null };
-        case 'UPDATE_QUESTION':
-            return {
-                ...state,
-                questions: state.questions.map(q => 
-                    q.id === action.payload.id ? action.payload : q
-                ),
-                loading: false
-            };
         default:
             return state;
     }
@@ -48,73 +37,16 @@ const testReducer = (state, action) => {
 export const TestProvider = ({ children }) => {
     const [state, dispatch] = useReducer(testReducer, initialState);
 
-
-
-    const getTestQuestions = async () => {
-        dispatch({ type: 'SET_LOADING', payload: true });
-        try {
-            console.log('Fetching CSI questions...');
-            // URL corretto che matcha il backend
-            const response = await axiosInstance.get('/tests/csi/questions');
-            console.log('Response:', response.data);
-            dispatch({ type: 'SET_QUESTIONS', payload: response.data.data });
-            return response.data.data;
-        } catch (error) {
-            console.error('Error fetching questions:', error);
-            dispatch({ 
-                type: 'SET_ERROR', 
-                payload: error.response?.data?.message || 'Errore nel caricamento delle domande'
-            });
-            return [];
-        }
-    };
-    
-    const updateTestQuestion = async (questionData) => {
-        try {
-            const formattedData = {
-                ...questionData,
-                weight: parseFloat(questionData.weight || 1).toFixed(1),
-                version: questionData.version || '1.0.0',
-                active: Boolean(questionData.active),
-                metadata: {
-                    ...questionData.metadata,
-                    polarity: questionData.metadata?.polarity || '+'
-                }
-            };
-    
-            // Validazione base solo per il peso
-            const weight = parseFloat(formattedData.weight);
-            if (isNaN(weight)) {
-                formattedData.weight = '1.0'; // Valore di default se invalido
-            }
-    
-            console.log('Sending update request with data:', formattedData);
-    
-            const response = await axiosInstance.put(
-                `/tests/csi/questions/${questionData.id}`,
-                formattedData
-            );
-    
-            if (response.data.status === 'success') {
-                dispatch({ type: 'UPDATE_QUESTION', payload: response.data.data });
-                await getTestQuestions();
-            }
-    
-            return response.data.data;
-        } catch (error) {
-            console.error('Error updating question:', error);
-            // Mostra l'errore in console ma non bloccare l'esecuzione
-            console.warn('Continuing despite error:', error.message);
-            return null;
-        }
-    };
-
+    /**
+     * Recupera tutti i test disponibili
+     */
     const getTests = async () => {
         dispatch({ type: 'SET_LOADING', payload: true });
         try {
             const response = await axiosInstance.get('/tests');
             dispatch({ type: 'SET_TESTS', payload: response.data.data });
         } catch (error) {
+            console.error('Error fetching tests:', error);
             dispatch({ 
                 type: 'SET_ERROR', 
                 payload: error.response?.data?.message || 'Errore nel caricamento dei test'
@@ -122,32 +54,47 @@ export const TestProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Recupera un test specifico per ID
+     */
     const getTestById = async (testId) => {
         dispatch({ type: 'SET_LOADING', payload: true });
         try {
             const response = await axiosInstance.get(`/tests/${testId}`);
             dispatch({ type: 'SET_SELECTED_TEST', payload: response.data.data });
+            return response.data.data;
         } catch (error) {
+            console.error('Error fetching test:', error);
             dispatch({ 
                 type: 'SET_ERROR', 
                 payload: error.response?.data?.message || 'Errore nel caricamento del test'
             });
+            return null;
         }
     };
 
+    /**
+     * Recupera i risultati di un test
+     */
     const getTestResults = async (testId) => {
         dispatch({ type: 'SET_LOADING', payload: true });
         try {
             const response = await axiosInstance.get(`/tests/${testId}/results`);
             dispatch({ type: 'SET_RESULTS', payload: response.data.data });
+            return response.data.data;
         } catch (error) {
+            console.error('Error fetching test results:', error);
             dispatch({ 
                 type: 'SET_ERROR', 
                 payload: error.response?.data?.message || 'Errore nel caricamento dei risultati'
             });
+            return null;
         }
     };
 
+    /**
+     * Recupera statistiche per test o scuola
+     */
     const getTestStatistics = async (testId, schoolId = null) => {
         dispatch({ type: 'SET_LOADING', payload: true });
         try {
@@ -156,14 +103,20 @@ export const TestProvider = ({ children }) => {
                 : `/tests/${testId}/stats`;
             const response = await axiosInstance.get(url);
             dispatch({ type: 'SET_STATISTICS', payload: response.data.data });
+            return response.data.data;
         } catch (error) {
+            console.error('Error fetching test statistics:', error);
             dispatch({ 
                 type: 'SET_ERROR', 
                 payload: error.response?.data?.message || 'Errore nel caricamento delle statistiche'
             });
+            return null;
         }
     };
 
+    /**
+     * Genera un link per un test
+     */
     const generateTestLink = async (studentId, testType) => {
         dispatch({ type: 'SET_LOADING', payload: true });
         try {
@@ -173,6 +126,7 @@ export const TestProvider = ({ children }) => {
             });
             return response.data.data;
         } catch (error) {
+            console.error('Error generating test link:', error);
             dispatch({ 
                 type: 'SET_ERROR', 
                 payload: error.response?.data?.message || 'Errore nella generazione del link'
@@ -180,7 +134,6 @@ export const TestProvider = ({ children }) => {
             return null;
         }
     };
-    
 
     const clearError = () => {
         dispatch({ type: 'CLEAR_ERROR' });
@@ -190,12 +143,10 @@ export const TestProvider = ({ children }) => {
         ...state,
         getTests,
         getTestById,
-        getTestQuestions,
         getTestResults,
         getTestStatistics,
         generateTestLink,
-        clearError,
-        updateTestQuestion
+        clearError
     };
 
     return (

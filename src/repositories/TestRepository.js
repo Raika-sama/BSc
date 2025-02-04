@@ -12,19 +12,27 @@ class TestRepository extends BaseRepository {
         this.Result = Result;
     }
 
-     /**
+    /**
      * Trova un test tramite token
+     * @param {string} token - Token del test
+     * @returns {Promise<Object>} Test trovato
      */
-     async findByToken(token) {
+    async findByToken(token) {
         try {
-            return await this.model.findOne({
+            logger.debug('Finding test by token:', {
+                token: token.substring(0, 10) + '...'
+            });
+
+            const result = await this.Result.findOne({
                 token,
                 expiresAt: { $gt: new Date() }
             }).populate('studentId');
+
+            return result;
         } catch (error) {
             logger.error('Error finding test by token:', {
-                error,
-                token: token.substring(0, 10) + '...' // log parziale per sicurezza
+                error: error.message,
+                token: token.substring(0, 10) + '...'
             });
             throw error;
         }
@@ -32,26 +40,38 @@ class TestRepository extends BaseRepository {
 
     /**
      * Verifica se un token è valido e utilizzabile
+     * @param {string} token - Token da verificare
+     * @returns {Promise<Object>} Stato validità token
      */
     async isTokenValid(token) {
         try {
+            logger.debug('Checking token validity');
+            
             const test = await this.findByToken(token);
             return {
                 isValid: !!test && !test.used,
                 test
             };
         } catch (error) {
-            logger.error('Error checking token validity:', { error });
+            logger.error('Error checking token validity:', {
+                error: error.message
+            });
             return { isValid: false, test: null };
         }
     }
 
     /**
      * Marca un token come utilizzato
+     * @param {string} token - Token da marcare
+     * @returns {Promise<boolean>} Successo operazione
      */
     async markTokenAsUsed(token) {
         try {
-            const result = await this.model.updateOne(
+            logger.debug('Marking token as used:', {
+                token: token.substring(0, 10) + '...'
+            });
+
+            const result = await this.Result.updateOne(
                 { token },
                 { 
                     $set: { 
@@ -62,7 +82,9 @@ class TestRepository extends BaseRepository {
             );
             return result.modifiedCount > 0;
         } catch (error) {
-            logger.error('Error marking token as used:', { error });
+            logger.error('Error marking token as used:', {
+                error: error.message
+            });
             throw error;
         }
     }
@@ -73,295 +95,109 @@ class TestRepository extends BaseRepository {
      * @returns {Promise<Object>} Test creato
      */
     async saveTestToken(tokenData) {
-        logger.info('Starting test token creation:', {
-            studentId: tokenData.studentId,
-            testType: tokenData.testType,
-            timestamp: new Date().toISOString()
-        });
-
         try {
-            const test = await this.model.create({
-                ...tokenData,
-                used: false,
-                created: new Date(),
-                configurazione: {
-                    tempoLimite: 30,
-                    tentativiMax: 1,
-                    cooldownPeriod: 168,
-                    randomizzaDomande: true,
-                    mostraRisultatiImmediati: false
-                }
+            logger.debug('Saving new test token:', {
+                studentId: tokenData.studentId,
+                testType: tokenData.testType
             });
 
-            logger.info('Test configuration created:', {
-                testId: test._id,
-                config: test.configurazione,
-                created: test.created
-            });
-
-            return test;
-        } catch (error) {
-            logger.error('Test token creation failed:', {
-                error: error.message,
-                stack: error.stack,
-                tokenData,
-                timestamp: new Date().toISOString()
-            });
-            throw createError(
-                ErrorTypes.DATABASE.SAVE_ERROR,
-                'Errore nel salvare il token del test',
-                { originalError: error.message }
-            );
-        }
-    }
-
-    /**
-     * Verifica validità di un token
-     * @param {string} token - Token da verificare
-     * @returns {Promise<Object>} Test associato al token
-     */
-    async verifyToken(token) {
-        logger.info('Starting token verification:', { 
-            token,
-            timestamp: new Date().toISOString()
-        });
-    
-        try {
-            // Prima cerca il test senza condizioni per vedere se esiste
-            const testExists = await this.model.findOne({ token });
-            logger.debug('Raw test search result:', {
-                exists: !!testExists,
-                test: testExists ? {
-                    id: testExists._id,
-                    expiresAt: testExists.expiresAt,
-                    used: testExists.used
-                } : null
-            });
-    
-            // Poi cerca con tutte le condizioni
-            const test = await this.model.findOne({
-                token,
-                expiresAt: { $gt: new Date() },
-                used: false
-            }).populate('studentId');
-    
-            logger.info('Token verification result:', {
-                found: !!test,
-                expired: testExists ? new Date() > testExists.expiresAt : null,
-                used: testExists ? testExists.used : null
-            });
-    
-            if (!test) {
-                logger.warn('Invalid or expired token:', { 
-                    token,
-                    testExists: !!testExists,
-                    reason: testExists ? 
-                        (testExists.used ? 'Token already used' : 
-                         new Date() > testExists.expiresAt ? 'Token expired' : 
-                         'Unknown') : 
-                        'Token not found'
-                });
+            // Verifica preliminare
+            if (!tokenData.studentId || !tokenData.testType) {
                 throw createError(
-                    ErrorTypes.VALIDATION.INVALID_TOKEN,
-                    'Token non valido o scaduto'
+                    ErrorTypes.VALIDATION.INVALID_INPUT,
+                    'StudentId e testType sono richiesti'
                 );
             }
-    
-            return test;
+
+            const result = await this.Result.create({
+                ...tokenData,
+                token: this._generateToken(),
+                used: false,
+                created: new Date(),
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 ore
+            });
+
+            logger.info('Test token created successfully:', {
+                resultId: result._id,
+                token: result.token.substring(0, 10) + '...'
+            });
+
+            return result;
         } catch (error) {
-            logger.error('Token verification failed:', {
+            logger.error('Error saving test token:', {
                 error: error.message,
-                stack: error.stack,
-                token,
-                timestamp: new Date().toISOString()
+                tokenData
             });
             throw error;
         }
     }
 
-    async createTest(testData) {
+    /**
+     * Recupera risultati base di un test
+     * @param {string} testId - ID del test
+     * @returns {Promise<Array>} Array di risultati
+     */
+    async getBaseResults(testId) {
         try {
-            if (!testData.domande || testData.domande.length === 0) {
-                logger.warn('Tentativo di creazione test senza domande', { testData });
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_INPUT,
-                    'Il test deve contenere almeno una domanda'
-                );
-            }
-
-            // Validazione opzioni per ogni domanda
-            testData.domande.forEach((domanda, index) => {
-                if (!domanda.opzioni || domanda.opzioni.length < 2) {
-                    throw createError(
-                        ErrorTypes.VALIDATION.INVALID_INPUT,
-                        `La domanda ${index + 1} deve avere almeno due opzioni`
-                    );
-                }
-
-                if (domanda.rispostaCorretta && 
-                    !domanda.opzioni.includes(domanda.rispostaCorretta)) {
-                    throw createError(
-                        ErrorTypes.VALIDATION.INVALID_INPUT,
-                        `Risposta corretta non presente nelle opzioni - Domanda ${index + 1}`
-                    );
-                }
+            return await this.Result.find({ 
+                test: testId,
+                completato: true 
+            })
+            .select('studentId dataCompletamento')
+            .populate('studentId', 'firstName lastName');
+        } catch (error) {
+            logger.error('Error getting base results:', {
+                error: error.message,
+                testId
             });
-
-            return await this.create(testData);
-        } catch (error) {
-            if (error.code) throw error;
-            logger.error('Errore nella creazione del test', { error, testData });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella creazione del test',
-                { originalError: error.message }
-            );
+            throw error;
         }
     }
 
-    async saveResult(resultData) {
+    /**
+     * Verifica se uno studente può sostenere un test
+     * @param {string} studentId - ID dello studente
+     * @param {string} testType - Tipo di test
+     * @returns {Promise<Object>} Stato disponibilità test
+     */
+    async checkTestAvailability(studentId, testType) {
         try {
-            const test = await this.findById(resultData.test);
-            
-            if (!resultData.risposte || 
-                resultData.risposte.length !== test.domande.length) {
-                logger.warn('Tentativo di salvare risultato con numero risposte non valido', { 
-                    expected: test.domande.length, 
-                    received: resultData.risposte?.length 
-                });
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_INPUT,
-                    'Numero di risposte non valido'
-                );
+            const lastResult = await this.Result
+                .findOne({
+                    studentId,
+                    'test.tipo': testType,
+                    completato: true
+                })
+                .sort({ dataCompletamento: -1 });
+
+            if (!lastResult) {
+                return { available: true };
             }
 
-            const result = await this.Result.create(resultData);
-            return result;
-        } catch (error) {
-            if (error.code) throw error;
-            logger.error('Errore nel salvataggio del risultato', { error, resultData });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nel salvataggio del risultato',
-                { originalError: error.message }
-            );
-        }
-    }
-
-    async findResultsByUser(userId) {
-        try {
-            return await this.Result.find({ utente: userId })
-                .populate('test', 'nome descrizione')
-                .sort({ data: -1 });
-        } catch (error) {
-            logger.error('Errore nel recupero dei risultati utente', { error, userId });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nel recupero dei risultati utente',
-                { originalError: error.message }
-            );
-        }
-    }
-
-    async findResultsByTest(testId, options = {}) {
-        try {
-            let query = this.Result.find({ test: testId });
-
-            if (options.populate) {
-                query = query.populate('utente', 'firstName lastName email');
-            }
-
-            if (options.sort) {
-                query = query.sort(options.sort);
-            } else {
-                query = query.sort({ data: -1 });
-            }
-
-            if (options.limit) {
-                query = query.limit(options.limit);
-            }
-
-            return await query.exec();
-        } catch (error) {
-            logger.error('Errore nel recupero dei risultati del test', { error, testId, options });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nel recupero dei risultati del test',
-                { originalError: error.message }
-            );
-        }
-    }
-
-    async getTestStats(testId) {
-        try {
-            const results = await this.Result.find({ test: testId });
-            
-            if (results.length === 0) {
-                return {
-                    totalAttempts: 0,
-                    averageScore: 0,
-                    highestScore: 0,
-                    lowestScore: 0,
-                    medianScore: 0
-                };
-            }
-
-            const scores = results.map(r => r.punteggio);
-            scores.sort((a, b) => a - b);
+            const hoursSinceLastTest = 
+                (Date.now() - lastResult.dataCompletamento.getTime()) / 
+                (1000 * 60 * 60);
 
             return {
-                totalAttempts: results.length,
-                averageScore: scores.reduce((a, b) => a + b) / scores.length,
-                highestScore: Math.max(...scores),
-                lowestScore: Math.min(...scores),
-                medianScore: scores[Math.floor(scores.length / 2)]
+                available: hoursSinceLastTest >= 24,
+                nextAvailableDate: lastResult.dataCompletamento.getTime() + (24 * 60 * 60 * 1000)
             };
         } catch (error) {
-            logger.error('Errore nel calcolo delle statistiche', { error, testId });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nel calcolo delle statistiche',
-                { originalError: error.message }
-            );
+            logger.error('Error checking test availability:', {
+                error: error.message,
+                studentId,
+                testType
+            });
+            throw error;
         }
     }
 
-    async getLastResult(userId, testId) {
-        try {
-            return await this.Result.findOne({
-                utente: userId,
-                test: testId
-            })
-            .sort({ data: -1 })
-            .populate('test', 'nome descrizione');
-        } catch (error) {
-            logger.error('Errore nel recupero dell\'ultimo risultato', { error, userId, testId });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nel recupero dell\'ultimo risultato',
-                { originalError: error.message }
-            );
-        }
-    }
-
-    async canRetakeTest(userId, testId, cooldownHours = 24) {
-        try {
-            const lastResult = await this.getLastResult(userId, testId);
-            
-            if (!lastResult) return true;
-
-            const hoursSinceLastAttempt = 
-                (Date.now() - lastResult.data.getTime()) / (1000 * 60 * 60);
-
-            return hoursSinceLastAttempt >= cooldownHours;
-        } catch (error) {
-            logger.error('Errore nella verifica ripetibilità test', { error, userId, testId });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella verifica ripetibilità test',
-                { originalError: error.message }
-            );
-        }
+    /**
+     * Genera un token univoco
+     * @private
+     */
+    _generateToken() {
+        return require('crypto').randomBytes(32).toString('hex');
     }
 }
 

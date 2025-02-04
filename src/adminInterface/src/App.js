@@ -16,7 +16,8 @@ import { adminRoutes } from './routes/routes';
 import PublicCSI from './components/engines/CSI/publicCSI';
 import { CircularProgress, Box } from '@mui/material';
 import HomePage from './components/home/HomePage';
-import { TestProvider } from './context/TestContext';
+import { TestingProvider } from './context/TestContext/TestingProvider';
+
 
 import './styles.css';
 
@@ -58,7 +59,7 @@ function App() {
                                             <SchoolProvider>
                                                 <ClassProvider>
                                                     <StudentProvider>
-                                                        <TestProvider>
+                                                        <TestingProvider>
                                                             <MainLayout>
                                                                 <Routes>
                                                                     {adminRoutes.map((route) => 
@@ -72,7 +73,7 @@ function App() {
                                                                     )}
                                                                 </Routes>
                                                             </MainLayout>
-                                                        </TestProvider>
+                                                        </TestingProvider>
                                                     </StudentProvider>
                                                 </ClassProvider>
                                             </SchoolProvider>

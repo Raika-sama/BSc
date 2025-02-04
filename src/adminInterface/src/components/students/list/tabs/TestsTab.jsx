@@ -3,7 +3,7 @@ import { Box, Paper, Button } from '@mui/material';
 import CompletedTestsList from '../../studentTests/components/CompletedTestsList';
 import TestResultsView from '../../studentTests/components/TestResultsView';
 import { useStudentTest } from '../../studentTests/hooks/useStudentTest';
-import TestLinkDialog from '../../TestLinkDialog';
+import TestLinkDialog from '../../studentTests/components/TestLinkDialog';
 import { useNotification } from '../../../../context/NotificationContext';
 import { axiosInstance } from '../../../../services/axiosConfig'; // Nota: import nominale
 
