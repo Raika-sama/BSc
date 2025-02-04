@@ -76,6 +76,21 @@ baseResultSchema.virtual('isCompleto').get(function() {
 
 // Schema specifico per CSI
 const csiResultSchema = new mongoose.Schema({
+    test: {
+        tipo: {
+            type: String,
+            required: true,
+            enum: ['CSI']
+        },
+        domande: [{
+            id: Number,
+            testo: String,
+            categoria: String,
+            metadata: Object,
+            version: String
+        }],
+        version: String
+    },
     risposte: [{
         domanda: {
             id: Number,

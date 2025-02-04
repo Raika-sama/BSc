@@ -21,6 +21,7 @@ import EnginesManagement from '../components/engines/EnginesManagement';
 import { Assessment as AssessmentIcon } from '@mui/icons-material';
 import CSITestView from '../components/engines/CSI/CSITestView';
 import CSIQuestionsPanel from '../components/engines/CSI/CSIQuestionsPanel';
+import PublicCSITest from '../components/engines/CSI/publicCSI';
 
 // Importa le icone da Material-UI
 import {
@@ -60,6 +61,14 @@ const PERMISSIONS = {
         WRITE: 'engines:write'
     }
 };
+export const publicRoutes = [
+    {
+        path: 'test/csi/:token',
+        element: PublicCSITest,
+        title: 'Test CSI',
+        showInMenu: false
+    }
+];
 export const adminRoutes = [
     {
         path: 'dashboard',

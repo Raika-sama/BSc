@@ -9,6 +9,7 @@ const config = require('./config/config');
 const logger = require('./utils/errors/logger/logger');
 const createCSIRoutes = require('./engines/CSI/routes/csi.routes');
 const setupCSIDependencies = require('./engines/CSI/config/setupDependencies');
+const createTestRouter = require('./routes/testRoutes');
 
 // Import Models
 const User = require('./models/User');
@@ -164,18 +165,22 @@ logger.debug('Dependencies check:', {
 const createQuestionRoutes = require('./engines/CSI/routes/csi.question.routes');
 
 // Inizializza le routes CSI
-const csiRoutes = createCSIRoutes({ 
-    authMiddleware, 
+const { publicRoutes: csiPublicRoutes, protectedRoutes: csiProtectedRoutes } = createCSIRoutes({
+    authMiddleware,
     csiController
 });
 
-// Inizializza le routes delle domande CSI
-const csiQuestionRouter = createQuestionRoutes({ authMiddleware });
+// Monta le rotte CSI
+app.use('/api/v1/tests/csi', csiPublicRoutes);    // Rotte pubbliche CSI
+app.use('/api/v1/tests/csi', csiProtectedRoutes); // Rotte protette CSI
 
-// Monta le rotte - IMPORTANTE: le rotte più specifiche devono venire prima
-app.use('/api/v1/tests/csi/questions', csiQuestionRouter);
-app.use('/api/v1/tests/csi', csiRoutes.publicRoutes);
-app.use('/api/v1/tests/csi', csiRoutes.protectedRoutes);
+// Monta le altre rotte dei test
+const testRouter = createTestRouter({
+    authMiddleware,
+    testController
+});
+app.use('/api/v1/tests', testRouter);
+
 
 // Altre routes con dipendenze iniettate
 app.use('/api/v1', routes(dependencies));

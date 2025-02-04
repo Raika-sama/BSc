@@ -1,8 +1,8 @@
 // src/repositories/TestRepository.js
-
+const crypto = require('crypto'); // Aggiungi questo import
 const BaseRepository = require('./base/BaseRepository');
 const Test = require('../models/Test');
-const Result = require('../models/Result');
+const { Result, CSIResult } = require('../models'); // Aggiorna l'import
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
@@ -10,6 +10,7 @@ class TestRepository extends BaseRepository {
     constructor() {
         super(Test);
         this.Result = Result;
+        this.CSIResult = CSIResult;
     }
 
     /**
@@ -60,6 +61,40 @@ class TestRepository extends BaseRepository {
         }
     }
 
+    async verifyToken(token) {
+        try {
+            // Cerca in entrambi i modelli
+            let result = await this.CSIResult.findOne({
+                token,
+                used: false,
+                expiresAt: { $gt: new Date() }
+            });
+
+            if (!result) {
+                result = await this.Result.findOne({
+                    token,
+                    used: false,
+                    expiresAt: { $gt: new Date() }
+                });
+            }
+
+            if (!result) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_TOKEN,
+                    'Token non valido o scaduto'
+                );
+            }
+
+            return result;
+        } catch (error) {
+            logger.error('Error verifying token:', {
+                error: error.message,
+                token: token ? token.substring(0, 10) + '...' : 'undefined'
+            });
+            throw error;
+        }
+    }
+    
     /**
      * Marca un token come utilizzato
      * @param {string} token - Token da marcare
@@ -67,70 +102,69 @@ class TestRepository extends BaseRepository {
      */
     async markTokenAsUsed(token) {
         try {
-            logger.debug('Marking token as used:', {
-                token: token.substring(0, 10) + '...'
-            });
-
-            const result = await this.Result.updateOne(
+            // Cerca e aggiorna in entrambi i modelli
+            let result = await this.CSIResult.findOneAndUpdate(
                 { token },
-                { 
-                    $set: { 
-                        used: true,
-                        lastUsed: new Date()
-                    }
-                }
+                { used: true },
+                { new: true }
             );
-            return result.modifiedCount > 0;
+
+            if (!result) {
+                result = await this.Result.findOneAndUpdate(
+                    { token },
+                    { used: true },
+                    { new: true }
+                );
+            }
+
+            return result;
         } catch (error) {
             logger.error('Error marking token as used:', {
-                error: error.message
+                error: error.message,
+                token: token ? token.substring(0, 10) + '...' : 'undefined'
             });
             throw error;
         }
     }
+
 
     /**
      * Salva un nuovo token di test
      * @param {Object} tokenData - Dati del token
      * @returns {Promise<Object>} Test creato
      */
-    async saveTestToken(tokenData) {
+    async saveTestToken(data) {
         try {
-            logger.debug('Saving new test token:', {
-                studentId: tokenData.studentId,
-                testType: tokenData.testType
+            // Usa il modello corretto in base al tipo di test
+            const ResultModel = data.testType === 'CSI' ? this.CSIResult : this.Result;
+            
+            const token = this.generateToken();
+            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 ore
+
+            const result = await ResultModel.create({
+                studentId: data.studentId,
+                tipo: data.testType,
+                test: data.test,
+                token,
+                expiresAt,
+                used: false
             });
 
-            // Verifica preliminare
-            if (!tokenData.studentId || !tokenData.testType) {
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_INPUT,
-                    'StudentId e testType sono richiesti'
-                );
-            }
-
-            const result = await this.Result.create({
-                ...tokenData,
-                token: this._generateToken(),
-                used: false,
-                created: new Date(),
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 ore
-            });
-
-            logger.info('Test token created successfully:', {
-                resultId: result._id,
-                token: result.token.substring(0, 10) + '...'
-            });
-
-            return result;
+            return {
+                token,
+                expiresAt,
+                _id: result._id
+            };
         } catch (error) {
             logger.error('Error saving test token:', {
                 error: error.message,
-                tokenData
+                studentId: data.studentId,
+                testType: data.testType
             });
             throw error;
         }
     }
+
 
     /**
      * Recupera risultati base di un test
@@ -162,25 +196,28 @@ class TestRepository extends BaseRepository {
      */
     async checkTestAvailability(studentId, testType) {
         try {
-            const lastResult = await this.Result
-                .findOne({
-                    studentId,
-                    'test.tipo': testType,
-                    completato: true
-                })
-                .sort({ dataCompletamento: -1 });
+            // Usa il modello corretto in base al tipo di test
+            const ResultModel = testType === 'CSI' ? this.CSIResult : this.Result;
+            
+            const lastTest = await ResultModel.findOne({
+                studentId,
+                tipo: testType,
+                completato: true
+            }).sort({ dataCompletamento: -1 });
 
-            if (!lastResult) {
+            if (!lastTest) {
                 return { available: true };
             }
 
-            const hoursSinceLastTest = 
-                (Date.now() - lastResult.dataCompletamento.getTime()) / 
-                (1000 * 60 * 60);
+            // Calcola quando sarà disponibile il prossimo test
+            const cooldownPeriod = 30 * 24 * 60 * 60 * 1000; // 30 giorni in millisecondi
+            const nextAvailableDate = new Date(lastTest.dataCompletamento.getTime() + cooldownPeriod);
+            const now = new Date();
 
             return {
-                available: hoursSinceLastTest >= 24,
-                nextAvailableDate: lastResult.dataCompletamento.getTime() + (24 * 60 * 60 * 1000)
+                available: now >= nextAvailableDate,
+                nextAvailableDate: nextAvailableDate,
+                lastTestDate: lastTest.dataCompletamento
             };
         } catch (error) {
             logger.error('Error checking test availability:', {
@@ -192,12 +229,13 @@ class TestRepository extends BaseRepository {
         }
     }
 
+
     /**
      * Genera un token univoco
      * @private
      */
-    _generateToken() {
-        return require('crypto').randomBytes(32).toString('hex');
+    generateToken() {
+        return crypto.randomBytes(32).toString('hex');
     }
 }
 
