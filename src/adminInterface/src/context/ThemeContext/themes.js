@@ -72,20 +72,20 @@ const lightTheme = {
     palette: {
         mode: 'light',
         primary: {
-            main: '#64B5F6',
-            light: '#90CAF9',
-            dark: '#42A5F5',
+            main: '#2196F3',        // Un blu più scuro e meno brillante (era '#64B5F6')
+            light: '#64B5F6',       // Mantenuto come colore chiaro
+            dark: '#1976D2',        // Un blu ancora più scuro (era '#42A5F5')
             contrastText: '#fff'
         },
         background: {
-            default: '#F5F7FA',
+            default: '#FAFBFD',     // Un grigio molto chiaro e più neutro (era '#F5F7FA')
             paper: '#FFFFFF'
         },
         sidebar: {
             background: '#FFFFFF',
-            hover: '#E3F2FD',
-            selected: '#BBDEFB',
-            text: '#37474F'
+            hover: '#EDF3FA',       // Un blu più tenue per l'hover (era '#E3F2FD')
+            selected: '#E3F2FD',    // Un blu più leggero per la selezione (era '#BBDEFB')
+            text: '#2C3E50'         // Un grigio più scuro per il testo (era '#37474F')
         }
     }
 };
