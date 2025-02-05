@@ -18,7 +18,11 @@ import { ContentLayout } from '../common/commonIndex';
 import CardsLayout from '../common/ui/CardsLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '@mui/material/styles';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Creiamo i componenti motion all'inizio
+const MotionButton = motion.create(Button);
+const MotionBox = motion.create(Box);
 
 const EnginesManagement = () => {
     const { checkPermission } = useAuth();
@@ -38,10 +42,9 @@ const EnginesManagement = () => {
     };
 
     const ActionButton = ({ children, onClick }) => (
-        <Button
+        <MotionButton
             variant="outlined"
             endIcon={<ArrowForwardIcon />}
-            component={motion.button}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onClick}
@@ -58,8 +61,9 @@ const EnginesManagement = () => {
             }}
         >
             {children}
-        </Button>
+        </MotionButton>
     );
+
 
     const cards = [
         {
@@ -198,8 +202,7 @@ const EnginesManagement = () => {
             subtitle="Gestisci e configura i test disponibili nella piattaforma"
             actions={
                 canCreateEngine && (
-                    <Button
-                        component={motion.button}
+                    <MotionButton
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         variant="contained"
@@ -216,19 +219,21 @@ const EnginesManagement = () => {
                         }}
                     >
                         Nuovo Test
-                    </Button>
+                    </MotionButton>
                 )
             }
         >
-            <Box 
-                component={motion.div}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                sx={{ mt: 3 }}
-            >
-                <CardsLayout cards={cards} />
-            </Box>
+            <AnimatePresence>
+                <MotionBox
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                    sx={{ mt: 3 }}
+                >
+                    <CardsLayout cards={cards} />
+                </MotionBox>
+            </AnimatePresence>
         </ContentLayout>
     );
 };

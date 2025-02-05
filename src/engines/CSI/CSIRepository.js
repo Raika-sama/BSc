@@ -2,15 +2,91 @@
 
 const CSIQuestion = require('./models/CSIQuestion');
 const { Result, CSIResult } = require('../../models'); // usa l'index.js centralizzato
+const CSIConfig = require('./models/CSIConfig');  // Aggiungiamo l'import
 const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 const logger = require('../../utils/errors/logger/logger');
 
 class CSIRepository {
     constructor() {
         this.questionModel = CSIQuestion;
-        this.CSIResult = CSIResult; // Cambia il nome della proprietà
+        this.resultModel = CSIResult;    // Nota: ho corretto anche il nome della proprietà
+        this.configModel = CSIConfig;    // Aggiungiamo il model per la config
     }
 
+   /**
+ * Recupera la configurazione attiva
+ */
+async getActiveConfiguration() {
+    try {
+        logger.debug('Getting active CSI configuration');
+        
+        // Ora usiamo this.configModel invece di this.model
+        const config = await this.configModel.findOne({ active: true });
+        
+        if (!config) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Nessuna configurazione CSI attiva trovata'
+            );
+        }
+
+        return config;
+    } catch (error) {
+        logger.error('Error getting configuration:', {
+            error: error.message
+        });
+        throw createError(
+            ErrorTypes.DATABASE.QUERY_ERROR,
+            'Errore nel recupero della configurazione CSI',
+            { originalError: error.message }
+        );
+    }
+}
+
+/**
+ * Aggiorna la configurazione
+ */
+async updateConfiguration(configData) {
+    try {
+        logger.debug('Updating CSI configuration with data:', {
+            version: configData.version
+        });
+
+        // Verifica se esiste una configurazione attiva
+        let config = await this.configModel.findOne({ active: true });
+
+        if (config) {
+            // Se esiste, aggiorniamo
+            Object.assign(config, configData);
+            config = await config.save();
+        } else {
+            // Se non esiste, ne creiamo una nuova
+            config = new this.configModel({
+                ...configData,
+                active: true,
+                version: configData.version || '1.0.0'
+            });
+            config = await config.save();
+        }
+
+        logger.debug('Configuration updated successfully:', {
+            id: config._id,
+            version: config.version
+        });
+
+        return config;
+    } catch (error) {
+        logger.error('Error updating configuration:', {
+            error: error.message,
+            data: configData
+        });
+        throw createError(
+            ErrorTypes.DATABASE.UPDATE_ERROR,
+            'Errore nell\'aggiornamento della configurazione CSI',
+            { originalError: error.message }
+        );
+    }
+}
 
   /**
      * Salva i risultati di un test CSI

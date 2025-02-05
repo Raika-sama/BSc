@@ -132,6 +132,12 @@ const ClassDetails = () => {
 
     return (
         <ContentLayout
+            title={classData ? `Classe ${classData.year}${classData.section || ''}` : 'Dettagli Classe'}
+            subtitle={
+                classData && classData.school 
+                    ? `${classData.school.name}${classData.schoolYear ? ` - Anno Scolastico ${classData.schoolYear}` : ''}`
+                    : ''
+            }
             actions={
                 <Button
                     variant="outlined"
@@ -141,8 +147,6 @@ const ClassDetails = () => {
                     Indietro
                 </Button>
             }
-
-            
         >
             <Box sx={{ 
                 display: 'flex', 

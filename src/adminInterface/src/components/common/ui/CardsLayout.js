@@ -1,11 +1,13 @@
-// src/components/common/ui/CardsLayout.js
 import React from 'react';
 import { Box, Card, CardContent, Typography, Grid, Chip, IconButton, Tooltip, alpha } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import { HelpOutline as HelpIcon, Star as StarIcon } from '@mui/icons-material';
 
-const MotionCard = motion(Card);
+// Define motion components correctly
+const MotionCard = motion.create(Card);
+const MotionBox = motion.create(Box);
+const MotionGrid = motion.create(Grid);
 
 const CardsLayout = ({ 
     cards, 
@@ -53,8 +55,7 @@ const CardsLayout = ({
     });
 
     return (
-        <Grid 
-            component={motion.div}
+        <MotionGrid
             variants={container}
             initial="hidden"
             animate="show"
@@ -66,12 +67,12 @@ const CardsLayout = ({
                     item 
                     xs={12} 
                     sm={6} 
-                    md={3}  // Manteniamo 4 cards per riga su desktop
-                    lg={3}
+                    md={2.4}
+                    lg={2.4}
                     key={index}
                     sx={{
                         minWidth: minWidth,
-                        maxWidth: maxWidth,
+                        maxWidth: 125,
                     }}
                 >
                     <MotionCard
@@ -119,7 +120,7 @@ const CardsLayout = ({
                         }}
                         onClick={card.onClick}
                     >
-                        <Box
+                        <MotionBox
                             className="card-background"
                             sx={{
                                 position: 'absolute',
@@ -154,8 +155,7 @@ const CardsLayout = ({
                                 mb: 2 
                             }}>
                                 {card.icon && (
-                                    <Box 
-                                        component={motion.div}
+                                    <MotionBox
                                         whileHover={{ 
                                             scale: 1.1,
                                             rotate: [0, -10, 10, -10, 0],
@@ -173,7 +173,7 @@ const CardsLayout = ({
                                         }}
                                     >
                                         {card.icon}
-                                    </Box>
+                                    </MotionBox>
                                 )}
                                 {card.helpText && !card.centerContent && (
                                     <Tooltip title={card.helpText} arrow>
@@ -284,7 +284,7 @@ const CardsLayout = ({
                     </MotionCard>
                 </Grid>
             ))}
-        </Grid>
+        </MotionGrid>
     );
 };
 

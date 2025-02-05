@@ -185,14 +185,8 @@ const ListLayout = ({
             overflow: 'hidden' // Aggiungi questa riga
         }}>         
             {/* Stats Cards - Usiamo il nuovo CardsLayout */}
-            {statsCards?.length > 0 && (
-                <StatsCardsLayout 
-                    cards={statsCards}
-                    loading={loading}
-                    spacing={3}
-                    maxColumns={4}
-                />
-            )}
+            {statsCards && <StatsCardsLayout cards={statsCards} />}
+
 
             {/* Toolbar */}
             <Box sx={{ 
@@ -488,12 +482,15 @@ const ListLayout = ({
 };
 
 ListLayout.propTypes = {
-    statsCards: PropTypes.arrayOf(PropTypes.shape({
-        title: PropTypes.string.isRequired,
-        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-        icon: PropTypes.node.isRequired,
-        color: PropTypes.string.isRequired
-    })),
+    statsCards: PropTypes.arrayOf(
+        PropTypes.shape({
+            title: PropTypes.string.isRequired,
+            value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+            icon: PropTypes.elementType.isRequired,
+            color: PropTypes.string.isRequired,
+            subtitle: PropTypes.string
+        })
+    ),
     isFilterOpen: PropTypes.bool,
     filterComponent: PropTypes.node,
     rows: PropTypes.array,

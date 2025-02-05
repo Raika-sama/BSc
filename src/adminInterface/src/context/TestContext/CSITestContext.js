@@ -4,9 +4,13 @@ import { axiosInstance } from '../../services/axiosConfig';
 
 const CSITestContext = createContext();
 
+// Aggiungiamo queste funzioni
+
+
 const initialState = {
     questions: [],
     selectedQuestion: null,
+    config: null,
     metadata: {
         tags: [],
         categories: [],
@@ -14,7 +18,8 @@ const initialState = {
     },
     loading: {
         questions: false,
-        saving: false
+        saving: false,
+        config: false
     },
     error: null
 };
@@ -51,6 +56,18 @@ const csiTestReducer = (state, action) => {
                 ),
                 loading: { ...state.loading, saving: false }
             };
+            case 'SET_CONFIG':
+            return { 
+                ...state, 
+                config: action.payload,
+                loading: { ...state.loading, config: false }
+            };
+        case 'UPDATE_CONFIG':
+            return {
+                ...state,
+                config: action.payload,
+                loading: { ...state.loading, saving: false }
+            };
         case 'CLEAR_ERROR':
             return { ...state, error: null };
         default:
@@ -67,7 +84,7 @@ export const CSITestProvider = ({ children }) => {
     const getTestQuestions = async () => {
         dispatch({ type: 'SET_LOADING', payload: { type: 'questions', status: true } });
         try {
-            const response = await axiosInstance.get('/tests/csi/questions');
+            const response = await axiosInstance.get('/tests/csi/config');
             dispatch({ type: 'SET_QUESTIONS', payload: response.data.data });
             return response.data.data;
         } catch (error) {
@@ -80,6 +97,50 @@ export const CSITestProvider = ({ children }) => {
                 }
             });
             return [];
+        }
+    };
+
+    /**
+     * Recupera la configurazione del test CSI
+     */
+    const getTestConfiguration = async () => {
+        dispatch({ type: 'SET_LOADING', payload: { type: 'config', status: true } });
+        try {
+            const response = await axiosInstance.get('/tests/csi/config');
+            dispatch({ type: 'SET_CONFIG', payload: response.data.data });
+            return response.data.data;
+        } catch (error) {
+            console.error('Error fetching configuration:', error);
+            dispatch({ 
+                type: 'SET_ERROR', 
+                payload: {
+                    message: error.response?.data?.message || 'Errore nel caricamento della configurazione',
+                    type: 'config'
+                }
+            });
+            return null;
+        }
+    };
+
+    /**
+     * Aggiorna la configurazione del test CSI
+     */
+    const updateTestConfiguration = async (configData) => {
+        dispatch({ type: 'SET_LOADING', payload: { type: 'saving', status: true } });
+        try {
+            const response = await axiosInstance.put('/tests/csi/config', configData);
+            dispatch({ type: 'UPDATE_CONFIG', payload: response.data.data });
+            return response.data.data;
+        } catch (error) {
+            console.error('Error updating configuration:', error);
+            dispatch({ 
+                type: 'SET_ERROR', 
+                payload: {
+                    message: error.response?.data?.message || 'Errore nel salvataggio della configurazione',
+                    type: 'saving'
+                }
+            });
+            return null;
         }
     };
 
@@ -165,6 +226,8 @@ export const CSITestProvider = ({ children }) => {
         getTestQuestions,
         updateTestQuestion,
         createTestQuestion,
+        getTestConfiguration,    // Aggiungiamo
+        updateTestConfiguration, // Aggiungiamo
         clearError
     };
 

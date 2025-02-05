@@ -113,6 +113,17 @@ const createCSIRoutes = ({ authMiddleware, csiController }) => {
         csiController.generateTestLink
     );
 
+    
+// Rotte per la configurazione (protette)
+protectedRouter.get('/config',
+    csiController.getConfiguration  // il metodo che abbiamo aggiunto
+);
+
+protectedRouter.put('/config',
+    express.json(),
+    csiController.updateConfiguration  // il metodo che abbiamo aggiunto
+);
+
     // Error handler migliorato
     const errorHandler = (err, req, res, next) => {
         const statusCode = err.statusCode || 500;

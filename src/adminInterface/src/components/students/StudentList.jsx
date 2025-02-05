@@ -26,7 +26,9 @@ import {
     Warning as WarningIcon,
     HourglassEmpty as PendingIcon,
     Block as BlockIcon,
-    FilterList as FilterListIcon
+    FilterList as FilterListIcon,
+    People as PeopleIcon,
+    Accessibility as AccessibilityIcon
 } from '@mui/icons-material';
 import { useStudent } from '../../context/StudentContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -95,6 +97,56 @@ const StudentList = () => {
     useEffect(() => {
         loadStudents();
     }, [page, pageSize, filters]);
+
+// Creiamo le stats cards utilizzando i dati degli studenti
+const statsCards = useMemo(() => {
+    const stats = {
+        totalStudents: students.length,
+        activeStudents: students.filter(s => s.status === 'active').length,
+        pendingStudents: students.filter(s => s.status === 'pending').length,
+        specialNeedsStudents: students.filter(s => s.specialNeeds).length,
+        assignedStudents: students.filter(s => s.classId).length
+    };
+
+
+    return [
+        {
+            title: 'Studenti Totali',
+            value: stats.totalStudents,
+            icon: PeopleIcon,         // Passa il riferimento al componente
+            color: '#1976d2',
+            subtitle: 'Totale studenti registrati'
+        },
+        {
+            title: 'Studenti Attivi',
+            value: stats.activeStudents,
+            icon: CheckCircleIcon,    // Passa il riferimento al componente
+            color: '#2e7d32',
+            subtitle: `${((stats.activeStudents / stats.totalStudents) * 100).toFixed(1)}% del totale`
+        },
+        {
+            title: 'In Attesa',
+            value: stats.pendingStudents,
+            icon: PendingIcon,        // Passa il riferimento al componente
+            color: '#ed6c02',
+            subtitle: 'Studenti in fase di registrazione'
+        },
+        {
+            title: 'Necessità Speciali',
+            value: stats.specialNeedsStudents,
+            icon: AccessibilityIcon,  // Passa il riferimento al componente
+            color: '#9c27b0',
+            subtitle: 'Studenti con supporto dedicato'
+        },
+        {
+            title: 'Assegnati',
+            value: stats.assignedStudents,
+            icon: SchoolIcon,         // Passa il riferimento al componente
+            color: '#0288d1',
+            subtitle: `${((stats.assignedStudents / stats.totalStudents) * 100).toFixed(1)}% assegnati a classi`
+        }
+    ];
+}, [students]);
 
     // Handlers
     const handleDeleteClick = (student) => {
@@ -272,7 +324,7 @@ const StudentList = () => {
             }
         >
             <ListLayout
-                statsCards={<StatCards students={students} />}
+                statsCards={statsCards} // Modifica qui: passiamo direttamente l'array di cards
                 isFilterOpen={isFilterOpen}
                 filterComponent={
                     <FilterToolbar
