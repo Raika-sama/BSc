@@ -9,11 +9,6 @@ import {
 } from '@mui/material';
 import {
     Dashboard as DashboardIcon,
-    Person as PersonIcon,
-    School as SchoolIcon,
-    Class as ClassIcon,
-    Assessment as AssessmentIcon,
-    Api as ApiIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,22 +22,12 @@ const Sidebar = ({ open, drawerWidth }) => {
     const { user, checkPermission } = useAuth();
     const { theme: customTheme } = useTheme();
 
-    // Filtra gli elementi del menu
-    const filteredMenuItems = adminRoutes.filter(route => {
-        const basePath = route.path.split('/')[0];
-        const currentPath = location.pathname.split('/')[2];
-        
-        if (!route.showInMenu) return false;
-        if (route.adminOnly && user?.role !== 'admin') return false;
-        return hasRoutePermission(route, checkPermission);
-    });
-
-    const handleNavigation = (path) => {
-        const basePath = path.split('/')[0];
-        navigate(`/admin/${basePath}`);
+    // Animazioni
+    const itemVariants = {
+        hidden: { x: -20, opacity: 0 },
+        show: { x: 0, opacity: 1 }
     };
 
-    // Animazione container
     const containerVariants = {
         hidden: { opacity: 0 },
         show: {
@@ -53,10 +38,114 @@ const Sidebar = ({ open, drawerWidth }) => {
         }
     };
 
-    // Animazione item
-    const itemVariants = {
-        hidden: { x: -20, opacity: 0 },
-        show: { x: 0, opacity: 1 }
+    // Stili
+    const drawerStyles = {
+        width: drawerWidth,
+        flexShrink: 0,
+        '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+            bgcolor: 'transparent',
+            backgroundImage: theme => theme.palette.mode === 'dark'
+                ? `linear-gradient(135deg, 
+                    ${alpha(theme.palette.background.paper, 0.98)} 0%,
+                    ${alpha(theme.palette.background.paper, 0.95)} 50%,
+                    ${alpha(theme.palette.background.paper, 0.92)} 100%)`
+                : `linear-gradient(135deg, 
+                    ${alpha(theme.palette.background.paper, 0.98)} 0%,
+                    ${alpha(theme.palette.background.paper, 0.95)} 50%,
+                    ${alpha(theme.palette.background.paper, 0.92)} 100%)`,
+            borderRight: theme => `1px solid ${
+                theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.primary.main, 0.15)
+                    : alpha(theme.palette.primary.main, 0.12)
+            }`,
+            mt: 8,
+            height: 'calc(100% - 64px)',
+            overflow: 'hidden',
+            backdropFilter: 'blur(10px)',
+            boxShadow: theme => theme.palette.mode === 'dark'
+                ? '4px 0 20px rgba(0,0,0,0.35)'
+                : '4px 0 20px rgba(100, 181, 246, 0.15)',
+            transition: 'all 0.3s ease-in-out',
+            position: 'relative',
+            '&::after': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: theme => `linear-gradient(45deg, 
+                    ${alpha(theme.palette.primary.main, 0)} 30%, 
+                    ${alpha(theme.palette.primary.light, 0.05)} 50%,
+                    ${alpha(theme.palette.primary.main, 0)} 70%)`,
+                animation: 'shimmerSidebar 3s infinite',
+                pointerEvents: 'none'
+            },
+            '@keyframes shimmerSidebar': {
+                '0%': { transform: 'translateY(-100%)' },
+                '100%': { transform: 'translateY(100%)' }
+            }
+        }
+    };
+
+    const scrollbarStyles = {
+        '::-webkit-scrollbar': {
+            width: '4px',
+        },
+        '::-webkit-scrollbar-track': {
+            backgroundColor: 'transparent',
+        },
+        '::-webkit-scrollbar-thumb': {
+            backgroundColor: theme => alpha(theme.palette.primary.main, 0.2),
+            borderRadius: '4px',
+            '&:hover': {
+                backgroundColor: theme => alpha(theme.palette.primary.main, 0.3),
+            },
+        },
+    };
+
+    const listItemStyles = (isSelected) => ({
+        border: 'none',
+        width: '90%',
+        py: 1.2,
+        my: 0.5,
+        mx: 'auto',
+        borderRadius: 2,
+        background: isSelected
+            ? theme => `linear-gradient(135deg, 
+                ${alpha(theme.palette.primary.main, 0.15)} 0%,
+                ${alpha(theme.palette.primary.light, 0.12)} 50%,
+                ${alpha(theme.palette.primary.main, 0.15)} 100%)`
+            : 'transparent',
+        '&:hover': {
+            background: theme => theme.palette.mode === 'dark'
+                ? `linear-gradient(135deg, 
+                    ${alpha(theme.palette.primary.main, 0.18)} 0%,
+                    ${alpha(theme.palette.primary.light, 0.15)} 50%,
+                    ${alpha(theme.palette.primary.main, 0.18)} 100%)`
+                : `linear-gradient(135deg, 
+                    ${alpha(theme.palette.primary.main, 0.12)} 0%,
+                    ${alpha(theme.palette.primary.light, 0.09)} 50%,
+                    ${alpha(theme.palette.primary.main, 0.12)} 100%)`,
+            '& .MuiListItemIcon-root': {
+                transform: 'scale(1.1) translateX(2px)',
+            }
+        },
+        transition: 'all 0.3s ease'
+    });
+
+    // Logica
+    const filteredMenuItems = adminRoutes.filter(route => {
+        if (!route.showInMenu) return false;
+        if (route.adminOnly && user?.role !== 'admin') return false;
+        return hasRoutePermission(route, checkPermission);
+    });
+
+    const handleNavigation = (path) => {
+        const basePath = path.split('/')[0];
+        navigate(`/admin/${basePath}`);
     };
 
     return (
@@ -64,58 +153,9 @@ const Sidebar = ({ open, drawerWidth }) => {
             variant="persistent"
             anchor="left"
             open={open}
-            sx={{
-                width: drawerWidth,
-                flexShrink: 0,
-                '& .MuiDrawer-paper': {
-                    width: drawerWidth,
-                    boxSizing: 'border-box',
-                    bgcolor: 'transparent',
-                    backgroundImage: theme => theme.palette.mode === 'dark'
-                        ? `linear-gradient(135deg, 
-                            ${alpha(theme.palette.background.paper, 0.98)} 0%,
-                            ${alpha(theme.palette.background.paper, 0.95)} 50%,
-                            ${alpha(theme.palette.background.paper, 0.92)} 100%)`
-                        : `linear-gradient(135deg, 
-                            ${alpha(theme.palette.background.paper, 0.98)} 0%,
-                            ${alpha(theme.palette.background.paper, 0.95)} 50%,
-                            ${alpha(theme.palette.background.paper, 0.92)} 100%)`,
-                    borderRight: theme => `1px solid ${
-                        theme.palette.mode === 'dark'
-                            ? alpha(theme.palette.primary.main, 0.15)
-                            : alpha(theme.palette.primary.main, 0.12)
-                    }`,
-                    mt: 8,
-                    height: 'calc(100% - 64px)', // Altezza calcolata sottraendo l'altezza dell'header
-                    overflow: 'hidden', // Nascondiamo l'overflow principale
-                    backdropFilter: 'blur(10px)',
-                    boxShadow: theme => theme.palette.mode === 'dark'
-                        ? '4px 0 20px rgba(0,0,0,0.35)'
-                        : '4px 0 20px rgba(100, 181, 246, 0.15)',
-                    transition: 'all 0.3s ease-in-out',
-                    position: 'relative',
-                    '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: theme => `linear-gradient(45deg, 
-                            ${alpha(theme.palette.primary.main, 0)} 30%, 
-                            ${alpha(theme.palette.primary.light, 0.05)} 50%,
-                            ${alpha(theme.palette.primary.main, 0)} 70%)`,
-                        animation: 'shimmerSidebar 3s infinite',
-                        pointerEvents: 'none'
-                    },
-                    '@keyframes shimmerSidebar': {
-                        '0%': { transform: 'translateY(-100%)' },
-                        '100%': { transform: 'translateY(100%)' }
-                    }
-                }
-            }}
+            sx={drawerStyles}
         >
-        <motion.div
+            <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
@@ -123,26 +163,11 @@ const Sidebar = ({ open, drawerWidth }) => {
                     height: '100%',
                     overflowY: 'auto',
                     overflowX: 'hidden',
-                    '&::-webkit-scrollbar': {
-                        width: '4px',
-                    },
-                    '&::-webkit-scrollbar-track': {
-                        background: 'transparent',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                        background: theme => alpha(theme.palette.primary.main, 0.2),
-                        borderRadius: '4px',
-                        '&:hover': {
-                            background: theme => alpha(theme.palette.primary.main, 0.3),
-                        },
-                    },
                 }}
+                sx={scrollbarStyles}
             >
-                <List sx={{ 
-                    pt: 1,
-                    pb: 2, // Aggiungiamo padding bottom per evitare che l'ultimo elemento sia troppo vicino al bordo
-                }}>
-                    <AnimatePresence>
+                <List sx={{ pt: 1, pb: 2 }}>
+                    <AnimatePresence mode="wait">
                         {filteredMenuItems.map((route) => {
                             const basePath = route.path.split('/')[0];
                             const isSelected = location.pathname.startsWith(`/admin/${basePath}`);
@@ -150,49 +175,20 @@ const Sidebar = ({ open, drawerWidth }) => {
                             
                             return (
                                 <motion.div
-                                    key={route.path}
+                                    key={`sidebar-${route.path}`}
                                     variants={itemVariants}
-                                    whileHover={{ scale: 1.02, x: 5 }}
-                                    whileTap={{ scale: 0.98 }}
+                                    initial="hidden"
+                                    animate="show"
+                                    exit="hidden"
                                 >
                                     <ListItem
                                         onClick={() => handleNavigation(route.path)}
                                         selected={isSelected}
-                                        sx={{
-                                            border: 'none',
-                                            width: '90%',
-                                            py: 1.2,
-                                            my: 0.5,
-                                            mx: 'auto',
-                                            borderRadius: 2,
-                                            background: isSelected
-                                                ? theme => `linear-gradient(135deg, 
-                                                    ${alpha(theme.palette.primary.main, 0.15)} 0%,
-                                                    ${alpha(theme.palette.primary.light, 0.12)} 50%,
-                                                    ${alpha(theme.palette.primary.main, 0.15)} 100%)`
-                                                : 'transparent',
-                                            '&:hover': {
-                                                background: theme => theme.palette.mode === 'dark'
-                                                    ? `linear-gradient(135deg, 
-                                                        ${alpha(theme.palette.primary.main, 0.18)} 0%,
-                                                        ${alpha(theme.palette.primary.light, 0.15)} 50%,
-                                                        ${alpha(theme.palette.primary.main, 0.18)} 100%)`
-                                                    : `linear-gradient(135deg, 
-                                                        ${alpha(theme.palette.primary.main, 0.12)} 0%,
-                                                        ${alpha(theme.palette.primary.light, 0.09)} 50%,
-                                                        ${alpha(theme.palette.primary.main, 0.12)} 100%)`,
-                                                '& .MuiListItemIcon-root': {
-                                                    transform: 'scale(1.1) translateX(2px)',
-                                                }
-                                            },
-                                            transition: 'all 0.3s ease'
-                                        }}
+                                        sx={listItemStyles(isSelected)}
                                     >
                                         <ListItemIcon 
                                             sx={{
-                                                color: isSelected 
-                                                    ? 'primary.main' 
-                                                    : 'text.secondary',
+                                                color: isSelected ? 'primary.main' : 'text.secondary',
                                                 minWidth: 35,
                                                 marginRight: 1,
                                                 transition: 'all 0.3s ease'
@@ -206,9 +202,7 @@ const Sidebar = ({ open, drawerWidth }) => {
                                                 sx: {
                                                     fontSize: '0.95rem',
                                                     fontWeight: isSelected ? 600 : 400,
-                                                    color: isSelected 
-                                                        ? 'primary.main' 
-                                                        : 'text.primary',
+                                                    color: isSelected ? 'primary.main' : 'text.primary',
                                                     letterSpacing: '0.02em',
                                                     transition: 'all 0.3s ease'
                                                 }

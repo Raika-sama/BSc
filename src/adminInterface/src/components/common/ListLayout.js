@@ -19,7 +19,6 @@ import {
     Fade
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
-import StatCard from '../school/schoolComponents/StatCard';
 import { DataGrid } from '@mui/x-data-grid';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
@@ -138,6 +137,13 @@ const ListLayout = ({
         '& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within': {
             outline: 'none'
         },
+        '& .MuiDataGrid-virtualScroller': {
+        '::-webkit-scrollbar': {
+            display: 'none'
+        },
+        msOverflowStyle: 'none',
+        scrollbarWidth: 'none',
+    },
         ...sx
     };
 
@@ -175,8 +181,9 @@ const ListLayout = ({
             flexDirection: 'column', 
             gap: 3, 
             height: '100%',
-            minHeight: '100vh'
-        }}>            
+            minHeight: '100vh',
+            overflow: 'hidden' // Aggiungi questa riga
+        }}>         
             {/* Stats Cards - Usiamo il nuovo CardsLayout */}
             {statsCards?.length > 0 && (
                 <StatsCardsLayout 
@@ -374,7 +381,13 @@ const ListLayout = ({
                     flex: 1,
                     width: '100%',
                     '& .MuiDataGrid-root': {
-                        border: 'none'
+                        border: 'none',
+                        // Aggiungi questi stili per nascondere la scrollbar
+                        '& ::-webkit-scrollbar': {
+                            display: 'none'
+                        },
+                        msOverflowStyle: 'none',
+                        scrollbarWidth: 'none',
                     },
                     display: 'flex',
                     flexDirection: 'column',
@@ -382,8 +395,8 @@ const ListLayout = ({
                     overflow: 'hidden',
                     border: '1px solid',
                     borderColor: 'divider',
-                    minHeight: 400, // Aggiungiamo un'altezza minima
-                    height: '100%'  // Importante per il layout flex
+                    minHeight: 400,
+                    height: '100%'
                 }}
             >
                 {tabsComponent}
@@ -392,8 +405,15 @@ const ListLayout = ({
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
-                    height: tabsComponent ? 'calc(100% - 48px)' : '100%', // Aggiustiamo l'altezza in base alla presenza delle tabs
-                    minHeight: 400 // Altezza minima anche qui
+                    height: tabsComponent ? 'calc(100% - 48px)' : '100%',
+                    minHeight: 400,
+                    // Aggiungi questi stili per nascondere la scrollbar
+                    overflow: 'auto',
+                    '::-webkit-scrollbar': {
+                        display: 'none'
+                    },
+                    msOverflowStyle: 'none',
+                    scrollbarWidth: 'none',
                 }}>
                     <DataGrid
                         rows={rows}

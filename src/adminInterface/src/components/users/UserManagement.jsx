@@ -57,12 +57,18 @@ const loadUsers = useCallback(async () => {
     } catch (error) {
         console.error('Error loading users:', error);
     }
-}, [page, pageSize, filters, getUsers]);
+}, [page, pageSize, filters]); // Rimuovi getUsers dalle dipendenze
 
+const debouncedFilters = useMemo(() => ({
+    search: filters.search,
+    role: filters.role,
+    status: filters.status,
+    sort: filters.sort
+}), [filters.search, filters.role, filters.status, filters.sort]);
 
-    React.useEffect(() => {
-        loadUsers();
-    }, [loadUsers]);
+React.useEffect(() => {
+    loadUsers();
+}, [page, pageSize, debouncedFilters]); // Usa debouncedFilters invece di loadUsers
 
     const calculateTrendData = useCallback((roleFilter = null) => {
         try {
@@ -280,9 +286,13 @@ const statsCards = useMemo(() => [
         }
     };
 
-    const handleSearch = (value) => {
+    const handleSearch = useCallback((value) => {
         setFilters(prev => ({ ...prev, search: value }));
-    };
+    }, []);
+    
+    const handleFiltersChange = useCallback((newFilters) => {
+        setFilters(prev => ({ ...prev, ...newFilters }));
+    }, []);
 
     const handleDeleteUser = (user) => {
         console.log('Delete user:', user);
@@ -321,7 +331,7 @@ const statsCards = useMemo(() => [
                             filterComponent={
                                 <UsersFilters
                                     filters={filters}
-                                    onFiltersChange={setFilters}
+                                    onFiltersChange={handleFiltersChange}
                                 />
                             }
                             rows={users || []}

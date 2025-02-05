@@ -260,6 +260,14 @@ export const adminRoutes = [
         showInMenu: false
     }
 ];
+// Aggiungi questa verifica in development
+if (process.env.NODE_ENV === 'development') {
+    const paths = adminRoutes.map(route => route.path);
+    const duplicates = paths.filter((item, index) => paths.indexOf(item) !== index);
+    if (duplicates.length > 0) {
+        console.warn('Trovati path duplicati nelle route:', duplicates);
+    }
+}
 // Utility per verificare i permessi delle rotte
 export const hasRoutePermission = (route, checkPermission) => {
     // Se non ci sono permessi richiesti o l'utente è admin, concedi accesso
