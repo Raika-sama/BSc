@@ -126,4 +126,7 @@ csiQuestionSchema.pre('save', function(next) {
 
 const CSIQuestion = mongoose.model('CSIQuestion', csiQuestionSchema);
 
-module.exports = CSIQuestion;
+module.exports = {
+    CSIQuestion,
+    metadataSchema  // Esporta anche lo schema dei metadati
+};

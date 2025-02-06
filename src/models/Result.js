@@ -1,5 +1,6 @@
 // src/models/Result.js
 const mongoose = require('mongoose');
+const { metadataSchema } = require('../engines/CSI/models/CSIQuestion');
 
 // Schema base comune a tutti i risultati
 const baseResultSchema = new mongoose.Schema({
@@ -77,26 +78,15 @@ baseResultSchema.virtual('isCompleto').get(function() {
 
 // Schema specifico per CSI
 const csiResultSchema = new mongoose.Schema({
-    test: {
-        tipo: {
-            type: String,
-            required: true,
-            enum: ['CSI']
-        },
-        config: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'CSIConfig',
-            required: true
-        },
-        domande: [{
-            id: Number,
-            testo: String,
-            categoria: {
-                type: String,
-                enum: ['Elaborazione', 'Creatività', 'Preferenza Visiva', 'Decisione', 'Autonomia']
-            },
-            metadata: metadataSchema // useremo lo stesso schema di CSIQuestion
-        }]
+    testRef: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Test',
+        required: true
+    },
+    config: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CSIConfig',
+        required: true
     },
     risposte: [{
         questionId: {
@@ -111,15 +101,7 @@ const csiResultSchema = new mongoose.Schema({
         },
         timeSpent: {
             type: Number,
-            required: true,
-            validate: {
-                validator: async function(timeSpent) {
-                    const config = await mongoose.model('CSIConfig').getActiveConfig();
-                    return timeSpent >= config.validazione.tempoMinimoDomanda &&
-                           timeSpent <= config.validazione.tempoMassimoDomanda;
-                },
-                message: 'Tempo di risposta non valido'
-            }
+            required: true
         },
         categoria: {
             type: String,

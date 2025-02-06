@@ -57,18 +57,35 @@ class CSIController {
                 token: token.substring(0, 10) + '...'
             });
     
-            // Cerca il test e logga il risultato
+            // Cerca il test
             const test = await this.repository.findByToken(token);
+            
             logger.debug('Test found:', {
                 found: !!test,
                 testId: test?._id,
-                testToken: test?.token
+                testToken: test?.token,
+                expiresAt: test?.expiresAt,
+                isExpired: test?.expiresAt < new Date()
             });
     
             if (!test) {
                 throw createError(
                     ErrorTypes.VALIDATION.INVALID_TOKEN,
                     'Token non valido o test non trovato'
+                );
+            }
+    
+            if (test.expiresAt < new Date()) {
+                throw createError(
+                    ErrorTypes.VALIDATION.EXPIRED_TOKEN,
+                    'Il token è scaduto'
+                );
+            }
+    
+            if (test.completato) {
+                throw createError(
+                    ErrorTypes.VALIDATION.TEST_COMPLETED,
+                    'Il test è già stato completato'
                 );
             }
     
@@ -82,9 +99,14 @@ class CSIController {
                 status: 'success',
                 data: {
                     valid: true,
-                    test: test,
-                    questions: questions,
-                    config: config
+                    test: {
+                        id: test._id,
+                        studentId: test.studentId,
+                        risposte: test.risposte.length,
+                        config: test.config
+                    },
+                    questions,
+                    config
                 }
             });
     
@@ -212,40 +234,49 @@ class CSIController {
         const { questionId, value, timeSpent, categoria, timestamp } = req.body;
     
         try {
-            logger.debug('Submitting answer:', { token, questionId, value });
-    
-            const updatedTest = await this.repository.updateByToken(token, {
-                $push: {
-                    risposte: {
-                        questionId,
-                        value,
-                        timeSpent,
-                        categoria,
-                        timestamp
-                    }
-                }
+            logger.debug('Submitting answer:', { 
+                token: token.substring(0, 10) + '...',
+                questionId, 
+                value 
             });
     
-            if (!updatedTest) {
+            // Usa il metodo addAnswer del repository invece di updateByToken
+            const result = await this.repository.addAnswer(token, {
+                questionId,
+                value,
+                timeSpent,
+                categoria,
+                timestamp: timestamp || new Date()
+            });
+    
+            if (!result) {
                 throw createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,
                     'Test non trovato'
                 );
             }
     
+            // Calcola il progresso
+            const progress = {
+                answered: result.risposte.length,
+                currentQuestion: result.risposte.length,
+                total: result.test.domande.length,
+                isComplete: result.risposte.length === result.test.domande.length
+            };
+    
+            logger.debug('Answer submitted successfully:', { progress });
+    
             res.json({
                 status: 'success',
-                data: {
-                    answered: updatedTest.risposte.length,
-                    currentQuestion: updatedTest.risposte.length
-                }
+                data: progress
             });
     
         } catch (error) {
-            logger.error('Error submitting CSI answer:', {
+            logger.error('Error submitting answer:', {
                 error: error.message,
                 token: token.substring(0, 10) + '...'
             });
+            
             res.status(400).json({
                 status: 'error',
                 error: {

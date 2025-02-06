@@ -21,6 +21,16 @@ const initialState = {
         saving: false,
         config: false
     },
+    activeTest: {
+        questions: [],
+        currentQuestion: 0,
+        answers: {},
+        testData: null,
+        isSubmitting: false,
+        timeSpent: 0,
+        startTime: null,
+        questionStartTime: null
+    },
     error: null
 };
 
@@ -72,6 +82,43 @@ const csiTestReducer = (state, action) => {
             return { ...state, error: null };
         default:
             return state;
+            case 'SET_ACTIVE_TEST':
+                return {
+                    ...state,
+                    activeTest: {
+                        ...state.activeTest,
+                        testData: action.payload.testData,
+                        questions: action.payload.questions
+                    }
+                };
+            case 'SET_CURRENT_QUESTION':
+                return {
+                    ...state,
+                    activeTest: {
+                        ...state.activeTest,
+                        currentQuestion: action.payload,
+                        questionStartTime: Date.now()
+                    }
+                };
+            case 'ADD_ANSWER':
+                return {
+                    ...state,
+                    activeTest: {
+                        ...state.activeTest,
+                        answers: {
+                            ...state.activeTest.answers,
+                            [state.activeTest.currentQuestion]: action.payload
+                        }
+                    }
+                };
+            case 'SET_SUBMITTING':
+                return {
+                    ...state,
+                    activeTest: {
+                        ...state.activeTest,
+                        isSubmitting: action.payload
+                    }
+                };
     }
 };
 
@@ -245,6 +292,82 @@ export const CSITestProvider = ({ children }) => {
         }
     };
 
+    const verifyTestToken = async (token) => {
+        dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: true } });
+        try {
+            const response = await axiosInstance.get(`/tests/csi/verify/${token}`);
+            if (response.data?.data?.valid) {
+                dispatch({
+                    type: 'SET_ACTIVE_TEST',
+                    payload: {
+                        testData: response.data.data.test,
+                        questions: response.data.data.questions
+                    }
+                });
+                return response.data.data;
+            }
+            throw new Error('Token non valido o scaduto');
+        } catch (error) {
+            dispatch({
+                type: 'SET_ERROR',
+                payload: {
+                    message: error.message,
+                    type: 'test'
+                }
+            });
+            throw error;
+        }
+    };
+
+    const submitAnswer = async (token, answerData) => {
+        dispatch({ type: 'SET_SUBMITTING', payload: true });
+        try {
+            const response = await axiosInstance.post(
+                `/tests/csi/${token}/answer`,
+                answerData
+            );
+
+            if (response.data.status === 'success') {
+                dispatch({ type: 'ADD_ANSWER', payload: answerData });
+                return response.data.data;
+            }
+            throw new Error('Errore durante il salvataggio della risposta');
+        } catch (error) {
+            dispatch({
+                type: 'SET_ERROR',
+                payload: {
+                    message: error.message,
+                    type: 'answer'
+                }
+            });
+            throw error;
+        } finally {
+            dispatch({ type: 'SET_SUBMITTING', payload: false });
+        }
+    };
+
+    const completeTest = async (token, totalTime, answers) => {
+        dispatch({ type: 'SET_LOADING', payload: { type: 'completing', status: true } });
+        try {
+            const response = await axiosInstance.post(`/tests/csi/${token}/complete`, {
+                totalTime,
+                answers
+            });
+            return response.data.data;
+        } catch (error) {
+            dispatch({
+                type: 'SET_ERROR',
+                payload: {
+                    message: error.message,
+                    type: 'completing'
+                }
+            });
+            throw error;
+        } finally {
+            dispatch({ type: 'SET_LOADING', payload: { type: 'completing', status: false } });
+        }
+    };
+
     const clearError = () => {
         dispatch({ type: 'CLEAR_ERROR' });
     };
@@ -257,6 +380,9 @@ export const CSITestProvider = ({ children }) => {
         getTestConfiguration,    // Aggiungiamo
         updateTestConfiguration, // Aggiungiamo
         generateCSITestLink,     // Aggiungiamo
+        verifyTestToken,
+        submitAnswer,
+        completeTest,
         clearError
     };
 

@@ -1,7 +1,7 @@
 // src/engines/CSI/repositories/CSIRepository.js
-
+const crypto = require('crypto'); // Aggiungi questo import in cima
 const CSIQuestion = require('./models/CSIQuestion');
-const { Result, CSIResult } = require('../../models'); // usa l'index.js centralizzato
+const { Test, Result, CSIResult } = require('../../models'); // usa l'index.js centralizzato
 const CSIConfig = require('./models/CSIConfig');  // Aggiungiamo l'import
 const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 const logger = require('../../utils/errors/logger/logger');
@@ -13,6 +13,8 @@ class CSIRepository extends TestRepository {
         this.questionModel = CSIQuestion;
         this.resultModel = CSIResult;    // Nota: ho corretto anche il nome della proprietà
         this.configModel = CSIConfig;    // Aggiungiamo il model per la config
+        this.Test = Test; // Aggiungi questa riga
+
     }
 
 /**
@@ -76,27 +78,112 @@ async checkAvailability(studentId) {
  */
  async saveTestToken(testData) {
     try {
-        logger.debug('Saving CSI test token with data:', testData);
-
-        // Struttura i dati nel formato corretto per il TestRepository
-        const formattedData = {
+        logger.debug('Saving CSI test token with data:', {
             studentId: testData.studentId,
-            tipo: 'CSI',  // Questo è il campo richiesto che mancava
-            config: testData.config
-        };
-
-        const tokenData = await super.saveTestToken(formattedData);
-
-        logger.debug('CSI test token saved successfully:', {
-            tokenId: tokenData._id,
-            studentId: testData.studentId
+            tipo: testData.tipo
         });
 
-        return tokenData;
+        // Genera un nuovo token
+        const token = crypto.randomBytes(32).toString('hex');
+
+        // Prima ottieni la configurazione attiva
+        const activeConfig = await this.configModel.findOne({ active: true });
+        if (!activeConfig) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Nessuna configurazione CSI attiva trovata'
+            );
+        }
+
+        logger.debug('Found active CSI config:', {
+            configId: activeConfig._id,
+            version: activeConfig.version
+        });
+
+        // Crea prima il Test con valori di default sicuri
+        const newTest = await this.Test.create({
+            tipo: 'CSI',
+            studentId: testData.studentId,
+            configurazione: {
+                tempoLimite: activeConfig.validazione?.tempoMassimoDomanda || 300000,
+                tentativiMax: 1,
+                cooldownPeriod: 24 * 60 * 60 * 1000,
+                randomizzaDomande: false,
+                mostraRisultatiImmediati: false,
+                istruzioni: activeConfig.interfaccia?.istruzioni || 
+                    'Rispondi alle seguenti domande selezionando un valore da 1 a 5',
+                questionVersion: '1.0.0'
+            },
+            csiConfig: activeConfig._id,
+            active: true,
+            versione: '1.0.0'
+        });
+
+        logger.debug('Created new CSI test:', {
+            testId: newTest._id,
+            config: newTest.configurazione
+        });
+
+        // Poi crea il Result associato
+        const newResult = await this.resultModel.create({
+            tipo: 'CSI',
+            studentId: testData.studentId,
+            token: token,
+            testRef: newTest._id,
+            config: activeConfig._id,
+            expiresAt: new Date(Date.now() + (24 * 60 * 60 * 1000)),
+            risposte: [],
+            completato: false,
+            dataInizio: new Date()
+        });
+
+        return {
+            token,
+            expiresAt: newResult.expiresAt,
+            testId: newTest._id,
+            resultId: newResult._id
+        };
     } catch (error) {
         logger.error('Error saving CSI test token:', {
             error: error.message,
             studentId: testData.studentId
+        });
+        throw createError(
+            ErrorTypes.DATABASE.SAVE_ERROR,
+            'Errore nel salvataggio del token CSI',
+            { originalError: error.message }
+        );
+    }
+}
+
+
+
+async findByToken(token) {
+    try {
+        logger.debug('Finding test by token:', { 
+            token: token.substring(0, 10) + '...',
+            modelName: this.resultModel.modelName
+        });
+
+        // Aggiungiamo più dettagli alla query
+        const test = await this.resultModel.findOne({ 
+            token,
+            tipo: 'CSI',
+            expiresAt: { $gt: new Date() } // verifica che non sia scaduto
+        });
+        
+        logger.debug('Find by token result:', {
+            found: !!test,
+            testId: test?._id,
+            testToken: test?.token,
+            expires: test?.expiresAt
+        });
+
+        return test;
+    } catch (error) {
+        logger.error('Error finding test by token:', {
+            error: error.message,
+            token: token.substring(0, 10) + '...'
         });
         throw error;
     }
@@ -407,8 +494,48 @@ async updateByToken(token, updateData) {
 
 async addAnswer(token, answerData) {
     try {
+        logger.debug('Adding answer:', {
+            token: token.substring(0, 10) + '...',
+            answerData
+        });
+
+        // Verifica che il test esista e non sia completato
+        const test = await this.resultModel.findOne({ 
+            token,
+            completato: false
+        });
+
+        if (!test) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Test non trovato o già completato'
+            );
+        }
+
+        // Verifica che la risposta non sia già presente
+        const esisteRisposta = test.risposte.some(r => r.questionId === answerData.questionId);
+        if (esisteRisposta) {
+            throw createError(
+                ErrorTypes.VALIDATION.DUPLICATE_ANSWER,
+                'Risposta già presente per questa domanda'
+            );
+        }
+
+        // Verifica il tempo di risposta
+        const config = await this.configModel.findOne({ active: true });
+        if (config && answerData.timeSpent) {
+            const tempoValido = config.validateAnswer(answerData.timeSpent);
+            if (!tempoValido) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_RESPONSE_TIME,
+                    'Tempo di risposta non valido'
+                );
+            }
+        }
+
+        // Aggiunge la risposta
         const result = await this.resultModel.findOneAndUpdate(
-            { token: token }, // cerca per token invece che per _id
+            { token },
             {
                 $push: {
                     risposte: {
@@ -416,48 +543,49 @@ async addAnswer(token, answerData) {
                         value: answerData.value,
                         timeSpent: answerData.timeSpent,
                         categoria: answerData.categoria,
-                        timestamp: answerData.timestamp
+                        timestamp: answerData.timestamp || new Date()
                     }
                 }
             },
-            { new: true } // restituisce il documento aggiornato
+            { 
+                new: true,
+                runValidators: true
+            }
         );
 
-        if (!result) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Test non trovato'
-            );
-        }
+        logger.debug('Answer added successfully:', {
+            testId: result._id,
+            answersCount: result.risposte.length
+        });
 
         return result;
     } catch (error) {
         logger.error('Error adding answer:', {
             error: error.message,
-            token
+            token: token.substring(0, 10) + '...'
         });
         throw error;
     }
 }
 
-async findByToken(token) {
+
+
+async getTestStatus(token) {
     try {
-        logger.debug('Finding test by token:', { 
-            token: token.substring(0, 10) + '...',
-            modelName: this.resultModel.modelName
-        });
-
         const test = await this.resultModel.findOne({ token });
-        
-        logger.debug('Find by token result:', {
-            found: !!test,
-            testId: test?._id,
-            testToken: test?.token
-        });
+        if (!test) {
+            return null;
+        }
 
-        return test;
+        return {
+            total: test.test.domande.length,
+            answered: test.risposte.length,
+            remaining: test.test.domande.length - test.risposte.length,
+            isComplete: test.completato,
+            canSubmitMore: !test.completato && test.risposte.length < test.test.domande.length
+        };
     } catch (error) {
-        logger.error('Error finding test by token:', {
+        logger.error('Error getting test status:', {
             error: error.message,
             token: token.substring(0, 10) + '...'
         });

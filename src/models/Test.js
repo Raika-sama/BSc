@@ -127,15 +127,62 @@ testSchema.index({ tipo: 1, active: 1 });
 testSchema.index({ 'configurazione.questionVersion': 1 });
 
 // Aggiungi questo pre-save middleware
+// Middleware di validazione
 testSchema.pre('save', async function(next) {
     if (this.tipo === 'CSI') {
-        if (!this.csiConfig) {
+        try {
             const CSIConfig = mongoose.model('CSIConfig');
-            const activeConfig = await CSIConfig.getActiveConfig();
-            if (!activeConfig) {
-                next(new Error('Nessuna configurazione CSI attiva trovata'));
+            const config = await CSIConfig.findOne({ active: true });
+            
+            if (!config) {
+                throw new Error('Nessuna configurazione CSI attiva trovata');
             }
-            this.csiConfig = activeConfig._id;
+
+            // Salva il riferimento alla configurazione
+            this.configurazione.configRef = config._id;
+            
+            // Imposta i metadati di base dalla configurazione
+            // Verifichiamo che le proprietà esistano prima di accedervi
+            this.configurazione.metadataSchema = {
+                categorie: config.scoring?.categorie?.map(c => c.nome) || [],
+                scaleLikert: config.scoring?.categorie?.[0]?.max || 5, // valore di default se non presente
+                pesoDefault: config.scoring?.categorie?.[0]?.pesoDefault || 1
+            };
+
+            // Imposta anche altri valori di default se non specificati
+            if (!this.configurazione.tempoLimite) {
+                this.configurazione.tempoLimite = config.validazione?.tempoMassimoDomanda || 300000;
+            }
+            
+            if (this.configurazione.tentativiMax === undefined) {
+                this.configurazione.tentativiMax = 1;
+            }
+
+            if (this.configurazione.cooldownPeriod === undefined) {
+                this.configurazione.cooldownPeriod = 24 * 60 * 60 * 1000; // 24 ore in ms
+            }
+
+            if (this.configurazione.randomizzaDomande === undefined) {
+                this.configurazione.randomizzaDomande = false;
+            }
+
+            if (this.configurazione.mostraRisultatiImmediati === undefined) {
+                this.configurazione.mostraRisultatiImmediati = false;
+            }
+
+            if (!this.configurazione.istruzioni) {
+                this.configurazione.istruzioni = config.interfaccia?.istruzioni || 
+                    'Rispondi alle seguenti domande selezionando un valore da 1 a 5';
+            }
+
+        } catch (error) {
+            logger.error('Error in Test pre-save middleware:', {
+                error: error.message,
+                testId: this._id,
+                tipo: this.tipo
+            });
+            next(error);
+            return;
         }
     }
     next();
