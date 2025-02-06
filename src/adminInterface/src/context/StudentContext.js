@@ -403,28 +403,38 @@ return normalized;
     };
 
     // Modifica createStudent
-const createStudent = async (studentData) => {
-    try {
-        const formattedData = {
-            ...studentData,
-            dateOfBirth: new Date(studentData.dateOfBirth).toISOString()
-        };
-
-        const response = await axiosInstance.post('/students', formattedData);
-
-        if (response.data.status === 'success') {
-            const newStudent = normalizeStudent(response.data.data.student);
-            dispatch({
-                type: STUDENT_ACTIONS.ADD_STUDENT,
-                payload: newStudent
-            });
-            return newStudent;
+    const createStudent = async (studentData) => {
+        try {
+            // Pulizia dei dati prima dell'invio
+            const formattedData = {
+                ...studentData,
+                // Converti stringhe vuote in null
+                fiscalCode: studentData.fiscalCode || null,
+                parentEmail: studentData.parentEmail || null,
+                // Gestisci correttamente mainTeacher e teachers
+                mainTeacher: studentData.mainTeacher || null,
+                teachers: (studentData.teachers || []).filter(Boolean),
+                // Assicurati che la data sia in formato ISO
+                dateOfBirth: new Date(studentData.dateOfBirth).toISOString()
+            };
+    
+            console.log('Sending formatted data to server:', formattedData);
+    
+            const response = await axiosInstance.post('/students', formattedData);
+    
+            if (response.data.status === 'success') {
+                const newStudent = normalizeStudent(response.data.data.student);
+                dispatch({
+                    type: STUDENT_ACTIONS.ADD_STUDENT,
+                    payload: newStudent
+                });
+                return newStudent;
+            }
+        } catch (error) {
+            console.error('Error creating student:', error);
+            throw error;
         }
-    } catch (error) {
-        console.error('Error creating student:', error);
-        throw error;
-    }
-};
+    };
 
     const createStudentWithClass = async (studentData) => {
         try {

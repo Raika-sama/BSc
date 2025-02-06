@@ -102,7 +102,22 @@ const StudentForm = () => {
         setError(null);
 
         try {
-            const newStudent = await createStudent(formData);
+            // Pulizia dei dati prima dell'invio
+            const cleanedData = {
+                ...formData,
+                // Converti stringhe vuote in null
+                fiscalCode: formData.fiscalCode || null,
+                parentEmail: formData.parentEmail || null,
+                // Gestisci correttamente mainTeacher e teachers
+                mainTeacher: formData.mainTeacher || null,
+                teachers: (formData.teachers || []).filter(Boolean),
+                // Assicurati che la data sia in formato ISO
+                dateOfBirth: new Date(formData.dateOfBirth).toISOString()
+            };
+
+            console.log('Sending cleaned data:', cleanedData);
+
+            const newStudent = await createStudent(cleanedData);
             showNotification('Studente creato con successo', 'success');
             navigate(`/admin/students/${newStudent.id}`);
         } catch (err) {
@@ -112,6 +127,7 @@ const StudentForm = () => {
             setLoading(false);
         }
     };
+
 
     return (
         <Paper sx={{ p: 3 }}>
@@ -213,22 +229,22 @@ const StudentForm = () => {
                     </Grid>
 
                     <Grid item xs={12} sm={6} md={4}>
-                        <FormControl fullWidth>
-                            <InputLabel>Docente Principale</InputLabel>
-                            <Select
-                                name="mainTeacher"
-                                value={formData.mainTeacher}
-                                onChange={handleChange}
-                                label="Docente Principale"
-                            >
-                                <MenuItem value="">Nessuno</MenuItem>
-                                {users.map(user => (
-                                    <MenuItem key={user._id} value={user._id}>
-                                        {`${user.firstName} ${user.lastName}`}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                    <FormControl fullWidth>
+                        <InputLabel>Docente Principale</InputLabel>
+                        <Select
+                            name="mainTeacher"
+                            value={formData.mainTeacher || ''} // Usa stringa vuota per il valore nel select
+                            onChange={handleChange}
+                            label="Docente Principale"
+                        >
+                            <MenuItem value="">Nessuno</MenuItem>
+                            {users.map(user => (
+                                <MenuItem key={user._id} value={user._id}>
+                                    {`${user.firstName} ${user.lastName}`}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                     </Grid>
 
                     <Grid item xs={12} sm={6} md={4}>

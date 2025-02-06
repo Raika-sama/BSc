@@ -47,6 +47,12 @@ const StudentEditForm = ({ student, setStudent }) => {
 
     useEffect(() => {
         if (student) {
+            // Debug log per vedere cosa arriva
+            console.log('Student data received:', {
+                mainTeacher: student.mainTeacher,
+                mainTeacherId: student.mainTeacher?._id || student.mainTeacher
+            });
+
             setFormData({
                 firstName: student.firstName || '',
                 lastName: student.lastName || '',
@@ -55,10 +61,14 @@ const StudentEditForm = ({ student, setStudent }) => {
                 dateOfBirth: student.dateOfBirth ? student.dateOfBirth.split('T')[0] : '',
                 email: student.email || '',
                 parentEmail: student.parentEmail || '',
-                mainTeacher: student.mainTeacher ? 
-                           (student.mainTeacher._id || student.mainTeacher.id || student.mainTeacher) : 
-                           '',
-                teachers: student.teachers?.map(t => t._id || t.id || t) || [],
+                // Assicurati di prendere SOLO l'ID, non l'oggetto intero
+                mainTeacher: typeof student.mainTeacher === 'string' 
+                    ? student.mainTeacher 
+                    : student.mainTeacher?._id || '',
+                // Stessa cosa per teachers - prendiamo solo gli ID
+                teachers: student.teachers?.map(t => 
+                    typeof t === 'string' ? t : t._id
+                ) || [],
                 specialNeeds: student.specialNeeds || false
             });
         }
@@ -70,9 +80,16 @@ const StudentEditForm = ({ student, setStudent }) => {
         if (name === 'specialNeeds') {
             setFormData(prev => ({ ...prev, specialNeeds: checked }));
         } else if (name === 'teachers') {
-            setFormData(prev => ({ ...prev, teachers: Array.isArray(value) ? value : [] }));
+            setFormData(prev => ({ 
+                ...prev, 
+                teachers: Array.isArray(value) ? value : []
+            }));
         } else if (name === 'mainTeacher') {
-            setFormData(prev => ({ ...prev, mainTeacher: value || null }));
+            // Assicurati che il valore sia una stringa o stringa vuota
+            setFormData(prev => ({ 
+                ...prev, 
+                mainTeacher: value || ''
+            }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -105,30 +122,46 @@ const StudentEditForm = ({ student, setStudent }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        const studentId = student.id || student._id;
+        const studentId = student._id;
         if (!studentId) {
             setError('ID studente non valido');
             return;
         }
-
+    
         const errors = validateForm();
         if (errors.length > 0) {
             setError(errors.join(', '));
             return;
         }
-
+    
         try {
             setLoading(true);
+            // Puliamo i dati prima di inviarli
             const updateData = {
-                ...formData,
-                dateOfBirth: new Date(formData.dateOfBirth).toISOString()
+                firstName: formData.firstName.trim(),
+                lastName: formData.lastName.trim(),
+                gender: formData.gender,
+                dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
+                email: formData.email.trim(),
+                // Invia fiscalCode solo se non è vuoto
+                ...(formData.fiscalCode ? { fiscalCode: formData.fiscalCode.trim().toUpperCase() } : {}),
+                // Invia parentEmail solo se non è vuoto
+                ...(formData.parentEmail ? { parentEmail: formData.parentEmail.trim() } : {}),
+                // Assicurati che mainTeacher sia una stringa valida o null
+                mainTeacher: formData.mainTeacher || null,
+                // Filtra eventuali teachers vuoti o invalidi
+                teachers: (formData.teachers || []).filter(Boolean),
+                specialNeeds: Boolean(formData.specialNeeds)
             };
-
+    
+            console.log('Sending update data:', updateData); // Debug log
+    
             const updatedStudent = await updateStudent(studentId, updateData);
             setStudent(updatedStudent);
             setModified(false);
             showNotification('Studente aggiornato con successo', 'success');
         } catch (err) {
+            console.error('Update error:', err);
             setError(err.response?.data?.message || err.message);
             showNotification('Errore durante l\'aggiornamento', 'error');
         } finally {
@@ -228,22 +261,22 @@ const StudentEditForm = ({ student, setStudent }) => {
                 </Grid>
 
                 <Grid item xs={12} sm={6} md={4}>
-                    <FormControl fullWidth>
-                        <InputLabel>Docente Principale</InputLabel>
-                        <Select
-                            name="mainTeacher"
-                            value={formData.mainTeacher || ''}
-                            onChange={handleChange}
-                            label="Docente Principale"
-                        >
-                            <MenuItem value="">Nessuno</MenuItem>
-                            {users.map(user => (
-                                <MenuItem key={user._id} value={user._id}>
-                                    {`${user.firstName} ${user.lastName}`}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                <FormControl fullWidth>
+                    <InputLabel>Docente Principale</InputLabel>
+                    <Select
+                        name="mainTeacher"
+                        value={formData.mainTeacher || ''} // Ora questo sarà sempre un ID o stringa vuota
+                        onChange={handleChange}
+                        label="Docente Principale"
+                    >
+                        <MenuItem value="">Nessuno</MenuItem>
+                        {users.map(user => (
+                            <MenuItem key={user._id} value={user._id}>
+                                {`${user.firstName} ${user.lastName}`}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
                 </Grid>
 
                 <Grid item xs={12} sm={6} md={4}>
