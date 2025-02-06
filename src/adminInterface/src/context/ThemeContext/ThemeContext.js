@@ -1,4 +1,3 @@
-// src/context/ThemeContext/ThemeContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { createTheme } from '@mui/material';
 import { themes, defaultTheme, isValidTheme } from './themes';
@@ -32,8 +31,9 @@ export const ThemeProvider = ({ children }) => {
     // Genera il tema Material-UI
     const theme = React.useMemo(() => {
         if (currentTheme === 'custom') {
-            // Per il tema personalizzato, passa anche la modalità corrente
-            const mode = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
+            // Per il tema personalizzato, determina la modalità basandosi sul tema corrente
+            const baseTheme = localStorage.getItem('theme') || defaultTheme;
+            const mode = baseTheme.includes('Dark') ? 'dark' : 'light';
             return createTheme(themes.getCustomTheme(customColor, mode));
         }
         return createTheme(themes[currentTheme]);
@@ -41,13 +41,40 @@ export const ThemeProvider = ({ children }) => {
 
     // Funzione per cambiare tema
     const changeTheme = (newTheme) => {
-        if (newTheme === 'dark' || newTheme === 'light') {
-            // Salva la modalità
+        if (isValidTheme(newTheme)) {
             localStorage.setItem('theme', newTheme);
             setCurrentTheme(newTheme);
         } else if (newTheme === 'custom') {
             // Per il tema personalizzato, mantieni la modalità corrente
             setCurrentTheme('custom');
+        }
+    };
+
+    // Funzione per determinare se un tema è in modalità dark
+    const isDarkTheme = (themeName) => {
+        return themeName.includes('Dark');
+    };
+
+    // Funzione per ottenere la versione light/dark di un tema
+    const getThemeVariant = (themeName, wantDark) => {
+        if (themeName === 'custom') return themeName;
+        
+        const baseTheme = themeName.replace('Dark', '');
+        return wantDark ? `${baseTheme}Dark` : baseTheme;
+    };
+
+    // Funzione per toggleTheme che supporta i nuovi temi
+    const toggleTheme = () => {
+        const currentIsDark = isDarkTheme(currentTheme);
+        if (currentTheme === 'custom') {
+            // Per il tema custom, toggle tra light e dark mantenendo il colore personalizzato
+            const newMode = currentIsDark ? 'light' : 'dark';
+            localStorage.setItem('theme', newMode);
+            setCurrentTheme('custom');
+        } else {
+            // Per i temi predefiniti, passa tra le versioni light e dark
+            const newTheme = getThemeVariant(currentTheme, !currentIsDark);
+            changeTheme(newTheme);
         }
     };
 
@@ -72,8 +99,8 @@ export const ThemeProvider = ({ children }) => {
         return () => window.removeEventListener('storage', handleStorageChange);
     }, [currentTheme]);
 
+    // Effetto per applicare il tema al body
     useEffect(() => {
-        // Applica il tema anche al body
         document.body.style.backgroundColor = theme.palette.background.default;
         document.body.style.color = theme.palette.text.primary;
         
@@ -85,11 +112,13 @@ export const ThemeProvider = ({ children }) => {
 
     const value = {
         theme,                  // Il tema Material-UI corrente
-        currentTheme,          // Nome del tema corrente ('light', 'dark', 'custom')
+        currentTheme,          // Nome del tema corrente
         customColor,           // Colore personalizzato corrente
         changeTheme,          // Funzione per cambiare tema
+        toggleTheme,          // Funzione per alternare tra light e dark
         setCustomThemeColor,  // Funzione per impostare un colore personalizzato
-        isValidTheme         // Utility function per validare i temi
+        isValidTheme,        // Utility function per validare i temi
+        isDarkTheme          // Utility function per verificare se un tema è dark
     };
 
     return (
@@ -98,5 +127,3 @@ export const ThemeProvider = ({ children }) => {
         </ThemeContext.Provider>
     );
 };
-
-// Non c'è bisogno di ri-esportare useTheme qui dato che è già esportato sopra

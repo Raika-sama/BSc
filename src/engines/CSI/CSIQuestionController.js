@@ -73,6 +73,7 @@ getAvailableTags = async (req, res) => {
      */
     getActiveQuestions = async (req, res) => {
         try {
+            logger.debug('Controller: Getting active questions');
             const questions = await this.service.getTestQuestions();
 
             logger.debug('Retrieved questions:', {

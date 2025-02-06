@@ -1,9 +1,14 @@
-// src/components/profile/ThemeSelector/ThemePreview.js
 import React from 'react';
 import { Box, Paper, Typography, useTheme } from '@mui/material';
 
 const ThemePreview = ({ themeData, themeName, selected, onClick }) => {
     const currentTheme = useTheme();
+
+    // Verifica che themeData abbia le proprietà necessarie
+    if (!themeData?.palette?.primary?.main) {
+        console.warn('Theme data is missing required properties:', themeName);
+        return null;
+    }
 
     return (
         <Paper
@@ -17,76 +22,45 @@ const ThemePreview = ({ themeData, themeName, selected, onClick }) => {
                     transform: 'scale(1.02)',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
                 },
-                backgroundColor: themeData.palette.background.default,
-                position: 'relative',
-                overflow: 'hidden',
-                '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    opacity: 0,
-                    transition: 'opacity 0.3s',
-                },
-                '&:active::after': {
-                    opacity: 1,
-                }
-                    }}
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2,
+                minWidth: 120,
+                backgroundColor: themeData.palette.background?.default || '#ffffff'
+            }}
         >
-            {/* Header Preview */}
-            <Box 
-                sx={{ 
-                    height: '20px', 
-                    backgroundColor: themeData.palette.primary.main,
-                    borderRadius: '4px',
-                    mb: 1 
-                }} 
-            />
-            
-            {/* Content Preview */}
+            {/* Colori del tema */}
             <Box sx={{ display: 'flex', gap: 1 }}>
-                {/* Sidebar Preview */}
-                <Box 
-                    sx={{ 
-                        width: '30px',
-                        height: '50px',
-                        backgroundColor: themeData.palette.background.paper,
-                        borderRadius: '4px'
-                    }} 
-                />
-                
-                {/* Main Content Preview */}
-                <Box 
-                    sx={{ 
-                        flex: 1,
-                        height: '50px',
-                        backgroundColor: themeData.palette.background.paper,
-                        borderRadius: '4px',
-                        p: 1
+                {/* Colore principale */}
+                <Box
+                    sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        backgroundColor: themeData.palette.primary.main,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                     }}
-                >
-                    <Box 
-                        sx={{ 
-                            width: '70%', 
-                            height: '8px',
-                            backgroundColor: themeData.palette.text.primary,
-                            opacity: 0.2,
-                            borderRadius: '2px'
-                        }} 
-                    />
-                </Box>
+                />
+                {/* Colore secondario (light o dark in base al tema) */}
+                <Box
+                    sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        backgroundColor: themeData.palette.mode === 'dark' 
+                            ? themeData.palette.primary.light 
+                            : themeData.palette.primary.dark,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                />
             </Box>
 
             <Typography 
-                variant="caption" 
-                sx={{ 
-                    mt: 1, 
-                    display: 'block',
-                    color: themeData.palette.text.primary,
-                    textAlign: 'center'
+                variant="caption"
+                sx={{
+                    fontWeight: selected ? 'bold' : 'normal',
+                    color: themeData.palette.text?.primary
                 }}
             >
                 {themeName}

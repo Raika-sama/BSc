@@ -45,6 +45,8 @@ const initializeCSIConfig = () => {
 
 const setupCSIDependencies = () => {
     try {
+        logger.debug('Initializing CSI dependencies...');
+
         // Inizializza configurazione
         const csiConfig = initializeCSIConfig();
 
@@ -57,6 +59,12 @@ const setupCSIDependencies = () => {
         const studentRepository = new StudentRepository();
         const csiQuestionRepository = new CSIQuestionRepository(CSIQuestion, validator); // CORRETTO
         
+          
+        logger.debug('Repositories initialized:', {
+            hasTestRepository: !!testRepository,
+            hasCsiRepository: !!csiRepository
+        });
+
         // Inizializza scorer con config
         const csiScorer = new CSIScorer(csiConfig);
         
@@ -75,13 +83,32 @@ const setupCSIDependencies = () => {
             validator
         });
 
+        logger.debug('Creating CSI repository...', {
+            repositoryMethods: Object.getOwnPropertyNames(Object.getPrototypeOf(csiRepository))
+        });
+
+        logger.debug('Creating CSI controller with dependencies...', {
+            hasEngine: !!csiEngine,
+            hasRepository: !!csiRepository,
+            hasQuestionService: !!csiQuestionService
+        });
+
+
         // Inizializza controller con tutte le dipendenze
         const csiController = new CSIController({
+            repository: csiRepository, // Passa il repository corretto
             testEngine: csiEngine,
             csiQuestionService,
             userService,
             csiConfig,
-            validator
+            validator,
+            repository: csiRepository  // Aggiungiamo questa!
+        });
+
+  logger.debug('CSI controller initialized:', {
+            hasController: !!csiController,
+            hasRepository: !!csiController.repository,
+            repositoryType: csiController.repository?.constructor?.name
         });
 
         if (!csiController) {
@@ -102,7 +129,10 @@ const setupCSIDependencies = () => {
             csiQuestionRepository
         };
     } catch (error) {
-        logger.error('Error in setupCSIDependencies:', { error: error.message });
+        logger.error('Error in setupCSIDependencies:', { 
+            error: error.message,
+            stack: error.stack 
+        });
         throw new Error('CSI Dependencies initialization failed');
     }
 };

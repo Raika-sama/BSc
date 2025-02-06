@@ -27,8 +27,97 @@ const ContentLayout = ({
     loading,
     animation = true
 }) => {
-    const customTheme = useTheme();
-    const isDarkMode = customTheme.palette.mode === 'dark';
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
+
+    // Definizione degli stili in base al tema
+    const styles = {
+        wrapper: {
+            background: isDarkMode
+                ? alpha(theme.palette.background.default, 0.6)
+                : theme.palette.background.default,
+            borderRadius: 2,
+            transition: 'all 0.3s ease',
+        },
+        contentBox: {
+            borderRadius: 3,
+            overflow: 'hidden',
+            bgcolor: isDarkMode
+                ? alpha(theme.palette.background.paper, 0.85)
+                : theme.palette.background.paper,
+            boxShadow: isDarkMode
+                ? `0 4px 20px ${alpha(theme.palette.common.black, 0.35)}`
+                : `0 4px 20px ${alpha(theme.palette.primary.main, 0.15)}`,
+            backgroundImage: `linear-gradient(135deg, 
+                ${alpha(theme.palette.background.paper, isDarkMode ? 0.98 : 1)} 0%,
+                ${alpha(theme.palette.background.paper, isDarkMode ? 0.95 : 0.98)} 50%,
+                ${alpha(theme.palette.background.paper, isDarkMode ? 0.92 : 0.95)} 100%)`,
+            backdropFilter: 'blur(10px)',
+            transition: 'all 0.3s ease',
+            p: 3,
+            '&:hover': {
+                boxShadow: isDarkMode
+                    ? `0 6px 25px ${alpha(theme.palette.common.black, 0.45)}`
+                    : `0 6px 25px ${alpha(theme.palette.primary.main, 0.25)}`,
+            }
+        },
+        title: {
+            fontWeight: 600,
+            background: isDarkMode
+                ? `linear-gradient(135deg, 
+                    ${theme.palette.primary.main}, 
+                    ${theme.palette.primary.light})`
+                : `linear-gradient(135deg, 
+                    ${theme.palette.primary.main}, 
+                    ${theme.palette.primary.dark})`,
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            color: 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+                transform: 'scale(1.01)',
+                background: isDarkMode
+                    ? `linear-gradient(135deg, 
+                        ${theme.palette.primary.light}, 
+                        ${theme.palette.primary.main})`
+                    : `linear-gradient(135deg, 
+                        ${theme.palette.primary.dark}, 
+                        ${theme.palette.primary.main})`,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+            }
+        },
+        breadcrumbs: {
+            '& .MuiLink-root': {
+                color: theme.palette.text.secondary,
+                fontSize: '0.875rem',
+                transition: 'color 0.2s',
+                '&:hover': {
+                    color: theme.palette.primary.main
+                }
+            }
+        },
+        backButton: {
+            color: theme.palette.text.secondary,
+            '&:hover': {
+                color: theme.palette.primary.main,
+                backgroundColor: alpha(theme.palette.primary.main, 0.08)
+            }
+        },
+        helpIcon: {
+            fontSize: '1.2rem',
+            color: theme.palette.text.secondary,
+            cursor: 'help'
+        },
+        subtitle: {
+            color: theme.palette.text.secondary,
+            opacity: 0.8,
+            transition: 'color 0.3s ease'
+        }
+    };
 
     return (
         <Fade 
@@ -54,74 +143,15 @@ const ContentLayout = ({
                 sx={{
                     flex: 1,
                     p: 3,
-                    transition: 'all 0.3s ease',
-                    position: 'relative',
-                    '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: theme => `linear-gradient(45deg, 
-                            ${alpha(theme.palette.primary.main, 0)} 30%, 
-                            ${alpha(theme.palette.primary.light, 0.03)} 50%,
-                            ${alpha(theme.palette.primary.main, 0)} 70%)`,
-                        animation: 'shimmerContent 3s infinite',
-                        pointerEvents: 'none'
-                    },
-                    '@keyframes shimmerContent': {
-                        '0%': { transform: 'translateX(-100%)' },
-                        '100%': { transform: 'translateX(100%)' }
-                    }
+                    ...styles.wrapper
                 }}
             >
-                <Box
-                    sx={{
-                        borderRadius: 3,
-                        overflow: 'hidden',
-                        bgcolor: theme => theme.palette.mode === 'dark'
-                            ? alpha(theme.palette.background.paper, 0.85)
-                            : theme.palette.background.paper,
-                        boxShadow: theme => theme.palette.mode === 'dark'
-                            ? '0 4px 20px rgba(0,0,0,0.35)'
-                            : '0 4px 20px rgba(100, 181, 246, 0.15)',
-                        backgroundImage: theme => theme.palette.mode === 'dark'
-                            ? `linear-gradient(135deg, 
-                                ${alpha(theme.palette.background.paper, 0.98)} 0%,
-                                ${alpha(theme.palette.background.paper, 0.95)} 50%,
-                                ${alpha(theme.palette.background.paper, 0.92)} 100%)`
-                            : `linear-gradient(135deg, 
-                                ${alpha(theme.palette.background.paper, 1)} 0%,
-                                ${alpha(theme.palette.background.paper, 0.98)} 50%,
-                                ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
-                        backdropFilter: 'blur(10px)',
-                        transition: 'all 0.3s ease',
-                        p: 3, // Aggiunto padding interno
-                        '&:hover': {
-                            boxShadow: theme => theme.palette.mode === 'dark'
-                                ? '0 6px 25px rgba(0,0,0,0.45)'
-                                : '0 6px 25px rgba(100, 181, 246, 0.25)',
-                        }
-                    }}
-                >
+                <Box sx={styles.contentBox}>
                     {/* Header Section */}
                     <Box sx={{ mb: 4, ...headerProps }}>
                         {/* Breadcrumbs */}
                         {breadcrumbs && (
-                            <Breadcrumbs 
-                                sx={{ 
-                                    mb: 2,
-                                    '& .MuiLink-root': {
-                                        color: 'text.secondary',
-                                        fontSize: '0.875rem',
-                                        transition: 'color 0.2s',
-                                        '&:hover': {
-                                            color: 'primary.main'
-                                        }
-                                    }
-                                }}
-                            >
+                            <Breadcrumbs sx={styles.breadcrumbs}>
                                 {breadcrumbs.map((crumb, index) => (
                                     <Link
                                         key={index}
@@ -151,14 +181,7 @@ const ContentLayout = ({
                                 {onBack && (
                                     <IconButton 
                                         onClick={onBack}
-                                        sx={{ 
-                                            mr: 1,
-                                            color: 'text.secondary',
-                                            '&:hover': {
-                                                color: 'primary.main',
-                                                backgroundColor: alpha(customTheme.palette.primary.main, 0.08)
-                                            }
-                                        }}
+                                        sx={styles.backButton}
                                     >
                                         <KeyboardBackspaceIcon />
                                     </IconButton>
@@ -166,57 +189,19 @@ const ContentLayout = ({
                                 <Box>
                                     <Typography
                                         variant="h4"
-                                        sx={{
-                                            fontWeight: 600,
-                                            background: theme => theme.palette.mode === 'dark'
-                                                ? `linear-gradient(135deg, 
-                                                    ${theme.palette.primary.main}, 
-                                                    ${theme.palette.primary.light})`
-                                                : `linear-gradient(135deg, 
-                                                    ${theme.palette.primary.main}, 
-                                                    ${theme.palette.primary.dark})`,
-                                            backgroundClip: 'text',
-                                            WebkitBackgroundClip: 'text',
-                                            color: 'transparent',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 1,
-                                            transition: 'all 0.3s ease',
-                                            '&:hover': {
-                                                transform: 'scale(1.01)',
-                                                background: theme => theme.palette.mode === 'dark'
-                                                    ? `linear-gradient(135deg, 
-                                                        ${theme.palette.primary.light}, 
-                                                        ${theme.palette.primary.main})`
-                                                    : `linear-gradient(135deg, 
-                                                        ${theme.palette.primary.dark}, 
-                                                        ${theme.palette.primary.main})`,
-                                                backgroundClip: 'text',
-                                                WebkitBackgroundClip: 'text',
-                                            }
-                                        }}
+                                        sx={styles.title}
                                     >
                                         {title}
                                         {helpText && (
                                             <Tooltip title={helpText} arrow>
-                                                <HelpOutlineIcon 
-                                                    sx={{ 
-                                                        fontSize: '1.2rem',
-                                                        color: 'text.secondary',
-                                                        cursor: 'help'
-                                                    }}
-                                                />
+                                                <HelpOutlineIcon sx={styles.helpIcon} />
                                             </Tooltip>
                                         )}
                                     </Typography>
                                     {subtitle && (
                                         <Typography 
                                             variant="subtitle1" 
-                                            sx={{ 
-                                                color: 'text.secondary',
-                                                opacity: 0.8,
-                                                transition: 'color 0.3s ease'
-                                            }}
+                                            sx={styles.subtitle}
                                         >
                                             {subtitle}
                                         </Typography>
@@ -251,6 +236,7 @@ const ContentLayout = ({
     );
 };
 
+// PropTypes rimangono gli stessi
 ContentLayout.propTypes = {
     title: PropTypes.string.isRequired,
     subtitle: PropTypes.string,

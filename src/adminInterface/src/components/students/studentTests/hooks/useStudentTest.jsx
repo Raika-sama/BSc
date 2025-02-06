@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../../../context/NotificationContext';
 import { axiosInstance } from '../../../../services/axiosConfig';
+import { useCSITest } from '../../../../context/TestContext/CSITestContext';
 
 export const useStudentTest = (studentId) => {
     const [loading, setLoading] = useState(false);
@@ -11,6 +12,8 @@ export const useStudentTest = (studentId) => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [testLink, setTestLink] = useState('');
     const { showNotification } = useNotification();
+    const { generateCSITestLink } = useCSITest(); // Aggiungiamo questo
+    const csiContext = useCSITest();
     const navigate = useNavigate();
 
     // Verifica validità studentId
@@ -21,6 +24,31 @@ export const useStudentTest = (studentId) => {
             return;
         }
     }, [studentId, navigate, showNotification]);
+
+    const handleCreateTest = async () => {
+        try {
+            if (!studentId || studentId === 'undefined') {
+                showNotification('ID studente mancante o non valido', 'error');
+                return;
+            }
+
+            const result = await generateCSITestLink(studentId);
+            if (result) {
+                const testUrl = `${window.location.origin}/test/csi/${result.token}`;
+                setTestLink(testUrl);
+                setDialogOpen(true);
+                showNotification('Link del test generato con successo', 'success');
+            }
+        } catch (error) {
+            showNotification(
+                `Errore nella generazione del link del test: ${
+                    error.response?.data?.message || error.message
+                }`,
+                'error'
+            );
+        }
+    };
+
 
     // Carica i test completati
     const fetchCompletedTests = useCallback(async () => {
@@ -82,6 +110,7 @@ export const useStudentTest = (studentId) => {
         completedTests,
         selectedTest,
         handleTestSelect,
+        handleCreateTest,
         formatDate,
         refreshTests: fetchCompletedTests,
         // Aggiungi questi

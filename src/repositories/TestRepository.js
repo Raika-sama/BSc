@@ -135,21 +135,19 @@ class TestRepository extends BaseRepository {
      */
     async saveTestToken(data) {
         try {
-            // Usa il modello corretto in base al tipo di test
-            const ResultModel = data.testType === 'CSI' ? this.CSIResult : this.Result;
-            
             const token = this.generateToken();
             const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 ore
-
-            const result = await ResultModel.create({
+    
+            const result = await this.Result.create({
                 studentId: data.studentId,
                 tipo: data.testType,
-                test: data.test,
                 token,
                 expiresAt,
-                used: false
+                used: false,
+                config: data.config, // Salviamo la configurazione
+                status: 'initialized'
             });
-
+    
             return {
                 token,
                 expiresAt,
@@ -158,8 +156,7 @@ class TestRepository extends BaseRepository {
         } catch (error) {
             logger.error('Error saving test token:', {
                 error: error.message,
-                studentId: data.studentId,
-                testType: data.testType
+                data
             });
             throw error;
         }

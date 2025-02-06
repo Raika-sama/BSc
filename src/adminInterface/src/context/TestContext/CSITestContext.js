@@ -78,13 +78,41 @@ const csiTestReducer = (state, action) => {
 export const CSITestProvider = ({ children }) => {
     const [state, dispatch] = useReducer(csiTestReducer, initialState);
 
+    const generateCSITestLink = async (studentId) => {
+        dispatch({ type: 'SET_LOADING', payload: { type: 'link', status: true } });
+        try {
+            const response = await axiosInstance.post('/tests/csi/generate-link', {
+                studentId,
+                testType: 'CSI'
+            });
+            
+            if (!response.data?.data) {
+                throw new Error('Risposta non valida dal server');
+            }
+    
+            return response.data.data;
+        } catch (error) {
+            dispatch({ 
+                type: 'SET_ERROR', 
+                payload: {
+                    message: error.response?.data?.message || 'Errore nella generazione del link',
+                    type: 'link'
+                }
+            });
+            throw error;
+        } finally {
+            dispatch({ type: 'SET_LOADING', payload: { type: 'link', status: false } });
+        }
+    };
+
     /**
      * Recupera tutte le domande CSI
      */
     const getTestQuestions = async () => {
         dispatch({ type: 'SET_LOADING', payload: { type: 'questions', status: true } });
         try {
-            const response = await axiosInstance.get('/tests/csi/config');
+            // Modifichiamo l'endpoint per puntare alle domande invece che alla config
+            const response = await axiosInstance.get('/tests/csi/questions');
             dispatch({ type: 'SET_QUESTIONS', payload: response.data.data });
             return response.data.data;
         } catch (error) {
@@ -228,6 +256,7 @@ export const CSITestProvider = ({ children }) => {
         createTestQuestion,
         getTestConfiguration,    // Aggiungiamo
         updateTestConfiguration, // Aggiungiamo
+        generateCSITestLink,     // Aggiungiamo
         clearError
     };
 

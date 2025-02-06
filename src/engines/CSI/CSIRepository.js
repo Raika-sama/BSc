@@ -5,41 +5,51 @@ const { Result, CSIResult } = require('../../models'); // usa l'index.js central
 const CSIConfig = require('./models/CSIConfig');  // Aggiungiamo l'import
 const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 const logger = require('../../utils/errors/logger/logger');
+const TestRepository = require('../../repositories/TestRepository');
 
-class CSIRepository {
+class CSIRepository extends TestRepository {
     constructor() {
+        super();
         this.questionModel = CSIQuestion;
         this.resultModel = CSIResult;    // Nota: ho corretto anche il nome della proprietà
         this.configModel = CSIConfig;    // Aggiungiamo il model per la config
+        this.resultModel = CSIResult;
+
     }
 
-   /**
- * Recupera la configurazione attiva
- */
+/**
+     * Recupera la configurazione attiva
+     */
 async getActiveConfiguration() {
     try {
         logger.debug('Getting active CSI configuration');
-        
-        // Ora usiamo this.configModel invece di this.model
         const config = await this.configModel.findOne({ active: true });
-        
-        if (!config) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Nessuna configurazione CSI attiva trovata'
-            );
-        }
-
-        return config;
+        return config || null;
     } catch (error) {
-        logger.error('Error getting configuration:', {
+        logger.error('Error getting CSI configuration:', {
             error: error.message
         });
-        throw createError(
-            ErrorTypes.DATABASE.QUERY_ERROR,
-            'Errore nel recupero della configurazione CSI',
-            { originalError: error.message }
-        );
+        throw error;
+    }
+}
+
+  /**
+     * Override del metodo saveTestToken per gestire specifiche CSI
+     */
+  async saveTestToken(testData) {
+    try {
+        const tokenData = await super.saveTestToken({
+            ...testData,
+            testType: 'CSI'
+        });
+
+        return tokenData;
+    } catch (error) {
+        logger.error('Error saving CSI test token:', {
+            error: error.message,
+            studentId: testData.studentId
+        });
+        throw error;
     }
 }
 

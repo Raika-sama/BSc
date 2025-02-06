@@ -30,6 +30,7 @@ const QuestionsPanel = () => {
 
     const fetchQuestions = async () => {
         try {
+            console.log('Fetching questions...');
             const data = await getTestQuestions();
             console.log('Questions received:', data);
             setQuestions(data || []); // Aggiunto fallback a array vuoto

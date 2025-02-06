@@ -5,8 +5,8 @@ const logger = require('../utils/errors/logger/logger');
 
 // Rate Limiter per tentativi di login
 const loginLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 60 minuti
-    max: 5, // limite di 5 tentativi
+    windowMs: 15 * 60 * 1000, // 15 minuti
+    max: 10, // limite di 5 tentativi
     message: 'Troppi tentativi di login. Riprova più tardi.',
     standardHeaders: true,
     legacyHeaders: false,
@@ -119,7 +119,7 @@ class AuthMiddleware {
         // In produzione, impostare TTL basato sulla scadenza del token
         setTimeout(() => {
             this.tokenBlacklist.delete(token);
-        }, 24 * 60 * 60 * 1000); // 24 ore
+        }, /*24 * 60 * 60 **/ 1000); // 24 ore
     };
 }
 

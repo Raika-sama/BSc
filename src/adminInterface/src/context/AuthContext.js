@@ -103,31 +103,6 @@ export const AuthProvider = ({ children }) => {
     };
 
     
-
-   /* const refreshSession = async () => {
-        try {
-            if (!sessionData?.refreshToken) return false;
-            
-            const response = await axiosInstance.post('/auth/refresh-token', {
-                refreshToken: sessionData.refreshToken
-            });
-
-            if (response.data.status === 'success') {
-                const { token, refreshToken } = response.data.data;
-                setSessionData(prev => ({
-                    ...prev,
-                    token,
-                    refreshToken
-                }));
-                return true;
-            }
-            return false;
-        } catch (error) {
-            handleAuthError();
-            return false;
-        }
-    }; */
-
     const updateUser = (userData) => {
         try {
             const updatedUser = { ...user, ...userData };

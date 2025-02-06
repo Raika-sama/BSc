@@ -4,10 +4,11 @@ const logger = require('../../../utils/errors/logger/logger');
 const { createError, ErrorTypes } = require('../../../utils/errors/errorTypes');
 
 const createCSIRoutes = ({ authMiddleware, csiController }) => {
-    logger.debug('Creating CSI routes with:', {
-        hasAuthMiddleware: !!authMiddleware,
+    // Aggiungiamo log all'inizio
+    logger.debug('Creating CSI routes with controller:', {
         hasCsiController: !!csiController,
-        controllerMethods: csiController ? Object.getOwnPropertyNames(Object.getPrototypeOf(csiController)) : []
+        controllerType: csiController?.constructor?.name,
+        hasRepository: !!csiController?.repository
     });
     // Validazione dipendenze
     if (!authMiddleware) throw new Error('authMiddleware is required');

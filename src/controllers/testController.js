@@ -35,7 +35,7 @@ class TestController extends BaseController {
             const { studentId, testType } = req.body;
             
             logger.debug('Starting new test:', { studentId, testType });
-
+    
             // Verifica disponibilità
             const availability = await this.repository.checkTestAvailability(studentId, testType);
             if (!availability.available) {
@@ -48,23 +48,25 @@ class TestController extends BaseController {
                     }
                 });
             }
-
-            // Genera token per il test
-            const token = await this.repository.saveTestToken({
-                studentId,
-                testType
-            });
-
-            logger.info('Test started successfully:', {
-                testId: token._id,
-                studentId,
-                testType
-            });
-
+    
+            let testData;
+            // Se è un test CSI, usa il controller specifico
+            if (testType === 'CSI') {
+                testData = await this.csiController.initializeCSITest(studentId);
+            } else {
+                // Gestione altri tipi di test...
+                throw new Error('Tipo test non supportato');
+            }
+    
+            const testUrl = `${process.env.FRONTEND_URL}/test/${testType.toLowerCase()}/${testData.token}`;
+    
             this.sendResponse(res, { 
-                token: token.token,
-                expiresAt: token.expiresAt
+                token: testData.token,
+                url: testUrl,
+                expiresAt: testData.expiresAt,
+                config: testData.config
             }, 201);
+    
         } catch (error) {
             logger.error('Error starting test:', {
                 error: error.message,

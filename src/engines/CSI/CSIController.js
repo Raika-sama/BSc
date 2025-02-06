@@ -5,11 +5,25 @@ const logger = require('../../utils/errors/logger/logger');
 
 class CSIController {
     constructor(dependencies) {
+        logger.debug('CSIController constructor called with dependencies:', {
+            hasDependencies: !!dependencies,
+            dependencyKeys: dependencies ? Object.keys(dependencies) : []
+        });
         const { 
-            testEngine,      // Cambiato da testRepository
+            testEngine,
             csiQuestionService,
             userService,
+            csiConfig,
+            validator,
+            repository  // Aggiungiamo questa dipendenza!
         } = dependencies;
+
+        logger.debug('Dependencies extracted:', {
+            hasTestEngine: !!testEngine,
+            hasQuestionService: !!csiQuestionService,
+            hasRepository: !!repository,
+            repositoryType: repository ? repository.constructor.name : 'undefined'
+        });
 
         if (!testEngine || !csiQuestionService) {
             throw new Error('Required dependencies missing');
@@ -23,9 +37,13 @@ class CSIController {
         this.questionService = csiQuestionService;
         this.userService = userService;
         this.configModel = require('./models/CSIConfig');
+        this.validator = validator;
+        this.repository = repository;  // Salviamo il repository!
 
-        logger.debug('CSIController initialized successfully');
 
+        logger.debug('CSIController initialized, repository methods:', {
+            repositoryMethods: repository ? Object.getOwnPropertyNames(Object.getPrototypeOf(repository)) : []
+        });
     }
 
     /**
@@ -109,6 +127,56 @@ class CSIController {
         }
     };
 
+    async initializeCSITest(studentId) {
+        try {
+            logger.debug('Initializing CSI test for student:', { studentId });
+    
+            // 1. Recupera configurazione attiva
+            const config = await this.configModel.getActiveConfig();
+            if (!config) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Nessuna configurazione CSI attiva trovata'
+                );
+            }
+    
+            // 2. Imposta i dati del test
+            const testData = {
+                studentId,
+                testType: 'CSI',
+                config: {
+                    timeLimit: config.validazione.tempoMassimoDomanda,
+                    minQuestions: config.validazione.numeroMinimoDomande,
+                    instructions: config.interfaccia.istruzioni,
+                    showProgress: config.interfaccia.mostraProgressBar,
+                    allowBack: config.interfaccia.permettiTornaIndietro
+                }
+            };
+    
+            // 3. Genera token tramite TestRepository
+            const tokenData = await this.repository.saveTestToken(testData);
+    
+            logger.info('CSI test initialized:', {
+                studentId,
+                tokenId: tokenData._id,
+                expiresAt: tokenData.expiresAt
+            });
+    
+            return {
+                token: tokenData.token,
+                expiresAt: tokenData.expiresAt,
+                config: testData.config
+            };
+    
+        } catch (error) {
+            logger.error('Error initializing CSI test:', {
+                error: error.message,
+                studentId
+            });
+            throw error;
+        }
+    }
+
     /**
      * Processa risposta test CSI
      */
@@ -191,33 +259,31 @@ class CSIController {
     generateTestLink = async (req, res) => {
         try {
             const { studentId } = req.body;
-    
-            // Delega la generazione del link all'engine
-            const result = await this.engine.generateTestLink(studentId);
-    
-            const testUrl = `${process.env.FRONTEND_URL}/test/csi/${result.token}`;
-    
-            res.json({
-                status: 'success',
-                data: {
-                    token: result.token,
-                    url: testUrl,
-                    expiresAt: result.expiresAt
-                }
+            
+            logger.debug('Generating CSI test link:', { 
+                studentId,
+                hasRepository: !!this.repository,
+                repositoryType: this.repository ? this.repository.constructor.name : 'undefined'
             });
+    
+            if (!this.repository) {
+                throw new Error('Repository not initialized in CSIController');
+            }
+    
+            // Verifica disponibilità
+            const availability = await this.repository.checkTestAvailability(studentId, 'CSI');
+            
+            // ... resto del codice
         } catch (error) {
             logger.error('Error generating CSI test link:', {
                 error: error.message,
-                studentId: req.body.studentId
-            });
-    
-            res.status(400).json({
-                status: 'error',
-                error: {
-                    message: error.message,
-                    code: error.code || 'GENERATE_LINK_ERROR'
+                errorStack: error.stack,
+                studentId: req.body.studentId,
+                controllerState: {
+                    hasRepository: !!this.repository
                 }
             });
+            this.sendError(res, error);
         }
     };
 

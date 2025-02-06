@@ -115,33 +115,38 @@ if (config.env === 'development') {
 // Inizializza le dipendenze CSI
 logger.debug('Initializing CSI dependencies...');
 
-// Setup iniziale CSI
-const csiSetup = setupCSIDependencies();
-
-// Inizializza CSIQuestionController con le sue dipendenze
-const csiQuestionController = new CSIQuestionController(
-    csiSetup.csiQuestionService // assicurati che questo venga restituito da setupCSIDependencies
-);
-
-// Verifica inizializzazione
-logger.debug('CSIQuestionController initialization:', {
-    hasController: !!csiQuestionController,
-    controllerMethods: csiQuestionController ? Object.getOwnPropertyNames(Object.getPrototypeOf(csiQuestionController)) : []
-});
-
 // Crea il controller CSI con le dipendenze esterne
 const { controller: csiController, dependencies: csiDependencies } = createCSIController({
     userService,
     testRepository,
     studentRepository,
-    ...csiSetup // Includi le dipendenze base CSI
+    testEngine: csiEngine,
+    csiQuestionService
 });
 
-// Debug log per verificare l'inizializzazione del controller
 logger.debug('CSI Controller initialization:', {
     hasController: !!csiController,
-    controllerMethods: csiController ? Object.getOwnPropertyNames(Object.getPrototypeOf(csiController)) : []
+    controllerState: {
+        hasRepository: !!csiController.repository,
+        hasEngine: !!csiController.engine,
+        hasUserService: !!csiController.userService
+    }
 });
+
+// Inizializza CSIQuestionController
+const csiQuestionController = new CSIQuestionController(
+    csiDependencies.csiQuestionService
+);
+
+// Verifica inizializzazione
+logger.debug('CSIQuestionController initialization:', {
+    hasController: !!csiQuestionController,
+    hasQuestionService: !!csiQuestionController.service
+});
+
+if (!csiController?.engine) {
+    throw new Error('CSI Controller engine not initialized correctly');
+}
 
 // Crea oggetto con tutte le dipendenze
 const dependencies = {
@@ -189,6 +194,14 @@ logger.debug('Dependencies check:', {
 if (!csiController || !csiQuestionController) {
     throw new Error('CSI Controllers non inizializzati correttamente');
 }
+
+logger.debug('Setting up CSI routes...', {
+    hasController: !!csiController,
+    controllerState: {
+        hasRepository: !!csiController?.repository,
+        hasEngine: !!csiController?.engine
+    }
+});
 
 // Inizializza e monta le routes CSI
 const csiRoutes = createCSIRoutes({

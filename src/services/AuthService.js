@@ -22,8 +22,8 @@ class AuthService {
         this.JWT_REFRESH_SECRET = config.jwt.refreshSecret;
         this.JWT_EXPIRES_IN = config.jwt.expiresIn || '1h';
         this.REFRESH_TOKEN_EXPIRES_IN = config.jwt.refreshExpiresIn || '7d';
-        this.MAX_LOGIN_ATTEMPTS = 5;
-        this.LOCK_TIME = 15 * 60 * 1000; // 15 minuti
+        this.MAX_LOGIN_ATTEMPTS = 100;
+        this.LOCK_TIME = 24 * 60 * 60 * 1000; // 24h
     }
 
     /**

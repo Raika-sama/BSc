@@ -5,5 +5,6 @@ export {
     defaultTheme,
     lightenColor,
     darkenColor,
-    getContrastText 
-} from './themes';
+    getContrastText,
+    isValidTheme
+ } from './themes';
