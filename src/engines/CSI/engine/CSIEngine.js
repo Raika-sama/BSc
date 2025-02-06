@@ -1,186 +1,119 @@
-// src/engines/CSI/repositories/CSIRepository.js
-
-const CSIQuestion = require('../models/CSIQuestion');
-const { Result, CSIResult } = require('../../../models/Result');
 const { createError, ErrorTypes } = require('../../../utils/errors/errorTypes');
 const logger = require('../../../utils/errors/logger/logger');
 
-class CSIRepository {
-    constructor() {
-        this.questionModel = CSIQuestion;
-        this.resultModel = CSIResult;
-    }
-
-    /**
-     * Salva un nuovo risultato CSI
-     */
-    async saveResults(resultData) {
-        try {
-            logger.debug('Saving CSI test results:', { 
-                studentId: resultData.studentId,
-                testId: resultData._id 
-            });
-
-            const result = await this.resultModel.create({
-                ...resultData,
-                tipo: 'CSI'
-            });
-
-            logger.debug('CSI results saved successfully:', {
-                resultId: result._id
-            });
-
-            return result;
-        } catch (error) {
-            logger.error('Error saving CSI results:', {
-                error: error.message,
-                resultData
-            });
-            throw createError(
-                ErrorTypes.DATABASE.SAVE_ERROR,
-                'Errore nel salvataggio dei risultati CSI',
-                { originalError: error.message }
-            );
+class CSIEngine {
+    constructor({ Test, Result, scorer, config, repository, questionService, validator }) {
+        if (!Test || !Result || !scorer || !config || !repository || !questionService) {
+            throw new Error('Required dependencies missing in CSIEngine');
         }
+
+        this.testRepo = Test;
+        this.resultRepo = Result;
+        this.scorer = scorer;
+        this.config = config;
+        this.repository = repository;
+        this.questionService = questionService;
+        this.validator = validator;
     }
-
-    /**
-     * Trova un risultato per token
-     */
-    async findByToken(token) {
+/*
+    async verifyToken(token) {
         try {
-            logger.debug('Finding CSI result by token:', {
-                token: token ? token.substring(0, 10) + '...' : 'undefined'
-            });
+            logger.debug('Verifying CSI token:', { token: token.substring(0, 10) + '...' });
 
-            const result = await this.resultModel.findOne({
-                token,
-                used: false,
-                expiresAt: { $gt: new Date() }
-            });
-
-            return result;
-        } catch (error) {
-            logger.error('Error finding CSI result by token:', {
-                error: error.message,
-                token: token ? token.substring(0, 10) + '...' : 'undefined'
-            });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_ERROR,
-                'Errore nella ricerca del risultato CSI',
-                { originalError: error.message }
-            );
-        }
-    }
-
-    /**
-     * Trova un risultato per ID
-     */
-    async findById(id) {
-        try {
-            return await this.resultModel.findById(id);
-        } catch (error) {
-            logger.error('Error finding CSI result by id:', {
-                error: error.message,
-                id
-            });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_ERROR,
-                'Errore nella ricerca del risultato CSI',
-                { originalError: error.message }
-            );
-        }
-    }
-
-    /**
-     * Aggiorna un risultato esistente
-     */
-    async update(id, updateData) {
-        try {
-            logger.debug('Updating CSI result:', { id });
-
-            const result = await this.resultModel.findByIdAndUpdate(
-                id,
-                updateData,
-                { new: true }
-            );
-
+            // Verifica il token usando il repository
+            const result = await this.repository.verifyToken(token);
+            
             if (!result) {
                 throw createError(
-                    ErrorTypes.DATABASE.NOT_FOUND,
-                    'Risultato CSI non trovato'
+                    ErrorTypes.VALIDATION.INVALID_TOKEN,
+                    'Token non valido o scaduto'
                 );
             }
 
             return result;
         } catch (error) {
-            logger.error('Error updating CSI result:', {
-                error: error.message,
-                id,
-                updateData
-            });
+            logger.error('Error verifying token:', { error: error.message });
             throw error;
         }
     }
 
-    /**
-     * Trova risultati per studente
-     */
-    async findByStudent(studentId) {
+    async startTest(token) {
         try {
-            return await this.resultModel.find({
-                studentId,
-                tipo: 'CSI'
-            }).sort({ dataCompletamento: -1 });
-        } catch (error) {
-            logger.error('Error finding CSI results for student:', {
-                error: error.message,
-                studentId
-            });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_ERROR,
-                'Errore nella ricerca dei risultati CSI dello studente',
-                { originalError: error.message }
-            );
-        }
-    }
-
-    /**
-     * Verifica disponibilità test per uno studente
-     */
-    async checkAvailability(studentId) {
-        try {
-            const lastTest = await this.resultModel.findOne({
-                studentId,
-                tipo: 'CSI',
-                completato: true
-            }).sort({ dataCompletamento: -1 });
-
-            if (!lastTest) {
-                return { available: true };
+            // Verifica e marca il token come utilizzato
+            const result = await this.repository.markTokenAsUsed(token);
+            
+            if (!result) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_TOKEN,
+                    'Token non valido o già utilizzato'
+                );
             }
 
-            const cooldownPeriod = 30 * 24 * 60 * 60 * 1000; // 30 giorni
-            const nextAvailableDate = new Date(lastTest.dataCompletamento.getTime() + cooldownPeriod);
-            const now = new Date();
-
-            return {
-                available: now >= nextAvailableDate,
-                nextAvailableDate,
-                lastTestDate: lastTest.dataCompletamento
-            };
+            return result;
         } catch (error) {
-            logger.error('Error checking CSI test availability:', {
-                error: error.message,
-                studentId
-            });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_ERROR,
-                'Errore nella verifica disponibilità test CSI',
-                { originalError: error.message }
-            );
+            logger.error('Error starting test:', { error: error.message });
+            throw error;
         }
     }
+
+    async processAnswer(token, answerData) {
+        try {
+            const { questionId, value, timeSpent } = answerData;
+            
+            // Validazione risposta
+            if (!this.validator.validateAnswer(value, timeSpent)) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_INPUT,
+                    'Risposta non valida'
+                );
+            }
+
+            // Aggiorna il risultato
+            const result = await this.repository.update(token, {
+                $push: {
+                    risposte: {
+                        questionId,
+                        value,
+                        timeSpent,
+                        timestamp: new Date()
+                    }
+                }
+            });
+
+            return result;
+        } catch (error) {
+            logger.error('Error processing answer:', { error: error.message });
+            throw error;
+        }
+    }
+
+    async completeTest(token) {
+        try {
+            const result = await this.repository.findByToken(token);
+            
+            if (!result) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_TOKEN,
+                    'Token non valido'
+                );
+            }
+
+            // Calcola i punteggi
+            const scores = await this.scorer.calculateTestResult(result.risposte);
+            
+            // Aggiorna e completa il test
+            const completedResult = await this.repository.update(token, {
+                completato: true,
+                dataCompletamento: new Date(),
+                ...scores
+            });
+
+            return completedResult;
+        } catch (error) {
+            logger.error('Error completing test:', { error: error.message });
+            throw error;
+        }
+    }*/
 }
 
-module.exports = CSIRepository;
+module.exports = CSIEngine;

@@ -22,6 +22,8 @@ import { Assessment as AssessmentIcon } from '@mui/icons-material';
 import CSITestView from '../components/engines/CSI/CSITestView';
 import CSIQuestionsPanel from '../components/engines/CSI/CSIQuestionsPanel';
 import PublicCSITest from '../components/engines/CSI/publicCSI';
+import StudentForm from '../components/students/StudentForm';  // Aggiungi questo import
+import StudentEditForm from '../components/students/list/tabs/InfoTab';  // Aggiungi questo import
 
 // Importa le icone da Material-UI
 import {
@@ -190,6 +192,14 @@ export const adminRoutes = [
         title: 'Assegnazione Studenti',
         icon: PersonIcon,
         permissions: [PERMISSIONS.STUDENTS.WRITE, PERMISSIONS.SCHOOLS.READ],
+        showInMenu: false
+    },
+    {
+        path: 'students/new',
+        element: StudentForm,  // Il nuovo componente
+        title: 'Nuovo Studente',
+        icon: PersonIcon,
+        permissions: [PERMISSIONS.STUDENTS.WRITE],
         showInMenu: false
     },
     {

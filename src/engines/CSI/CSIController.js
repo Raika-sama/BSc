@@ -58,7 +58,7 @@ class CSIController {
             });
     
             // Delega la verifica all'engine
-            const result = await this.engine.verifyToken(token);
+            const result = await this.repository.verifyToken(token);
             
             // Carica le domande attraverso il questionService
             const questions = await this.questionService.getTestQuestions();
@@ -104,13 +104,13 @@ class CSIController {
                 token: token ? token.substring(0, 10) + '...' : 'undefined'
             });
     
-            // Delega l'inizializzazione all'engine
-            const result = await this.engine.startTest(token);
+            // Marca il token come usato
+            const result = await this.repository.markTokenAsUsed(token);
             
-            // Carica le domande
+            // Carica domande
             const questions = await this.questionService.getTestQuestions();
             
-            // Carica la configurazione attiva
+            // Carica configurazione attiva
             const config = await this.configModel.findOne({ active: true });
     
             if (!config) {
@@ -131,9 +131,8 @@ class CSIController {
         } catch (error) {
             logger.error('Error starting CSI test:', {
                 error: error.message,
-                token: token ? token.substring(0, 10) + '...' : 'undefined'
+                token: token.substring(0, 10) + '...'
             });
-    
             res.status(400).json({
                 status: 'error',
                 error: {
@@ -200,15 +199,19 @@ class CSIController {
     submitAnswer = async (req, res) => {
         const { token } = req.params;
         const { questionId, value, timeSpent } = req.body;
-
+    
         try {
-            // Delega il processamento della risposta all'engine
-            const result = await this.engine.processAnswer(token, {
-                questionId,
-                value,
-                timeSpent
+            const result = await this.repository.update(token, {
+                $push: {
+                    risposte: {
+                        questionId,
+                        value,
+                        timeSpent,
+                        timestamp: new Date()
+                    }
+                }
             });
-
+    
             res.json({
                 status: 'success',
                 data: {
@@ -219,9 +222,8 @@ class CSIController {
         } catch (error) {
             logger.error('Error submitting CSI answer:', {
                 error: error.message,
-                token: token ? token.substring(0, 10) + '...' : 'undefined'
+                token: token.substring(0, 10) + '...'
             });
-
             res.status(400).json({
                 status: 'error',
                 error: {
@@ -239,27 +241,37 @@ class CSIController {
         const { token } = req.params;
     
         try {
-            // Delega il completamento all'engine
-            const result = await this.engine.completeTest(token);
-
+            const result = await this.repository.findByToken(token);
+            
+            if (!result) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_TOKEN,
+                    'Token non valido'
+                );
+            }
+    
+            const completedResult = await this.repository.update(token, {
+                completato: true,
+                dataCompletamento: new Date()
+            });
+    
             // Notifica completamento
             if (this.userService) {
-                await this.userService.notifyTestComplete(result.studentId, 'CSI');
+                await this.userService.notifyTestComplete(completedResult.studentId, 'CSI');
             }
     
             res.json({
                 status: 'success',
                 data: {
                     testCompleted: true,
-                    resultId: result._id
+                    resultId: completedResult._id
                 }
             });
         } catch (error) {
             logger.error('Error completing CSI test:', {
                 error: error.message,
-                token: token ? token.substring(0, 10) + '...' : 'undefined'
+                token: token.substring(0, 10) + '...'
             });
-    
             res.status(400).json({
                 status: 'error',
                 error: {

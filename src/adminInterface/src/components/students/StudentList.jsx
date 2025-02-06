@@ -266,8 +266,8 @@ const statsCards = useMemo(() => {
                     <Tooltip title="Visualizza Dettagli">
                         <IconButton
                             size="small"
-                            onClick={() => navigate(`/admin/students/${params.row._id}`)}
-                        >
+                            onClick={() => navigate('/admin/students/new')}
+                            >
                             <VisibilityIcon sx={{ fontSize: '1.1rem' }} />
                         </IconButton>
                     </Tooltip>

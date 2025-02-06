@@ -318,18 +318,45 @@ export const StudentProvider = ({ children }) => {
     // Recupera un singolo studente per ID
     const getStudentById = async (studentId) => {
         try {
+            // Se stiamo creando un nuovo studente, non fare la chiamata GET
+            if (studentId === 'new') {
+                const emptyStudent = {
+                    id: 'new',
+                    _id: 'new',
+                    firstName: '',
+                    lastName: '',
+                    fiscalCode: '',
+                    gender: '',
+                    dateOfBirth: '',
+                    email: '',
+                    parentEmail: '',
+                    mainTeacher: null,
+                    teachers: [],
+                    specialNeeds: false,
+                    status: 'pending',
+                    needsClassAssignment: true,
+                    isActive: true
+                };
+                
+                dispatch({
+                    type: STUDENT_ACTIONS.SET_SELECTED_STUDENT,
+                    payload: emptyStudent
+                });
+                
+                return emptyStudent;
+            }
+    
             console.log('[StudentContext] Getting student with ID:', studentId);
             
             const response = await axiosInstance.get(`/students/${studentId}?includeTestCount=true`);
             console.log('[StudentContext] Backend response:', response.data);
     
             if (response.data.status === 'success') {
-                // Assicuriamoci che lo studente abbia sia id che _id
                 const student = response.data.data.student;
                 const normalizedStudent = {
                     ...student,
-                    _id: student.id,  // Aggiungiamo _id se non presente
-                    id: student.id    // Manteniamo id
+                    _id: student.id,
+                    id: student.id
                 };
     
                 console.log('[StudentContext] Normalized student:', normalizedStudent);
@@ -412,55 +439,29 @@ console.log('Normalized mainTeacher:', normalized.mainTeacher);
 return normalized;
     };
 
-    const createStudent = async (studentData) => {
-        try {
-            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
-            console.log('Creating student with data:', studentData);
+    // Modifica createStudent
+const createStudent = async (studentData) => {
+    try {
+        const formattedData = {
+            ...studentData,
+            dateOfBirth: new Date(studentData.dateOfBirth).toISOString()
+        };
 
-            // Formattazione dati secondo il modello
-            const formattedData = {
-                firstName: studentData.firstName?.trim(),
-                lastName: studentData.lastName?.trim(),
-                gender: studentData.gender,
-                dateOfBirth: studentData.dateOfBirth ? new Date(studentData.dateOfBirth).toISOString() : null,
-                email: studentData.email?.trim().toLowerCase(),
-                schoolId: studentData.schoolId,
-                parentEmail: studentData.parentEmail?.trim().toLowerCase() || null,
-                fiscalCode: studentData.fiscalCode?.trim().toUpperCase() || null,
-                mainTeacher: studentData.mainTeacher || null,
-                teachers: studentData.teachers || [],
-                specialNeeds: studentData.specialNeeds || false,
-                status: 'pending',
-                needsClassAssignment: true,
-                isActive: true
-            };
+        const response = await axiosInstance.post('/students', formattedData);
 
-            console.log('Creating student with data:', formattedData);
-            
-            const response = await axiosInstance.post('/students', formattedData);
-            
-            if (response.data.status === 'success') {
-                const newStudent = normalizeStudent(response.data.data.student);
-                dispatch({
-                    type: STUDENT_ACTIONS.ADD_STUDENT,
-                    payload: newStudent
-                });
-                showNotification('Studente creato con successo', 'success');
-                return newStudent;
-            }
-        } catch (error) {
-            console.error('Error creating student:', error);
-            const errorMessage = error.response?.data?.error?.message || 
-                            error.message || 
-                            'Errore nella creazione dello studente';
+        if (response.data.status === 'success') {
+            const newStudent = normalizeStudent(response.data.data.student);
             dispatch({
-                type: STUDENT_ACTIONS.SET_ERROR,
-                payload: errorMessage
+                type: STUDENT_ACTIONS.ADD_STUDENT,
+                payload: newStudent
             });
-            showNotification(errorMessage, 'error');
-            throw error;
+            return newStudent;
         }
-    };
+    } catch (error) {
+        console.error('Error creating student:', error);
+        throw error;
+    }
+};
 
     const createStudentWithClass = async (studentData) => {
         try {
