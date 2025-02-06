@@ -318,48 +318,11 @@ export const StudentProvider = ({ children }) => {
     // Recupera un singolo studente per ID
     const getStudentById = async (studentId) => {
         try {
-            // Se stiamo creando un nuovo studente, non fare la chiamata GET
-            if (studentId === 'new') {
-                const emptyStudent = {
-                    id: 'new',
-                    _id: 'new',
-                    firstName: '',
-                    lastName: '',
-                    fiscalCode: '',
-                    gender: '',
-                    dateOfBirth: '',
-                    email: '',
-                    parentEmail: '',
-                    mainTeacher: null,
-                    teachers: [],
-                    specialNeeds: false,
-                    status: 'pending',
-                    needsClassAssignment: true,
-                    isActive: true
-                };
-                
-                dispatch({
-                    type: STUDENT_ACTIONS.SET_SELECTED_STUDENT,
-                    payload: emptyStudent
-                });
-                
-                return emptyStudent;
-            }
-    
-            console.log('[StudentContext] Getting student with ID:', studentId);
-            
             const response = await axiosInstance.get(`/students/${studentId}?includeTestCount=true`);
-            console.log('[StudentContext] Backend response:', response.data);
-    
+            
             if (response.data.status === 'success') {
                 const student = response.data.data.student;
-                const normalizedStudent = {
-                    ...student,
-                    _id: student.id,
-                    id: student.id
-                };
-    
-                console.log('[StudentContext] Normalized student:', normalizedStudent);
+                const normalizedStudent = normalizeStudent(student);
                 
                 dispatch({
                     type: STUDENT_ACTIONS.SET_SELECTED_STUDENT,
@@ -368,7 +331,7 @@ export const StudentProvider = ({ children }) => {
                 return normalizedStudent;
             }
         } catch (error) {
-            console.error('[StudentContext] Error getting student:', error);
+            console.error('Error getting student:', error);
             throw error;
         }
     };
