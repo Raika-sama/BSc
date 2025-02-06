@@ -119,10 +119,21 @@ logger.debug('Initializing CSI dependencies...');
 const { controller: csiController, dependencies: csiDependencies } = createCSIController({
     userService,
     testRepository,
-    studentRepository,
-    testEngine: csiEngine,
-    csiQuestionService
+    studentRepository
 });
+
+
+
+// Inizializza CSIQuestionController
+const csiQuestionController = new CSIQuestionController(
+    csiDependencies.csiQuestionService
+);
+
+
+
+if (!csiController?.engine) {
+    throw new Error('CSI Controller engine not initialized correctly');
+}
 
 logger.debug('CSI Controller initialization:', {
     hasController: !!csiController,
@@ -132,21 +143,6 @@ logger.debug('CSI Controller initialization:', {
         hasUserService: !!csiController.userService
     }
 });
-
-// Inizializza CSIQuestionController
-const csiQuestionController = new CSIQuestionController(
-    csiDependencies.csiQuestionService
-);
-
-// Verifica inizializzazione
-logger.debug('CSIQuestionController initialization:', {
-    hasController: !!csiQuestionController,
-    hasQuestionService: !!csiQuestionController.service
-});
-
-if (!csiController?.engine) {
-    throw new Error('CSI Controller engine not initialized correctly');
-}
 
 // Crea oggetto con tutte le dipendenze
 const dependencies = {

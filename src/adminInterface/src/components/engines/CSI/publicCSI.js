@@ -34,37 +34,45 @@ const PublicCSITest = () => {
     useEffect(() => {
       const initializeTest = async () => {
         try {
-          console.log('Verifying token:', token);
-  
-          // Rimuovi /api/v1 dai path perché è già in axiosConfig
-          const verifyResponse = await axiosInstance.get(`/tests/csi/verify/${token}`);
-          console.log('Verify response:', verifyResponse.data);
-  
-          if (!verifyResponse.data?.data?.valid) {
-            throw new Error('Token non valido o scaduto');
-          }
-  
-          const startResponse = await axiosInstance.post(`/tests/csi/${token}/start`);
-          console.log('Start response:', startResponse.data);
-  
-          if (!startResponse.data?.data?.questions?.length) {
-            throw new Error('Nessuna domanda ricevuta dal server');
-          }
-  
-          setQuestions(startResponse.data.data.questions);
-          setTestData(startResponse.data.data);
-          setCurrentStep('intro');
-          setStartTime(Date.now());
-  
+            console.log('Verifying token:', token);
+    
+            const verifyResponse = await axiosInstance.get(`/tests/csi/verify/${token}`);
+            console.log('Verify response:', verifyResponse.data);
+    
+            if (!verifyResponse.data?.data?.valid) {
+                throw new Error('Token non valido o scaduto');
+            }
+    
+            // Salva le domande e la configurazione
+            const { questions, config } = verifyResponse.data.data;
+            setQuestions(questions);
+            setTestData({ ...verifyResponse.data.data, config });
+    
+            const startResponse = await axiosInstance.post(`/tests/csi/${token}/start`);
+            console.log('Start response:', startResponse.data);
+    
+            if (!startResponse.data?.data?.questions?.length) {
+                throw new Error('Nessuna domanda ricevuta dal server');
+            }
+    
+            // Aggiorna con eventuali nuovi dati dal server
+            setQuestions(startResponse.data.data.questions);
+            setTestData(prev => ({
+                ...prev,
+                ...startResponse.data.data
+            }));
+            setCurrentStep('intro');
+            setStartTime(Date.now());
+    
         } catch (err) {
-          console.error('Test initialization error:', err);
-          const errorMessage = err.response?.data?.error?.message || 
-                             err.message || 
-                             'Errore durante il caricamento del test';
-          setError(errorMessage);
-          setCurrentStep('error');
+            console.error('Test initialization error:', err);
+            const errorMessage = err.response?.data?.error?.message || 
+                               err.message || 
+                               'Errore durante il caricamento del test';
+            setError(errorMessage);
+            setCurrentStep('error');
         }
-      };
+    };
   
       if (token) {
         initializeTest();
@@ -196,32 +204,34 @@ const PublicCSITest = () => {
     };
 
 
-  const renderIntro = () => (
-    <Card sx={{ maxWidth: 600, mx: 'auto' }}>
-      <CardContent>
-        <Typography variant="h5" component="div" gutterBottom>
-          Test Stili Cognitivi (CSI)
-        </Typography>
-        <Typography variant="body1" sx={{ mb: 3 }}>
-          Questo test ti aiuterà a comprendere il tuo stile di apprendimento.
-          Non esistono risposte giuste o sbagliate, sii sincero nelle tue risposte.
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Il test consiste in {questions.length} domande.
-          Per ogni domanda, indica quanto sei d'accordo con l'affermazione proposta.
-        </Typography>
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Una volta iniziato il test, non potrai tornare indietro o modificare le risposte date.
-        </Alert>
-        <Button 
-          variant="contained" 
-          fullWidth 
-          onClick={handleStartTest}
-        >
-          Inizia il Test
-        </Button>
-      </CardContent>
-    </Card>
+    const renderIntro = () => (
+      <Card sx={{ maxWidth: 600, mx: 'auto' }}>
+          <CardContent>
+              <Typography variant="h5" component="div" gutterBottom>
+                  Test Stili Cognitivi (CSI)
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 3 }}>
+                  {testData?.config?.interfaccia?.istruzioni || 
+                   "Questo test ti aiuterà a comprendere il tuo stile di apprendimento."}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Il test consiste in {questions.length} domande.
+                  Tempo massimo per domanda: {formatTime(testData?.config?.validazione?.tempoMassimoDomanda)}
+              </Typography>
+              <Alert severity="info" sx={{ mb: 3 }}>
+                  {testData?.config?.interfaccia?.permettiTornaIndietro ? 
+                      "Potrai rivedere le risposte date prima di completare il test." :
+                      "Una volta data una risposta, non potrai tornare indietro."}
+              </Alert>
+              <Button 
+                  variant="contained" 
+                  fullWidth 
+                  onClick={handleStartTest}
+              >
+                  Inizia il Test
+              </Button>
+          </CardContent>
+      </Card>
   );
 
 

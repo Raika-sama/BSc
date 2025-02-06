@@ -164,7 +164,8 @@ const createCSIController = (externalDeps = {}) => {
             csiQuestionService,
             userService: externalDeps.userService,
             csiConfig,
-            validator
+            validator,
+            repository: csiRepository
         });
 
         if (!controller) {

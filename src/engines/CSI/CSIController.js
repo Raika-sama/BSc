@@ -25,7 +25,7 @@ class CSIController {
             repositoryType: repository ? repository.constructor.name : 'undefined'
         });
 
-        if (!testEngine || !csiQuestionService) {
+        if (!testEngine || !csiQuestionService || !repository) {
             throw new Error('Required dependencies missing');
         }
 
@@ -59,12 +59,19 @@ class CSIController {
     
             // Delega la verifica all'engine
             const result = await this.engine.verifyToken(token);
+            
+            // Carica le domande attraverso il questionService
+            const questions = await this.questionService.getTestQuestions();
+    
+            // Carica la configurazione attiva
+            const config = await this.configModel.findOne({ active: true });
     
             res.status(200).json({
                 status: 'success',
                 data: {
                     valid: true,
-                    questions: result.test.domande,
+                    questions: questions,
+                    config: config,
                     expiresAt: result.expiresAt,
                     testId: result._id
                 }
@@ -96,18 +103,28 @@ class CSIController {
             logger.debug('Starting CSI test with token:', { 
                 token: token ? token.substring(0, 10) + '...' : 'undefined'
             });
-
+    
             // Delega l'inizializzazione all'engine
             const result = await this.engine.startTest(token);
             
-            // Ottieni la configurazione attiva
-            const config = await this.config.getActiveConfig();
-
+            // Carica le domande
+            const questions = await this.questionService.getTestQuestions();
+            
+            // Carica la configurazione attiva
+            const config = await this.configModel.findOne({ active: true });
+    
+            if (!config) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Nessuna configurazione CSI attiva trovata'
+                );
+            }
+    
             res.json({
                 status: 'success',
                 data: {
-                    questions: result.test.domande,
-                    config,
+                    questions: questions,
+                    config: config,
                     testId: result._id
                 }
             });
@@ -116,7 +133,7 @@ class CSIController {
                 error: error.message,
                 token: token ? token.substring(0, 10) + '...' : 'undefined'
             });
-
+    
             res.status(400).json({
                 status: 'error',
                 error: {
@@ -140,10 +157,10 @@ class CSIController {
                 );
             }
     
-            // 2. Imposta i dati del test
+            // 2. Imposta i dati del test con il tipo corretto
             const testData = {
                 studentId,
-                testType: 'CSI',
+                tipo: 'CSI',  // Questo è il campo richiesto
                 config: {
                     timeLimit: config.validazione.tempoMassimoDomanda,
                     minQuestions: config.validazione.numeroMinimoDomande,
@@ -253,39 +270,73 @@ class CSIController {
         }
     };
 
-    /**
-     * Genera link per test CSI
-     */
-    generateTestLink = async (req, res) => {
-        try {
-            const { studentId } = req.body;
-            
-            logger.debug('Generating CSI test link:', { 
-                studentId,
-                hasRepository: !!this.repository,
-                repositoryType: this.repository ? this.repository.constructor.name : 'undefined'
-            });
-    
-            if (!this.repository) {
-                throw new Error('Repository not initialized in CSIController');
-            }
-    
-            // Verifica disponibilità
-            const availability = await this.repository.checkTestAvailability(studentId, 'CSI');
-            
-            // ... resto del codice
-        } catch (error) {
-            logger.error('Error generating CSI test link:', {
-                error: error.message,
-                errorStack: error.stack,
-                studentId: req.body.studentId,
-                controllerState: {
-                    hasRepository: !!this.repository
-                }
-            });
-            this.sendError(res, error);
+/**
+ * Genera link per test CSI
+ */
+generateTestLink = async (req, res) => {
+    try {
+        const { studentId } = req.body;
+        
+        logger.debug('Generating CSI test link:', { 
+            studentId,
+            hasRepository: !!this.repository,
+            repositoryType: this.repository ? this.repository.constructor.name : 'undefined'
+        });
+
+        if (!this.repository) {
+            throw new Error('Repository not initialized in CSIController');
         }
-    };
+
+        // Verifica disponibilità
+        const availability = await this.repository.checkAvailability(studentId);
+        if (!availability.available) {
+            throw createError(
+                ErrorTypes.VALIDATION.NOT_ALLOWED,
+                'Test CSI non disponibile al momento',
+                {
+                    nextAvailableDate: availability.nextAvailableDate,
+                    lastTestDate: availability.lastTestDate
+                }
+            );
+        }
+
+        // Inizializza il test
+        const testInit = await this.initializeCSITest(studentId);
+
+        // Costruisci l'URL del test
+        const testUrl = `${process.env.FRONTEND_URL}/test/csi/${testInit.token}`;
+
+        res.json({
+            status: 'success',
+            data: {
+                token: testInit.token,
+                url: testUrl,
+                expiresAt: testInit.expiresAt,
+                config: testInit.config
+            }
+        });
+
+    } catch (error) {
+        logger.error('Error generating CSI test link:', {
+            error: error.message,
+            errorStack: error.stack,
+            studentId: req.body.studentId,
+            controllerState: {
+                hasRepository: !!this.repository
+            }
+        });
+        
+        const statusCode = error.statusCode || 400;
+        res.status(statusCode).json({
+            status: 'error',
+            error: {
+                message: error.message,
+                code: error.code || 'GENERATE_LINK_ERROR',
+                details: error.details || {}
+            }
+        });
+    }
+};
 
 /**
  * Recupera la configurazione attiva

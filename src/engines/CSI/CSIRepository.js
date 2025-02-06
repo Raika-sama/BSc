@@ -13,8 +13,6 @@ class CSIRepository extends TestRepository {
         this.questionModel = CSIQuestion;
         this.resultModel = CSIResult;    // Nota: ho corretto anche il nome della proprietà
         this.configModel = CSIConfig;    // Aggiungiamo il model per la config
-        this.resultModel = CSIResult;
-
     }
 
 /**
@@ -33,14 +31,65 @@ async getActiveConfiguration() {
     }
 }
 
+/**
+ * Verifica disponibilità test per uno studente
+ */
+async checkAvailability(studentId) {
+    try {
+        const lastTest = await this.resultModel.findOne({
+            studentId,
+            tipo: 'CSI',
+            completato: true
+        }).sort({ dataCompletamento: -1 });
+
+        if (!lastTest) {
+            return { available: true };
+        }
+
+        const cooldownPeriod = 30 * 24 * 60 * 60 * 1000; // 30 giorni
+        const nextAvailableDate = new Date(lastTest.dataCompletamento.getTime() + cooldownPeriod);
+        const now = new Date();
+
+        return {
+            available: now >= nextAvailableDate,
+            nextAvailableDate,
+            lastTestDate: lastTest.dataCompletamento
+        };
+    } catch (error) {
+        logger.error('Error checking CSI test availability:', {
+            error: error.message,
+            studentId
+        });
+        throw createError(
+            ErrorTypes.DATABASE.QUERY_ERROR,
+            'Errore nella verifica disponibilità test CSI',
+            { originalError: error.message }
+        );
+    }
+}
+
   /**
      * Override del metodo saveTestToken per gestire specifiche CSI
      */
-  async saveTestToken(testData) {
+ /**
+ * Override del metodo saveTestToken per gestire specifiche CSI
+ */
+ async saveTestToken(testData) {
     try {
-        const tokenData = await super.saveTestToken({
-            ...testData,
-            testType: 'CSI'
+        logger.debug('Saving CSI test token with data:', testData);
+
+        // Struttura i dati nel formato corretto per il TestRepository
+        const formattedData = {
+            studentId: testData.studentId,
+            tipo: 'CSI',  // Questo è il campo richiesto che mancava
+            config: testData.config
+        };
+
+        const tokenData = await super.saveTestToken(formattedData);
+
+        logger.debug('CSI test token saved successfully:', {
+            tokenId: tokenData._id,
+            studentId: testData.studentId
         });
 
         return tokenData;
