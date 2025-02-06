@@ -159,6 +159,14 @@ csiConfigSchema.methods.validateAnswer = function(tempoRisposta) {
            tempoRisposta <= this.validazione.tempoMassimoDomanda;
 };
 
+csiConfigSchema.methods.validateTestSetup = function(test) {
+    return {
+        isValid: test.domande.length >= this.validazione.numeroMinimoDomande,
+        minQuestions: this.validazione.numeroMinimoDomande,
+        currentQuestions: test.domande.length
+    };
+};
+
 const CSIConfig = mongoose.model('CSIConfig', csiConfigSchema);
 
 module.exports = CSIConfig;

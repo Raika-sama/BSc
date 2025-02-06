@@ -165,6 +165,48 @@ analyzeResponsePattern(answers) {
         };
     }
 
+    _determineDominantStyles(scores) {
+        const threshold = 70; // soglia per considerare uno stile dominante
+        return Object.entries(scores)
+            .filter(([_, score]) => score.score >= threshold)
+            .map(([style]) => style);
+    }
+
+    _generateRecommendations(scores) {
+        const recommendations = [];
+        Object.entries(scores).forEach(([dimension, score]) => {
+            const dimensionRecs = this._getRecommendations(dimension, score.score);
+            recommendations.push(...dimensionRecs);
+        });
+        return recommendations;
+    }
+
+    _generateGlobalInterpretation(scores, dominantStyles) {
+        if (dominantStyles.length === 0) {
+            return "Nessuno stile di apprendimento dominante identificato";
+        }
+
+        return `Stile di apprendimento prevalente: ${dominantStyles.join(', ')}. ` +
+               `Si consiglia di focalizzarsi su attività che valorizzino questi aspetti.`;
+    }
+
+    _validateResponses(answers) {
+        const warnings = [];
+        const isValid = answers.every(answer => {
+            const isValidTime = answer.tempoRisposta >= this.responseTime.min && 
+                              answer.tempoRisposta <= this.responseTime.max;
+            const isValidValue = answer.valore >= this.responseRange.min && 
+                               answer.valore <= this.responseRange.max;
+            
+            if (!isValidTime) warnings.push(`Tempo risposta non valido per domanda ${answer.domanda.id}`);
+            if (!isValidValue) warnings.push(`Valore risposta non valido per domanda ${answer.domanda.id}`);
+            
+            return isValidTime && isValidValue;
+        });
+
+        return { isValid, warnings };
+    }
+
     /**
      * Normalizza un punteggio su scala 0-100
      * @private
@@ -175,6 +217,15 @@ analyzeResponsePattern(answers) {
         return Math.round(normalized);
     }
 
+    _mapAnswersToCategories(answers) {
+        return answers.map(answer => ({
+            ...answer,
+            question: {
+                ...answer.domanda,
+                categoria: this.categoryMapping[answer.domanda.categoria] || answer.domanda.categoria
+            }
+        }));
+    }
 
 
     /**

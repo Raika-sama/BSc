@@ -19,7 +19,8 @@ const baseResultSchema = new mongoose.Schema({
     token: {
         type: String,
         unique: true,
-        sparse: true
+        sparse: true,
+        index: true // Importante!
     },
     expiresAt: {
         type: Date
@@ -82,78 +83,54 @@ const csiResultSchema = new mongoose.Schema({
             required: true,
             enum: ['CSI']
         },
+        config: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'CSIConfig',
+            required: true
+        },
         domande: [{
             id: Number,
             testo: String,
-            categoria: String,
-            metadata: Object,
-            version: String
-        }],
-        version: String
+            categoria: {
+                type: String,
+                enum: ['Elaborazione', 'Creatività', 'Preferenza Visiva', 'Decisione', 'Autonomia']
+            },
+            metadata: metadataSchema // useremo lo stesso schema di CSIQuestion
+        }]
     },
     risposte: [{
-        domanda: {
-            id: Number,
-            categoria: String,
-            testo: String
+        questionId: {
+            type: Number,
+            required: true
         },
-        valore: {
+        value: {
             type: Number,
             required: true,
             min: 1,
             max: 5
         },
-        tempoRisposta: Number
-    }],
-    punteggiDimensioni: {
-        creativita: {
-            score: Number,
-            level: String,
-            interpretation: String
-        },
-        elaborazione: {
-            score: Number,
-            level: String,
-            interpretation: String
-        },
-        decisione: {
-            score: Number,
-            level: String,
-            interpretation: String
-        },
-        preferenzaVisiva: {
-            score: Number,
-            level: String,
-            interpretation: String
-        },
-        autonomia: {
-            score: Number,
-            level: String,
-            interpretation: String
-        }
-    },
-    metadataCSI: {
-        versioneAlgoritmo: String,
-        calcolatoIl: Date,
-        pattern: {
-            isValid: Boolean,
-            consistency: Boolean,
-            timePattern: {
-                averageTime: Number,
-                suspicious: Boolean,
-                tooFastResponses: Number,
-                pattern: {
-                    consistent: Boolean,
-                    avgTimePerQuestion: Number
-                }
+        timeSpent: {
+            type: Number,
+            required: true,
+            validate: {
+                validator: async function(timeSpent) {
+                    const config = await mongoose.model('CSIConfig').getActiveConfig();
+                    return timeSpent >= config.validazione.tempoMinimoDomanda &&
+                           timeSpent <= config.validazione.tempoMassimoDomanda;
+                },
+                message: 'Tempo di risposta non valido'
             }
         },
-        profiloCognitivo: {
-            stiliDominanti: [String],
-            raccomandazioni: [String]
+        categoria: {
+            type: String,
+            required: true,
+            enum: ['Elaborazione', 'Creatività', 'Preferenza Visiva', 'Decisione', 'Autonomia']
         },
-        warnings: [String]
-    }
+        timestamp: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 });
 
 // Crea il modello base
@@ -161,6 +138,33 @@ const Result = mongoose.model('Result', baseResultSchema);
 
 // Crea il discriminatore per CSI
 const CSIResult = Result.discriminator('CSI', csiResultSchema);
+
+csiResultSchema.methods.validateAnswer = async function(answerData) {
+    const config = await mongoose.model('CSIConfig').getActiveConfig();
+    return {
+        isValid: config.validateAnswer(answerData.timeSpent),
+        config: config
+    };
+};
+
+csiResultSchema.methods.addAnswer = async function(answerData) {
+    const validation = await this.validateAnswer(answerData);
+    if (!validation.isValid) {
+        throw new Error('Risposta non valida: tempo di risposta fuori dai limiti');
+    }
+    
+    this.risposte.push(answerData);
+    return this.save();
+};
+
+csiResultSchema.virtual('progress').get(function() {
+    return {
+        total: this.test.domande.length,
+        answered: this.risposte.length,
+        remaining: this.test.domande.length - this.risposte.length,
+        percentage: (this.risposte.length / this.test.domande.length) * 100
+    };
+});
 
 module.exports = {
     Result,

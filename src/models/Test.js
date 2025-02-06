@@ -89,9 +89,34 @@ const testSchema = new mongoose.Schema({
         required: true,
         default: '1.0.0'
     },
+    token: {
+        type: String,
+        unique: true,
+        sparse: true,
+        index: true  // importante per le performance
+    },
+    studentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Student',
+        required: true
+    },
+    risposte: [{
+        questionId: Number,
+        value: Number,
+        timeSpent: Number,
+        categoria: String,
+        timestamp: Date
+    }],
     active: {
         type: Boolean,
         default: true
+    },
+    csiConfig: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CSIConfig',
+        required: function() {
+            return this.tipo === 'CSI';
+        }
     }
 }, {
     timestamps: true
@@ -100,6 +125,21 @@ const testSchema = new mongoose.Schema({
 // Indici
 testSchema.index({ tipo: 1, active: 1 });
 testSchema.index({ 'configurazione.questionVersion': 1 });
+
+// Aggiungi questo pre-save middleware
+testSchema.pre('save', async function(next) {
+    if (this.tipo === 'CSI') {
+        if (!this.csiConfig) {
+            const CSIConfig = mongoose.model('CSIConfig');
+            const activeConfig = await CSIConfig.getActiveConfig();
+            if (!activeConfig) {
+                next(new Error('Nessuna configurazione CSI attiva trovata'));
+            }
+            this.csiConfig = activeConfig._id;
+        }
+    }
+    next();
+});
 
 // Middleware per populate automatico delle domande
 testSchema.pre(/^find/, function(next) {

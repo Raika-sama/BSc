@@ -53,34 +53,45 @@ class CSIController {
         const { token } = req.params;
         
         try {
-            logger.debug('Verifying CSI token:', { 
-                token: token ? token.substring(0, 10) + '...' : 'undefined'
+            logger.debug('Verifying CSI token and searching test:', { 
+                token: token.substring(0, 10) + '...'
             });
     
-            // Delega la verifica all'engine
-            const result = await this.repository.verifyToken(token);
-            
-            // Carica le domande attraverso il questionService
-            const questions = await this.questionService.getTestQuestions();
+            // Cerca il test e logga il risultato
+            const test = await this.repository.findByToken(token);
+            logger.debug('Test found:', {
+                found: !!test,
+                testId: test?._id,
+                testToken: test?.token
+            });
     
-            // Carica la configurazione attiva
+            if (!test) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_TOKEN,
+                    'Token non valido o test non trovato'
+                );
+            }
+    
+            // Carica le domande
+            const questions = await this.questionService.getTestQuestions();
+            
+            // Carica la configurazione
             const config = await this.configModel.findOne({ active: true });
     
             res.status(200).json({
                 status: 'success',
                 data: {
                     valid: true,
+                    test: test,
                     questions: questions,
-                    config: config,
-                    expiresAt: result.expiresAt,
-                    testId: result._id
+                    config: config
                 }
             });
     
         } catch (error) {
             logger.error('Error verifying CSI token:', {
                 error: error.message,
-                token: token ? token.substring(0, 10) + '...' : 'undefined'
+                token: token.substring(0, 10) + '...'
             });
             
             res.status(400).json({
@@ -198,27 +209,38 @@ class CSIController {
      */
     submitAnswer = async (req, res) => {
         const { token } = req.params;
-        const { questionId, value, timeSpent } = req.body;
+        const { questionId, value, timeSpent, categoria, timestamp } = req.body;
     
         try {
-            const result = await this.repository.update(token, {
+            logger.debug('Submitting answer:', { token, questionId, value });
+    
+            const updatedTest = await this.repository.updateByToken(token, {
                 $push: {
                     risposte: {
                         questionId,
                         value,
                         timeSpent,
-                        timestamp: new Date()
+                        categoria,
+                        timestamp
                     }
                 }
             });
     
+            if (!updatedTest) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Test non trovato'
+                );
+            }
+    
             res.json({
                 status: 'success',
                 data: {
-                    answered: result.risposte.length,
-                    remaining: result.test.domande.length - result.risposte.length
+                    answered: updatedTest.risposte.length,
+                    currentQuestion: updatedTest.risposte.length
                 }
             });
+    
         } catch (error) {
             logger.error('Error submitting CSI answer:', {
                 error: error.message,
@@ -227,7 +249,7 @@ class CSIController {
             res.status(400).json({
                 status: 'error',
                 error: {
-                    message: error.message,
+                    message: error.message || 'Errore durante il salvataggio della risposta',
                     code: error.code || 'SUBMIT_ANSWER_ERROR'
                 }
             });
@@ -241,8 +263,8 @@ class CSIController {
         const { token } = req.params;
     
         try {
+            // 1. Verifica token e recupera risultato
             const result = await this.repository.findByToken(token);
-            
             if (!result) {
                 throw createError(
                     ErrorTypes.VALIDATION.INVALID_TOKEN,
@@ -250,12 +272,36 @@ class CSIController {
                 );
             }
     
+            // 2. Verifica che tutte le domande siano state risposte
+            const config = await this.configModel.findOne({ active: true });
+            if (result.risposte.length < config.validazione.numeroMinimoDomande) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INCOMPLETE_TEST,
+                    'Numero di risposte insufficiente'
+                );
+            }
+    
+            // 3. Calcola risultati usando CSIScorer
+            const scorer = new CSIScorer();
+            const testResults = scorer.calculateTestResult(result.risposte);
+    
+            // 4. Aggiorna il risultato con i punteggi e metadata
             const completedResult = await this.repository.update(token, {
                 completato: true,
-                dataCompletamento: new Date()
+                dataCompletamento: new Date(),
+                punteggiDimensioni: testResults.punteggiDimensioni,
+                metadataCSI: {
+                    ...testResults.metadataCSI,
+                    pattern: scorer.analyzeResponsePattern(result.risposte)
+                },
+                analytics: {
+                    tempoTotale: this._calculateTotalTime(result.risposte),
+                    domandePerse: this._calculateMissedQuestions(result),
+                    pattern: scorer._calculateTimePattern(result.risposte)
+                }
             });
     
-            // Notifica completamento
+            // 5. Notifica completamento se necessario
             if (this.userService) {
                 await this.userService.notifyTestComplete(completedResult.studentId, 'CSI');
             }
@@ -264,7 +310,9 @@ class CSIController {
                 status: 'success',
                 data: {
                     testCompleted: true,
-                    resultId: completedResult._id
+                    resultId: completedResult._id,
+                    scores: testResults.punteggiDimensioni,
+                    analytics: completedResult.analytics
                 }
             });
         } catch (error) {
@@ -272,7 +320,7 @@ class CSIController {
                 error: error.message,
                 token: token.substring(0, 10) + '...'
             });
-            res.status(400).json({
+            res.status(error.statusCode || 400).json({
                 status: 'error',
                 error: {
                     message: error.message,
@@ -281,6 +329,15 @@ class CSIController {
             });
         }
     };
+    
+    // Metodi di utility
+    _calculateTotalTime(risposte) {
+        return risposte.reduce((total, r) => total + (r.tempoRisposta || 0), 0);
+    }
+    
+    _calculateMissedQuestions(result) {
+        return result.test.domande.length - result.risposte.length;
+    }
 
 /**
  * Genera link per test CSI

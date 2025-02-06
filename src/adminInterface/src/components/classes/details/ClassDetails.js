@@ -35,7 +35,7 @@ import ClassTests from './detailscomponents/ClassTests';
 import TeacherForm from './forms/TeacherForm';
 import ClassSettings from './detailscomponents/ClassSettings';
 import ContentLayout from '../../common/ContentLayout';
-
+import StudentClassForm from './forms/StudentClassForm'; // Aggiungi questo import
 
 
 // Custom Tab Panel
@@ -65,7 +65,7 @@ const ClassDetails = () => {
     const { classId } = useParams();
     const navigate = useNavigate();
     const { getClassDetails, removeMainTeacher } = useClass();
-    
+    const [isStudentFormOpen, setIsStudentFormOpen] = useState(false);
     const [classData, setClassData] = useState(null);
     const [localError, setLocalError] = useState(null);
     const [localLoading, setLocalLoading] = useState(true);
@@ -93,6 +93,10 @@ const ClassDetails = () => {
             fetchData();
         }
     }, [classId]);
+
+    const handleOpenStudentForm = () => {
+        setIsStudentFormOpen(true);
+    };
 
     const handleTabChange = (event, newValue) => {
         setActiveTab(newValue);
@@ -130,42 +134,38 @@ const ClassDetails = () => {
 
     
 
-    return (
-        <ContentLayout
-            title={classData ? `Classe ${classData.year}${classData.section || ''}` : 'Dettagli Classe'}
-            subtitle={
-                classData && classData.school 
-                    ? `${classData.school.name}${classData.schoolYear ? ` - Anno Scolastico ${classData.schoolYear}` : ''}`
-                    : ''
-            }
-            actions={
-                <Button
-                    variant="outlined"
-                    startIcon={<ArrowBackIcon />}
-                    onClick={() => navigate('/admin/classes')}
-                >
-                    Indietro
-                </Button>
-            }
-        >
-            <Box sx={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                height: '100%',
-                gap: 2,
-                //p: 3
-            }}>
-
-                 
-
-             {/* Header and Info Combined Section */}
+  return (
+    <ContentLayout
+        title={classData ? `Classe ${classData.year}${classData.section || ''}` : 'Dettagli Classe'}
+        subtitle={
+            classData && classData.school 
+                ? `${classData.school.name}${classData.schoolYear ? ` - Anno Scolastico ${classData.schoolYear}` : ''}`
+                : ''
+        }
+        actions={
+            <Button
+                variant="outlined"
+                startIcon={<ArrowBackIcon />}
+                onClick={() => navigate('/admin/classes')}
+            >
+                Indietro
+            </Button>
+        }
+    >
+        <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: '100%',
+            gap: 2,
+        }}>
+            {/* Header and Info Combined Section */}
             <Paper 
                 elevation={0} 
                 sx={{ 
                     border: '1px solid',
                     borderColor: 'divider',
                     borderRadius: 2,
-                    overflow: 'hidden' // Aggiunto per gestire meglio il collapse
+                    overflow: 'hidden'
                 }}
             >
                 <Box sx={{ p: 2 }}>
@@ -185,29 +185,30 @@ const ClassDetails = () => {
                     classData={classData}
                 />
             </Paper>
-                {/* Tabs */}
-                <Paper 
-                    elevation={0} 
+
+            {/* Tabs */}
+            <Paper 
+                elevation={0} 
+                sx={{ 
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    minHeight: 0
+                }}
+            >
+                <Tabs 
+                    value={activeTab} 
+                    onChange={handleTabChange}
                     sx={{ 
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        border: '1px solid',
+                        borderBottom: 1, 
                         borderColor: 'divider',
-                        borderRadius: 2,
-                        overflow: 'hidden',
-                        minHeight: 0 // Importante per il corretto scrolling
+                        minHeight: 48
                     }}
                 >
-                    <Tabs 
-                        value={activeTab} 
-                        onChange={handleTabChange}
-                        sx={{ 
-                            borderBottom: 1, 
-                            borderColor: 'divider',
-                            minHeight: 48
-                        }}
-                    >
                         <Tab 
                             icon={<PeopleIcon />} 
                             label="Studenti" 
@@ -236,40 +237,64 @@ const ClassDetails = () => {
                     </Tabs>
 
                     <Box sx={{ 
-                        flex: 1, 
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column'
-                    }}>
-                        <TabPanel value={activeTab} index={0}>
-                            <StudentsList
-                                classData={classData}
-                                pageSize={pageSize}
-                                setPageSize={setPageSize}
-                                fetchData={fetchData}
-                            />
-                        </TabPanel>
+                    flex: 1, 
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    <TabPanel value={activeTab} index={0}>
+                        <StudentsList
+                            classData={classData}
+                            pageSize={pageSize}
+                            setPageSize={setPageSize}
+                            fetchData={fetchData}
+                            onAddStudent={handleOpenStudentForm} // Aggiungi questa prop
+                            onViewDetails={(student) => {
+                                // Implementa la visualizzazione dettagli
+                                console.log('View details:', student);
+                            }}
+                            onEdit={(student) => {
+                                // Implementa la modifica
+                                console.log('Edit student:', student);
+                            }}
+                            onNavigateToTests={(studentId) => {
+                                // Implementa la navigazione ai test
+                                console.log('Navigate to tests:', studentId);
+                            }}
+                        />
+                        <StudentClassForm 
+                            open={isStudentFormOpen}
+                            onClose={(needsRefresh) => {
+                                setIsStudentFormOpen(false);
+                                if (needsRefresh) {
+                                    fetchData();
+                                }
+                            }}
+                            classData={classData}
+                        />
+                    </TabPanel>
 
-                        <TabPanel value={activeTab} index={1}>
-                            <ClassPopulate classData={classData} onUpdate={fetchData} />
-                        </TabPanel>
+                    {/* Le altre TabPanel rimangono le stesse */}
+                    <TabPanel value={activeTab} index={1}>
+                        <ClassPopulate classData={classData} onUpdate={fetchData} />
+                    </TabPanel>
 
-                        <TabPanel value={activeTab} index={2}>
-                            <ClassTests classData={classData} />
-                        </TabPanel>
+                    <TabPanel value={activeTab} index={2}>
+                        <ClassTests classData={classData} />
+                    </TabPanel>
 
-                        <TabPanel value={activeTab} index={3}>
-                            <TeacherManagement classData={classData} onUpdate={fetchData} />
-                        </TabPanel>
+                    <TabPanel value={activeTab} index={3}>
+                        <TeacherManagement classData={classData} onUpdate={fetchData} />
+                    </TabPanel>
 
-                        <TabPanel value={activeTab} index={4}>
-                            <ClassSettings classData={classData} onUpdate={fetchData} />
-                        </TabPanel>
-                    </Box>
-                </Paper>
-            </Box>
-        </ContentLayout>
-    );
+                    <TabPanel value={activeTab} index={4}>
+                        <ClassSettings classData={classData} onUpdate={fetchData} />
+                    </TabPanel>
+                </Box>
+            </Paper>
+        </Box>
+    </ContentLayout>
+);
 };
 
 export default ClassDetails;

@@ -344,6 +344,127 @@ _generateRecommendations(scores) {
     // Implementa la logica per generare raccomandazioni basate sui punteggi
     return recommendations;
 }
+
+async update(token, updateData) {
+    try {
+        logger.debug('Updating CSI result:', { token, updateData });
+        
+        const result = await this.resultModel.findOneAndUpdate(
+            { token },
+            updateData,
+            { 
+                new: true,
+                runValidators: true
+            }
+        );
+
+        if (!result) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Risultato non trovato'
+            );
+        }
+
+        return result;
+    } catch (error) {
+        logger.error('Error updating CSI result:', {
+            error: error.message,
+            token
+        });
+        throw error;
+    }
+}
+
+async updateByToken(token, updateData) {
+    try {
+        const result = await this.resultModel.findOneAndUpdate(
+            { token: token }, // cerca per token
+            updateData,
+            { new: true }
+        );
+
+        if (!result) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Test non trovato'
+            );
+        }
+
+        return result;
+    } catch (error) {
+        logger.error('Error updating test by token:', {
+            error: error.message,
+            token: token
+        });
+        throw createError(
+            ErrorTypes.DATABASE.UPDATE_ERROR,
+            'Errore nell\'aggiornamento di Test',
+            { originalError: error.message }
+        );
+    }
+}
+
+
+async addAnswer(token, answerData) {
+    try {
+        const result = await this.resultModel.findOneAndUpdate(
+            { token: token }, // cerca per token invece che per _id
+            {
+                $push: {
+                    risposte: {
+                        questionId: answerData.questionId,
+                        value: answerData.value,
+                        timeSpent: answerData.timeSpent,
+                        categoria: answerData.categoria,
+                        timestamp: answerData.timestamp
+                    }
+                }
+            },
+            { new: true } // restituisce il documento aggiornato
+        );
+
+        if (!result) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Test non trovato'
+            );
+        }
+
+        return result;
+    } catch (error) {
+        logger.error('Error adding answer:', {
+            error: error.message,
+            token
+        });
+        throw error;
+    }
+}
+
+async findByToken(token) {
+    try {
+        logger.debug('Finding test by token:', { 
+            token: token.substring(0, 10) + '...',
+            modelName: this.resultModel.modelName
+        });
+
+        const test = await this.resultModel.findOne({ token });
+        
+        logger.debug('Find by token result:', {
+            found: !!test,
+            testId: test?._id,
+            testToken: test?.token
+        });
+
+        return test;
+    } catch (error) {
+        logger.error('Error finding test by token:', {
+            error: error.message,
+            token: token.substring(0, 10) + '...'
+        });
+        throw error;
+    }
+}
+
 }
 
 module.exports = CSIRepository;
