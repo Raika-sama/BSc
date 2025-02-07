@@ -76,7 +76,7 @@ const initializeCSIConfig = async () => {
                     }
                 },
                 validazione: {
-                    tempoMinimoDomanda: 2000,
+                    tempoMinimoDomanda: 500,
                     tempoMassimoDomanda: 300000,
                     numeroMinimoDomande: 20,
                     sogliaRisposteVeloci: 5

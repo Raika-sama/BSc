@@ -4,6 +4,11 @@ const logger = require('../../utils/errors/logger/logger');
 
 class BaseRepository {
     constructor(model) {
+        if (!model) {
+            logger.warn('Warning: ModelName mancante nel repository', {
+                repository: this.constructor.name.toLowerCase()
+            });
+        }
         this.model = model;
     }
 

@@ -262,6 +262,15 @@ const startServer = async () => {
             testController
         });
 
+        app.use((req, res, next) => {
+            logger.debug('Registered mongoose models:', {
+                models: mongoose.modelNames(),
+                hasCSIQuestion: !!mongoose.models.CSIQuestion,
+                hasTest: !!mongoose.models.Test
+            });
+            next();
+        });
+
         app.use('/api/v1/tests', testRouter);
 
         // Altre routes con dipendenze iniettate
