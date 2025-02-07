@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const mongoose = require('mongoose'); // Aggiungi questo import
 const { connectDB } = require('./config/database');
 const { requestLogger, errorLogger } = require('./middleware/loggerMiddleware');
 const errorHandler = require('./middleware/errorHandler');
@@ -12,6 +13,26 @@ const createCSIRoutes = require('./engines/CSI/routes/csi.routes');
 const createTestRouter = require('./routes/testRoutes');
 const createQuestionRoutes = require('./engines/CSI/routes/csi.question.routes');
 
+
+// Importa e registra i modelli CSI
+require('./engines/CSI/models/CSIConfig');
+require('./engines/CSI/models/CSIQuestion');
+require('./models/Result');
+require('./models/Test');
+
+
+// Funzione per verificare la registrazione dei modelli
+const ensureModelsRegistered = () => {
+    const models = mongoose.modelNames();
+    logger.debug('Registered mongoose models:', { models });
+    
+    const requiredModels = ['CSIConfig', 'CSIQuestion', 'Result', 'Test'];
+    const missingModels = requiredModels.filter(model => !models.includes(model));
+    
+    if (missingModels.length > 0) {
+        throw new Error(`Missing required models: ${missingModels.join(', ')}`);
+    }
+};
 
 // Import Models
 const User = require('./models/User');
@@ -112,159 +133,168 @@ if (config.env === 'development') {
     });
 }
 
-// Inizializza le dipendenze CSI
-logger.debug('Initializing CSI dependencies...');
+// Funzione di inizializzazione delle dipendenze CSI
+const initializeCSIDependencies = async () => {
+    try {
+        logger.debug('Initializing CSI dependencies...');
+        
+        const result = await createCSIController({
+            userService,
+            testRepository,
+            studentRepository
+        });
+        
+        const csiController = result.controller;
+        const csiDependencies = result.dependencies;
 
-// Crea il controller CSI con le dipendenze esterne
-const { controller: csiController, dependencies: csiDependencies } = createCSIController({
-    userService,
-    testRepository,
-    studentRepository
-});
-
-
-
-// Inizializza CSIQuestionController
-const csiQuestionController = new CSIQuestionController(
-    csiDependencies.csiQuestionService
-);
-
-
-
-if (!csiController?.engine) {
-    throw new Error('CSI Controller engine not initialized correctly');
-}
-
-logger.debug('CSI Controller initialization:', {
-    hasController: !!csiController,
-    controllerState: {
-        hasRepository: !!csiController.repository,
-        hasEngine: !!csiController.engine,
-        hasUserService: !!csiController.userService
-    }
-});
-
-// Crea oggetto con tutte le dipendenze
-const dependencies = {
-    // Controllers
-    authController,
-    userController,
-    schoolController,
-    classController,
-    studentController,
-    studentBulkImportController,
-    testController,
-    csiController,
-    // CSI Dependencies
-    ...csiDependencies,
-    csiQuestionController,
-    // Services
-    authService,
-    userService,
-    sessionService,
-    // Middleware
-    authMiddleware,
-    bulkImportValidation,
-    // Repositories
-    userRepository,
-    classRepository,
-    schoolRepository,
-    studentRepository,
-    studentBulkImportRepository,
-    testRepository
-};
-
-// Verifica delle dipendenze prima delle routes
-logger.debug('Dependencies check:', {
-    hasAuthMiddleware: !!dependencies.authMiddleware,
-    authMiddlewareMethods: dependencies.authMiddleware ? Object.keys(dependencies.authMiddleware) : [],
-    hasProtect: !!dependencies.authMiddleware?.protect,
-    hasRestrictTo: !!dependencies.authMiddleware?.restrictTo,
-    hasLoginLimiter: !!dependencies.authMiddleware?.loginLimiter,
-    hasCsiController: !!dependencies.csiController
-});
-
-
-
-// Verifica che sia tutto inizializzato correttamente
-if (!csiController || !csiQuestionController) {
-    throw new Error('CSI Controllers non inizializzati correttamente');
-}
-
-logger.debug('Setting up CSI routes...', {
-    hasController: !!csiController,
-    controllerState: {
-        hasRepository: !!csiController?.repository,
-        hasEngine: !!csiController?.engine
-    }
-});
-
-// Inizializza e monta le routes CSI
-const csiRoutes = createCSIRoutes({
-    authMiddleware,
-    csiController
-});
-
-// Inizializza le routes delle domande CSI
-const csiQuestionRoutes = createQuestionRoutes({
-    authMiddleware,
-    csiQuestionController  // passa il controller delle domande
-});
-
-if (!csiQuestionRoutes) {
-    throw new Error('CSI Question Routes non inizializzate correttamente');
-}
-
-// Mount delle rotte CSI con logging
-logger.debug('Mounting CSI routes...');
-
-app.use('/api/v1/tests/csi', csiRoutes.publicRoutes);
-app.use('/api/v1/tests/csi', csiRoutes.protectedRoutes);
-app.use('/api/v1/tests/csi/questions', csiQuestionRoutes);
-
-logger.debug('CSI routes mounted successfully');
-
-// Monta le altre rotte dei test
-const testRouter = createTestRouter({
-    authMiddleware,
-    testController
-});
-
-app.use('/api/v1/tests', testRouter);
-
-// Altre routes con dipendenze iniettate
-app.use('/api/v1', routes(dependencies));
-
-// Gestione errori
-app.use(errorLogger);
-app.use(errorHandler);
-
-// Gestione route non trovata
-app.use((req, res) => {
-    res.status(404).json({
-        status: 'error',
-        error: {
-            message: 'Route non trovata',
-            code: 'RES_001',
-            metadata: {
-                path: req.originalUrl
-            }
+        if (!csiController?.engine) {
+            throw new Error('CSI Controller engine not initialized correctly');
         }
-    });
-});
+
+        // Inizializza CSIQuestionController
+        const csiQuestionController = new CSIQuestionController(
+            csiDependencies.csiQuestionService
+        );
+
+        logger.debug('CSI Controller initialization:', {
+            hasController: !!csiController,
+            controllerState: {
+                hasRepository: !!csiController.repository,
+                hasEngine: !!csiController.engine,
+                hasUserService: !!csiController.userService
+            }
+        });
+
+        // Inizializza e monta le routes CSI
+        const csiRoutes = createCSIRoutes({
+            authMiddleware,
+            csiController
+        });
+
+        // Inizializza le routes delle domande CSI
+        const csiQuestionRoutes = createQuestionRoutes({
+            authMiddleware,
+            csiQuestionController
+        });
+
+        if (!csiQuestionRoutes) {
+            throw new Error('CSI Question Routes non inizializzate correttamente');
+        }
+
+        // Mount delle rotte CSI
+        logger.debug('Mounting CSI routes...');
+        app.use('/api/v1/tests/csi', csiRoutes.publicRoutes);
+        app.use('/api/v1/tests/csi', csiRoutes.protectedRoutes);
+        app.use('/api/v1/tests/csi/questions', csiQuestionRoutes);
+        logger.debug('CSI routes mounted successfully');
+
+        return {
+            csiController,
+            csiQuestionController,
+            csiDependencies
+        };
+    } catch (error) {
+        logger.error('Failed to initialize CSI dependencies:', {
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
+    }
+};
 
 // Gestione connessione DB e avvio server
 const startServer = async () => {
     try {
+        // Connetti al database
         await connectDB();
         logger.info('Database connesso con successo');
 
+        // Verifica che i modelli siano registrati
+        ensureModelsRegistered();
+        logger.info('Tutti i modelli richiesti sono registrati correttamente');
+
+        // Inizializza le dipendenze CSI
+        const { csiController, csiQuestionController, csiDependencies } = 
+            await initializeCSIDependencies();
+        // Crea oggetto con tutte le dipendenze
+        const dependencies = {
+            // Controllers
+            authController,
+            userController,
+            schoolController,
+            classController,
+            studentController,
+            studentBulkImportController,
+            testController,
+            csiController,
+            // CSI Dependencies
+            ...csiDependencies,
+            csiQuestionController,
+            // Services
+            authService,
+            userService,
+            sessionService,
+            // Middleware
+            authMiddleware,
+            bulkImportValidation,
+            // Repositories
+            userRepository,
+            classRepository,
+            schoolRepository,
+            studentRepository,
+            studentBulkImportRepository,
+            testRepository
+        };
+
+        // Verifica delle dipendenze prima delle routes
+        logger.debug('Dependencies check:', {
+            hasAuthMiddleware: !!dependencies.authMiddleware,
+            authMiddlewareMethods: dependencies.authMiddleware ? Object.keys(dependencies.authMiddleware) : [],
+            hasProtect: !!dependencies.authMiddleware?.protect,
+            hasRestrictTo: !!dependencies.authMiddleware?.restrictTo,
+            hasLoginLimiter: !!dependencies.authMiddleware?.loginLimiter,
+            hasCsiController: !!dependencies.csiController
+        });
+
+        // Monta le altre rotte dei test
+        const testRouter = createTestRouter({
+            authMiddleware,
+            testController
+        });
+
+        app.use('/api/v1/tests', testRouter);
+
+        // Altre routes con dipendenze iniettate
+        app.use('/api/v1', routes(dependencies));
+
+        // Gestione errori
+        app.use(errorLogger);
+        app.use(errorHandler);
+
+        // Gestione route non trovata
+        app.use((req, res) => {
+            res.status(404).json({
+                status: 'error',
+                error: {
+                    message: 'Route non trovata',
+                    code: 'RES_001',
+                    metadata: {
+                        path: req.originalUrl
+                    }
+                }
+            });
+        });
+
+        // Avvia il server
         app.listen(config.server.port, () => {
             logger.info(`Server in esecuzione su ${config.server.host}:${config.server.port}`);
             logger.info(`Ambiente: ${config.env}`);
         });
     } catch (error) {
-        logger.error('Errore durante l\'avvio del server:', error);
+        logger.error('Errore durante l\'avvio del server:', {
+            error: error.message,
+            stack: error.stack
+        });
         process.exit(1);
     }
 };

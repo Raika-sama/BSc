@@ -181,7 +181,7 @@ class CSIController {
             logger.debug('Initializing CSI test for student:', { studentId });
     
             // 1. Recupera configurazione attiva
-            const config = await this.configModel.getActiveConfig();
+            const config = await this.configModel.findOne({ active: true }).sort({ version: -1 });
             if (!config) {
                 throw createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,

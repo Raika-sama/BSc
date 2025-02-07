@@ -1,7 +1,8 @@
 // src/engines/CSI/repositories/CSIRepository.js
+const mongoose = require('mongoose'); // Aggiungi questo import
 const crypto = require('crypto'); // Aggiungi questo import in cima
-const CSIQuestion = require('./models/CSIQuestion');
-const { Test, Result, CSIResult } = require('../../models'); // usa l'index.js centralizzato
+const { CSIQuestion } = require('./models/CSIQuestion'); // Corretto il path e destructuring
+const { Test } = require('../../models'); // Corretto il path
 const CSIConfig = require('./models/CSIConfig');  // Aggiungiamo l'import
 const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 const logger = require('../../utils/errors/logger/logger');
@@ -10,16 +11,25 @@ const TestRepository = require('../../repositories/TestRepository');
 class CSIRepository extends TestRepository {
     constructor() {
         super();
-        this.questionModel = CSIQuestion;
-        this.resultModel = CSIResult;    // Nota: ho corretto anche il nome della proprietà
+        
+        // Inizializza i modelli con mongoose
+        this.questionModel = mongoose.model('CSIQuestion');
         this.resultModel = mongoose.model('Result').discriminators['CSI']; // Usa il discriminator corretto
-        this.configModel = CSIConfig;    // Aggiungiamo il model per la config
-        this.Test = Test; // Aggiungi questa riga
+        this.configModel = mongoose.model('CSIConfig');
+        this.Test = mongoose.model('Test');
+
+        // Verifica che i modelli siano inizializzati correttamente
+        if (!this.resultModel) {
+            throw new Error('Result model not properly initialized');
+        }
+
         logger.debug('CSIRepository initialized with models:', {
             hasQuestionModel: !!this.questionModel,
             hasResultModel: !!this.resultModel,
             hasConfigModel: !!this.configModel,
-            hasTestModel: !!this.Test
+            hasTestModel: !!this.Test,
+            resultModelName: this.resultModel?.modelName,
+            discriminatorKey: this.resultModel?.schema?.discriminatorMapping?.key
         });
     }
 

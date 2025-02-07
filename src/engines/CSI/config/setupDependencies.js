@@ -1,5 +1,6 @@
 // src/engines/CSI/config/setupDependencies.js
-const CSIQuestion = require('../models/CSIQuestion'); // Aggiungi questo import
+const mongoose = require('mongoose'); // Aggiungi questo import
+const { CSIQuestion } = require('../models/CSIQuestion');
 const TestRepository = require('../../../repositories/TestRepository');
 const CSIRepository = require('../CSIRepository');
 const StudentRepository = require('../../../repositories/StudentRepository');
@@ -20,10 +21,11 @@ const logger = require('../../../utils/errors/logger/logger');
 const initializeCSIConfig = async () => {
     try {
         // Cerca prima una configurazione attiva
-        let config = await CSIConfig.findOne({ active: true });
+        let config = await mongoose.model('CSIConfig').findOne({ active: true });
         
         if (!config) {
             // Creiamo una configurazione di default completa
+            const CSIConfigModel = mongoose.model('CSIConfig');
             const defaultConfig = {
                 version: '1.0.0',
                 active: true,
@@ -86,24 +88,28 @@ const initializeCSIConfig = async () => {
                 }
             };
 
-            config = await CSIConfig.create(defaultConfig);
+            config = await CSIConfigModel.create(defaultConfig);
             logger.info('Created default CSI configuration:', { configId: config._id });
         }
 
         return config;
     } catch (error) {
-        logger.error('Error initializing CSI config:', { error: error.message });
-        throw new Error('CSI Config initialization failed');
+        logger.error('Error initializing CSI config:', { 
+            error: error.message,
+            stack: error.stack 
+        });
+        throw error;
     }
 };
 
 
-const setupCSIDependencies = () => {
+
+const setupCSIDependencies = async () => {
     try {
         logger.debug('Initializing CSI dependencies...');
 
         // Inizializza configurazione
-        const csiConfig = initializeCSIConfig();
+        const csiConfig = await initializeCSIConfig();
 
         // Inizializza validator
         const validator = CSIQuestionValidator;
@@ -197,9 +203,11 @@ const createCSIController = async (externalDeps = {}) => {
         const csiConfig = await initializeCSIConfig();
         const validator = CSIQuestionValidator;
         const csiRepository = new CSIRepository();
-        const csiQuestionRepository = new CSIQuestionRepository(CSIQuestion, validator); // CORRETTO
+        const csiQuestionRepository = new CSIQuestionRepository(CSIQuestion, validator);
         const csiQuestionService = new CSIQuestionService(csiQuestionRepository, validator);
         const csiScorer = new CSIScorer(csiConfig);
+
+        const CSIConfigModel = mongoose.model('CSIConfig');
 
         // Crea l'engine con le dipendenze aggiornate
         const csiEngine = new CSIEngine({
@@ -217,7 +225,7 @@ const createCSIController = async (externalDeps = {}) => {
             testEngine: csiEngine,
             csiQuestionService,
             userService: externalDeps.userService,
-            csiConfig,
+            csiConfig: CSIConfigModel,  // Usiamo il modello mongoose
             validator,
             repository: csiRepository
         });
@@ -239,8 +247,11 @@ const createCSIController = async (externalDeps = {}) => {
             }
         };
     } catch (error) {
-        logger.error('Error creating CSI controller:', { error: error.message });
-        throw new Error('CSI Controller creation failed');
+        logger.error('Error creating CSI controller:', { 
+            error: error.message,
+            stack: error.stack 
+        });
+        throw new Error(`CSI Controller creation failed: ${error.message}`);
     }
 };
 
