@@ -1,6 +1,5 @@
 // src/models/Result.js
 const mongoose = require('mongoose');
-const { metadataSchema } = require('../engines/CSI/models/CSIQuestion');
 
 // Schema base comune a tutti i risultati
 const baseResultSchema = new mongoose.Schema({
@@ -47,11 +46,12 @@ const baseResultSchema = new mongoose.Schema({
             type: Map,
             of: mongoose.Schema.Types.Mixed
         }
-    }
+    },
 }, { 
     discriminatorKey: 'tipo',
     timestamps: true 
 });
+
 
 // Indici comuni
 baseResultSchema.index({ tipo: 1, dataCompletamento: -1 });
@@ -81,38 +81,65 @@ const csiResultSchema = new mongoose.Schema({
     testRef: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Test',
-        required: true
+        required: [true, 'Il riferimento al test è obbligatorio']
     },
     config: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'CSIConfig',
-        required: true
+        required: [true, 'Il riferimento alla configurazione è obbligatorio']
     },
     risposte: [{
         questionId: {
             type: Number,
-            required: true
+            required: [true, 'ID domanda obbligatorio']
         },
         value: {
             type: Number,
-            required: true,
-            min: 1,
-            max: 5
+            required: [true, 'Valore risposta obbligatorio'],
+            min: [1, 'Il valore minimo è 1'],
+            max: [5, 'Il valore massimo è 5']
         },
         timeSpent: {
             type: Number,
-            required: true
+            required: [true, 'Tempo di risposta obbligatorio'],
+            min: [0, 'Il tempo non può essere negativo']
         },
         categoria: {
             type: String,
-            required: true,
-            enum: ['Elaborazione', 'Creatività', 'Preferenza Visiva', 'Decisione', 'Autonomia']
+            required: [true, 'Categoria obbligatoria'],
+            enum: {
+                values: ['Elaborazione', 'Creatività', 'Preferenza Visiva', 'Decisione', 'Autonomia'],
+                message: 'Categoria non valida'
+            }
         },
         timestamp: {
             type: Date,
             default: Date.now
         }
-    }]
+    }],
+    // Aggiungiamo alcuni campi utili
+    punteggi: {
+        elaborazione: Number,
+        creativita: Number,
+        preferenzaVisiva: Number,
+        decisione: Number,
+        autonomia: Number
+    },
+    metadata: {
+        tempoTotaleDomande: Number,
+        tempoMedioRisposta: Number,
+        completamentoPercentuale: {
+            type: Number,
+            default: 0
+        },
+        pattern: {
+            type: Map,
+            of: mongoose.Schema.Types.Mixed
+        }
+    }
+}, {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
 });
 
 // Crea il modello base
@@ -150,17 +177,47 @@ csiResultSchema.methods.addAnswer = async function(answerData) {
         throw new Error('Risposta non valida: tempo di risposta fuori dai limiti');
     }
     
+    // Assicuriamoci che il test sia popolato correttamente
+    if (!this.populated('testRef')) {
+        await this.populate({
+            path: 'testRef',
+            populate: {
+                path: 'domande.questionRef',
+                model: 'CSIQuestion'  // Riferimento esplicito al modello CSIQuestion
+            }
+        });
+    }
+    
     this.risposte.push(answerData);
     return this.save();
 };
 
 csiResultSchema.virtual('progress').get(function() {
     return {
-        total: this.test.domande.length,
+        total: this.testRef.domande.length,
         answered: this.risposte.length,
-        remaining: this.test.domande.length - this.risposte.length,
-        percentage: (this.risposte.length / this.test.domande.length) * 100
+        remaining: this.testRef.domande.length - this.risposte.length,
+        percentage: (this.risposte.length / this.testRef.domande.length) * 100
     };
+});
+
+
+// Aggiungiamo alcune validazioni
+csiResultSchema.path('risposte').validate(function(risposte) {
+    // Verifica che non ci siano questionId duplicati
+    const ids = risposte.map(r => r.questionId);
+    return new Set(ids).size === ids.length;
+}, 'Non possono esserci risposte duplicate per la stessa domanda');
+
+// Virtual per il conteggio delle risposte
+csiResultSchema.virtual('totalRisposte').get(function() {
+    return this.risposte.length;
+});
+
+// Virtual per verificare se il test è completo
+csiResultSchema.virtual('isCompleto').get(function() {
+    if (!this.testRef || !this.testRef.domande) return false;
+    return this.risposte.length === this.testRef.domande.length;
 });
 
 module.exports = {

@@ -20,21 +20,22 @@ class TestRepository extends BaseRepository {
      */
     async findByToken(token) {
         try {
-            logger.debug('Finding test by token:', {
-                token: token.substring(0, 10) + '...'
-            });
-
             const result = await this.Result.findOne({
                 token,
                 expiresAt: { $gt: new Date() }
-            }).populate('studentId');
+            }).populate({
+                path: 'testRef',
+                populate: {
+                    path: 'domande.questionRef',
+                    model: function(doc) {
+                        return doc.questionModel || 'CSIQuestion';
+                    }
+                }
+            });
 
             return result;
         } catch (error) {
-            logger.error('Error finding test by token:', {
-                error: error.message,
-                token: token.substring(0, 10) + '...'
-            });
+            logger.error('Error finding test by token:', error);
             throw error;
         }
     }

@@ -2,7 +2,8 @@
 const mongoose = require('mongoose');
 const logger = require('../utils/errors/logger/logger');
 
-
+// Prima della definizione dello schema
+const availableQuestionModels = ['CSIQuestion', 'FutureTestQuestion'];
 const questionSchema = new mongoose.Schema({
     id: {
         type: Number,
@@ -130,53 +131,27 @@ testSchema.index({ 'configurazione.questionVersion': 1 });
 
 // Aggiungi questo pre-save middleware
 // Middleware di validazione
+// Nel middleware pre-save
 testSchema.pre('save', async function(next) {
-    if (this.tipo === 'CSI') {
-        try {
-            const CSIConfig = mongoose.model('CSIConfig');
-            const config = await CSIConfig.findOne({ active: true });
-            
-            if (!config) {
-                throw new Error('Nessuna configurazione CSI attiva trovata');
-            }
-
-            // Salva il riferimento alla configurazione
-            this.configurazione.configRef = config._id;
-            this.csiConfig = config._id; // Aggiungi anche questo
-            
-            // Imposta i metadati con safe access
-            this.configurazione.metadataSchema = {
-                categorie: config.scoring?.categorie?.map(c => c.nome) || [],
-                scaleLikert: 5, // valore di default
-                pesoDefault: 1  // valore di default
-            };
-
-            // Imposta valori di default dalla configurazione con safe access
-            this.configurazione = {
-                ...this.configurazione,
-                tempoLimite: config.validazione?.tempoMassimoDomanda || 300000,
-                tentativiMax: 1,
-                cooldownPeriod: 24 * 60 * 60 * 1000,
-                randomizzaDomande: false,
-                mostraRisultatiImmediati: false,
-                istruzioni: config.interfaccia?.istruzioni || 
-                    'Rispondi alle seguenti domande selezionando un valore da 1 a 5'
-            };
-        } catch (error) {
-            console.error('Error in Test pre-save middleware:', error);
-            return next(error);
+    // Verifica che i modelli delle domande esistano
+    for (const domanda of this.domande) {
+        if (!mongoose.modelNames().includes(domanda.questionModel)) {
+            throw new Error(`Model ${domanda.questionModel} non registrato`);
         }
     }
     next();
 });
 
-// Middleware per populate automatico delle domande
+// Nel middleware per populate
 testSchema.pre(/^find/, function(next) {
     if (this.options.populateQuestions !== false) {
-        this.populate({
+        const populateOptions = {
             path: 'domande.questionRef',
-            model: '$domande.questionModel'
-        });
+            model: function(doc) {
+                return doc.questionModel || 'CSIQuestion';
+            }
+        };
+        this.populate(populateOptions);
     }
     next();
 });

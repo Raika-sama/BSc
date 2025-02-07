@@ -18,6 +18,8 @@ const UserAudit = require('./UserAudit');
 
 // Verifica che tutti i modelli siano stati caricati correttamente
 const models = {
+    CSIQuestion,     // Sposta CSIQuestion all'inizio
+    CSIConfig,
     School,
     User,
     Class,
@@ -26,8 +28,6 @@ const models = {
     Result,
     CSIResult,  // Aggiungi CSIResult
     UserAudit,
-    CSIResult,
-    UserAudit
 };
 
 // Verifica che tutti i modelli siano stati caricati correttamente

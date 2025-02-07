@@ -538,71 +538,27 @@ async updateByToken(token, updateData) {
 
 async addAnswer(token, answerData) {
     try {
-        logger.debug('Adding answer:', {
-            token: token.substring(0, 10) + '...',
-            answerData
-        });
-
-       
-        // Test existence check
-        const test = await this.resultModel.findOne({ 
+        const result = await this.resultModel.findOne({ 
             token,
             completato: false
+        }).populate({
+            path: 'testRef',
+            populate: {
+                path: 'domande.questionRef',
+                model: 'CSIQuestion'
+            }
         });
 
-        logger.debug('Found test:', {
-            testFound: !!test,
-            testId: test?._id,
-            hasTestRef: !!test?.testRef,
-            testRefId: test?.testRef?._id
-        });
-
-        if (!test) {
+        if (!result) {
             throw createError(
                 ErrorTypes.RESOURCE.NOT_FOUND,
                 'Test non trovato o già completato'
             );
         }
 
-        // Verifica che la risposta non sia già presente
-        const esisteRisposta = test.risposte.some(r => r.questionId === answerData.questionId);
-        if (esisteRisposta) {
-            throw createError(
-                ErrorTypes.VALIDATION.DUPLICATE_ANSWER,
-                'Risposta già presente per questa domanda'
-            );
-        }
-
-        // Verifica il tempo di risposta
-        const config = await this.configModel.findOne({ active: true });
-        if (config && answerData.timeSpent) {
-            const tempoValido = config.validateAnswer(answerData.timeSpent);
-            if (!tempoValido) {
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_RESPONSE_TIME,
-                    'Tempo di risposta non valido'
-                );
-            }
-        }
-
-         // Prima del populate
-         logger.debug('About to execute populate query with testRef:', {
-            testRef: test?.testRef,
-            modelNames: mongoose.modelNames()  // Per vedere i modelli disponibili
-        });
-
-
-        // Prima troviamo il risultato
-        const testResult = await this.resultModel.findOne({ token });
+        // ... resto del codice ...
         
-        // Poi facciamo il populate del test
-        const populatedTest = await this.Test.findById(testResult.testRef).populate({
-            path: 'domande.questionRef',
-            model: 'CSIQuestion'  // Forziamo l'uso di CSIQuestion
-        });
-
-        // Infine aggiorniamo il risultato
-        const result = await this.resultModel.findOneAndUpdate(
+        const updatedResult = await this.resultModel.findOneAndUpdate(
             { token },
             {
                 $push: {
@@ -619,31 +575,19 @@ async addAnswer(token, answerData) {
                 new: true,
                 runValidators: true
             }
-        );
-
-        // Aggiungiamo il test popolato al risultato
-        result.testRef = populatedTest;
-
-
-        logger.debug('After populate result:', {
-            hasResult: !!result,
-            resultId: result?._id,
-            hasTestRef: !!result?.testRef,
-            testRefPopulated: !!result?.testRef?.domande,
-            domandeCount: result?.testRef?.domande?.length,
-            firstDomanda: result?.testRef?.domande?.[0]
+        ).populate({
+            path: 'testRef',
+            populate: {
+                path: 'domande.questionRef',
+                model: 'CSIQuestion'
+            }
         });
 
-        return result;
+        return updatedResult;
     } catch (error) {
-        logger.error('Detailed error in addAnswer:', {
+        logger.error('Error in addAnswer:', {
             error: error.message,
-            stack: error.stack,
-            token: token.substring(0, 10) + '...',
-            modelState: {
-                hasResultModel: !!this.resultModel,
-                modelNames: mongoose.modelNames()
-            }
+            token: token.substring(0, 10) + '...'
         });
         throw error;
     }
