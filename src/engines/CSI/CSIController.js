@@ -36,7 +36,7 @@ class CSIController {
         this.engine = testEngine;       // Rinominato per chiarezza
         this.questionService = csiQuestionService;
         this.userService = userService;
-        this.configModel = require('./models/CSIConfig');
+        this.configModel = csiConfig; // Usa l'import diretto invece di require
         this.validator = validator;
         this.repository = repository;  // Salviamo il repository!
 

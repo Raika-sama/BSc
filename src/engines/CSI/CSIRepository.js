@@ -12,9 +12,15 @@ class CSIRepository extends TestRepository {
         super();
         this.questionModel = CSIQuestion;
         this.resultModel = CSIResult;    // Nota: ho corretto anche il nome della proprietà
+        this.resultModel = mongoose.model('Result').discriminators['CSI']; // Usa il discriminator corretto
         this.configModel = CSIConfig;    // Aggiungiamo il model per la config
         this.Test = Test; // Aggiungi questa riga
-
+        logger.debug('CSIRepository initialized with models:', {
+            hasQuestionModel: !!this.questionModel,
+            hasResultModel: !!this.resultModel,
+            hasConfigModel: !!this.configModel,
+            hasTestModel: !!this.Test
+        });
     }
 
 /**
@@ -38,11 +44,26 @@ async getActiveConfiguration() {
  */
 async checkAvailability(studentId) {
     try {
+        logger.debug('Checking CSI test availability:', { 
+            studentId,
+            hasResultModel: !!this.resultModel,
+            modelName: this.resultModel?.modelName
+        });
+
+        if (!this.resultModel) {
+            throw new Error('Result model not initialized');
+        }
+
         const lastTest = await this.resultModel.findOne({
             studentId,
             tipo: 'CSI',
             completato: true
         }).sort({ dataCompletamento: -1 });
+
+        logger.debug('Last test found:', {
+            found: !!lastTest,
+            completionDate: lastTest?.dataCompletamento
+        });
 
         if (!lastTest) {
             return { available: true };
@@ -52,15 +73,23 @@ async checkAvailability(studentId) {
         const nextAvailableDate = new Date(lastTest.dataCompletamento.getTime() + cooldownPeriod);
         const now = new Date();
 
-        return {
+        const availability = {
             available: now >= nextAvailableDate,
             nextAvailableDate,
             lastTestDate: lastTest.dataCompletamento
         };
+
+        logger.debug('Availability check result:', availability);
+
+        return availability;
     } catch (error) {
         logger.error('Error checking CSI test availability:', {
             error: error.message,
-            studentId
+            studentId,
+            modelState: {
+                hasResultModel: !!this.resultModel,
+                modelName: this.resultModel?.modelName
+            }
         });
         throw createError(
             ErrorTypes.DATABASE.QUERY_ERROR,
@@ -69,6 +98,7 @@ async checkAvailability(studentId) {
         );
     }
 }
+
 
   /**
      * Override del metodo saveTestToken per gestire specifiche CSI
@@ -86,32 +116,49 @@ async checkAvailability(studentId) {
         // Genera un nuovo token
         const token = crypto.randomBytes(32).toString('hex');
 
-        // Prima ottieni la configurazione attiva
-        const activeConfig = await this.configModel.findOne({ active: true });
+        // Ottieni o crea la configurazione attiva
+        let activeConfig = await this.configModel.findOne({ active: true });
         if (!activeConfig) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Nessuna configurazione CSI attiva trovata'
-            );
+            activeConfig = await this.configModel.create({
+                version: '1.0.0',
+                active: true,
+                scoring: {
+                    categorie: [
+                        {
+                            nome: 'Elaborazione',
+                            pesoDefault: 1,
+                            min: 1,
+                            max: 5,
+                            interpretazioni: []
+                        },
+                        // aggiungi altre categorie predefinite
+                    ]
+                },
+                validazione: {
+                    tempoMinimoDomanda: 2000,
+                    tempoMassimoDomanda: 300000,
+                    numeroMinimoDomande: 20,
+                    sogliaRisposteVeloci: 5
+                },
+                interfaccia: {
+                    istruzioni: 'Rispondi alle seguenti domande selezionando un valore da 1 a 5',
+                    mostraProgressBar: true,
+                    permettiTornaIndietro: false
+                }
+            });
         }
 
-        logger.debug('Found active CSI config:', {
-            configId: activeConfig._id,
-            version: activeConfig.version
-        });
-
-        // Crea prima il Test con valori di default sicuri
+        // Crea il Test
         const newTest = await this.Test.create({
             tipo: 'CSI',
             studentId: testData.studentId,
             configurazione: {
-                tempoLimite: activeConfig.validazione?.tempoMassimoDomanda || 300000,
+                tempoLimite: activeConfig.validazione.tempoMassimoDomanda,
                 tentativiMax: 1,
                 cooldownPeriod: 24 * 60 * 60 * 1000,
                 randomizzaDomande: false,
                 mostraRisultatiImmediati: false,
-                istruzioni: activeConfig.interfaccia?.istruzioni || 
-                    'Rispondi alle seguenti domande selezionando un valore da 1 a 5',
+                istruzioni: activeConfig.interfaccia.istruzioni,
                 questionVersion: '1.0.0'
             },
             csiConfig: activeConfig._id,
@@ -119,12 +166,7 @@ async checkAvailability(studentId) {
             versione: '1.0.0'
         });
 
-        logger.debug('Created new CSI test:', {
-            testId: newTest._id,
-            config: newTest.configurazione
-        });
-
-        // Poi crea il Result associato
+        // Crea il Result
         const newResult = await this.resultModel.create({
             tipo: 'CSI',
             studentId: testData.studentId,

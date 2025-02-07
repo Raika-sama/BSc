@@ -17,31 +17,86 @@ const logger = require('../../../utils/errors/logger/logger');
  * Inizializza la configurazione CSI
  * @private
  */
-const initializeCSIConfig = () => {
+const initializeCSIConfig = async () => {
     try {
-        // Creiamo una configurazione di default
-        const defaultConfig = {
-            version: '1.0.0',
-            active: true,
-            scoring: {
-                categorie: [
-                    {
-                        nome: 'Elaborazione',
-                        pesoDefault: 1,
-                        min: 1,
-                        max: 5
-                    },
-                    // ... altre categorie
-                ]
-            }
-        };
+        // Cerca prima una configurazione attiva
+        let config = await CSIConfig.findOne({ active: true });
+        
+        if (!config) {
+            // Creiamo una configurazione di default completa
+            const defaultConfig = {
+                version: '1.0.0',
+                active: true,
+                scoring: {
+                    categorie: [
+                        {
+                            nome: 'Elaborazione',
+                            pesoDefault: 1,
+                            min: 1,
+                            max: 5,
+                            interpretazioni: []
+                        },
+                        {
+                            nome: 'Creatività',
+                            pesoDefault: 1,
+                            min: 1,
+                            max: 5,
+                            interpretazioni: []
+                        },
+                        {
+                            nome: 'Preferenza Visiva',
+                            pesoDefault: 1,
+                            min: 1,
+                            max: 5,
+                            interpretazioni: []
+                        },
+                        {
+                            nome: 'Decisione',
+                            pesoDefault: 1,
+                            min: 1,
+                            max: 5,
+                            interpretazioni: []
+                        },
+                        {
+                            nome: 'Autonomia',
+                            pesoDefault: 1,
+                            min: 1,
+                            max: 5,
+                            interpretazioni: []
+                        }
+                    ],
+                    algoritmo: {
+                        version: '1.0.0',
+                        parametri: new Map([
+                            ['pesoTempoRisposta', 0.3],
+                            ['sogliaConsistenza', 0.7]
+                        ])
+                    }
+                },
+                validazione: {
+                    tempoMinimoDomanda: 2000,
+                    tempoMassimoDomanda: 300000,
+                    numeroMinimoDomande: 20,
+                    sogliaRisposteVeloci: 5
+                },
+                interfaccia: {
+                    istruzioni: 'Rispondi alle seguenti domande selezionando un valore da 1 a 5',
+                    mostraProgressBar: true,
+                    permettiTornaIndietro: false
+                }
+            };
 
-        return new CSIConfig(defaultConfig);
+            config = await CSIConfig.create(defaultConfig);
+            logger.info('Created default CSI configuration:', { configId: config._id });
+        }
+
+        return config;
     } catch (error) {
         logger.error('Error initializing CSI config:', { error: error.message });
         throw new Error('CSI Config initialization failed');
     }
 };
+
 
 const setupCSIDependencies = () => {
     try {
@@ -101,8 +156,7 @@ const setupCSIDependencies = () => {
             csiQuestionService,
             userService,
             csiConfig,
-            validator,
-            repository: csiRepository  // Aggiungiamo questa!
+            validator
         });
 
   logger.debug('CSI controller initialized:', {
@@ -137,10 +191,10 @@ const setupCSIDependencies = () => {
     }
 };
 
-const createCSIController = (externalDeps = {}) => {
+const createCSIController = async (externalDeps = {}) => {
     try {
         // Inizializza le dipendenze di base
-        const csiConfig = initializeCSIConfig();
+        const csiConfig = await initializeCSIConfig();
         const validator = CSIQuestionValidator;
         const csiRepository = new CSIRepository();
         const csiQuestionRepository = new CSIQuestionRepository(CSIQuestion, validator); // CORRETTO

@@ -27,3 +27,20 @@
 {"error":"Cannot read properties of undefined (reading 'max')","level":"error","message":"Error saving CSI test token:","studentId":"679c7494bdb941a2c47766c8","timestamp":"2025-02-06T23:37:18.019Z"}
 {"error":"Errore nel salvataggio del token CSI","level":"error","message":"Error initializing CSI test:","studentId":"679c7494bdb941a2c47766c8","timestamp":"2025-02-06T23:37:18.021Z"}
 {"controllerState":{"hasRepository":true},"error":"Errore nel salvataggio del token CSI","level":"error","message":"Error generating CSI test link:","studentId":"679c7494bdb941a2c47766c8","timestamp":"2025-02-06T23:37:18.022Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/unassigned-to-school","timestamp":"2025-02-06T23:46:12.036Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{},"requestId":"req_1738885572029_2rgj9xy62","timestamp":"2025-02-06T23:46:12.038Z","url":"/api/v1/students/unassigned-to-school"}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-06T23:46:12.039Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-06T23:46:12.060Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/","timestamp":"2025-02-06T23:46:12.069Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{"limit":"10","page":"1","populate":"manager"},"requestId":"req_1738885572055_fbbdduzm4","timestamp":"2025-02-06T23:46:12.071Z","url":"/api/v1/schools?page=1&limit=10&populate=manager"}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-06T23:46:12.073Z"}
+{"body":{},"error":{"message":"Autenticazione richiesta"},"level":"error","message":"Errore richiesta","method":"GET","query":{"limit":"50","page":"1"},"requestId":"req_1738885572064_je9q2nvhs","timestamp":"2025-02-06T23:46:12.077Z","url":"/api/v1/students?page=1&limit=50"}
+{"level":"error","message":"Autenticazione richiesta","timestamp":"2025-02-06T23:46:12.078Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-02-06T23:46:13.983Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-02-06T23:46:13.985Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-02-06T23:46:13.999Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-06T23:46:14.000Z"}
+{"error":"Cannot read properties of undefined (reading 'findOne')","level":"error","message":"Error checking CSI test availability:","studentId":"679c7494bdb941a2c47766c8","timestamp":"2025-02-06T23:46:22.326Z"}
+{"controllerState":{"hasRepository":true},"error":"Errore nella verifica disponibilità test CSI","level":"error","message":"Error generating CSI test link:","studentId":"679c7494bdb941a2c47766c8","timestamp":"2025-02-06T23:46:22.328Z"}
+{"error":"Cannot read properties of undefined (reading 'findOne')","level":"error","message":"Error checking CSI test availability:","studentId":"679c7494bdb941a2c47766c8","timestamp":"2025-02-06T23:46:27.311Z"}
+{"controllerState":{"hasRepository":true},"error":"Errore nella verifica disponibilità test CSI","level":"error","message":"Error generating CSI test link:","studentId":"679c7494bdb941a2c47766c8","timestamp":"2025-02-06T23:46:27.312Z"}

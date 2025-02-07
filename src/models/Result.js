@@ -121,6 +121,21 @@ const Result = mongoose.model('Result', baseResultSchema);
 // Crea il discriminatore per CSI
 const CSIResult = Result.discriminator('CSI', csiResultSchema);
 
+csiResultSchema.pre('save', async function(next) {
+    if (!this.config) {
+        try {
+            const CSIConfig = mongoose.model('CSIConfig');
+            const config = await CSIConfig.findOne({ active: true });
+            if (config) {
+                this.config = config._id;
+            }
+        } catch (error) {
+            return next(error);
+        }
+    }
+    next();
+});
+
 csiResultSchema.methods.validateAnswer = async function(answerData) {
     const config = await mongoose.model('CSIConfig').getActiveConfig();
     return {

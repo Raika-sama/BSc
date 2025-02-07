@@ -1,5 +1,7 @@
 // src/models/Test.js
 const mongoose = require('mongoose');
+const logger = require('../utils/errors/logger/logger');
+
 
 const questionSchema = new mongoose.Schema({
     id: {
@@ -140,49 +142,29 @@ testSchema.pre('save', async function(next) {
 
             // Salva il riferimento alla configurazione
             this.configurazione.configRef = config._id;
+            this.csiConfig = config._id; // Aggiungi anche questo
             
-            // Imposta i metadati di base dalla configurazione
-            // Verifichiamo che le proprietà esistano prima di accedervi
+            // Imposta i metadati con safe access
             this.configurazione.metadataSchema = {
                 categorie: config.scoring?.categorie?.map(c => c.nome) || [],
-                scaleLikert: config.scoring?.categorie?.[0]?.max || 5, // valore di default se non presente
-                pesoDefault: config.scoring?.categorie?.[0]?.pesoDefault || 1
+                scaleLikert: 5, // valore di default
+                pesoDefault: 1  // valore di default
             };
 
-            // Imposta anche altri valori di default se non specificati
-            if (!this.configurazione.tempoLimite) {
-                this.configurazione.tempoLimite = config.validazione?.tempoMassimoDomanda || 300000;
-            }
-            
-            if (this.configurazione.tentativiMax === undefined) {
-                this.configurazione.tentativiMax = 1;
-            }
-
-            if (this.configurazione.cooldownPeriod === undefined) {
-                this.configurazione.cooldownPeriod = 24 * 60 * 60 * 1000; // 24 ore in ms
-            }
-
-            if (this.configurazione.randomizzaDomande === undefined) {
-                this.configurazione.randomizzaDomande = false;
-            }
-
-            if (this.configurazione.mostraRisultatiImmediati === undefined) {
-                this.configurazione.mostraRisultatiImmediati = false;
-            }
-
-            if (!this.configurazione.istruzioni) {
-                this.configurazione.istruzioni = config.interfaccia?.istruzioni || 
-                    'Rispondi alle seguenti domande selezionando un valore da 1 a 5';
-            }
-
+            // Imposta valori di default dalla configurazione con safe access
+            this.configurazione = {
+                ...this.configurazione,
+                tempoLimite: config.validazione?.tempoMassimoDomanda || 300000,
+                tentativiMax: 1,
+                cooldownPeriod: 24 * 60 * 60 * 1000,
+                randomizzaDomande: false,
+                mostraRisultatiImmediati: false,
+                istruzioni: config.interfaccia?.istruzioni || 
+                    'Rispondi alle seguenti domande selezionando un valore da 1 a 5'
+            };
         } catch (error) {
-            logger.error('Error in Test pre-save middleware:', {
-                error: error.message,
-                testId: this._id,
-                tipo: this.tipo
-            });
-            next(error);
-            return;
+            console.error('Error in Test pre-save middleware:', error);
+            return next(error);
         }
     }
     next();
@@ -199,32 +181,6 @@ testSchema.pre(/^find/, function(next) {
     next();
 });
 
-// Middleware di validazione
-testSchema.pre('save', async function(next) {
-    if (this.tipo === 'CSI') {
-        try {
-            const CSIConfig = mongoose.model('CSIConfig');
-            const config = await CSIConfig.getActiveConfig();
-            
-            if (!config) {
-                throw new Error('Nessuna configurazione CSI attiva trovata');
-            }
-
-            // Salva il riferimento alla configurazione
-            this.configurazione.configRef = config._id;
-            
-            // Imposta i metadati di base dalla configurazione
-            this.configurazione.metadataSchema = {
-                categorie: config.scoring.categorie.map(c => c.nome),
-                scaleLikert: config.scoring.categorie[0].max,
-                pesoDefault: config.scoring.categorie[0].pesoDefault
-            };
-        } catch (error) {
-            next(error);
-        }
-    }
-    next();
-});
 
 // Metodo per calcolare tempo rimanente
 testSchema.methods.getTempoRimanente = function(dataInizio) {
