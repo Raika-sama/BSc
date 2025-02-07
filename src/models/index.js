@@ -5,6 +5,8 @@
  * Permette di importare i modelli in modo più pulito:
  * const { School, User, Class, Result, CSIResult } = require('../models');
  */
+const { CSIQuestion } = require('../engines/CSI/models/CSIQuestion');
+const CSIConfig = require('../engines/CSI/models/CSIConfig');
 
 const School = require('./School');
 const User = require('./User');
@@ -23,6 +25,8 @@ const models = {
     Test,
     Result,
     CSIResult,  // Aggiungi CSIResult
+    UserAudit,
+    CSIResult,
     UserAudit
 };
 
@@ -44,6 +48,8 @@ module.exports = {
     Test,      // Modello per la struttura dei test
     Result,    // Modello base per i risultati dei test
     CSIResult, // Modello specifico per i risultati CSI
+    CSIQuestion,
+    CSIConfig,
     UserAudit  // Modello per Audit Utenti
 };
 

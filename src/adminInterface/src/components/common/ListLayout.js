@@ -37,7 +37,7 @@ const ListLayout = ({
     rows = [],
     columns,
     getRowId,
-    pageSize = 10,
+    pageSize = 15,
     onPageSizeChange,
     tabsComponent,
     paginationMode = "client",

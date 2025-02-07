@@ -15,10 +15,8 @@ const createQuestionRoutes = require('./engines/CSI/routes/csi.question.routes')
 
 
 // Importa e registra i modelli CSI
-require('./engines/CSI/models/CSIConfig');
-require('./engines/CSI/models/CSIQuestion');
-require('./models/Result');
-require('./models/Test');
+require('./models'); // Questo importerà e registrerà tutti i modelli
+
 
 
 // Funzione per verificare la registrazione dei modelli

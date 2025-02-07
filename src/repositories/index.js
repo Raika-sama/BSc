@@ -3,11 +3,6 @@
 /**
  * @file index.js
  * @description File di esportazione centralizzata per tutti i repository del sistema Brain-Scanner.
- * Implementa il pattern Singleton per garantire una singola istanza di ogni repository.
- * 
- * @author Raika-sama
- * @date 2025-01-05
- * @project Brain-Scanner (BSc)
  */
 
 const SchoolRepository = require('./SchoolRepository');
@@ -18,50 +13,46 @@ const TestRepository = require('./TestRepository');
 const AuthRepository = require('./AuthRepository');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
+
+// Importa tutti i modelli dal punto centralizzato
 const models = require('../models');
-console.log('Models debug:', {
-    hasUser: !!models.User,
-    userModel: models.User ? Object.keys(models.User) : null,
-    modelNames: Object.keys(models)
+
+logger.debug('Models imported in repositories/index.js:', {
+    availableModels: Object.keys(models),
+    modelsValidation: Object.entries(models).map(([name, model]) => ({
+        name,
+        hasModelName: !!model.modelName,
+        modelName: model.modelName
+    }))
 });
 
-// Creiamo le istanze dei repository passando i models corrispondenti
-const classRepository = new ClassRepository(models.Class);
-const studentRepository = new StudentRepository(models.Student);
-const userRepository = new UserRepository(models.User);
-const testRepository = new TestRepository(models.Test);
-const authRepository = new AuthRepository(models.User);
-
-// Creiamo il repository della scuola iniettando le dipendenze
-const schoolRepository = new SchoolRepository(
-    models.School,
-    classRepository, 
-    studentRepository
-);
-
+// Creiamo le istanze dei repository usando i modelli dal models/index.js
 const repositories = {
-    // Nomi per destrutturazione esplicita
-    authRepository,
-    userRepository,
-    classRepository,
-    schoolRepository,
-    studentRepository,
-    testRepository,
-    
-    // Nomi brevi per retrocompatibilità
-    auth: authRepository,
-    user: userRepository,
-    class: classRepository,
-    school: schoolRepository,
-    student: studentRepository,
-    test: testRepository
+    auth: new AuthRepository(models.User),
+    user: new UserRepository(models.User),
+    class: new ClassRepository(models.Class),
+    student: new StudentRepository(models.Student),
+    test: new TestRepository(models.Test),
+    // School repository richiede dipendenze aggiuntive
+    school: new SchoolRepository(
+        models.School,
+        new ClassRepository(models.Class),
+        new StudentRepository(models.Student)
+    )
 };
-// Dopo l'inizializzazione dei repository
-logger.debug('Repository initialization check:', {
-    hasSchoolRepo: !!repositories.school,
-    schoolRepoHasClassRepo: !!repositories.school.ClassRepository,
-    schoolRepoHasStudentRepo: !!repositories.school.StudentRepository
-});
+
+// Aggiungi alias più descrittivi
+const namedRepositories = {
+    authRepository: repositories.auth,
+    userRepository: repositories.user,
+    classRepository: repositories.class,
+    studentRepository: repositories.student,
+    testRepository: repositories.test,
+    schoolRepository: repositories.school
+};
+
+// Unisci i repository con nomi brevi e descrittivi
+Object.assign(repositories, namedRepositories);
 
 /**
  * Verifica l'inizializzazione corretta dei repository
@@ -70,70 +61,39 @@ logger.debug('Repository initialization check:', {
 const validateRepositories = () => {
     try {
         Object.entries(repositories).forEach(([name, repository]) => {
-            if (!repository.model) {
-                logger.error(`Repository non inizializzato correttamente`, {
-                    repository: name,
-                    error: 'Model non inizializzato'
-                });
+            if (!repository?.model) {
                 throw createError(
                     ErrorTypes.SYSTEM.INTERNAL_ERROR,
-                    `Repository ${name} non inizializzato correttamente`
+                    `Repository ${name} non ha un modello associato`
                 );
             }
 
-            if (!repository.modelName) {
+            if (!repository.model.modelName) {
                 logger.warn(`Warning: ModelName mancante nel repository`, {
-                    repository: name
+                    repository: name,
+                    modelType: repository.model.constructor.name
                 });
             }
+
+            logger.debug(`Repository ${name} validation:`, {
+                hasModel: !!repository.model,
+                modelName: repository.model.modelName || 'undefined',
+                isMongooseModel: !!repository.model.base
+            });
         });
     } catch (error) {
-        if (error.code) throw error;
-        logger.error('Errore durante la validazione dei repository', { error });
-        throw createError(
-            ErrorTypes.SYSTEM.INTERNAL_ERROR,
-            'Errore durante l\'inizializzazione dei repository',
-            { originalError: error.message }
-        );
-    }
-};
-
-
-/**
- * Log dei repository caricati
- * @private
- */
-const logLoadedRepositories = () => {
-    try {
-        logger.info('Repository caricati con successo', {
-            repositories: Object.keys(repositories),
-            timestamp: new Date().toISOString()
+        logger.error('Errore durante la validazione dei repository', { 
+            error: error.message,
+            stack: error.stack 
         });
-    } catch (error) {
-        logger.error('Errore durante il logging dei repository', { error });
-        // Non lanciamo l'errore qui perché il logging è non critico
+        throw error;
     }
 };
 
 // Esegue le verifiche di inizializzazione
 validateRepositories();
-logLoadedRepositories();
 
 // Congela l'oggetto repositories per prevenire modifiche accidentali
 Object.freeze(repositories);
 
 module.exports = repositories;
-
-/**
- * @example
- * // Importazione e utilizzo dei repository
- * const { school, user, class: classRepo } = require('../repositories');
- * 
- * // Esempi di utilizzo:
- * await school.findWithUsers(schoolId);
- * await user.findByEmail(email);
- * await classRepo.findWithDetails(classId);
- * 
- * @note Il repository 'class' viene rinominato in 'classRepo' 
- * nell'importazione per evitare conflitti con la keyword 'class'
- */
