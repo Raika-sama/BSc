@@ -209,3 +209,6 @@
 {"error":"Schema hasn't been registered for model \"model\".\nUse mongoose.model(name, schema)","level":"error","message":"Error submitting answer:","timestamp":"2025-02-07T22:39:37.141Z","token":"cd2a98221e..."}
 {"error":"Schema hasn't been registered for model \"model\".\nUse mongoose.model(name, schema)","level":"error","message":"Error in addAnswer:","timestamp":"2025-02-07T22:43:51.033Z","token":"62cffccaff..."}
 {"error":"Schema hasn't been registered for model \"model\".\nUse mongoose.model(name, schema)","level":"error","message":"Error submitting answer:","timestamp":"2025-02-07T22:43:51.034Z","token":"62cffccaff..."}
+{"error":"Cannot read properties of undefined (reading 'create')","level":"error","message":"Error saving CSI test token:","studentId":"67a50781681e9001bdbec982","timestamp":"2025-02-07T22:50:51.880Z"}
+{"error":"Errore nel salvataggio del token CSI","level":"error","message":"Error initializing CSI test:","studentId":"67a50781681e9001bdbec982","timestamp":"2025-02-07T22:50:51.881Z"}
+{"controllerState":{"hasRepository":true},"error":"Errore nel salvataggio del token CSI","level":"error","message":"Error generating CSI test link:","studentId":"67a50781681e9001bdbec982","timestamp":"2025-02-07T22:50:51.881Z"}

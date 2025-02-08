@@ -20,7 +20,7 @@ const baseResultSchema = new mongoose.Schema({
         type: String,
         unique: true,
         sparse: true,
-        index: true // Importante!
+        index: true
     },
     expiresAt: {
         type: Date
@@ -46,12 +46,12 @@ const baseResultSchema = new mongoose.Schema({
             type: Map,
             of: mongoose.Schema.Types.Mixed
         }
-    },
+    }
 }, { 
     discriminatorKey: 'tipo',
+    collection: 'results',  // Specifica esplicitamente la collection
     timestamps: true 
 });
-
 
 // Indici comuni
 baseResultSchema.index({ tipo: 1, dataCompletamento: -1 });
@@ -71,10 +71,12 @@ baseResultSchema.pre('save', function(next) {
     next();
 });
 
-// Virtual per stato completamento
 baseResultSchema.virtual('isCompleto').get(function() {
     return this.completato && this.dataCompletamento;
 });
+
+// Crea i modelli nell'ordine corretto
+const Result = mongoose.model('Result', baseResultSchema);
 
 // Schema specifico per CSI
 const csiResultSchema = new mongoose.Schema({
@@ -117,7 +119,6 @@ const csiResultSchema = new mongoose.Schema({
             default: Date.now
         }
     }],
-    // Aggiungiamo alcuni campi utili
     punteggi: {
         elaborazione: Number,
         creativita: Number,
@@ -142,12 +143,7 @@ const csiResultSchema = new mongoose.Schema({
     toObject: { virtuals: true }
 });
 
-// Crea il modello base
-const Result = mongoose.model('Result', baseResultSchema);
-
-// Crea il discriminatore per CSI
-const CSIResult = Result.discriminator('CSI', csiResultSchema);
-
+// Aggiungiamo i metodi e i virtual PRIMA di creare il discriminator
 csiResultSchema.pre('save', async function(next) {
     if (!this.config) {
         try {
@@ -177,13 +173,12 @@ csiResultSchema.methods.addAnswer = async function(answerData) {
         throw new Error('Risposta non valida: tempo di risposta fuori dai limiti');
     }
     
-    // Assicuriamoci che il test sia popolato correttamente
     if (!this.populated('testRef')) {
         await this.populate({
             path: 'testRef',
             populate: {
                 path: 'domande.questionRef',
-                model: 'CSIQuestion'  // Riferimento esplicito al modello CSIQuestion
+                model: 'CSIQuestion'
             }
         });
     }
@@ -192,7 +187,18 @@ csiResultSchema.methods.addAnswer = async function(answerData) {
     return this.save();
 };
 
+// Validazioni e virtual
+csiResultSchema.path('risposte').validate(function(risposte) {
+    const ids = risposte.map(r => r.questionId);
+    return new Set(ids).size === ids.length;
+}, 'Non possono esserci risposte duplicate per la stessa domanda');
+
+csiResultSchema.virtual('totalRisposte').get(function() {
+    return this.risposte.length;
+});
+
 csiResultSchema.virtual('progress').get(function() {
+    if (!this.testRef || !this.testRef.domande) return { total: 0, answered: 0, remaining: 0, percentage: 0 };
     return {
         total: this.testRef.domande.length,
         answered: this.risposte.length,
@@ -202,23 +208,7 @@ csiResultSchema.virtual('progress').get(function() {
 });
 
 
-// Aggiungiamo alcune validazioni
-csiResultSchema.path('risposte').validate(function(risposte) {
-    // Verifica che non ci siano questionId duplicati
-    const ids = risposte.map(r => r.questionId);
-    return new Set(ids).size === ids.length;
-}, 'Non possono esserci risposte duplicate per la stessa domanda');
-
-// Virtual per il conteggio delle risposte
-csiResultSchema.virtual('totalRisposte').get(function() {
-    return this.risposte.length;
-});
-
-// Virtual per verificare se il test è completo
-csiResultSchema.virtual('isCompleto').get(function() {
-    if (!this.testRef || !this.testRef.domande) return false;
-    return this.risposte.length === this.testRef.domande.length;
-});
+const CSIResult = Result.discriminator('CSI', csiResultSchema);
 
 module.exports = {
     Result,

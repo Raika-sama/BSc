@@ -202,16 +202,26 @@ const createCSIController = async (externalDeps = {}) => {
         // Inizializza le dipendenze di base
         const csiConfig = await initializeCSIConfig();
         const validator = CSIQuestionValidator;
+        
+        // Assicuriamoci di avere il modello Mongoose per CSIConfig
+        const CSIConfigModel = mongoose.model('CSIConfig');
+        
+        // Inizializza repository
+        const testRepository = externalDeps.testRepository || new TestRepository();
         const csiRepository = new CSIRepository();
+        
+        logger.debug('Repository initialization:', {
+            hasResultModel: !!csiRepository.resultModel,
+            hasConfigModel: !!CSIConfigModel
+        });
+
         const csiQuestionRepository = new CSIQuestionRepository(CSIQuestion, validator);
         const csiQuestionService = new CSIQuestionService(csiQuestionRepository, validator);
         const csiScorer = new CSIScorer(csiConfig);
 
-        const CSIConfigModel = mongoose.model('CSIConfig');
-
-        // Crea l'engine con le dipendenze aggiornate
+        // Crea l'engine
         const csiEngine = new CSIEngine({
-            Test: externalDeps.testRepository || new TestRepository(),
+            Test: testRepository,
             Result: csiRepository,
             scorer: csiScorer,
             config: csiConfig,
@@ -220,19 +230,21 @@ const createCSIController = async (externalDeps = {}) => {
             validator
         });
 
-        // Crea il controller con tutte le dipendenze necessarie
+        // IMPORTANTE: Passa il modello Mongoose, non la configurazione
         const controller = new CSIController({
             testEngine: csiEngine,
             csiQuestionService,
             userService: externalDeps.userService,
-            csiConfig: CSIConfigModel,  // Usiamo il modello mongoose
+            csiConfig: CSIConfigModel,  // Passa il modello Mongoose
             validator,
             repository: csiRepository
         });
 
-        if (!controller) {
-            throw new Error('Controller initialization failed');
-        }
+        logger.debug('Controller initialization:', {
+            hasConfigModel: !!controller.configModel?.findOne,
+            hasRepository: !!controller.repository,
+            hasEngine: !!controller.engine
+        });
 
         return {
             controller,

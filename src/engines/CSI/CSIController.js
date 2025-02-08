@@ -24,6 +24,16 @@ class CSIController {
             hasRepository: !!repository,
             repositoryType: repository ? repository.constructor.name : 'undefined'
         });
+        
+        // Verifica che csiConfig sia un modello Mongoose
+        if (!csiConfig || !csiConfig.findOne) {
+            throw new Error('Invalid CSIConfig model provided to CSIController');
+        }
+
+        // Verifica le dipendenze obbligatorie
+        if (!repository) {
+            throw new Error('Repository is required in CSIController');
+        }
 
         if (!testEngine || !csiQuestionService || !repository) {
             throw new Error('Required dependencies missing');
@@ -179,52 +189,66 @@ class CSIController {
     async initializeCSITest(studentId) {
         try {
             logger.debug('Initializing CSI test for student:', { studentId });
-    
-            // 1. Recupera configurazione attiva
-            const config = await this.configModel.findOne({ active: true }).sort({ version: -1 });
+
+            // Verifica che il repository sia disponibile
+            if (!this.repository) {
+                throw new Error('Repository not initialized');
+            }
+
+            // 1. Verifica disponibilità
+            const availability = await this.repository.checkAvailability(studentId);
+            if (!availability.available) {
+                throw createError(
+                    ErrorTypes.VALIDATION.NOT_ALLOWED,
+                    'Test CSI non disponibile al momento',
+                    { nextAvailableDate: availability.nextAvailableDate }
+                );
+            }
+
+            // 2. Recupera configurazione attiva
+            const config = await this.configModel.findOne({ active: true });
             if (!config) {
                 throw createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,
                     'Nessuna configurazione CSI attiva trovata'
                 );
             }
-    
-            // 2. Imposta i dati del test con il tipo corretto
+
+            // 3. Prepara i dati del test
             const testData = {
                 studentId,
-                tipo: 'CSI',  // Questo è il campo richiesto
-                config: {
-                    timeLimit: config.validazione.tempoMassimoDomanda,
-                    minQuestions: config.validazione.numeroMinimoDomande,
-                    instructions: config.interfaccia.istruzioni,
-                    showProgress: config.interfaccia.mostraProgressBar,
-                    allowBack: config.interfaccia.permettiTornaIndietro
-                }
+                tipo: 'CSI',
+                config: config._id
             };
-    
-            // 3. Genera token tramite TestRepository
+
+            // 4. Genera il token usando il repository
             const tokenData = await this.repository.saveTestToken(testData);
-    
-            logger.info('CSI test initialized:', {
-                studentId,
+            
+            logger.debug('Test token generated:', {
                 tokenId: tokenData._id,
-                expiresAt: tokenData.expiresAt
+                hasToken: !!tokenData.token
             });
-    
+
             return {
                 token: tokenData.token,
                 expiresAt: tokenData.expiresAt,
-                config: testData.config
+                config: {
+                    timeLimit: config.validazione.tempoMassimoDomanda,
+                    minQuestions: config.validazione.numeroMinimoDomande,
+                    instructions: config.interfaccia.istruzioni
+                }
             };
-    
+
         } catch (error) {
             logger.error('Error initializing CSI test:', {
                 error: error.message,
-                studentId
+                studentId,
+                stack: error.stack
             });
             throw error;
         }
     }
+
 
     /**
      * Processa risposta test CSI
@@ -379,31 +403,16 @@ generateTestLink = async (req, res) => {
         
         logger.debug('Generating CSI test link:', { 
             studentId,
-            hasRepository: !!this.repository,
-            repositoryType: this.repository ? this.repository.constructor.name : 'undefined'
+            hasRepository: !!this.repository
         });
 
-        if (!this.repository) {
-            throw new Error('Repository not initialized in CSIController');
-        }
-
-        // Verifica disponibilità
-        const availability = await this.repository.checkAvailability(studentId);
-        if (!availability.available) {
-            throw createError(
-                ErrorTypes.VALIDATION.NOT_ALLOWED,
-                'Test CSI non disponibile al momento',
-                {
-                    nextAvailableDate: availability.nextAvailableDate,
-                    lastTestDate: availability.lastTestDate
-                }
-            );
-        }
-
-        // Inizializza il test
+        // Inizializza il test e ottieni il token
         const testInit = await this.initializeCSITest(studentId);
+        
+        if (!testInit || !testInit.token) {
+            throw new Error('Failed to initialize test');
+        }
 
-        // Costruisci l'URL del test
         const testUrl = `${process.env.FRONTEND_URL}/test/csi/${testInit.token}`;
 
         res.json({
@@ -419,20 +428,15 @@ generateTestLink = async (req, res) => {
     } catch (error) {
         logger.error('Error generating CSI test link:', {
             error: error.message,
-            errorStack: error.stack,
             studentId: req.body.studentId,
-            controllerState: {
-                hasRepository: !!this.repository
-            }
+            stack: error.stack
         });
         
-        const statusCode = error.statusCode || 400;
-        res.status(statusCode).json({
+        res.status(400).json({
             status: 'error',
             error: {
                 message: error.message,
-                code: error.code || 'GENERATE_LINK_ERROR',
-                details: error.details || {}
+                code: error.code || 'GENERATE_LINK_ERROR'
             }
         });
     }

@@ -2,65 +2,90 @@
 
 /**
  * File di esportazione centralizzata per tutti i modelli MongoDB
- * Permette di importare i modelli in modo più pulito:
- * const { School, User, Class, Result, CSIResult } = require('../models');
  */
-const { CSIQuestion } = require('../engines/CSI/models/CSIQuestion');
-const CSIConfig = require('../engines/CSI/models/CSIConfig');
+const mongoose = require('mongoose');
+const logger = require('../utils/errors/logger/logger');
 
+// 1. Prima carichiamo i modelli base
 const School = require('./School');
 const User = require('./User');
 const Class = require('./Class');
 const Student = require('./Student');
 const Test = require('./Test');
-const { Result, CSIResult } = require('./Result');  // Importa entrambi i modelli
 const UserAudit = require('./UserAudit');
 
-// Verifica che tutti i modelli siano stati caricati correttamente
+// 2. Poi carichiamo Result (il modello base per i discriminator)
+const { Result } = require('./Result');
+
+// 3. Poi carichiamo i modelli CSI
+const { CSIQuestion } = require('../engines/CSI/models/CSIQuestion');
+const CSIConfig = require('../engines/CSI/models/CSIConfig');
+
+// 4. Infine carichiamo il discriminator CSI
+const { CSIResult } = require('./Result');
+
+// Verifica e registrazione esplicita dei modelli
+const registerModels = () => {
+    // Registra prima il modello base Result se non esiste
+    if (!mongoose.models.Result) {
+        mongoose.model('Result', Result.schema);
+    }
+
+    // Registra il discriminator CSI
+    const ResultModel = mongoose.model('Result');
+    if (!ResultModel.discriminators || !ResultModel.discriminators['CSI']) {
+        ResultModel.discriminator('CSI', CSIResult.schema);
+    }
+
+    logger.debug('Models registration check:', {
+        registeredModels: mongoose.modelNames(),
+        hasResult: !!mongoose.models.Result,
+        hasCSIDiscriminator: !!mongoose.models.Result.discriminators?.CSI
+    });
+};
+
+// Esegui la registrazione
+registerModels();
+
+// Definisci l'oggetto dei modelli
 const models = {
-    CSIQuestion,     // Sposta CSIQuestion all'inizio
-    CSIConfig,
     School,
     User,
     Class,
     Student,
     Test,
     Result,
-    CSIResult,  // Aggiungi CSIResult
-    UserAudit,
-};
-
-// Verifica che tutti i modelli siano stati caricati correttamente
-Object.entries(models).forEach(([name, model]) => {
-    if (!model || !model.modelName) {
-        throw new Error(`Model ${name} non inizializzato correttamente`);
-    }
-});
-
-console.log('Models loaded:', Object.keys(models));
-
-// Esporta tutti i modelli come oggetto
-module.exports = {
-    School,    // Modello per la gestione delle scuole
-    User,      // Modello per la gestione degli utenti
-    Class,     // Modello per la gestione delle classi
-    Student,   // Modello per la gestione degli studenti
-    Test,      // Modello per la struttura dei test
-    Result,    // Modello base per i risultati dei test
-    CSIResult, // Modello specifico per i risultati CSI
+    CSIResult,
     CSIQuestion,
     CSIConfig,
-    UserAudit  // Modello per Audit Utenti
+    UserAudit
 };
 
-// Log dei modelli disponibili
-console.log('Models loaded:', Object.keys(models));
-
-// Verifica che ogni modello sia un modello Mongoose valido
+// Verifica finale
 Object.entries(models).forEach(([name, model]) => {
-    if (!model.modelName) {
-        console.error(`Warning: ${name} potrebbe non essere un modello Mongoose valido`);
-    } else {
-        console.log(`Model ${name} loaded with discriminator:`, model.discriminators ? 'Yes' : 'No');
+    if (!model || !model.modelName) {
+        logger.error(`Model ${name} non inizializzato correttamente`);
+        throw new Error(`Model ${name} non inizializzato correttamente`);
     }
+    logger.debug(`Model ${name} loaded:`, {
+        modelName: model.modelName,
+        hasDiscriminator: !!model.discriminators,
+        discriminatorKeys: model.discriminators ? Object.keys(model.discriminators) : []
+    });
 });
+
+// Esporta i modelli
+module.exports = {
+    School,
+    User,
+    Class,
+    Student,
+    Test,
+    Result,
+    CSIResult,
+    CSIQuestion,
+    CSIConfig,
+    UserAudit
+};
+
+logger.info('All models loaded successfully');
