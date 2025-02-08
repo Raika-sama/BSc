@@ -100,8 +100,21 @@ analyzeResponsePattern(answers) {
      */
     calculateScores(answers) {
         try {
+            // Aggiungiamo logging per debug
+            logger.debug('Raw answers received:', {
+                count: answers.length,
+                sampleAnswer: answers[0],
+                structure: Object.keys(answers[0] || {})
+            });
+
             const mappedAnswers = this._mapAnswersToCategories(answers);
             
+            logger.debug('Mapped answers:', {
+                count: mappedAnswers.length,
+                sampleMapped: mappedAnswers[0],
+                categories: [...new Set(mappedAnswers.map(a => a.question.categoria))]
+            });
+
             const scores = {
                 analitico: this._calculateDimensionScore(mappedAnswers, 'analitico'),
                 sistematico: this._calculateDimensionScore(mappedAnswers, 'sistematico'),
@@ -113,7 +126,15 @@ analyzeResponsePattern(answers) {
             logger.debug('Scores calculated:', { scores });
             return scores;
         } catch (error) {
-            logger.error('Error calculating scores:', { error });
+            logger.error('Error calculating scores:', { 
+                error: error.message,
+                stack: error.stack,
+                answers: answers.map(a => ({
+                    id: a.questionId,
+                    value: a.value,
+                    category: a.domanda?.categoria
+                }))
+            });
             throw error;
         }
     }
@@ -136,27 +157,50 @@ analyzeResponsePattern(answers) {
      * @private
      */
     _calculateDimensionScore(answers, dimension) {
-        const dimensionAnswers = answers.filter(a => 
-            a.question.categoria === dimension
-        );
+        try {
+            const dimensionAnswers = answers.filter(a => 
+                a.question.categoria === dimension
+            );
 
-        if (dimensionAnswers.length === 0) return 0;
+            logger.debug(`Calculating score for dimension ${dimension}:`, {
+                totalAnswers: answers.length,
+                dimensionAnswers: dimensionAnswers.length
+            });
 
-        // Calcola il punteggio come somma dei valori pesati
-        const rawScore = dimensionAnswers.reduce((total, answer) => {
-            const value = answer.question.polarity === '+' ? 
-                answer.value : 
-                (6 - answer.value); // Inverti punteggio per domande negative
+            if (dimensionAnswers.length === 0) return 0;
 
-            return total + (value * (answer.question.peso || 1));
-        }, 0);
+            // Calcola il punteggio come somma dei valori pesati
+            const rawScore = dimensionAnswers.reduce((total, answer) => {
+                const value = answer.question.polarity === '+' ? 
+                    answer.value : 
+                    (6 - answer.value); // Inverti punteggio per domande negative
 
-        // Calcola il range teorico per questa dimensione
-        const theoreticalRange = this._calculateTheoreticalRange(dimensionAnswers.length);
+                return total + (value * (answer.question.peso || 1));
+            }, 0);
 
-        // Normalizza il punteggio sul range teorico
-        return this._normalizeScore(rawScore, theoreticalRange);
+            // Calcola il range teorico per questa dimensione
+            const theoreticalRange = this._calculateTheoreticalRange(dimensionAnswers.length);
+
+            // Normalizza il punteggio sul range teorico
+            const normalizedScore = this._normalizeScore(rawScore, theoreticalRange);
+
+            logger.debug(`Score calculated for dimension ${dimension}:`, {
+                rawScore,
+                normalizedScore,
+                answersCount: dimensionAnswers.length,
+                theoreticalRange
+            });
+
+            return normalizedScore;
+        } catch (error) {
+            logger.error(`Error calculating dimension score for ${dimension}:`, {
+                error: error.message,
+                stack: error.stack
+            });
+            throw error;
+        }
     }
+
 
     _calculateTheoreticalRange(numberOfQuestions) {
         return {
@@ -218,13 +262,32 @@ analyzeResponsePattern(answers) {
     }
 
     _mapAnswersToCategories(answers) {
-        return answers.map(answer => ({
-            ...answer,
-            question: {
-                ...answer.domanda,
-                categoria: this.categoryMapping[answer.domanda.categoria] || answer.domanda.categoria
-            }
-        }));
+        try {
+            return answers.map(answer => {
+                // Verifica struttura risposta
+                if (!answer.domanda) {
+                    logger.error('Missing domanda in answer:', { answer });
+                    throw new Error('Struttura risposta non valida: manca domanda');
+                }
+
+                return {
+                    value: answer.value || answer.valore, // supporta entrambi i formati
+                    timeSpent: answer.timeSpent || answer.tempoRisposta, // supporta entrambi i formati
+                    question: {
+                        categoria: this.categoryMapping[answer.domanda.categoria] || answer.domanda.categoria,
+                        polarity: answer.domanda.polarity || '+',
+                        peso: answer.domanda.peso || 1
+                    }
+                };
+            });
+        } catch (error) {
+            logger.error('Error mapping answers:', {
+                error: error.message,
+                stack: error.stack,
+                sampleAnswer: answers[0]
+            });
+            throw error;
+        }
     }
 
 
@@ -366,22 +429,6 @@ _determineLevel(score) {
     }
 
 
-
-   /**
-     * Calcola la consistenza delle risposte
-     */
-    _calculateConsistency(answers) {
-        const values = answers.map(a => a.value);
-        const hasVariation = new Set(values).size > 1;
-        const hasExtremesOnly = values.every(v => v === 1 || v === 5);
-        const timeConsistency = this._checkTimeConsistency(answers.map(a => a.tempoRisposta));
-
-        return {
-            isConsistent: !hasExtremesOnly && hasVariation,
-            timeConsistency,
-            confidence: hasVariation ? 1 : 0.5
-        };
-    }
 
     /**
      * Verifica la consistenza dei tempi

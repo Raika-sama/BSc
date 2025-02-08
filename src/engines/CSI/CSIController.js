@@ -3,7 +3,7 @@
 const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 const logger = require('../../utils/errors/logger/logger');
 const CSIScorer = require('./engine/CSIScorer');  // Aggiungiamo questo import
-
+const mongoose = require('mongoose');
 
 class CSIController {
     constructor(dependencies) {
@@ -327,14 +327,18 @@ class CSIController {
         }
     };
 
- /**
-     * Completa test CSI
-     */
- async completeTest(req, res) {
+/**
+ * Completa test CSI
+ */
+completeTest = async (req, res) => {
     const { token } = req.params;
 
     try {
-        logger.debug('Starting test completion:', { token });
+        logger.debug('Starting test completion:', { 
+            token,
+            hasRepository: !!this.repository,
+            repositoryType: this.repository.constructor.name
+        });
 
         // 1. Verifica token e recupera risultato
         const result = await this.repository.findByToken(token);
@@ -345,23 +349,90 @@ class CSIController {
             );
         }
 
-        // 2. Verifica numero minimo di risposte
+        logger.debug('Found result:', {
+            resultId: result._id,
+            testRef: result.testRef,
+            risposteCount: result.risposte?.length || 0
+        });
+
+        // 2. Recupera il test direttamente, senza populate
+        const test = await mongoose.model('Test').findById(result.testRef).lean();
+        
+        if (!test) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Test di riferimento non trovato'
+            );
+        }
+
+        logger.debug('Found test:', {
+            testId: test._id,
+            domandeCount: test.domande?.length || 0,
+            tipo: test.tipo
+        });
+
+        // 3. Recupera le domande CSI usando gli ID memorizzati nel test
+        const domandeRefs = test.domande
+            .filter(d => d.questionModel === 'CSIQuestion')
+            .map(d => d.originalQuestion);
+
+        logger.debug('Mapped question refs:', {
+            count: domandeRefs.length,
+            sample: domandeRefs[0]
+        });
+
+        // 4. Prepara le risposte con i dati delle domande originali
+        const risposteComplete = result.risposte.map(risposta => {
+            // Trova la domanda originale corrispondente nel test
+            const domandaOriginal = test.domande.find(d => 
+                d.originalQuestion.id === risposta.questionId
+            )?.originalQuestion;
+
+            if (!domandaOriginal) {
+                logger.warn('Domanda non trovata per risposta:', {
+                    questionId: risposta.questionId
+                });
+                return null;
+            }
+
+            return {
+                value: risposta.value,
+                timeSpent: risposta.timeSpent,
+                domanda: {
+                    id: domandaOriginal.id,
+                    categoria: domandaOriginal.categoria,
+                    peso: domandaOriginal.peso || 1,
+                    polarity: domandaOriginal.metadata?.get('polarity') || '+',
+                    testo: domandaOriginal.testo
+                }
+            };
+        }).filter(r => r !== null);
+
+        logger.debug('Prepared answers for scoring:', {
+            totalAnswers: risposteComplete.length,
+            sampleAnswer: risposteComplete[0],
+            categories: [...new Set(risposteComplete.map(r => r.domanda.categoria))]
+        });
+
+        // 5. Verifica numero minimo di risposte
         const config = await this.configModel.findOne({ active: true });
-        if (result.risposte.length < config.validazione.numeroMinimoDomande) {
+        if (risposteComplete.length < config.validazione.numeroMinimoDomande) {
             throw createError(
                 ErrorTypes.VALIDATION.INCOMPLETE_TEST,
                 'Numero di risposte insufficiente'
             );
         }
 
-        // 3. Calcola i punteggi usando il scorer
-        const testResults = this.scorer.calculateTestResult(result.risposte);
+        // 6. Calcola i punteggi usando il scorer
+        const testResults = this.scorer.calculateTestResult(risposteComplete);
+        
         logger.debug('Test results calculated:', {
             resultId: result._id,
-            hasScores: !!testResults.punteggiDimensioni
+            hasScores: !!testResults.punteggiDimensioni,
+            dimensioni: Object.keys(testResults.punteggiDimensioni || {})
         });
 
-        // 4. Aggiorna il risultato con i punteggi e metadata
+        // 7. Aggiorna il risultato con i punteggi e metadata
         const completedResult = await this.repository.update(token, {
             completato: true,
             dataCompletamento: new Date(),
@@ -393,8 +464,8 @@ class CSIController {
             }
         });
     }
-}
-    
+};
+
     // Metodi di utility
     _calculateTotalTime(risposte) {
         return risposte.reduce((total, r) => total + (r.tempoRisposta || 0), 0);
