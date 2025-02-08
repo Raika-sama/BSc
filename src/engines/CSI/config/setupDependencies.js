@@ -206,6 +206,13 @@ const createCSIController = async (externalDeps = {}) => {
         // Assicuriamoci di avere il modello Mongoose per CSIConfig
         const CSIConfigModel = mongoose.model('CSIConfig');
         
+          // Inizializza scorer con config
+        const csiScorer = new CSIScorer(csiConfig);
+        logger.debug('CSI Scorer initialized:', {
+            hasScorer: !!csiScorer,
+            version: csiScorer.version
+        });
+
         // Inizializza repository
         const testRepository = externalDeps.testRepository || new TestRepository();
         const csiRepository = new CSIRepository();
@@ -217,7 +224,6 @@ const createCSIController = async (externalDeps = {}) => {
 
         const csiQuestionRepository = new CSIQuestionRepository(CSIQuestion, validator);
         const csiQuestionService = new CSIQuestionService(csiQuestionRepository, validator);
-        const csiScorer = new CSIScorer(csiConfig);
 
         // Crea l'engine
         const csiEngine = new CSIEngine({
@@ -237,7 +243,8 @@ const createCSIController = async (externalDeps = {}) => {
             userService: externalDeps.userService,
             csiConfig: CSIConfigModel,  // Passa il modello Mongoose
             validator,
-            repository: csiRepository
+            repository: csiRepository,
+            scorer: csiScorer  // Aggiungiamo il scorer qui
         });
 
         logger.debug('Controller initialization:', {

@@ -9,33 +9,233 @@ const TestRepository = require('../../repositories/TestRepository');
 
 class CSIRepository extends TestRepository {
     constructor() {
-          // 1. Prima otteniamo il modello Result
-          const ResultModel = mongoose.model('Result');
-          if (!ResultModel) {
-              throw new Error('Result model not found');
-          }
-  
-          // 2. Chiamiamo il costruttore del parent con il modello Test
-          super(mongoose.model('Test'));
-  
-          // 3. Otteniamo il discriminator CSI
-          this.resultModel = ResultModel.discriminators?.['CSI'];
-          if (!this.resultModel) {
-              throw new Error('CSI discriminator not found in Result model');
-          }
-  
-          // 4. Otteniamo gli altri modelli necessari
-          this.questionModel = mongoose.model('CSIQuestion');
-          this.configModel = mongoose.model('CSIConfig');
-  
-          logger.debug('CSIRepository initialized:', {
-              hasResultModel: !!this.resultModel,
-              resultModelName: this.resultModel.modelName,
-              discriminatorKey: this.resultModel.schema.discriminatorMapping?.key,
-              hasQuestionModel: !!this.questionModel,
-              hasConfigModel: !!this.configModel
-          });
-      }
+        super(mongoose.model('Test'));
+        
+        // Verifica esplicita del modello Result
+        const ResultModel = mongoose.model('Result');
+        if (!ResultModel) {
+            throw new Error('Result model not found');
+        }
+    
+        // Verifica del discriminator CSI
+        this.resultModel = ResultModel.discriminators?.['CSI'];
+        if (!this.resultModel) {
+            throw new Error('CSI discriminator not found');
+        }
+    
+        // Verifica della presenza di tutti i modelli necessari
+        const requiredModels = ['Test', 'CSIConfig', 'CSIQuestion'];
+        const missingModels = requiredModels.filter(model => !mongoose.models[model]);
+        if (missingModels.length > 0) {
+            throw new Error(`Missing required models: ${missingModels.join(', ')}`);
+        }
+    
+        logger.debug('CSIRepository initialized:', {
+            resultModel: {
+                name: ResultModel.modelName,
+                discriminators: Object.keys(ResultModel.discriminators || {})
+            },
+            csiModel: {
+                name: this.resultModel.modelName,
+                schema: !!this.resultModel.schema,
+                collection: this.resultModel.collection.name
+            }
+        });
+    }
+
+    
+    async addAnswer(token, answerData) {
+        try {
+            logger.debug('Starting addAnswer operation:', { 
+                token: token.substring(0, 10),
+                answerData,
+                modelInfo: {
+                    resultModel: this.resultModel?.modelName,
+                    discriminator: this.resultModel?.schema?.discriminatorMapping?.key
+                }
+            });
+    
+            // 1. Query diretta alla collection senza rischio di populate
+            const result = await this.resultModel.collection.findOne({
+                token,
+                tipo: 'CSI',
+                completato: false
+            });
+    
+            if (!result) {
+                throw new Error('Test non trovato o già completato');
+            }
+    
+            logger.debug('Found result document:', {
+                resultId: result._id,
+                testRef: result.testRef
+            });
+    
+            // 2. Query diretta al test correlato
+            const test = await mongoose.model('Test').collection.findOne({
+                _id: result.testRef
+            });
+    
+            if (!test) {
+                throw new Error('Test reference not found');
+            }
+    
+            logger.debug('Found test document:', {
+                testId: test._id,
+                questionCount: test.domande?.length
+            });
+    
+            // 3. Aggiornamento diretto della collection
+            const updateOperation = await this.resultModel.collection.updateOne(
+                { _id: result._id },
+                {
+                    $push: {
+                        risposte: {
+                            ...answerData,
+                            _id: new mongoose.Types.ObjectId()
+                        }
+                    }
+                }
+            );
+    
+            logger.debug('Update operation result:', {
+                matched: updateOperation.matchedCount,
+                modified: updateOperation.modifiedCount
+            });
+    
+            // 4. Recupero il documento aggiornato
+            const updatedResult = await this.resultModel.collection.findOne({
+                _id: result._id
+            });
+    
+            // 5. Costruisco la risposta combinando i dati
+            const response = {
+                _id: updatedResult._id,
+                tipo: updatedResult.tipo,
+                studentId: updatedResult.studentId,
+                risposte: updatedResult.risposte || [],
+                completato: updatedResult.completato,
+                test: {
+                    _id: test._id,
+                    domande: test.domande || [],
+                    configurazione: test.configurazione
+                }
+            };
+    
+            logger.debug('AddAnswer operation completed:', {
+                responseId: response._id,
+                answersCount: response.risposte.length,
+                testId: response.test._id
+            });
+    
+            return response;
+    
+        } catch (error) {
+            logger.error('Error in addAnswer:', {
+                error: error.message,
+                stack: error.stack,
+                token: token.substring(0, 10),
+                modelStatus: {
+                    hasModel: !!this.resultModel,
+                    modelName: this.resultModel?.modelName,
+                    availableModels: mongoose.modelNames()
+                }
+            });
+            throw error;
+        }
+    }
+
+  /**
+     * Override del metodo saveTestToken per gestire specifiche CSI
+     */
+ /**
+ * Override del metodo saveTestToken per gestire specifiche CSI
+ */
+ async saveTestToken(testData) {
+    try {
+        logger.debug('Saving CSI test token:', { 
+            studentId: testData.studentId 
+        });
+
+        const token = crypto.randomBytes(32).toString('hex');
+        
+        // 1. Recupera configurazione e domande
+        const [activeConfig, questions] = await Promise.all([
+            mongoose.model('CSIConfig').findOne({ active: true }),
+            mongoose.model('CSIQuestion').find({ active: true }).lean()
+        ]);
+
+        if (!activeConfig) {
+            throw new Error('No active CSI configuration found');
+        }
+
+        // 2. Crea il test base
+        const newTest = await mongoose.model('Test').create({
+            tipo: 'CSI',
+            studentId: testData.studentId,
+            domande: questions.map(q => ({
+                questionRef: q._id,
+                questionModel: 'CSIQuestion',
+                order: q.id,
+                version: '1.0.0'
+            })),
+            configurazione: {
+                tempoLimite: activeConfig.validazione.tempoMassimoDomanda,
+                tentativiMax: 1,
+                cooldownPeriod: 24 * 60 * 60 * 1000, // 24 ore
+                randomizzaDomande: false,
+                mostraRisultatiImmediati: false,
+                istruzioni: activeConfig.interfaccia.istruzioni,
+                questionVersion: '1.0.0'
+            },
+            csiConfig: activeConfig._id,
+            active: true,
+            versione: '1.0.0'
+        });
+
+        logger.debug('Created new test:', { 
+            testId: newTest._id 
+        });
+
+        // 3. Crea il risultato CSI usando il discriminator
+        if (!this.resultModel) {
+            throw new Error('CSI Result model not properly initialized');
+        }
+
+        const newResult = await this.resultModel.create({
+            tipo: 'CSI',
+            studentId: testData.studentId,
+            token,
+            testRef: newTest._id,
+            config: activeConfig._id,
+            expiresAt: new Date(Date.now() + (24 * 60 * 60 * 1000)), // 24 ore
+            risposte: [],
+            completato: false,
+            dataInizio: new Date()
+        });
+
+        logger.debug('Created new CSI result:', {
+            resultId: newResult._id,
+            token: token.substring(0, 10) + '...'
+        });
+
+        return {
+            token,
+            expiresAt: newResult.expiresAt,
+            testId: newTest._id,
+            resultId: newResult._id
+        };
+
+    } catch (error) {
+        logger.error('Error saving test token:', {
+            error: error.message,
+            stack: error.stack,
+            data: testData
+        });
+        throw new Error('Errore nel salvataggio del token CSI');
+    }
+}
+
 
 /**
      * Recupera la configurazione attiva
@@ -87,84 +287,6 @@ async checkAvailability(studentId) {
 
 
 
-  /**
-     * Override del metodo saveTestToken per gestire specifiche CSI
-     */
- /**
- * Override del metodo saveTestToken per gestire specifiche CSI
- */
- async saveTestToken(testData) {
-    try {
-        const token = crypto.randomBytes(32).toString('hex');
-        
-        // Recupera configurazione e domande
-        const [activeConfig, questions] = await Promise.all([
-            this.configModel.findOne({ active: true }),
-            this.questionModel.find({}).lean()
-        ]);
-
-        if (!activeConfig) {
-            throw new Error('No active CSI configuration found');
-        }
-
-        // Crea il test base
-        const newTest = await this.model.create({
-            tipo: 'CSI',
-            studentId: testData.studentId,
-            domande: questions.map(q => ({
-                questionRef: q._id,
-                questionModel: 'CSIQuestion',
-                order: q.id,
-                version: '1.0.0'
-            })),
-            configurazione: {
-                tempoLimite: activeConfig.validazione.tempoMassimoDomanda,
-                tentativiMax: 1,
-                cooldownPeriod: 24 * 60 * 60 * 1000,
-                randomizzaDomande: false,
-                mostraRisultatiImmediati: false,
-                istruzioni: activeConfig.interfaccia.istruzioni,
-                questionVersion: '1.0.0'
-            },
-            csiConfig: activeConfig._id,
-            active: true,
-            versione: '1.0.0'
-        });
-
-        // Crea il risultato CSI
-        const newResult = await this.resultModel.create({
-            tipo: 'CSI',
-            studentId: testData.studentId,
-            token,
-            testRef: newTest._id,
-            config: activeConfig._id,
-            expiresAt: new Date(Date.now() + (24 * 60 * 60 * 1000)),
-            risposte: [],
-            completato: false,
-            dataInizio: new Date()
-        });
-
-        logger.debug('Created new CSI test:', {
-            testId: newTest._id,
-            resultId: newResult._id,
-            token: token.substring(0, 10) + '...'
-        });
-
-        return {
-            token,
-            expiresAt: newResult.expiresAt,
-            testId: newTest._id,
-            resultId: newResult._id
-        };
-    } catch (error) {
-        logger.error('Error saving test token:', error);
-        throw createError(
-            ErrorTypes.DATABASE.SAVE_ERROR,
-            'Errore nel salvataggio del token CSI',
-            { originalError: error.message }
-        );
-    }
-}
 
 
 
@@ -501,36 +623,6 @@ async updateByToken(token, updateData) {
         );
     }
 }
-
-async addAnswer(token, answerData) {
-    try {
-        logger.debug('Adding answer:', { token, answerData });
-
-        // Usa il modello Result per trovare il documento
-        const result = await this.resultModel.findOne({ 
-            token,
-            completato: false
-        }).populate('testRef');
-
-        if (!result) {
-            throw new Error('Test non trovato o già completato');
-        }
-
-        // Aggiungi la risposta
-        result.risposte.push(answerData);
-        await result.save();
-
-        return result;
-    } catch (error) {
-        logger.error('Error in addAnswer:', {
-            error: error.message,
-            token,
-            answerData
-        });
-        throw error;
-    }
-}
-
 
 
 }

@@ -167,25 +167,7 @@ csiResultSchema.methods.validateAnswer = async function(answerData) {
     };
 };
 
-csiResultSchema.methods.addAnswer = async function(answerData) {
-    const validation = await this.validateAnswer(answerData);
-    if (!validation.isValid) {
-        throw new Error('Risposta non valida: tempo di risposta fuori dai limiti');
-    }
-    
-    if (!this.populated('testRef')) {
-        await this.populate({
-            path: 'testRef',
-            populate: {
-                path: 'domande.questionRef',
-                model: 'CSIQuestion'
-            }
-        });
-    }
-    
-    this.risposte.push(answerData);
-    return this.save();
-};
+
 
 // Validazioni e virtual
 csiResultSchema.path('risposte').validate(function(risposte) {
@@ -198,12 +180,11 @@ csiResultSchema.virtual('totalRisposte').get(function() {
 });
 
 csiResultSchema.virtual('progress').get(function() {
-    if (!this.testRef || !this.testRef.domande) return { total: 0, answered: 0, remaining: 0, percentage: 0 };
     return {
-        total: this.testRef.domande.length,
         answered: this.risposte.length,
-        remaining: this.testRef.domande.length - this.risposte.length,
-        percentage: (this.risposte.length / this.testRef.domande.length) * 100
+        total: 0,  // Sarà calcolato dal repository
+        remaining: 0,
+        percentage: 0
     };
 });
 

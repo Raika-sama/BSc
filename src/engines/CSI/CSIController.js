@@ -2,6 +2,8 @@
 
 const { createError, ErrorTypes } = require('../../utils/errors/errorTypes');
 const logger = require('../../utils/errors/logger/logger');
+const CSIScorer = require('./engine/CSIScorer');  // Aggiungiamo questo import
+
 
 class CSIController {
     constructor(dependencies) {
@@ -15,7 +17,8 @@ class CSIController {
             userService,
             csiConfig,
             validator,
-            repository  // Aggiungiamo questa dipendenza!
+            repository,
+            scorer
         } = dependencies;
 
         logger.debug('Dependencies extracted:', {
@@ -24,7 +27,13 @@ class CSIController {
             hasRepository: !!repository,
             repositoryType: repository ? repository.constructor.name : 'undefined'
         });
-        
+
+         // Verifica del scorer
+    if (!scorer) {
+        throw new Error('Scorer is required in CSIController');
+    }
+
+
         // Verifica che csiConfig sia un modello Mongoose
         if (!csiConfig || !csiConfig.findOne) {
             throw new Error('Invalid CSIConfig model provided to CSIController');
@@ -49,10 +58,17 @@ class CSIController {
         this.configModel = csiConfig; // Usa l'import diretto invece di require
         this.validator = validator;
         this.repository = repository;  // Salviamo il repository!
-
+        this.scorer = scorer;          // Salviamo il scorer!
 
         logger.debug('CSIController initialized, repository methods:', {
             repositoryMethods: repository ? Object.getOwnPropertyNames(Object.getPrototypeOf(repository)) : []
+        });
+
+        
+        logger.debug('CSIController initialized:', {
+            hasScorer: !!this.scorer,
+            scorerVersion: this.scorer.version,
+            hasRepository: !!this.repository
         });
     }
 
@@ -311,79 +327,73 @@ class CSIController {
         }
     };
 
-    /**
+ /**
      * Completa test CSI
      */
-    completeTest = async (req, res) => {
-        const { token } = req.params;
-    
-        try {
-            // 1. Verifica token e recupera risultato
-            const result = await this.repository.findByToken(token);
-            if (!result) {
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_TOKEN,
-                    'Token non valido'
-                );
-            }
-    
-            // 2. Verifica che tutte le domande siano state risposte
-            const config = await this.configModel.findOne({ active: true });
-            if (result.risposte.length < config.validazione.numeroMinimoDomande) {
-                throw createError(
-                    ErrorTypes.VALIDATION.INCOMPLETE_TEST,
-                    'Numero di risposte insufficiente'
-                );
-            }
-    
-            // 3. Calcola risultati usando CSIScorer
-            const scorer = new CSIScorer();
-            const testResults = scorer.calculateTestResult(result.risposte);
-    
-            // 4. Aggiorna il risultato con i punteggi e metadata
-            const completedResult = await this.repository.update(token, {
-                completato: true,
-                dataCompletamento: new Date(),
-                punteggiDimensioni: testResults.punteggiDimensioni,
-                metadataCSI: {
-                    ...testResults.metadataCSI,
-                    pattern: scorer.analyzeResponsePattern(result.risposte)
-                },
-                analytics: {
-                    tempoTotale: this._calculateTotalTime(result.risposte),
-                    domandePerse: this._calculateMissedQuestions(result),
-                    pattern: scorer._calculateTimePattern(result.risposte)
-                }
-            });
-    
-            // 5. Notifica completamento se necessario
-            if (this.userService) {
-                await this.userService.notifyTestComplete(completedResult.studentId, 'CSI');
-            }
-    
-            res.json({
-                status: 'success',
-                data: {
-                    testCompleted: true,
-                    resultId: completedResult._id,
-                    scores: testResults.punteggiDimensioni,
-                    analytics: completedResult.analytics
-                }
-            });
-        } catch (error) {
-            logger.error('Error completing CSI test:', {
-                error: error.message,
-                token: token.substring(0, 10) + '...'
-            });
-            res.status(error.statusCode || 400).json({
-                status: 'error',
-                error: {
-                    message: error.message,
-                    code: error.code || 'COMPLETE_TEST_ERROR'
-                }
-            });
+ async completeTest(req, res) {
+    const { token } = req.params;
+
+    try {
+        logger.debug('Starting test completion:', { token });
+
+        // 1. Verifica token e recupera risultato
+        const result = await this.repository.findByToken(token);
+        if (!result) {
+            throw createError(
+                ErrorTypes.VALIDATION.INVALID_TOKEN,
+                'Token non valido'
+            );
         }
-    };
+
+        // 2. Verifica numero minimo di risposte
+        const config = await this.configModel.findOne({ active: true });
+        if (result.risposte.length < config.validazione.numeroMinimoDomande) {
+            throw createError(
+                ErrorTypes.VALIDATION.INCOMPLETE_TEST,
+                'Numero di risposte insufficiente'
+            );
+        }
+
+        // 3. Calcola i punteggi usando il scorer
+        const testResults = this.scorer.calculateTestResult(result.risposte);
+        logger.debug('Test results calculated:', {
+            resultId: result._id,
+            hasScores: !!testResults.punteggiDimensioni
+        });
+
+        // 4. Aggiorna il risultato con i punteggi e metadata
+        const completedResult = await this.repository.update(token, {
+            completato: true,
+            dataCompletamento: new Date(),
+            punteggiDimensioni: testResults.punteggiDimensioni,
+            metadataCSI: testResults.metadataCSI
+        });
+
+        res.json({
+            status: 'success',
+            data: {
+                testCompleted: true,
+                resultId: completedResult._id,
+                scores: testResults.punteggiDimensioni,
+                metadata: testResults.metadataCSI
+            }
+        });
+
+    } catch (error) {
+        logger.error('Error completing test:', {
+            error: error.message,
+            token,
+            stack: error.stack
+        });
+        res.status(error.statusCode || 400).json({
+            status: 'error',
+            error: {
+                message: error.message,
+                code: error.code || 'COMPLETE_TEST_ERROR'
+            }
+        });
+    }
+}
     
     // Metodi di utility
     _calculateTotalTime(risposte) {

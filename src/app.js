@@ -155,13 +155,10 @@ const initializeCSIDependencies = async () => {
             csiDependencies.csiQuestionService
         );
 
-        logger.debug('CSI Controller initialization:', {
+        logger.debug('CSI Dependencies initialized:', {
             hasController: !!csiController,
-            controllerState: {
-                hasRepository: !!csiController.repository,
-                hasEngine: !!csiController.engine,
-                hasUserService: !!csiController.userService
-            }
+            hasScorer: !!csiDependencies.csiScorer,
+            scorerVersion: csiDependencies.csiScorer?.version
         });
 
         // Inizializza e monta le routes CSI
@@ -190,7 +187,8 @@ const initializeCSIDependencies = async () => {
         return {
             csiController,
             csiQuestionController,
-            csiDependencies
+            csiDependencies,
+            csiScorer: csiDependencies.csiScorer  // Lo esportiamo esplicitamente
         };
     } catch (error) {
         logger.error('Failed to initialize CSI dependencies:', {
@@ -228,6 +226,7 @@ const startServer = async () => {
             csiController,
             // CSI Dependencies
             ...csiDependencies,
+            csiScorer: csiDependencies.csiScorer,  // Lo aggiungiamo esplicitamente
             csiQuestionController,
             // Services
             authService,
