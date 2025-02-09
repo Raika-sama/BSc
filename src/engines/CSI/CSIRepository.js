@@ -9,38 +9,81 @@ const TestRepository = require('../../repositories/TestRepository');
 
 class CSIRepository extends TestRepository {
     constructor() {
+        // Chiamiamo il costruttore della classe padre (TestRepository)
         super(mongoose.model('Test'));
         
-        // Verifica esplicita del modello Result
-        const ResultModel = mongoose.model('Result');
-        if (!ResultModel) {
-            throw new Error('Result model not found');
-        }
-    
-        // Verifica del discriminator CSI
-        this.resultModel = ResultModel.discriminators?.['CSI'];
-        if (!this.resultModel) {
-            throw new Error('CSI discriminator not found');
-        }
-    
-        // Verifica della presenza di tutti i modelli necessari
-        const requiredModels = ['Test', 'CSIConfig', 'CSIQuestion'];
-        const missingModels = requiredModels.filter(model => !mongoose.models[model]);
-        if (missingModels.length > 0) {
-            throw new Error(`Missing required models: ${missingModels.join(', ')}`);
-        }
-    
-        logger.debug('CSIRepository initialized:', {
-            resultModel: {
-                name: ResultModel.modelName,
-                discriminators: Object.keys(ResultModel.discriminators || {})
-            },
-            csiModel: {
-                name: this.resultModel.modelName,
-                schema: !!this.resultModel.schema,
-                collection: this.resultModel.collection.name
-            }
+        // Logging iniziale per debugging
+        logger.debug('Initializing CSIRepository...', {
+            availableModels: mongoose.modelNames(),
+            resultDiscriminators: mongoose.model('Result').discriminators 
+                ? Object.keys(mongoose.model('Result').discriminators)
+                : 'No discriminators'
         });
+    
+        try {
+            // Step 1: Verifica del modello Result base
+            const ResultModel = mongoose.model('Result');
+            if (!ResultModel) {
+                throw new Error('Result model not found');
+            }
+    
+            // Step 2: Verifica e acquisizione del discriminatore CSI
+            this.resultModel = ResultModel.discriminators?.CSI;
+            if (!this.resultModel) {
+                throw new Error('CSI discriminator not found in Result model');
+            }
+    
+            // Step 3: Verifica che il discriminatore sia configurato correttamente
+            if (this.resultModel.modelName !== 'CSI' || 
+                this.resultModel.baseModelName !== 'Result' ||
+                this.resultModel.collection.name !== 'results') {
+                throw new Error('CSI discriminator is not properly configured');
+            }
+    
+            // Step 4: Verifica della presenza di tutti i modelli necessari
+            const requiredModels = ['Test', 'CSIConfig', 'CSIQuestion'];
+            const missingModels = requiredModels.filter(model => !mongoose.models[model]);
+            if (missingModels.length > 0) {
+                throw new Error(`Missing required models: ${missingModels.join(', ')}`);
+            }
+    
+            // Step 5: Logging dettagliato della configurazione del modello
+            logger.debug('CSIRepository initialized:', {
+                resultModel: {
+                    name: ResultModel.modelName,
+                    discriminators: Object.keys(ResultModel.discriminators || {})
+                },
+                csiModel: {
+                    name: this.resultModel.modelName,
+                    schema: !!this.resultModel.schema,
+                    collection: this.resultModel.collection.name,
+                    baseModel: this.resultModel.baseModelName
+                }
+            });
+    
+            // Step 6: Verifica dettagliata del modello CSI
+            logger.debug('CSI Result Model verification:', {
+                modelName: this.resultModel.modelName,      // Deve essere 'CSI'
+                baseModel: this.resultModel.baseModelName,  // Deve essere 'Result'
+                collection: this.resultModel.collection.name, // Deve essere 'results'
+                hasSchema: !!this.resultModel.schema,
+                schemaOptions: this.resultModel.schema.options,
+                discriminatorKey: this.resultModel.schema.options.discriminatorKey
+            });
+    
+        } catch (error) {
+            // Logging dettagliato in caso di errore durante l'inizializzazione
+            logger.error('Failed to initialize CSIRepository:', {
+                error: error.message,
+                stack: error.stack,
+                availableModels: mongoose.modelNames(),
+                resultModel: mongoose.models.Result ? {
+                    name: mongoose.models.Result.modelName,
+                    hasDiscriminators: !!mongoose.models.Result.discriminators
+                } : 'Not found'
+            });
+            throw error;
+        }
     }
 
     

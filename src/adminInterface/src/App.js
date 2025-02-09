@@ -48,8 +48,14 @@ function App() {
                             <Route path="/" element={<HomePage />} />
                             <Route path="/login" element={<Login />} />
                             <Route path="/unauthorized" element={<Unauthorized />} />
-                            <Route path="/test/csi/:token" element={<PublicCSI />} />
-
+                            <Route 
+                                path="/test/csi/:token" 
+                                element={
+                                    <TestingProvider>
+                                        <PublicCSI />
+                                    </TestingProvider>
+                                } 
+                            />
                             {/* Protected admin routes con tutti i provider necessari */}
                             <Route
                                 path="/admin/*"

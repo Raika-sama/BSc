@@ -123,11 +123,13 @@ const PublicCSITest = () => {
     const handleTestComplete = async () => {
         try {
             const totalTime = Date.now() - startTime;
-            await axiosInstance.post(`/tests/csi/${token}/complete`, {
-                totalTime,
-                answers: Object.values(answers)
-            });
-            setCurrentStep('results');
+            const response = await axiosInstance.post(`/tests/csi/${token}/complete`);
+            
+            if (response.data.status === 'success') {
+                setCurrentStep('results');
+            } else {
+                throw new Error('Errore durante il completamento del test');
+            }
         } catch (err) {
             setError(err.response?.data?.error?.message || 'Errore durante il completamento del test');
         }

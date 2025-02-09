@@ -335,9 +335,9 @@ completeTest = async (req, res) => {
 
     try {
         logger.debug('Starting test completion:', { 
-            token,
+            token: token.substring(0, 10) + '...',
             hasRepository: !!this.repository,
-            repositoryType: this.repository.constructor.name
+            hasScorer: !!this.scorer
         });
 
         // 1. Verifica token e recupera risultato
@@ -345,7 +345,7 @@ completeTest = async (req, res) => {
         if (!result) {
             throw createError(
                 ErrorTypes.VALIDATION.INVALID_TOKEN,
-                'Token non valido'
+                'Token non valido o test non trovato'
             );
         }
 
@@ -355,9 +355,15 @@ completeTest = async (req, res) => {
             risposteCount: result.risposte?.length || 0
         });
 
-        // 2. Recupera il test direttamente, senza populate
-        const test = await mongoose.model('Test').findById(result.testRef).lean();
-        
+        // 2. Recupera il test con le domande
+        const Test = mongoose.model('Test');
+        const test = await Test.findById(result.testRef)
+            .populate({
+                path: 'domande.questionRef',
+                model: 'CSIQuestion',
+                select: 'id categoria peso metadata testo'
+            });
+
         if (!test) {
             throw createError(
                 ErrorTypes.RESOURCE.NOT_FOUND,
@@ -365,32 +371,16 @@ completeTest = async (req, res) => {
             );
         }
 
-        logger.debug('Found test:', {
-            testId: test._id,
-            domandeCount: test.domande?.length || 0,
-            tipo: test.tipo
-        });
-
-        // 3. Recupera le domande CSI usando gli ID memorizzati nel test
-        const domandeRefs = test.domande
-            .filter(d => d.questionModel === 'CSIQuestion')
-            .map(d => d.originalQuestion);
-
-        logger.debug('Mapped question refs:', {
-            count: domandeRefs.length,
-            sample: domandeRefs[0]
-        });
-
-        // 4. Prepara le risposte con i dati delle domande originali
+        // 3. Prepara le risposte nel formato richiesto da CSIScorer
         const risposteComplete = result.risposte.map(risposta => {
-            // Trova la domanda originale corrispondente nel test
-            const domandaOriginal = test.domande.find(d => 
-                d.originalQuestion.id === risposta.questionId
-            )?.originalQuestion;
+            const domanda = test.domande.find(d => 
+                d.questionRef?.id === risposta.questionId
+            );
 
-            if (!domandaOriginal) {
-                logger.warn('Domanda non trovata per risposta:', {
-                    questionId: risposta.questionId
+            if (!domanda?.questionRef) {
+                logger.warn('Question not found for answer:', {
+                    questionId: risposta.questionId,
+                    answerId: risposta._id
                 });
                 return null;
             }
@@ -399,63 +389,84 @@ completeTest = async (req, res) => {
                 value: risposta.value,
                 timeSpent: risposta.timeSpent,
                 domanda: {
-                    id: domandaOriginal.id,
-                    categoria: domandaOriginal.categoria,
-                    peso: domandaOriginal.peso || 1,
-                    polarity: domandaOriginal.metadata?.get('polarity') || '+',
-                    testo: domandaOriginal.testo
+                    id: domanda.questionRef.id,
+                    categoria: domanda.questionRef.categoria,
+                    peso: domanda.questionRef.metadata?.peso || 1,
+                    polarity: domanda.questionRef.metadata?.polarity || '+',
+                    testo: domanda.questionRef.testo
                 }
             };
         }).filter(r => r !== null);
 
-        logger.debug('Prepared answers for scoring:', {
-            totalAnswers: risposteComplete.length,
-            sampleAnswer: risposteComplete[0],
-            categories: [...new Set(risposteComplete.map(r => r.domanda.categoria))]
-        });
-
-        // 5. Verifica numero minimo di risposte
+        // 4. Verifica numero minimo di risposte
         const config = await this.configModel.findOne({ active: true });
-        if (risposteComplete.length < config.validazione.numeroMinimoDomande) {
+        if (!config) {
             throw createError(
-                ErrorTypes.VALIDATION.INCOMPLETE_TEST,
-                'Numero di risposte insufficiente'
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Configurazione CSI non trovata'
             );
         }
 
-        // 6. Calcola i punteggi usando il scorer
+        if (risposteComplete.length < config.validazione.numeroMinimoDomande) {
+            throw createError(
+                ErrorTypes.VALIDATION.INCOMPLETE_TEST,
+                `Numero di risposte insufficiente (minimo ${config.validazione.numeroMinimoDomande})`
+            );
+        }
+
+        // 5. Calcola i risultati usando CSIScorer
         const testResults = this.scorer.calculateTestResult(risposteComplete);
         
         logger.debug('Test results calculated:', {
-            resultId: result._id,
-            hasScores: !!testResults.punteggiDimensioni,
-            dimensioni: Object.keys(testResults.punteggiDimensioni || {})
+            dimensions: Object.keys(testResults.punteggiDimensioni),
+            hasPattern: !!testResults.metadataCSI?.pattern,
+            hasProfile: !!testResults.metadataCSI?.profiloCognitivo
         });
 
-        // 7. Aggiorna il risultato con i punteggi e metadata
+        // 6. Aggiungi metriche aggiuntive ai metadata
+        const metadataCompleto = {
+            ...testResults.metadataCSI,
+            tempoTotaleDomande: risposteComplete.reduce((sum, r) => sum + r.timeSpent, 0),
+            tempoMedioRisposta: risposteComplete.reduce((sum, r) => sum + r.timeSpent, 0) / risposteComplete.length,
+            completamentoPercentuale: (risposteComplete.length / test.domande.length) * 100,
+            sessioneTest: {
+                iniziata: result.dataInizio,
+                completata: new Date(),
+                durataTotale: new Date() - result.dataInizio
+            }
+        };
+
+        // 7. Aggiorna il risultato con i punteggi e metadata completi
         const completedResult = await this.repository.update(token, {
             completato: true,
             dataCompletamento: new Date(),
             punteggiDimensioni: testResults.punteggiDimensioni,
-            metadataCSI: testResults.metadataCSI
+            metadataCSI: metadataCompleto
         });
 
+        // 8. Prepara la risposta con i risultati elaborati
         res.json({
             status: 'success',
             data: {
                 testCompleted: true,
                 resultId: completedResult._id,
                 scores: testResults.punteggiDimensioni,
-                metadata: testResults.metadataCSI
+                metadata: metadataCompleto,
+                profilo: testResults.metadataCSI.profiloCognitivo,
+                validita: {
+                    pattern: testResults.metadataCSI.pattern,
+                    avvertimenti: testResults.metadataCSI.pattern.warnings
+                }
             }
         });
 
     } catch (error) {
         logger.error('Error completing test:', {
             error: error.message,
-            token,
+            token: token?.substring(0, 10) + '...',
             stack: error.stack
         });
+        
         res.status(error.statusCode || 400).json({
             status: 'error',
             error: {

@@ -1,75 +1,64 @@
 const mongoose = require('mongoose');
 const logger = require('../utils/errors/logger/logger');
 
-// Funzione di utilità per verificare la registrazione di un modello
-const verifyModel = (modelName, schema) => {
-    try {
-        // Verifica se il modello esiste già
-        if (mongoose.models[modelName]) {
-            logger.debug(`Model ${modelName} già registrato, utilizzo istanza esistente`);
-            return mongoose.models[modelName];
-        }
-
-        // Registra il nuovo modello
-        const model = mongoose.model(modelName, schema);
-        logger.debug(`Model ${modelName} registrato con successo`);
-        return model;
-    } catch (error) {
-        logger.error(`Errore nella registrazione del model ${modelName}:`, {
-            error: error.message,
-            stack: error.stack
-        });
-        throw error;
-    }
-};
-
 const initializeModels = () => {
     try {
         logger.info('Inizializzazione modelli in corso...');
 
-        // 1. Registrazione modelli di base nell'ordine corretto
-        const modelsToRegister = [
-            { name: 'School', schema: require('./School').schema },
-            { name: 'Class', schema: require('./Class').schema },
-            { name: 'Student', schema: require('./Student').schema },
-            { name: 'User', schema: require('./User').schema },
-            { name: 'UserAudit', schema: require('./UserAudit').schema }
-        ];
+        // Prima registriamo i modelli base
+        // Nota come importiamo direttamente gli schemi
+        const School = mongoose.models.School || mongoose.model('School', require('./School').schema);
+        const Class = mongoose.models.Class || mongoose.model('Class', require('./Class').schema);
+        const Student = mongoose.models.Student || mongoose.model('Student', require('./Student').schema);
+        const User = mongoose.models.User || mongoose.model('User', require('./User').schema);
+        const UserAudit = mongoose.models.UserAudit || mongoose.model('UserAudit', require('./UserAudit').schema);
 
-        const registeredModels = {};
-        modelsToRegister.forEach(({ name, schema }) => {
-            registeredModels[name] = verifyModel(name, schema);
-        });
-
-        // 2. Registrazione modelli CSI
+        // Registrazione modelli CSI
         logger.debug('Registrazione modelli CSI...');
-        const CSIConfig = verifyModel('CSIConfig', require('../engines/CSI/models/CSIConfig').schema);
-        const CSIQuestion = verifyModel('CSIQuestion', require('../engines/CSI/models/CSIQuestion').CSIQuestion.schema);
+        // Per CSIConfig, importiamo lo schema direttamente
+        const CSIConfig = mongoose.models.CSIConfig || 
+            mongoose.model('CSIConfig', require('../engines/CSI/models/CSIConfig').schema);
+        
+        // Per CSIQuestion, usiamo lo schema dalla struttura corretta
+        const CSIQuestion = mongoose.models.CSIQuestion || 
+            mongoose.model('CSIQuestion', require('../engines/CSI/models/CSIQuestion').CSIQuestion.schema);
 
-        // 3. Registrazione Test (dipende da CSIConfig)
+        // Registrazione Test
         logger.debug('Registrazione modello Test...');
-        const Test = verifyModel('Test', require('./Test').schema);
+        const Test = mongoose.models.Test || mongoose.model('Test', require('./Test').schema);
 
-        // 4. Registrazione Result e CSIResult
+        // Registrazione Result e CSIResult
         logger.debug('Registrazione Result e discriminator CSI...');
-        const { Result: ResultSchema, CSIResult: CSIResultSchema } = require('./Result');
+        const { baseResultSchema, csiResultSchema } = require('./Result');
 
-        // Registra prima il modello base Result
-        const Result = verifyModel('Result', ResultSchema.schema);
+        // Registra il modello Result base se non esiste
+        const Result = mongoose.models.Result || mongoose.model('Result', baseResultSchema);
 
-        // Registra il discriminator CSI solo se non esiste già
+        // Gestione del discriminatore CSI
         let CSIResult;
-        if (!Result.discriminators?.CSI) {
-            CSIResult = Result.discriminator('CSI', CSIResultSchema.schema);
-            logger.debug('Discriminator CSI registrato con successo');
-        } else {
+        if (Result.discriminators?.CSI) {
             CSIResult = Result.discriminators.CSI;
-            logger.debug('Discriminator CSI già registrato, utilizzo istanza esistente');
+            logger.debug('Usando discriminatore CSI esistente');
+        } else {
+            CSIResult = Result.discriminator('CSI', csiResultSchema);
+            logger.debug('Creato nuovo discriminatore CSI');
         }
 
-        // 5. Verifica finale
-        const models = {
-            ...registeredModels,
+        // Log per verifica
+        logger.debug('Stato modelli dopo inizializzazione:', {
+            modelsRegistered: mongoose.modelNames(),
+            hasCSIDiscriminator: !!Result.discriminators?.CSI,
+            resultCollection: Result.collection.name,
+            csiResultCollection: CSIResult.collection.name
+        });
+
+        // Restituisci tutti i modelli
+        return {
+            School,
+            Class,
+            Student,
+            User,
+            UserAudit,
             Test,
             Result,
             CSIResult,
@@ -77,24 +66,8 @@ const initializeModels = () => {
             CSIQuestion
         };
 
-        // Log dello stato finale dei modelli
-        logger.debug('Stato finale modelli:', {
-            registeredModels: mongoose.modelNames(),
-            resultDiscriminators: Object.keys(Result.discriminators || {}),
-            hasCSIDiscriminator: !!Result.discriminators?.CSI
-        });
-
-        // 6. Verifica collegamenti tra modelli
-        logger.debug('Verifica collegamenti tra modelli:', {
-            testHasCSIConfig: !!Test.schema.paths.csiConfig,
-            resultHasTest: !!CSIResult.schema.paths.testRef,
-            resultHasConfig: !!CSIResult.schema.paths.config
-        });
-
-        return models;
-
     } catch (error) {
-        logger.error('Errore critico durante l\'inizializzazione dei modelli:', {
+        logger.error('Errore durante l\'inizializzazione dei modelli:', {
             error: error.message,
             stack: error.stack,
             currentModels: mongoose.modelNames()
@@ -103,7 +76,7 @@ const initializeModels = () => {
     }
 };
 
-// Esegui l'inizializzazione una sola volta
+// Inizializzazione una tantum con gestione errori
 let models;
 try {
     models = initializeModels();

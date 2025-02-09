@@ -106,6 +106,20 @@ const initializeCSIConfig = async () => {
 
 const setupCSIDependencies = async () => {
     try {
+        const models = await new Promise((resolve) => {
+            const checkModels = () => {
+                const registeredModels = mongoose.modelNames();
+                const requiredModels = ['CSIConfig', 'CSIQuestion', 'Test', 'Result'];
+                
+                if (requiredModels.every(model => registeredModels.includes(model))) {
+                    resolve(mongoose.models);
+                } else {
+                    setTimeout(checkModels, 100);
+                }
+            };
+            checkModels();
+        });
+        
         logger.debug('Initializing CSI dependencies...');
 
         // Inizializza configurazione

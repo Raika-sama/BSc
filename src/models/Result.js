@@ -202,6 +202,6 @@ if (Result.discriminators && Result.discriminators.CSI) {
 }
 
 module.exports = {
-    Result,
-    CSIResult
-};
+    baseResultSchema,   // Lo schema base
+    csiResultSchema    // Lo schema del discriminator
+};1
