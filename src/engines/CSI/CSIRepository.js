@@ -642,13 +642,23 @@ async update(token, updateData) {
     try {
         logger.debug('Updating CSI result:', { 
             token,
-            updateData,
-            modelInfo: {
-                hasModel: !!this.resultModel,
-                modelName: this.resultModel?.modelName
+            updateData: {
+                isCompleted: updateData.completato,
+                hasScores: !!updateData.punteggiDimensioni,
+                hasMetadata: !!updateData.metadataCSI
             }
         });
         
+        // Valida la struttura dei punteggi prima dell'aggiornamento
+        if (updateData.punteggiDimensioni) {
+            ['elaborazione', 'creativita', 'preferenzaVisiva', 'decisione', 'autonomia'].forEach(dim => {
+                const score = updateData.punteggiDimensioni[dim];
+                if (!score || typeof score.score !== 'number') {
+                    throw new Error(`Invalid score structure for dimension ${dim}`);
+                }
+            });
+        }
+
         const result = await this.resultModel.findOneAndUpdate(
             { token },
             updateData,

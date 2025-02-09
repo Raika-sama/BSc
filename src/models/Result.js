@@ -91,11 +91,31 @@ const csiResultSchema = new mongoose.Schema({
         }
     }],
     punteggiDimensioni: {
-        elaborazione: Number,
-        creativita: Number,
-        preferenzaVisiva: Number,
-        decisione: Number,
-        autonomia: Number
+        elaborazione: {
+            score: Number,
+            level: String,
+            interpretation: String
+        },
+        creativita: {
+            score: Number,
+            level: String,
+            interpretation: String
+        },
+        preferenzaVisiva: {
+            score: Number,
+            level: String,
+            interpretation: String
+        },
+        decisione: {
+            score: Number,
+            level: String,
+            interpretation: String
+        },
+        autonomia: {
+            score: Number,
+            level: String,
+            interpretation: String
+        }
     },
     metadataCSI: {
         tempoTotaleDomande: Number,
@@ -104,7 +124,14 @@ const csiResultSchema = new mongoose.Schema({
             type: Number,
             default: 0
         },
-        pattern: mongoose.Schema.Types.Mixed
+        pattern: mongoose.Schema.Types.Mixed,
+        versioneAlgoritmo: String,
+        calcolatoIl: Date,
+        profiloCognitivo: {
+            stiliDominanti: [String],
+            raccomandazioni: [String],
+            interpretazioneGlobale: String
+        }
     }
 }, {
     toJSON: { virtuals: false },

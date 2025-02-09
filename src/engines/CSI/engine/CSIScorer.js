@@ -119,45 +119,38 @@ analyzeResponsePattern(answers) {
     }
 }
 
-    /**
-     * Calcola i punteggi per ogni dimensione
-     */
-    calculateScores(answers) {
-        try {
-            // Mappa le risposte per categoria
-            const mappedAnswers = this._mapAnswersToCategories(answers);
-            
-            logger.debug('Mapped answers:', {
-                count: mappedAnswers.length,
-                categories: [...new Set(mappedAnswers.map(a => a.categoria))],
-                sampleMapped: mappedAnswers[0]
-            });
-    
-            // Raggruppa le risposte per categoria
-            const answersByCategory = mappedAnswers.reduce((acc, answer) => {
-                if (!acc[answer.categoria]) {
-                    acc[answer.categoria] = [];
-                }
-                acc[answer.categoria].push(answer);
-                return acc;
-            }, {});
-    
-            // Calcola i punteggi per ogni categoria
-            const scores = {};
-            for (const [categoria, risposte] of Object.entries(answersByCategory)) {
-                scores[categoria.toLowerCase()] = this._calculateCategoryScore(risposte);
-            }
-    
-            return scores;
-        } catch (error) {
-            logger.error('Error calculating scores:', {
-                error: error.message,
-                stack: error.stack,
-                answers: answers.map(a => ({ value: a.value }))
-            });
-            throw error;
-        }
+/**
+ * Calcola i punteggi per ogni dimensione
+ */
+calculateScores(answers) {
+    try {
+        // Mappa le risposte per categoria
+        const mappedAnswers = this._mapAnswersToCategories(answers);
+        
+        logger.debug('Mapped answers:', {
+            count: mappedAnswers.length,
+            categories: [...new Set(mappedAnswers.map(a => a.categoria))],
+            sampleMapped: mappedAnswers[0]
+        });
+
+        // Calcola i punteggi per ogni categoria
+        return {
+            analitico: this._calculateDimensionScore(mappedAnswers, 'Elaborazione'),
+            sistematico: this._calculateDimensionScore(mappedAnswers, 'Creatività'),
+            verbale: this._calculateDimensionScore(mappedAnswers, 'Preferenza Visiva'),
+            impulsivo: this._calculateDimensionScore(mappedAnswers, 'Decisione'),
+            dipendente: this._calculateDimensionScore(mappedAnswers, 'Autonomia')
+        };
+    } catch (error) {
+        logger.error('Error calculating scores:', {
+            error: error.message,
+            stack: error.stack,
+            answers: answers.map(a => ({ value: a.value }))
+        });
+        throw error;
     }
+}
+
 
     /**
      * Formatta il punteggio di una dimensione
@@ -172,54 +165,53 @@ analyzeResponsePattern(answers) {
     }
 
 
-    /**
-     * Calcola il punteggio per una singola dimensione
-     * @private
-     */
-    _calculateDimensionScore(answers, dimension) {
-        try {
-            const dimensionAnswers = answers.filter(a => 
-                a.question.categoria === dimension
-            );
+ /**
+ * Calcola il punteggio per una categoria specifica
+ * @private
+ */
+_calculateDimensionScore(answers, dimension) {
+    try {
+        const dimensionAnswers = answers.filter(a => a.categoria === dimension);
 
-            logger.debug(`Calculating score for dimension ${dimension}:`, {
-                totalAnswers: answers.length,
-                dimensionAnswers: dimensionAnswers.length
-            });
-
-            if (dimensionAnswers.length === 0) return 0;
-
-            // Calcola il punteggio come somma dei valori pesati
-            const rawScore = dimensionAnswers.reduce((total, answer) => {
-                const value = answer.question.polarity === '+' ? 
-                    answer.value : 
-                    (6 - answer.value); // Inverti punteggio per domande negative
-
-                return total + (value * (answer.question.peso || 1));
-            }, 0);
-
-            // Calcola il range teorico per questa dimensione
-            const theoreticalRange = this._calculateTheoreticalRange(dimensionAnswers.length);
-
-            // Normalizza il punteggio sul range teorico
-            const normalizedScore = this._normalizeScore(rawScore, theoreticalRange);
-
-            logger.debug(`Score calculated for dimension ${dimension}:`, {
-                rawScore,
-                normalizedScore,
-                answersCount: dimensionAnswers.length,
-                theoreticalRange
-            });
-
-            return normalizedScore;
-        } catch (error) {
-            logger.error(`Error calculating dimension score for ${dimension}:`, {
-                error: error.message,
-                stack: error.stack
-            });
-            throw error;
+        if (dimensionAnswers.length === 0) {
+            logger.warn(`No answers found for dimension ${dimension}`);
+            return 0;
         }
+
+        // Calcola il punteggio grezzo
+        const rawScore = dimensionAnswers.reduce((total, answer) => {
+            // Gestisce la polarità della domanda
+            const value = answer.polarity === '+' ? 
+                answer.value : 
+                (6 - answer.value); // Inverte il punteggio per domande negative
+
+            // Applica il peso
+            return total + (value * (answer.peso || 1));
+        }, 0);
+
+        // Calcola il punteggio massimo possibile per questa dimensione
+        const maxPossibleScore = dimensionAnswers.reduce((total, answer) => 
+            total + (5 * (answer.peso || 1)), 0);
+
+        // Normalizza il punteggio su scala 0-100
+        const normalizedScore = Math.round((rawScore / maxPossibleScore) * 100);
+
+        logger.debug(`Dimension score calculated for ${dimension}:`, {
+            rawScore,
+            maxPossibleScore,
+            normalizedScore,
+            answersCount: dimensionAnswers.length
+        });
+
+        return normalizedScore;
+    } catch (error) {
+        logger.error(`Error calculating dimension score for ${dimension}:`, {
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
     }
+}
 
 
     _calculateTheoreticalRange(numberOfQuestions) {

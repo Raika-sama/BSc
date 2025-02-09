@@ -467,10 +467,38 @@ completeTest = async (req, res) => {
         const updateData = {
             completato: true,
             dataCompletamento: new Date(),
-            punteggiDimensioni: testResults.punteggiDimensioni,
-            metadataCSI: metadataCompleto
+            punteggiDimensioni: {
+                elaborazione: testResults.punteggiDimensioni.elaborazione,
+                creativita: testResults.punteggiDimensioni.creativita,
+                preferenzaVisiva: testResults.punteggiDimensioni.preferenzaVisiva,
+                decisione: testResults.punteggiDimensioni.decisione,
+                autonomia: testResults.punteggiDimensioni.autonomia
+            },
+            metadataCSI: {
+                ...testResults.metadataCSI,
+                tempoTotaleDomande: risposteComplete.reduce((sum, r) => sum + r.timeSpent, 0),
+                tempoMedioRisposta: risposteComplete.reduce((sum, r) => sum + r.timeSpent, 0) / risposteComplete.length,
+                completamentoPercentuale: (risposteComplete.length / test.domande.length) * 100,
+                versioneAlgoritmo: testResults.metadataCSI.versioneAlgoritmo,
+                calcolatoIl: testResults.metadataCSI.calcolatoIl,
+                sessioneTest: {
+                    iniziata: result.dataInizio,
+                    completata: new Date(),
+                    durataTotale: new Date() - result.dataInizio
+                }
+            }
         };
-
+        
+        logger.debug('Preparing update data:', {
+            hasScores: !!updateData.punteggiDimensioni,
+            scoresSample: updateData.punteggiDimensioni.elaborazione,
+            metadata: {
+                tempoTotale: updateData.metadataCSI.tempoTotaleDomande,
+                tempoMedio: updateData.metadataCSI.tempoMedioRisposta,
+                completamento: updateData.metadataCSI.completamentoPercentuale
+            }
+        });
+        
         const completedResult = await this.repository.update(token, updateData);
 
         // 8. Prepara la risposta con i risultati elaborati
