@@ -1,0 +1,8 @@
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-09T13:15:42.919Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-09T13:15:43.017Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-02-09T13:15:44.302Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-09T13:15:44.305Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-09T13:15:44.307Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/tests/csi/public"],"timestamp":"2025-02-09T13:15:44.671Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-09T13:15:44.678Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-09T13:15:44.678Z"}
