@@ -12,7 +12,7 @@ const initializeModels = () => {
         const Student = mongoose.models.Student || mongoose.model('Student', require('./Student').schema);
         const User = mongoose.models.User || mongoose.model('User', require('./User').schema);
         const UserAudit = mongoose.models.UserAudit || mongoose.model('UserAudit', require('./UserAudit').schema);
-
+    
         // Registrazione modelli CSI
         logger.debug('Registrazione modelli CSI...');
         // Per CSIConfig, importiamo lo schema direttamente
@@ -29,20 +29,11 @@ const initializeModels = () => {
 
         // Registrazione Result e CSIResult
         logger.debug('Registrazione Result e discriminator CSI...');
-        const { baseResultSchema, csiResultSchema } = require('./Result');
+        const ResultModels = require('./Result').getModels();
+        const Result = ResultModels.Result;
+        const CSIResult = ResultModels.CSIResult;
 
-        // Registra il modello Result base se non esiste
-        const Result = mongoose.models.Result || mongoose.model('Result', baseResultSchema);
-
-        // Gestione del discriminatore CSI
-        let CSIResult;
-        if (Result.discriminators?.CSI) {
-            CSIResult = Result.discriminators.CSI;
-            logger.debug('Usando discriminatore CSI esistente');
-        } else {
-            CSIResult = Result.discriminator('CSI', csiResultSchema);
-            logger.debug('Creato nuovo discriminatore CSI');
-        }
+       
 
         // Log per verifica
         logger.debug('Stato modelli dopo inizializzazione:', {

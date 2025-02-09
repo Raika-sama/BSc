@@ -94,11 +94,11 @@ class CSIRepository extends TestRepository {
                 answerData,
                 modelInfo: {
                     resultModel: this.resultModel?.modelName,
-                    discriminator: this.resultModel?.schema?.discriminatorMapping?.key
+                    discriminator: this.resultModel?.schema?.discriminatorKey
                 }
             });
     
-            // 1. Query diretta alla collection senza rischio di populate
+            // 1. Trova il risultato per il token
             const result = await this.resultModel.collection.findOne({
                 token,
                 tipo: 'CSI',
@@ -111,31 +111,43 @@ class CSIRepository extends TestRepository {
     
             logger.debug('Found result document:', {
                 resultId: result._id,
-                testRef: result.testRef
+                testRef: result.testRef,
+                testRefType: typeof result.testRef
             });
     
-            // 2. Query diretta al test correlato
+            // 2. Trova il test di riferimento - Gestisce sia String che ObjectId
+            const testRef = typeof result.testRef === 'string' ? 
+                new mongoose.Types.ObjectId(result.testRef) : 
+                result.testRef;
+    
             const test = await mongoose.model('Test').collection.findOne({
-                _id: result.testRef
+                _id: testRef
             });
     
             if (!test) {
+                logger.error('Test reference not found:', {
+                    testRef: result.testRef,
+                    testRefType: typeof result.testRef,
+                    resultId: result._id
+                });
                 throw new Error('Test reference not found');
             }
     
             logger.debug('Found test document:', {
                 testId: test._id,
-                questionCount: test.domande?.length
+                questionCount: test.domande?.length,
+                questionData: test.domande ? test.domande.slice(0, 1) : null // Log della prima domanda per debug
             });
     
-            // 3. Aggiornamento diretto della collection
+            // 3. Aggiorna il documento con la nuova risposta
             const updateOperation = await this.resultModel.collection.updateOne(
                 { _id: result._id },
                 {
                     $push: {
                         risposte: {
                             ...answerData,
-                            _id: new mongoose.Types.ObjectId()
+                            _id: new mongoose.Types.ObjectId(),
+                            timestamp: new Date()
                         }
                     }
                 }
@@ -143,35 +155,30 @@ class CSIRepository extends TestRepository {
     
             logger.debug('Update operation result:', {
                 matched: updateOperation.matchedCount,
-                modified: updateOperation.modifiedCount
+                modified: updateOperation.modifiedCount,
+                newAnswer: answerData
             });
     
-            // 4. Recupero il documento aggiornato
+            // 4. Recupera il documento aggiornato
             const updatedResult = await this.resultModel.collection.findOne({
                 _id: result._id
             });
     
-            // 5. Costruisco la risposta combinando i dati
-            const response = {
-                _id: updatedResult._id,
-                tipo: updatedResult.tipo,
-                studentId: updatedResult.studentId,
-                risposte: updatedResult.risposte || [],
-                completato: updatedResult.completato,
-                test: {
-                    _id: test._id,
-                    domande: test.domande || [],
-                    configurazione: test.configurazione
-                }
+            // Aggiungi il test al risultato per la risposta
+            updatedResult.test = {
+                _id: test._id,
+                domande: test.domande || [],
+                configurazione: test.configurazione
             };
     
             logger.debug('AddAnswer operation completed:', {
-                responseId: response._id,
-                answersCount: response.risposte.length,
-                testId: response.test._id
+                responseId: updatedResult._id,
+                answersCount: updatedResult.risposte?.length,
+                testId: updatedResult.test._id,
+                latestAnswer: updatedResult.risposte[updatedResult.risposte.length - 1]
             });
     
-            return response;
+            return updatedResult;
     
         } catch (error) {
             logger.error('Error in addAnswer:', {
@@ -341,24 +348,47 @@ async findByToken(token) {
             modelName: this.resultModel.modelName
         });
 
-        // Aggiungiamo più dettagli alla query
-        const test = await this.resultModel.findOne({ 
-            token,
-            tipo: 'CSI',
-            expiresAt: { $gt: new Date() } // verifica che non sia scaduto
-        });
-        
+        // Usa una query diretta senza populate
+        const result = await this.resultModel
+            .findOne({ 
+                token,
+                tipo: 'CSI',
+                expiresAt: { $gt: new Date() }
+            })
+            .select({
+                _id: 1,
+                token: 1,
+                testRef: 1,
+                studentId: 1,
+                risposte: 1,
+                completato: 1,
+                dataInizio: 1,
+                expiresAt: 1,
+                tipo: 1
+            })
+            .lean()
+            .exec();
+
+        if (!result) {
+            logger.debug('No result found for token');
+            return null;
+        }
+
         logger.debug('Find by token result:', {
-            found: !!test,
-            testId: test?._id,
-            testToken: test?.token,
-            expires: test?.expiresAt
+            found: true,
+            testId: result._id,
+            testRef: result.testRef,
+            testToken: result.token,
+            expires: result.expiresAt,
+            fields: Object.keys(result)
         });
 
-        return test;
+        return result;
+
     } catch (error) {
-        logger.error('Error finding test by token:', {
+        logger.error('Error in findByToken:', {
             error: error.message,
+            stack: error.stack,
             token: token.substring(0, 10) + '...'
         });
         throw error;
@@ -610,7 +640,14 @@ _generateRecommendations(scores) {
 
 async update(token, updateData) {
     try {
-        logger.debug('Updating CSI result:', { token, updateData });
+        logger.debug('Updating CSI result:', { 
+            token,
+            updateData,
+            modelInfo: {
+                hasModel: !!this.resultModel,
+                modelName: this.resultModel?.modelName
+            }
+        });
         
         const result = await this.resultModel.findOneAndUpdate(
             { token },
@@ -622,16 +659,24 @@ async update(token, updateData) {
         );
 
         if (!result) {
+            logger.error('Result not found for token:', { token });
             throw createError(
                 ErrorTypes.RESOURCE.NOT_FOUND,
                 'Risultato non trovato'
             );
         }
 
+        logger.debug('Result updated successfully:', {
+            resultId: result._id,
+            isCompleted: result.completato,
+            hasScores: !!result.punteggiDimensioni
+        });
+
         return result;
     } catch (error) {
         logger.error('Error updating CSI result:', {
             error: error.message,
+            stack: error.stack,
             token
         });
         throw error;

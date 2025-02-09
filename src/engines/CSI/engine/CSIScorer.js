@@ -42,12 +42,32 @@ class CSIScorer {
 calculateTestResult(answers) {
     try {
         logger.debug('Calculating complete test result', {
-            answersCount: answers.length
+            answersCount: answers.length,
+            sampleAnswer: answers[0]  // Aggiungi per debug
+        });
+
+        // Verifica la struttura delle risposte
+        if (!Array.isArray(answers) || answers.length === 0) {
+            throw new Error('Invalid answers format: must be non-empty array');
+        }
+
+        // Verifica la struttura di ogni risposta
+        answers.forEach((answer, index) => {
+            if (!answer.value || !answer.timeSpent || !answer.question?.categoria) {
+                logger.error('Invalid answer structure:', { answer, index });
+                throw new Error(`Invalid answer structure at index ${index}`);
+            }
         });
 
         const scores = this.calculateScores(answers);
         const pattern = this.analyzeResponsePattern(answers);
         const profile = this.generateProfile(scores);
+
+        logger.debug('Calculation completed:', {
+            hasScores: !!scores,
+            hasPattern: !!pattern,
+            hasProfile: !!profile
+        });
 
         return {
             punteggiDimensioni: {
@@ -65,7 +85,11 @@ calculateTestResult(answers) {
             }
         };
     } catch (error) {
-        logger.error('Error calculating test result:', { error });
+        logger.error('Error calculating test result:', { 
+            error: error.message,
+            stack: error.stack,
+            sampleAnswer: answers[0] 
+        });
         throw createError(
             ErrorTypes.PROCESSING.CALCULATION_ERROR,
             'Errore nel calcolo del risultato del test',
@@ -100,40 +124,36 @@ analyzeResponsePattern(answers) {
      */
     calculateScores(answers) {
         try {
-            // Aggiungiamo logging per debug
-            logger.debug('Raw answers received:', {
-                count: answers.length,
-                sampleAnswer: answers[0],
-                structure: Object.keys(answers[0] || {})
-            });
-
+            // Mappa le risposte per categoria
             const mappedAnswers = this._mapAnswersToCategories(answers);
             
             logger.debug('Mapped answers:', {
                 count: mappedAnswers.length,
-                sampleMapped: mappedAnswers[0],
-                categories: [...new Set(mappedAnswers.map(a => a.question.categoria))]
+                categories: [...new Set(mappedAnswers.map(a => a.categoria))],
+                sampleMapped: mappedAnswers[0]
             });
-
-            const scores = {
-                analitico: this._calculateDimensionScore(mappedAnswers, 'analitico'),
-                sistematico: this._calculateDimensionScore(mappedAnswers, 'sistematico'),
-                verbale: this._calculateDimensionScore(mappedAnswers, 'verbale'),
-                impulsivo: this._calculateDimensionScore(mappedAnswers, 'impulsivo'),
-                dipendente: this._calculateDimensionScore(mappedAnswers, 'dipendente')
-            };
-
-            logger.debug('Scores calculated:', { scores });
+    
+            // Raggruppa le risposte per categoria
+            const answersByCategory = mappedAnswers.reduce((acc, answer) => {
+                if (!acc[answer.categoria]) {
+                    acc[answer.categoria] = [];
+                }
+                acc[answer.categoria].push(answer);
+                return acc;
+            }, {});
+    
+            // Calcola i punteggi per ogni categoria
+            const scores = {};
+            for (const [categoria, risposte] of Object.entries(answersByCategory)) {
+                scores[categoria.toLowerCase()] = this._calculateCategoryScore(risposte);
+            }
+    
             return scores;
         } catch (error) {
-            logger.error('Error calculating scores:', { 
+            logger.error('Error calculating scores:', {
                 error: error.message,
                 stack: error.stack,
-                answers: answers.map(a => ({
-                    id: a.questionId,
-                    value: a.value,
-                    category: a.domanda?.categoria
-                }))
+                answers: answers.map(a => ({ value: a.value }))
             });
             throw error;
         }
@@ -262,33 +282,32 @@ analyzeResponsePattern(answers) {
     }
 
     _mapAnswersToCategories(answers) {
-        try {
-            return answers.map(answer => {
-                // Verifica struttura risposta
-                if (!answer.domanda) {
-                    logger.error('Missing domanda in answer:', { answer });
-                    throw new Error('Struttura risposta non valida: manca domanda');
-                }
-
-                return {
-                    value: answer.value || answer.valore, // supporta entrambi i formati
-                    timeSpent: answer.timeSpent || answer.tempoRisposta, // supporta entrambi i formati
-                    question: {
-                        categoria: this.categoryMapping[answer.domanda.categoria] || answer.domanda.categoria,
-                        polarity: answer.domanda.polarity || '+',
-                        peso: answer.domanda.peso || 1
-                    }
-                };
-            });
-        } catch (error) {
-            logger.error('Error mapping answers:', {
-                error: error.message,
-                stack: error.stack,
-                sampleAnswer: answers[0]
-            });
-            throw error;
-        }
+        logger.debug('Raw answers received:', {
+            count: answers.length,
+            sampleAnswer: answers[0],
+            structure: answers[0] ? Object.keys(answers[0]) : []
+        });
+    
+        return answers.map(answer => {
+            // Verifica se l'answer ha la struttura corretta
+            if (!answer.domanda && !answer.question) {
+                logger.error('Missing domanda in answer:', { answer });
+                throw new Error('Struttura risposta non valida: manca domanda');
+            }
+    
+            // Usa domanda se disponibile, altrimenti usa question
+            const questionData = answer.domanda || answer.question;
+    
+            return {
+                value: answer.value,
+                timeSpent: answer.timeSpent,
+                categoria: questionData.categoria,
+                peso: questionData.peso || 1,
+                polarity: questionData.polarity || '+'
+            };
+        });
     }
+    
 
 
     /**

@@ -4,6 +4,8 @@ const logger = require('../utils/errors/logger/logger');
 
 // Prima della definizione dello schema
 const availableQuestionModels = ['CSIQuestion', 'FutureTestQuestion'];
+
+
 const questionSchema = new mongoose.Schema({
     id: {
         type: Number,
@@ -144,18 +146,27 @@ testSchema.pre('save', async function(next) {
 
 // Nel middleware per populate
 testSchema.pre(/^find/, function(next) {
-    if (this.options.populateQuestions !== false) {
-        const populateOptions = {
-            path: 'domande.questionRef',
-            model: function(doc) {
-                return doc.questionModel || 'CSIQuestion';
-            }
-        };
-        this.populate(populateOptions);
+    if (this.options.populateQuestions === false) {
+        return next();
     }
+
+    // Verifica che i modelli necessari siano registrati
+    const registeredModels = mongoose.modelNames();
+    const populateOptions = {
+        path: 'domande.questionRef',
+        model: function(doc) {
+            const modelName = doc.questionModel || 'CSIQuestion';
+            // Verifica che il modello sia disponibile
+            if (!registeredModels.includes(modelName)) {
+                return 'CSIQuestion'; // Fallback al modello di default
+            }
+            return modelName;
+        }
+    };
+
+    this.populate(populateOptions);
     next();
 });
-
 
 // Metodo per calcolare tempo rimanente
 testSchema.methods.getTempoRimanente = function(dataInizio) {

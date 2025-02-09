@@ -1,21 +1,14 @@
-// 1. Importazioni
 const mongoose = require('mongoose');
 
 // 2. Schema Base dei Risultati
 const baseResultSchema = new mongoose.Schema({
-    // Dati principali
     studentId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Student',
+        type: String,
         required: true
     },
-    classe: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Class'
-    },
-    scuola: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'School'
+    testRef: {
+        type: String,
+        required: true
     },
     token: {
         type: String,
@@ -51,42 +44,24 @@ const baseResultSchema = new mongoose.Schema({
 }, { 
     discriminatorKey: 'tipo',
     collection: 'results',
-    timestamps: true 
+    timestamps: true,
+    toJSON: { virtuals: false },
+    toObject: { virtuals: false }
 });
 
 // 3. Indici
 baseResultSchema.index({ tipo: 1, dataCompletamento: -1 });
-baseResultSchema.index({ classe: 1, tipo: 1 });
-baseResultSchema.index({ scuola: 1, tipo: 1 });
 baseResultSchema.index({ studentId: 1, tipo: 1 });
 baseResultSchema.index({ token: 1 }, { sparse: true });
-
-// 4. Middleware di validazione base
-baseResultSchema.pre('save', function(next) {
-    if ((this.token && !this.expiresAt) || (!this.token && this.expiresAt)) {
-        next(new Error('Token e expiresAt devono essere presenti insieme'));
-    }
-    if (!this.studentId) {
-        next(new Error('StudentId è richiesto'));
-    }
-    next();
-});
-
-// 5. Virtual properties
-baseResultSchema.virtual('isCompleto').get(function() {
-    return this.completato && this.dataCompletamento;
-});
 
 // 6. Schema specifico per CSI
 const csiResultSchema = new mongoose.Schema({
     testRef: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Test',
+        type: String,
         required: [true, 'Il riferimento al test è obbligatorio']
     },
     config: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'CSIConfig',
+        type: String,
         required: [true, 'Il riferimento alla configurazione è obbligatorio']
     },
     risposte: [{
@@ -115,93 +90,53 @@ const csiResultSchema = new mongoose.Schema({
             default: Date.now
         }
     }],
-    punteggiDimensioni: {  // Modificato da punteggi a punteggiDimensioni per allineamento
+    punteggiDimensioni: {
         elaborazione: Number,
         creativita: Number,
         preferenzaVisiva: Number,
         decisione: Number,
         autonomia: Number
     },
-    metadataCSI: {  // Modificato da metadata a metadataCSI per essere più specifico
+    metadataCSI: {
         tempoTotaleDomande: Number,
         tempoMedioRisposta: Number,
         completamentoPercentuale: {
             type: Number,
             default: 0
         },
-        pattern: {
-            type: Map,
-            of: mongoose.Schema.Types.Mixed
-        }
+        pattern: mongoose.Schema.Types.Mixed
     }
 }, {
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toJSON: { virtuals: false },
+    toObject: { virtuals: false }
 });
 
-// 7. Middleware CSI
-csiResultSchema.pre('save', async function(next) {
-    if (!this.config) {
-        try {
-            const CSIConfig = mongoose.model('CSIConfig');
-            const config = await CSIConfig.findOne({ active: true });
-            if (config) {
-                this.config = config._id;
-            }
-        } catch (error) {
-            return next(error);
-        }
+// Funzione per ottenere o creare il modello Result
+function getOrCreateResultModel() {
+    if (mongoose.models.Result) {
+        return mongoose.models.Result;
     }
-    next();
-});
-
-// 8. Metodi CSI
-csiResultSchema.methods.validateAnswer = async function(answerData) {
-    const config = await mongoose.model('CSIConfig').getActiveConfig();
-    return {
-        isValid: config.validateAnswer(answerData.timeSpent),
-        config: config
-    };
-};
-
-// 9. Validazioni CSI
-csiResultSchema.path('risposte').validate(function(risposte) {
-    const ids = risposte.map(r => r.questionId);
-    return new Set(ids).size === ids.length;
-}, 'Non possono esserci risposte duplicate per la stessa domanda');
-
-// 10. Virtuals CSI
-csiResultSchema.virtual('totalRisposte').get(function() {
-    return this.risposte.length;
-});
-
-csiResultSchema.virtual('progress').get(function() {
-    return {
-        answered: this.risposte.length,
-        total: 0,
-        remaining: 0,
-        percentage: 0
-    };
-});
-
-// 11. Creazione modelli nell'ordine corretto
-let Result, CSIResult;
-
-// Verifica se il modello Result esiste già
-if (mongoose.models.Result) {
-    Result = mongoose.models.Result;
-} else {
-    Result = mongoose.model('Result', baseResultSchema);
+    return mongoose.model('Result', baseResultSchema);
 }
 
-// Verifica se il discriminator CSI esiste già
-if (Result.discriminators && Result.discriminators.CSI) {
-    CSIResult = Result.discriminators.CSI;
-} else {
-    CSIResult = Result.discriminator('CSI', csiResultSchema);
+// Funzione per ottenere o creare il discriminatore CSI
+function getOrCreateCSIModel(ResultModel) {
+    if (ResultModel.discriminators && ResultModel.discriminators.CSI) {
+        return ResultModel.discriminators.CSI;
+    }
+    return ResultModel.discriminator('CSI', csiResultSchema);
 }
 
+// Esportazione degli schemi e dei modelli
 module.exports = {
-    baseResultSchema,   // Lo schema base
-    csiResultSchema    // Lo schema del discriminator
-};1
+    baseResultSchema,
+    csiResultSchema,
+    getModels: () => {
+        const ResultModel = getOrCreateResultModel();
+        const CSIResultModel = getOrCreateCSIModel(ResultModel);
+        return {
+            Result: ResultModel,
+            CSIResult: CSIResultModel
+        };
+    }
+};

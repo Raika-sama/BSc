@@ -355,14 +355,27 @@ completeTest = async (req, res) => {
             risposteCount: result.risposte?.length || 0
         });
 
-        // 2. Recupera il test con le domande
-        const Test = mongoose.model('Test');
-        const test = await Test.findById(result.testRef)
-            .populate({
-                path: 'domande.questionRef',
-                model: 'CSIQuestion',
-                select: 'id categoria peso metadata testo'
-            });
+        // 2. Recupera il test e le domande separatamente con lean() e no populate
+        const [test, questions] = await Promise.all([
+            mongoose.model('Test')
+                .findById(result.testRef)
+                .setOptions({ populateQuestions: false })
+                .lean(),
+            mongoose.model('CSIQuestion')
+                .find({
+                    id: { $in: result.risposte.map(r => r.questionId) }
+                })
+                .select('id categoria metadata')
+                .lean()
+        ]);
+
+        logger.debug('Retrieved test and questions:', {
+            testId: test?._id,
+            testType: test?.tipo,
+            questionsFound: questions.length,
+            questionIds: questions.map(q => q.id),
+            questionCategories: [...new Set(questions.map(q => q.categoria))]
+        });
 
         if (!test) {
             throw createError(
@@ -373,33 +386,47 @@ completeTest = async (req, res) => {
 
         // 3. Prepara le risposte nel formato richiesto da CSIScorer
         const risposteComplete = result.risposte.map(risposta => {
-            const domanda = test.domande.find(d => 
-                d.questionRef?.id === risposta.questionId
-            );
+            const domanda = questions.find(q => q.id === risposta.questionId);
 
-            if (!domanda?.questionRef) {
+            if (!domanda) {
                 logger.warn('Question not found for answer:', {
                     questionId: risposta.questionId,
-                    answerId: risposta._id
+                    availableIds: questions.map(q => q.id)
                 });
                 return null;
             }
 
+            // Modifica qui: aggiungi l'oggetto domanda completo
             return {
                 value: risposta.value,
                 timeSpent: risposta.timeSpent,
-                domanda: {
-                    id: domanda.questionRef.id,
-                    categoria: domanda.questionRef.categoria,
-                    peso: domanda.questionRef.metadata?.peso || 1,
-                    polarity: domanda.questionRef.metadata?.polarity || '+',
-                    testo: domanda.questionRef.testo
+                domanda: {  // Aggiungi questo campo
+                    id: domanda.id,
+                    categoria: domanda.categoria,
+                    peso: domanda.metadata?.peso || 1,
+                    polarity: domanda.metadata?.polarity || '+'
+                },
+                question: {  // Mantieni questo per retrocompatibilità
+                    categoria: domanda.categoria,
+                    peso: domanda.metadata?.peso || 1,
+                    polarity: domanda.metadata?.polarity || '+'
                 }
             };
         }).filter(r => r !== null);
 
+        logger.debug('Prepared answers for scoring:', {
+            totalAnswers: risposteComplete.length,
+            questionsFound: questions.length,
+            sampleAnswer: risposteComplete[0],
+            mappingStats: {
+                totalRisposte: result.risposte.length,
+                mappedRisposte: risposteComplete.length,
+                categories: [...new Set(risposteComplete.map(r => r.domanda.categoria))]
+            }
+        });
+
         // 4. Verifica numero minimo di risposte
-        const config = await this.configModel.findOne({ active: true });
+        const config = await this.configModel.findOne({ active: true }).lean();
         if (!config) {
             throw createError(
                 ErrorTypes.RESOURCE.NOT_FOUND,
@@ -437,12 +464,14 @@ completeTest = async (req, res) => {
         };
 
         // 7. Aggiorna il risultato con i punteggi e metadata completi
-        const completedResult = await this.repository.update(token, {
+        const updateData = {
             completato: true,
             dataCompletamento: new Date(),
             punteggiDimensioni: testResults.punteggiDimensioni,
             metadataCSI: metadataCompleto
-        });
+        };
+
+        const completedResult = await this.repository.update(token, updateData);
 
         // 8. Prepara la risposta con i risultati elaborati
         res.json({
@@ -464,7 +493,9 @@ completeTest = async (req, res) => {
         logger.error('Error completing test:', {
             error: error.message,
             token: token?.substring(0, 10) + '...',
-            stack: error.stack
+            stack: error.stack,
+            errorType: error.name,
+            details: error.details || {}
         });
         
         res.status(error.statusCode || 400).json({

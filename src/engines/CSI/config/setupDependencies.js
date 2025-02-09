@@ -8,7 +8,7 @@ const UserService = require('../../../services/UserService');
 const CSIQuestionService = require('../CSIQuestionService');
 const CSIQuestionRepository = require('../CSIQuestionRepository');
 const CSIQuestionValidator = require('../utils/CSIQuestionValidator');
-const CSIConfig = require('../models/CSIConfig');
+const { CSIResult } = require('../../../models/Result');
 const CSIScorer = require('../engine/CSIScorer');
 const CSIEngine = require('../engine/CSIEngine');
 const CSIController = require('../CSIController');
@@ -119,7 +119,7 @@ const setupCSIDependencies = async () => {
             };
             checkModels();
         });
-        
+
         logger.debug('Initializing CSI dependencies...');
 
         // Inizializza configurazione
@@ -130,7 +130,7 @@ const setupCSIDependencies = async () => {
 
         // Inizializza repositories con validator
         const testRepository = new TestRepository();
-        const csiRepository = new CSIRepository();
+        const csiRepository = new CSIRepository(CSIResult);
         const studentRepository = new StudentRepository();
         const csiQuestionRepository = new CSIQuestionRepository(CSIQuestion, validator); // CORRETTO
         
