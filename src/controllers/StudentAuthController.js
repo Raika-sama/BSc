@@ -18,15 +18,10 @@ class StudentAuthController extends BaseController {
             const { studentId } = req.params;
             const result = await this.studentAuthService.generateCredentials(studentId);
             
-            // Assicurati che la risposta abbia questo formato
-            return this.sendResponse(res, {
-                status: 'success',
-                data: {
-                    credentials: {
-                        username: result.username,
-                        temporaryPassword: result.temporaryPassword
-                    }
-                }
+            return res.status(200).json({
+                success: true,
+                username: result.username,
+                temporaryPassword: result.temporaryPassword
             });
         } catch (error) {
             logger.error('Error generating credentials:', error);
@@ -225,6 +220,7 @@ class StudentAuthController extends BaseController {
     /**
      * Reset password studente
      */
+    // In StudentAuthController.js
     resetPassword = async (req, res) => {
         try {
             const { studentId } = req.params;
@@ -236,6 +232,13 @@ class StudentAuthController extends BaseController {
             
             const result = await this.studentAuthService.resetPassword(studentId);
             
+            // Log dettagliato del risultato
+            logger.debug('Reset password service result:', {
+                result,
+                hasUsername: !!result?.username,
+                hasPassword: !!result?.temporaryPassword
+            });
+            
             if (!result?.username || !result?.temporaryPassword) {
                 logger.error('Invalid service response:', { result });
                 throw createError(
@@ -244,20 +247,16 @@ class StudentAuthController extends BaseController {
                 );
             }
             
-            logger.debug('Reset password controller response:', { 
-                studentId,
-                hasCredentials: true
-            });
+            // Struttura della risposta semplificata
+            const response = {
+                success: true,
+                username: result.username,
+                temporaryPassword: result.temporaryPassword
+            };
+
+            logger.debug('Sending response:', response);
             
-            return this.sendResponse(res, {
-                status: 'success',
-                data: {
-                    credentials: {
-                        username: result.username,
-                        temporaryPassword: result.temporaryPassword
-                    }
-                }
-            });
+            return res.status(200).json(response);
         } catch (error) {
             logger.error('Password reset controller error:', { 
                 error, 

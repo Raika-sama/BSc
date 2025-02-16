@@ -28,6 +28,8 @@ class StudentAuthService {
      */
     async generateCredentials(studentId) {
         try {
+            logger.debug('Generating credentials for student:', { studentId });
+    
             const student = await this.studentRepository.findById(studentId);
             if (!student) {
                 throw createError(
@@ -39,22 +41,35 @@ class StudentAuthService {
             // Genera una password temporanea
             const tempPassword = Math.random().toString(36).slice(-8);
             
-            // Crea o aggiorna il record di autenticazione
-            const authRecord = await this.studentAuthRepository.create({
-                studentId: student._id,
-                username: student.email,
-                password: tempPassword,
-                isFirstAccess: true,
-                isActive: true
+            // Usa updatePassword invece di create
+            const authRecord = await this.studentAuthRepository.updatePassword(
+                studentId,
+                tempPassword
+            );
+    
+            // Aggiorna lo stato dello studente
+            await this.studentRepository.update(studentId, {
+                hasCredentials: true,
+                credentialsSentAt: new Date()
             });
     
-            // Ritorna le credenziali nel formato corretto
+            logger.info('Credentials generated successfully', { 
+                studentId,
+                hasAuth: !!authRecord
+            });
+    
             return {
                 username: student.email,
                 temporaryPassword: tempPassword
             };
         } catch (error) {
-            logger.error('Error generating credentials:', error);
+            // Logghiamo solo le informazioni necessarie dell'errore
+            logger.error('Error generating credentials:', {
+                message: error.message,
+                studentId,
+                code: error.code,
+                type: error.constructor.name
+            });
             throw error;
         }
     }

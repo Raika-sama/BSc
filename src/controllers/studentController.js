@@ -98,102 +98,123 @@ class StudentController extends BaseController {
         }
     }
 
-    // In StudentController, aggiungi questo metodo
-_buildFilters(query) {
-    const filters = {};
+        // In StudentController, aggiungi questo metodo
+    _buildFilters(query) {
+        const filters = {};
 
-    // Filtri base
-    if (query.search) {
-        filters.$or = [
-            { firstName: { $regex: query.search, $options: 'i' } },
-            { lastName: { $regex: query.search, $options: 'i' } },
-            { email: { $regex: query.search, $options: 'i' } }
-        ];
-    }
-
-    // Filtro per scuola
-    if (query.schoolId) {
-        filters.schoolId = new mongoose.Types.ObjectId(query.schoolId);
-    }
-
-    // Filtro per stato
-    if (query.status) {
-        filters.status = query.status;
-    }
-
-    // Filtro per bisogni speciali
-    if (query.specialNeeds !== undefined) {
-        filters.specialNeeds = query.specialNeeds === 'true';
-    }
-
-    // Filtro per classe (year e section)
-    if (query.year && query.section) {
-        filters['classId.year'] = parseInt(query.year);
-        filters['classId.section'] = query.section;
-    }
-
-    return filters;
-}
-
-// In StudentController.js
-async getById(req, res, next) {
-    try {
-        const { id } = req.params;
-        
-        const student = await Student.findById(id)
-            .populate({
-                path: 'schoolId',
-                select: 'name schoolType institutionType region province'
-            })
-            .populate({
-                path: 'classId',
-                select: 'year section academicYear'
-            });
-
-        if (!student) {
-            throw createError(
-                ErrorTypes.VALIDATION.NOT_FOUND,
-                'Studente non trovato'
-            );
+        // Filtri base
+        if (query.search) {
+            filters.$or = [
+                { firstName: { $regex: query.search, $options: 'i' } },
+                { lastName: { $regex: query.search, $options: 'i' } },
+                { email: { $regex: query.search, $options: 'i' } }
+            ];
         }
 
-        this.sendResponse(res, { student });
-    } catch (error) {
-        next(error);
+        // Filtro per scuola
+        if (query.schoolId) {
+            filters.schoolId = new mongoose.Types.ObjectId(query.schoolId);
+        }
+
+        // Filtro per stato
+        if (query.status) {
+            filters.status = query.status;
+        }
+
+        // Filtro per bisogni speciali
+        if (query.specialNeeds !== undefined) {
+            filters.specialNeeds = query.specialNeeds === 'true';
+        }
+
+        // Filtro per classe (year e section)
+        if (query.year && query.section) {
+            filters['classId.year'] = parseInt(query.year);
+            filters['classId.section'] = query.section;
+        }
+
+        return filters;
     }
-}
+
+    // In StudentController.js
+    async getById(req, res, next) {
+        try {
+            const { id } = req.params;
+            
+            const student = await Student.findById(id)
+                .populate({
+                    path: 'schoolId',
+                    select: 'name schoolType institutionType region province'
+                })
+                .populate({
+                    path: 'classId',
+                    select: 'year section academicYear'
+                });
+
+            if (!student) {
+                throw createError(
+                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    'Studente non trovato'
+                );
+            }
+
+            this.sendResponse(res, { student });
+        } catch (error) {
+            next(error);
+        }
+    }
 
 
     /**
-     * Crea un nuovo studente
+     * Crea un nuovo studente - modificata dopo refactoring account studente
      * @override
      */
     async create(req, res) {
         try {
-            // Prima creiamo lo studente
-            const student = await this.studentService.create(req.body);
-            
-            // Poi generiamo le credenziali
-            const credentials = await this.studentAuthService.generateCredentials(student._id);
-    
-            logger.info('Student created with credentials', { 
-                studentId: student._id,
-                username: credentials.username
+            // Log dell'inizio operazione
+            logger.debug('Starting student creation:', { 
+                requestBody: { ...req.body, email: '***' }
             });
     
-            return this.sendResponse(res, {
+            // Prepariamo i dati dello studente
+            const studentData = {
+                ...req.body,
+                hasCredentials: false,
+                credentialsSentAt: null,
+                status: 'pending'
+            };
+    
+            // Usiamo il repository invece del service
+            const student = await this.repository.create(studentData);
+            
+            logger.info('Student created successfully:', { 
+                studentId: student._id,
+                email: '***'
+            });
+    
+            // Usiamo direttamente la response invece di sendResponse
+            return res.status(201).json({
                 status: 'success',
                 data: {
-                    student,
-                    credentials: {
-                        username: credentials.username,
-                        temporaryPassword: credentials.temporaryPassword // Questa sarà la password da comunicare
-                    }
+                    student // Il modello mongoose già "sanitizza" i dati sensibili
                 }
             });
+    
         } catch (error) {
-            logger.error('Error creating student with credentials', { error });
-            return this.handleError(res, error);
+            logger.error('Error creating student:', {
+                error: error.message,
+                stack: error.stack
+            });
+    
+            // Gestiamo l'errore direttamente
+            const statusCode = error.status || 500;
+            const errorMessage = error.message || 'Internal Server Error';
+            
+            return res.status(statusCode).json({
+                status: 'error',
+                error: {
+                    message: errorMessage
+                }
+            });
         }
     }
 

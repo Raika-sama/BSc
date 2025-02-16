@@ -16,6 +16,11 @@ const baseResultSchema = new mongoose.Schema({
         sparse: true,
         index: true
     },
+        accessMethod: {
+          type: String,
+          enum: ['account', 'token'],
+          required: true
+        },
     expiresAt: {
         type: Date
     },

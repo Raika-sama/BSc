@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { 
     Box, 
@@ -92,6 +92,8 @@ const InfoTab = ({ student, setStudent }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [credentials, setCredentials] = useState(null);
     const [openCredentialsDialog, setOpenCredentialsDialog] = useState(false);
+    const [lastCredentials, setLastCredentials] = useState(null); // In InfoTab.jsx aggiungiamo un display temporaneo per il debug
+
 
  // Aggiungi questa funzione per gestire l'apertura del dialog
  const handleOpenCredentialsDialog = (creds) => {
@@ -102,52 +104,109 @@ const InfoTab = ({ student, setStudent }) => {
     setCredentials(creds);
     setOpenCredentialsDialog(true);
 };
+ // Aggiungiamo console.log per debug
+ useEffect(() => {
+    console.log('LastCredentials state:', lastCredentials);
+}, [lastCredentials]);
 
-    const handleGenerateCredentials = async () => {
-        try {
-            const creds = await generateCredentials(student.id);
-            if (!creds?.username || !creds?.temporaryPassword) {
-                throw new Error('Credenziali non valide ricevute dal server');
-            }
-            setCredentials(creds);
-            setOpenCredentialsDialog(true);
-            setStudent(prev => ({
-                ...prev,
-                hasCredentials: true,
-                credentialsSentAt: new Date()
-            }));
-        } catch (error) {
-            console.error('Error generating credentials:', error);
-            showNotification('Errore nella generazione delle credenziali', 'error');
+const handleResetPassword = async () => {
+    try {
+        console.log('Starting password reset for student:', student.id);
+        const result = await resetPassword(student.id);
+        
+        console.log('Reset password result:', result);
+        
+        if (!result?.username || !result?.temporaryPassword) {
+            console.error('Invalid credentials format received:', result);
+            throw new Error('Credenziali non valide ricevute dal server');
         }
-    };
 
-    const handleResetPassword = async () => {
-        try {
-            console.log('Resetting password for student:', student.id);
-            const result = await resetPassword(student.id);
-            console.log('Reset password result:', result);
-            
-            if (!result?.username || !result?.temporaryPassword) {
-                throw new Error('Credenziali incomplete ricevute dal server');
-            }
-            
-            // Format credentials before setting state
-            const formattedCreds = {
-                username: result.username,
-                temporaryPassword: result.temporaryPassword
-            };
-            
-            setCredentials(formattedCreds);
-            setOpenCredentialsDialog(true);
-        } catch (error) {
-            console.error('Error in handleResetPassword:', error);
-            showNotification(
-                error.message || 'Errore nel reset della password', 
-                'error'
-            );
+        // Aggiorniamo esplicitamente lo state con le nuove credenziali
+        const newCredentials = {
+            username: result.username,
+            temporaryPassword: result.temporaryPassword,
+            generatedAt: new Date().toISOString()
+        };
+        
+        console.log('Setting new credentials:', newCredentials);
+        setLastCredentials(newCredentials);
+        
+        // Aggiorniamo anche lo student object
+        setStudent(prev => ({
+            ...prev,
+            hasCredentials: true,
+            credentialsSentAt: new Date().toISOString()
+        }));
+
+        // IMPORTANTE: Prima settiamo le credenziali, poi apriamo il dialog
+        setOpenCredentialsDialog(true);
+        
+        return newCredentials;
+    } catch (error) {
+        console.error('Error in handleResetPassword:', error);
+        showNotification(
+            error.message || 'Errore nel reset della password',
+            'error'
+        );
+        throw error;
+    }
+};
+
+const handleGenerateCredentials = async () => {
+    try {
+        console.log('Starting credentials generation for student:', student.id);
+        const result = await generateCredentials(student.id);
+        
+        console.log('Generation result:', result);
+        
+        if (!result?.username || !result?.temporaryPassword) {
+            console.error('Invalid credentials format received:', result);
+            throw new Error('Credenziali non valide ricevute dal server');
         }
-    };
+
+        // Aggiorniamo esplicitamente lo state con le nuove credenziali
+        const newCredentials = {
+            username: result.username,
+            temporaryPassword: result.temporaryPassword,
+            generatedAt: new Date().toISOString()
+        };
+        
+        console.log('Setting new credentials:', newCredentials);
+        setLastCredentials(newCredentials);
+        
+        // Aggiorniamo anche lo student object
+        setStudent(prev => ({
+            ...prev,
+            hasCredentials: true,
+            credentialsSentAt: new Date().toISOString()
+        }));
+
+        // IMPORTANTE: Prima settiamo le credenziali, poi apriamo il dialog
+        setOpenCredentialsDialog(true);
+        
+        return newCredentials;
+    } catch (error) {
+        console.error('Error in handleGenerateCredentials:', error);
+        showNotification(
+            error.message || 'Errore nella generazione delle credenziali',
+            'error'
+        );
+        throw error;
+    }
+};
+
+// Aggiungiamo un useEffect per monitorare lo state
+useEffect(() => {
+    console.log('LastCredentials state changed:', lastCredentials);
+}, [lastCredentials]);
+
+useEffect(() => {
+    console.log('Student credentials status:', {
+        hasCredentials: student.hasCredentials,
+        credentialsSentAt: student.credentialsSentAt
+    });
+}, [student.hasCredentials, student.credentialsSentAt]);
+
 
     // Vista informativa
     const InfoView = () => (
@@ -317,60 +376,128 @@ const InfoTab = ({ student, setStudent }) => {
                             <Grid item xs={12}>
                                 <Divider sx={{ my: 2 }} />
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                        Credenziali di Accesso
-                                    </Typography>
-                                    <Stack direction="row" spacing={1}>
-                                        {!student.hasCredentials ? (
-                                            <Button
-                                                variant="contained"
-                                                size="small"
-                                                onClick={handleGenerateCredentials}
-                                            >
-                                                Genera Credenziali
-                                            </Button>
-                                        ) : (
-                                            <Button
-                                                variant="outlined"
-                                                size="small"
-                                                onClick={handleResetPassword}
-                                            >
-                                                Reset Password
-                                            </Button>
-                                        )}
+    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        Credenziali di Accesso
+    </Typography>
 
-                                        <Button
-                                            variant="outlined"
-                                            size="small"
-                                            onClick={() => {
-                                                // Qui implementeremo il reinvio email
-                                                showNotification('Funzionalità disponibile prossimamente', 'info');
-                                            }}
-                                        >
-                                            Reinvia Credenziali
-                                        </Button>
-                                    </Stack>
-                                </Box>
-                                <Stack spacing={2} sx={{ mt: 2 }}>
-                                    <Box>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Stato Credenziali
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            {student.hasCredentials ? 'Generate' : 'Non Generate'}
-                                        </Typography>
-                                    </Box>
-                                    {student.hasCredentials && student.credentialsSentAt && (
-                                        <Box>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Generate il
-                                            </Typography>
-                                            <Typography variant="body1">
-                                                {new Date(student.credentialsSentAt).toLocaleString('it-IT')}
-                                            </Typography>
-                                        </Box>
-                                    )}
-                                </Stack>
+    <Stack direction="row" spacing={1}>
+        {!student.hasCredentials ? (
+            <Button
+                variant="contained"
+                size="small"
+                onClick={handleGenerateCredentials}
+            >
+                Genera Credenziali
+            </Button>
+        ) : (
+            <Button
+                variant="outlined"
+                size="small"
+                onClick={handleResetPassword}
+            >
+                Reset Password
+            </Button>
+        )}
+
+        <Button
+            variant="outlined"
+            size="small"
+            onClick={() => {
+                showNotification('Funzionalità disponibile prossimamente', 'info');
+            }}
+        >
+            Reinvia Credenziali
+        </Button>
+    </Stack>
+</Box>
+
+<Stack spacing={2} sx={{ mt: 2 }}>
+    <Box>
+        <Typography variant="body2" color="text.secondary">
+            Stato Credenziali
+        </Typography>
+        <Typography variant="body1">
+            {student.hasCredentials ? 'Generate' : 'Non Generate'}
+        </Typography>
+    </Box>
+
+    {/* Box di debug delle credenziali */}
+    {lastCredentials && (
+        <Box sx={{ 
+            mt: 2, 
+            p: 2, 
+            bgcolor: 'warning.light', 
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: 'warning.main'
+        }}>
+            <Typography variant="subtitle2" color="warning.dark" gutterBottom>
+                DEBUG - Ultime credenziali generate:
+            </Typography>
+            <Typography variant="body2" fontFamily="monospace">
+                Username: {lastCredentials.username}
+            </Typography>
+            <Typography variant="body2" fontFamily="monospace">
+                Password: {lastCredentials.temporaryPassword}
+            </Typography>
+        </Box>
+    )}
+
+    {student.hasCredentials && student.credentialsSentAt && (
+        <Box>
+            <Typography variant="body2" color="text.secondary">
+                Generate il
+            </Typography>
+            <Typography variant="body1">
+                {new Date(student.credentialsSentAt).toLocaleString('it-IT')}
+            </Typography>
+        </Box>
+    )}
+</Stack>
+<Box sx={{ mt: 2 }}>
+    <Typography variant="body2" color="text.secondary">
+        Debug Info
+    </Typography>
+    <Paper sx={{ 
+        p: 2, 
+        mt: 1,
+        bgcolor: 'warning.light',
+        border: '2px dashed',
+        borderColor: 'warning.main'
+    }}>
+        <Typography variant="subtitle2" gutterBottom>
+            Stato LastCredentials:
+        </Typography>
+        <pre style={{ 
+            whiteSpace: 'pre-wrap',
+            fontFamily: 'monospace',
+            fontSize: '0.875rem'
+        }}>
+            {JSON.stringify(lastCredentials, null, 2)}
+        </pre>
+        
+        <Divider sx={{ my: 1 }} />
+        
+        <Typography variant="subtitle2" gutterBottom>
+            Stato hasCredentials:
+        </Typography>
+        <Typography variant="body2" fontFamily="monospace">
+            {String(student.hasCredentials)}
+        </Typography>
+        
+        {student.credentialsSentAt && (
+            <>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="subtitle2" gutterBottom>
+                    Ultimo invio:
+                </Typography>
+                <Typography variant="body2" fontFamily="monospace">
+                    {new Date(student.credentialsSentAt).toLocaleString()}
+                </Typography>
+            </>
+        )}
+    </Paper>
+</Box>
                             </Grid>
 
                             <Grid item xs={12}>

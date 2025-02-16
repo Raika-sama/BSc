@@ -41,11 +41,12 @@ const StudentForm = () => {
         schoolId: '',
         parentEmail: '',
         mainTeacher: '',
-        teachers: [],
-        specialNeeds: false,
-        status: 'pending',
-        needsClassAssignment: true,
-        isActive: true
+        teachers: [],                   // Aggiunto per gestione docenti come array
+        specialNeeds: false,        // Aggiunto per gestione necessità speciali
+        status: 'pending',      // Aggiunto per gestione stato
+        needsClassAssignment: true, // Aggiunto per gestione assegnazione classe
+        hasCredentials: false,      // Aggiunto per gestione credenziali
+        isActive: true            // Aggiunto per gestione attivazione
     });
 
     useEffect(() => {
@@ -91,38 +92,46 @@ const StudentForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         const errors = validateForm();
         if (errors.length > 0) {
             setError(errors.join(', '));
             return;
         }
-
+    
         setLoading(true);
         setError(null);
-
+    
         try {
-            // Pulizia dei dati prima dell'invio
+            // Pulizia e preparazione dati
             const cleanedData = {
                 ...formData,
-                // Converti stringhe vuote in null
-                fiscalCode: formData.fiscalCode || null,
-                parentEmail: formData.parentEmail || null,
-                // Gestisci correttamente mainTeacher e teachers
+                // Dati base puliti
+                fiscalCode: formData.fiscalCode?.trim() || null,
+                parentEmail: formData.parentEmail?.trim() || null,
                 mainTeacher: formData.mainTeacher || null,
                 teachers: (formData.teachers || []).filter(Boolean),
-                // Assicurati che la data sia in formato ISO
-                dateOfBirth: new Date(formData.dateOfBirth).toISOString()
+                dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
+                // Nuovi campi per lo stato iniziale
+                status: 'pending',
+                hasCredentials: false,
+                needsClassAssignment: !formData.classId, // true se non c'è una classe
+                isActive: true
             };
-
-            console.log('Sending cleaned data:', cleanedData);
-
+    
+            console.log('Sending student data:', cleanedData);
+    
             const newStudent = await createStudent(cleanedData);
+            
             showNotification('Studente creato con successo', 'success');
             navigate(`/admin/students/${newStudent.id}`);
         } catch (err) {
-            setError(err.response?.data?.message || err.message);
-            showNotification('Errore nella creazione dello studente', 'error');
+            console.error('Error creating student:', err);
+            const errorMessage = err.response?.data?.error?.message || 
+                               err.message || 
+                               'Errore nella creazione dello studente';
+            setError(errorMessage);
+            showNotification(errorMessage, 'error');
         } finally {
             setLoading(false);
         }

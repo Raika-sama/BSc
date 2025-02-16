@@ -94,12 +94,17 @@ const testSchema = new mongoose.Schema({
         required: true,
         default: '1.0.0'
     },
-    token: {
-        type: String,
-        unique: true,
-        sparse: true,
-        index: true  // importante per le performance
-    },
+    
+        token: {
+          type: String,
+          unique: true,
+          sparse: true,  // Permette null/undefined
+          index: true
+        },
+        tokenEnabled: {
+          type: Boolean,
+          default: false  // Di default usiamo il nuovo sistema
+        },
     studentId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Student',
