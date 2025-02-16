@@ -192,6 +192,21 @@ const studentSchema = new mongoose.Schema({
         default: true,
         description: 'Flag per indicare se lo studente necessita di assegnazione a una classe'
     },
+    // Gestione credenziali di accesso
+    hasCredentials: {
+        type: Boolean,
+        default: false,
+        description: 'Flag per indicare se sono state generate le credenziali di accesso'
+    },
+    credentialsSentAt: {
+        type: Date,
+        description: 'Data e ora dell\'ultimo invio delle credenziali'
+    },
+    lastCredentialsRequestedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        description: 'Utente che ha richiesto l\'ultimo invio delle credenziali'
+    },
 
     // Storico e tracking
     lastClassChangeDate: {

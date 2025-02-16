@@ -7,13 +7,147 @@ import {
     Grid,
     Button,
     Stack,
-    Divider
+    Divider,
+    Dialog,            // Aggiungi questi
+    DialogTitle,       // componenti
+    DialogContent,     // per il
+    DialogContentText, // Dialog
+    DialogActions      // MUI
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import StudentEditForm from './StudentEditForm';
+import { useStudent } from '../../../../context/StudentContext';  // Aggiungi questo import
+import { useNotification } from '../../../../context/NotificationContext';  // Aggiungi questo se non c'è già
+
+// Modifica la definizione di CredentialsDialog
+const CredentialsDialog = ({ open, onClose, credentials, showNotification }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopyToClipboard = async () => {
+        try {
+            const text = `Username: ${credentials.username}\nPassword temporanea: ${credentials.temporaryPassword}`;
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+            showNotification('Credenziali copiate negli appunti', 'success');
+            setTimeout(() => setCopied(false), 2000);
+        } catch (error) {
+            showNotification('Errore nella copia delle credenziali', 'error');
+        }
+    };
+
+    return (
+        <Dialog 
+            open={open} 
+            onClose={onClose}
+            maxWidth="sm"
+            fullWidth
+        >
+            <DialogTitle>
+                Credenziali Studente
+            </DialogTitle>
+            <DialogContent>
+                <DialogContentText color="warning" sx={{ mb: 2 }}>
+                    IMPORTANTE: Queste credenziali saranno visibili solo una volta.
+                    Assicurati di salvarle o comunicarle allo studente.
+                </DialogContentText>
+                <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
+                    <Box sx={{ mb: 2 }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                            Username
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                            {credentials?.username}
+                        </Typography>
+                    </Box>
+                    <Box>
+                        <Typography variant="subtitle2" color="text.secondary">
+                            Password Temporanea
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                            {credentials?.temporaryPassword}
+                        </Typography>
+                    </Box>
+                </Paper>
+            </DialogContent>
+            <DialogActions>
+                <Button 
+                    onClick={handleCopyToClipboard}
+                    variant="contained"
+                    color="primary"
+                    disabled={copied}
+                >
+                    {copied ? 'Copiato!' : 'Copia Credenziali'}
+                </Button>
+                <Button onClick={onClose} color="inherit">
+                    Chiudi
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+};
 
 const InfoTab = ({ student, setStudent }) => {
+    const { generateCredentials, resetPassword } = useStudent(); // Aggiungi questa riga
+    const { showNotification } = useNotification();
     const [isEditing, setIsEditing] = useState(false);
+    const [credentials, setCredentials] = useState(null);
+    const [openCredentialsDialog, setOpenCredentialsDialog] = useState(false);
+
+ // Aggiungi questa funzione per gestire l'apertura del dialog
+ const handleOpenCredentialsDialog = (creds) => {
+    if (!creds?.username || !creds?.temporaryPassword) {
+        showNotification('Dati credenziali non validi o mancanti', 'error');
+        return;
+    }
+    setCredentials(creds);
+    setOpenCredentialsDialog(true);
+};
+
+    const handleGenerateCredentials = async () => {
+        try {
+            const creds = await generateCredentials(student.id);
+            if (!creds?.username || !creds?.temporaryPassword) {
+                throw new Error('Credenziali non valide ricevute dal server');
+            }
+            setCredentials(creds);
+            setOpenCredentialsDialog(true);
+            setStudent(prev => ({
+                ...prev,
+                hasCredentials: true,
+                credentialsSentAt: new Date()
+            }));
+        } catch (error) {
+            console.error('Error generating credentials:', error);
+            showNotification('Errore nella generazione delle credenziali', 'error');
+        }
+    };
+
+    const handleResetPassword = async () => {
+        try {
+            console.log('Resetting password for student:', student.id);
+            const result = await resetPassword(student.id);
+            console.log('Reset password result:', result);
+            
+            if (!result?.username || !result?.temporaryPassword) {
+                throw new Error('Credenziali incomplete ricevute dal server');
+            }
+            
+            // Format credentials before setting state
+            const formattedCreds = {
+                username: result.username,
+                temporaryPassword: result.temporaryPassword
+            };
+            
+            setCredentials(formattedCreds);
+            setOpenCredentialsDialog(true);
+        } catch (error) {
+            console.error('Error in handleResetPassword:', error);
+            showNotification(
+                error.message || 'Errore nel reset della password', 
+                'error'
+            );
+        }
+    };
 
     // Vista informativa
     const InfoView = () => (
@@ -182,6 +316,65 @@ const InfoTab = ({ student, setStudent }) => {
 
                             <Grid item xs={12}>
                                 <Divider sx={{ my: 2 }} />
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                        Credenziali di Accesso
+                                    </Typography>
+                                    <Stack direction="row" spacing={1}>
+                                        {!student.hasCredentials ? (
+                                            <Button
+                                                variant="contained"
+                                                size="small"
+                                                onClick={handleGenerateCredentials}
+                                            >
+                                                Genera Credenziali
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="outlined"
+                                                size="small"
+                                                onClick={handleResetPassword}
+                                            >
+                                                Reset Password
+                                            </Button>
+                                        )}
+
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            onClick={() => {
+                                                // Qui implementeremo il reinvio email
+                                                showNotification('Funzionalità disponibile prossimamente', 'info');
+                                            }}
+                                        >
+                                            Reinvia Credenziali
+                                        </Button>
+                                    </Stack>
+                                </Box>
+                                <Stack spacing={2} sx={{ mt: 2 }}>
+                                    <Box>
+                                        <Typography variant="body2" color="text.secondary">
+                                            Stato Credenziali
+                                        </Typography>
+                                        <Typography variant="body1">
+                                            {student.hasCredentials ? 'Generate' : 'Non Generate'}
+                                        </Typography>
+                                    </Box>
+                                    {student.hasCredentials && student.credentialsSentAt && (
+                                        <Box>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Generate il
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {new Date(student.credentialsSentAt).toLocaleString('it-IT')}
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                </Stack>
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <Divider sx={{ my: 2 }} />
                             </Grid>
 
                             {/* Docenti con ID */}
@@ -303,7 +496,15 @@ const InfoTab = ({ student, setStudent }) => {
         </Box>
     );
 
-    return isEditing ? (
+    return (
+        <>
+            <CredentialsDialog 
+                open={openCredentialsDialog}
+                onClose={() => setOpenCredentialsDialog(false)}
+                credentials={credentials}
+                showNotification={showNotification}
+            />
+            {isEditing ? (
         <Box>
             <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" gutterBottom>
@@ -318,9 +519,11 @@ const InfoTab = ({ student, setStudent }) => {
                 setStudent={setStudent}
                 onCancel={() => setIsEditing(false)}
             />
-        </Box>
-    ) : (
-        <InfoView />
+            </Box>
+        ) : (
+            <InfoView />
+        )}
+        </>
     );
 };
 
@@ -361,6 +564,17 @@ InfoTab.propTypes = {
         updatedAt: PropTypes.string
     }).isRequired,
     setStudent: PropTypes.func.isRequired,
+};
+
+// Aggiungi PropTypes per CredentialsDialog
+CredentialsDialog.propTypes = {
+    open: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    credentials: PropTypes.shape({
+        username: PropTypes.string,
+        temporaryPassword: PropTypes.string
+    }),
+    showNotification: PropTypes.func.isRequired
 };
 
 export default InfoTab;

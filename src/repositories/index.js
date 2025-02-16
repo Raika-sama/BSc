@@ -13,6 +13,8 @@ const TestRepository = require('./TestRepository');
 const AuthRepository = require('./AuthRepository');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
+const StudentAuthRepository = require('./StudentAuthRepository');
+
 
 // Importa tutti i modelli dal punto centralizzato
 const models = require('../models');
@@ -32,6 +34,7 @@ const repositories = {
     user: new UserRepository(models.User),
     class: new ClassRepository(models.Class),
     student: new StudentRepository(models.Student),
+    studentAuth: new StudentAuthRepository(models.StudentAuth),
     test: new TestRepository(models.Test),
     // School repository richiede dipendenze aggiuntive
     school: new SchoolRepository(
@@ -47,6 +50,7 @@ const namedRepositories = {
     userRepository: repositories.user,
     classRepository: repositories.class,
     studentRepository: repositories.student,
+    studentAuthRepository: repositories.studentAuth,
     testRepository: repositories.test,
     schoolRepository: repositories.school
 };

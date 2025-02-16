@@ -43,11 +43,13 @@ const ClassRepository = require('./repositories/ClassRepository');
 const SchoolRepository = require('./repositories/SchoolRepository');
 const StudentRepository = require('./repositories/StudentRepository');
 const StudentBulkImportRepository = require('./repositories/StudentBulkImportRepository');
+const StudentAuthRepository = require('./repositories/StudentAuthRepository');
 
 // Import Services
 const SessionService = require('./services/SessionService');
 const AuthService = require('./services/AuthService');
 const UserService = require('./services/UserService');
+const StudentAuthService = require('./services/StudentAuthService');
 
 // Import Controllers
 const AuthController = require('./controllers/authController');
@@ -58,6 +60,8 @@ const ClassController = require('./controllers/classController');
 const StudentController = require('./controllers/studentController');
 const TestController = require('./controllers/testController');
 const StudentBulkImportController = require('./controllers/studentBulkImportController');
+const StudentAuthController = require('./controllers/StudentAuthController');
+
 
 // Import Routes
 const routes = require('./routes');
@@ -93,15 +97,24 @@ const classRepository = new ClassRepository(User);
 const schoolRepository = new SchoolRepository(User);
 const studentRepository = new StudentRepository(User);
 const studentBulkImportRepository = new StudentBulkImportRepository();
+const studentAuthRepository = new StudentAuthRepository(mongoose.model('StudentAuth'));
 
 // Inizializza Services (ordine corretto per evitare dipendenze circolari)
 const sessionService = new SessionService(userRepository);
 const authService = new AuthService(authRepository, sessionService, userRepository);
 const userService = new UserService(userRepository, authService, sessionService);
-
+const studentAuthService = new StudentAuthService(
+    studentAuthRepository,
+    studentRepository,
+    sessionService
+);
 // Inizializza il middleware di autenticazione
-const { protect, restrictTo, loginLimiter } = createAuthMiddleware(authService, sessionService);
-const authMiddleware = { protect, restrictTo, loginLimiter };
+const { protect, restrictTo, loginLimiter, protectStudent } = createAuthMiddleware(
+    authService, 
+    sessionService,
+    studentAuthService
+);
+const authMiddleware = { protect, restrictTo, loginLimiter, protectStudent };
 const bulkImportValidation = new BulkImportValidation();
 
 // Inizializza Controllers base
@@ -115,7 +128,10 @@ const studentBulkImportController = new StudentBulkImportController(
     studentBulkImportRepository,
     bulkImportValidation
 );
-
+const studentAuthController = new StudentAuthController(
+    studentAuthService,
+    studentRepository
+);
 // Debug middleware in development
 if (config.env === 'development') {
     app.use((req, res, next) => {
@@ -221,6 +237,7 @@ const startServer = async () => {
             schoolController,
             classController,
             studentController,
+            studentAuthController,  // aggiungi qui
             studentBulkImportController,
             testController,
             csiController,
@@ -232,6 +249,7 @@ const startServer = async () => {
             authService,
             userService,
             sessionService,
+            studentAuthService,     // aggiungi qui
             // Middleware
             authMiddleware,
             bulkImportValidation,
@@ -241,6 +259,7 @@ const startServer = async () => {
             schoolRepository,
             studentRepository,
             studentBulkImportRepository,
+            studentAuthRepository,  // aggiungi qui
             testRepository
         };
 
@@ -251,7 +270,10 @@ const startServer = async () => {
             hasProtect: !!dependencies.authMiddleware?.protect,
             hasRestrictTo: !!dependencies.authMiddleware?.restrictTo,
             hasLoginLimiter: !!dependencies.authMiddleware?.loginLimiter,
-            hasCsiController: !!dependencies.csiController
+            hasCsiController: !!dependencies.csiController,
+            hasStudentAuthController: !!dependencies.studentAuthController,
+            hasStudentAuthService: !!dependencies.studentAuthService,
+            hasProtectStudent: !!dependencies.authMiddleware?.protectStudent
         });
 
         // Monta le altre rotte dei test

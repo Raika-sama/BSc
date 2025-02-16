@@ -95,12 +95,76 @@ class AuthMiddleware {
         }
     };
 
+ /**
+     * Middleware di protezione route studenti
+     */
+ protectStudent = async (req, res, next) => {
+    try {
+        const token = this.extractStudentToken(req);
+        
+        if (!token) {
+            throw createError(
+                ErrorTypes.AUTH.NO_TOKEN,
+                'Autenticazione studente richiesta'
+            );
+        }
+
+        // Verifica blacklist
+        if (this.tokenBlacklist.has(token)) {
+            throw createError(
+                ErrorTypes.AUTH.TOKEN_BLACKLISTED,
+                'Token non più valido'
+            );
+        }
+
+        // Verifica e decodifica token
+        const decoded = await this.studentAuthService.verifyToken(token);
+
+        logger.debug('Student token decoded:', {
+            studentId: decoded.id,
+            path: req.path
+        });
+
+        // Aggiungi student al request
+        req.student = {
+            id: decoded.id,
+            type: 'student'
+        };
+
+        next();
+    } catch (error) {
+        logger.error('Student authentication failed', {
+            error,
+            path: req.path,
+            ip: req.ip
+        });
+        next(error);
+    }
+};
+
+
     /**
      * Estrae token dalla request
      */
     extractToken = (req) => {
         if (req.cookies && req.cookies['access-token']) {
             return req.cookies['access-token'];
+        }
+
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            return authHeader.split(' ')[1];
+        }
+
+        return null;
+    };
+
+      /**
+     * Estrae token studente dalla request
+     */
+      extractStudentToken = (req) => {
+        if (req.cookies && req.cookies['student-token']) {
+            return req.cookies['student-token'];
         }
 
         const authHeader = req.headers.authorization;
@@ -123,16 +187,45 @@ class AuthMiddleware {
     };
 }
 
+// Rate Limiter per tentativi di login studenti (più restrittivo)
+const studentLoginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minuti
+    max: 5, // limite più basso per gli studenti
+    message: 'Troppi tentativi di login. Riprova più tardi.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+        logger.warn('Student rate limit exceeded', {
+            ip: req.ip,
+            path: req.path
+        });
+        res.status(429).json({
+            status: 'error',
+            error: {
+                code: 'RATE_LIMIT_EXCEEDED',
+                message: 'Troppi tentativi. Riprova più tardi.'
+            }
+        });
+    }
+});
+
 // Crea singleton con i servizi
-// Factory function
-const createAuthMiddleware = (authService, sessionService) => {
-    const middleware = new AuthMiddleware(authService, sessionService);
+
+// Factory function aggiornata
+const createAuthMiddleware = (authService, sessionService, studentAuthService) => {
+    const middleware = new AuthMiddleware(authService, sessionService, studentAuthService);
     return {
         loginLimiter,
+        studentLoginLimiter,
         protect: middleware.protect.bind(middleware),
+        protectStudent: middleware.protectStudent.bind(middleware),
         restrictTo: (...roles) => (req, res, next) => {
-            if (!req.user) {
+            if (!req.user && !req.student) {
                 return next(createError(ErrorTypes.AUTH.NO_USER, 'User not found'));
+            }
+            if (req.student) {
+                // Gli studenti hanno accesso solo alle loro risorse
+                return next();
             }
             if (!roles.includes(req.user.role)) {
                 return next(createError(ErrorTypes.AUTH.FORBIDDEN, 'Not authorized'));

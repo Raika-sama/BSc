@@ -13,6 +13,11 @@ const initializeModels = () => {
         const User = mongoose.models.User || mongoose.model('User', require('./User').schema);
         const UserAudit = mongoose.models.UserAudit || mongoose.model('UserAudit', require('./UserAudit').schema);
     
+          // Registrazione StudentAuth
+          logger.debug('Registrazione modello StudentAuth...');
+          const StudentAuth = mongoose.models.StudentAuth || 
+              mongoose.model('StudentAuth', require('./StudentAuth').schema);
+    
         // Registrazione modelli CSI
         logger.debug('Registrazione modelli CSI...');
         // Per CSIConfig, importiamo lo schema direttamente
@@ -48,6 +53,7 @@ const initializeModels = () => {
             School,
             Class,
             Student,
+            StudentAuth, // Aggiunto StudentAuth
             User,
             UserAudit,
             Test,

@@ -168,32 +168,32 @@ async getById(req, res, next) {
      * Crea un nuovo studente
      * @override
      */
-    async create(req, res, next) {
+    async create(req, res) {
         try {
-            logger.debug('Creating new student:', { 
-                body: req.body,
-                user: req.user?.id
-            });
-
-            // Verifica permessi
-            if (req.user.role !== 'admin') {
-                throw createError(
-                    ErrorTypes.AUTH.FORBIDDEN,
-                    'Non autorizzato a creare studenti'
-                );
-            }
-
-            const student = await this.repository.create(req.body);
+            // Prima creiamo lo studente
+            const student = await this.studentService.create(req.body);
             
-            logger.info('Student created successfully:', {
+            // Poi generiamo le credenziali
+            const credentials = await this.studentAuthService.generateCredentials(student._id);
+    
+            logger.info('Student created with credentials', { 
                 studentId: student._id,
-                school: student.schoolId
+                username: credentials.username
             });
-
-            this.sendResponse(res, { student }, 201);
+    
+            return this.sendResponse(res, {
+                status: 'success',
+                data: {
+                    student,
+                    credentials: {
+                        username: credentials.username,
+                        temporaryPassword: credentials.temporaryPassword // Questa sarà la password da comunicare
+                    }
+                }
+            });
         } catch (error) {
-            logger.error('Error creating student:', error);
-            next(error);
+            logger.error('Error creating student with credentials', { error });
+            return this.handleError(res, error);
         }
     }
 

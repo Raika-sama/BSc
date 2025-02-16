@@ -22,6 +22,7 @@ const createRouter = (dependencies) => {
         'schoolController',
         'userController',
         'studentController',
+        'studentAuthController', // Aggiunto
         'testController',
         'csiController'
     ];
@@ -37,6 +38,7 @@ const createRouter = (dependencies) => {
 
     // Importa le route con le dipendenze
     const authRoutes = require('./authRoutes')(dependencies);
+    const studentAuthRoutes = require('./studentAuthRoutes')(dependencies); // Aggiunto
     const classRoutes = require('./classRoutes')(dependencies);
     const schoolRoutes = require('./schoolRoutes')(dependencies);
     const userRoutes = require('./userRoutes')(dependencies);
@@ -58,9 +60,11 @@ const createRouter = (dependencies) => {
     });
 
     // Route pubbliche
-    const publicRoutes = ['/auth', '/tests/csi/public'];
+    const publicRoutes = ['/auth', '/student-auth', '/tests/csi/public']; // Aggiunto student-auth
     router.use('/auth', authRoutes);
+    router.use('/student-auth', studentAuthRoutes);
     router.use('/tests/csi/public', csiRoutes.publicRoutes);
+
 
     // Route protette
     const protectedPaths = ['/classes', '/schools', '/users', '/students', '/tests'];

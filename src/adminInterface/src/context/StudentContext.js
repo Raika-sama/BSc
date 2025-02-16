@@ -835,6 +835,83 @@ const batchAssignToSchool = async (studentIds, schoolId) => {
         dispatch({ type: STUDENT_ACTIONS.CLEAR_ERROR });
     };
 
+    // In StudentContext.js, aggiungi queste nuove funzioni
+const generateCredentials = async (studentId) => {
+    try {
+        const response = await axiosInstance.post(`/student-auth/generate/${studentId}`);
+        
+        if (response.data.status === 'success') {
+            const credentials = {
+                username: response.data.data.credentials.username,
+                temporaryPassword: response.data.data.credentials.temporaryPassword
+            };
+            showNotification('Credenziali generate con successo', 'success');
+            return credentials;
+        }
+        throw new Error('Errore nel formato della risposta');
+    } catch (error) {
+        console.error('Error generating credentials:', error);
+        const errorMessage = error.response?.data?.message || 
+                           'Errore nella generazione delle credenziali';
+        showNotification(errorMessage, 'error');
+        throw error;
+    }
+};
+
+const resetPassword = async (studentId) => {
+    try {
+        console.log('Resetting password - Request:', {
+            studentId,
+            url: `/student-auth/admin/reset-password/${studentId}`
+        });
+
+        const response = await axiosInstance.post(`/student-auth/admin/reset-password/${studentId}`);
+        
+        console.log('Reset password - Response:', {
+            status: response?.status,
+            data: response?.data
+        });
+
+        // Check the complete response structure
+        if (!response?.data?.status || response.data.status !== 'success') {
+            throw new Error('Risposta non valida dal server');
+        }
+
+        // Check credentials object existence
+        if (!response.data.data?.credentials) {
+            throw new Error('Credenziali mancanti nella risposta');
+        }
+
+        const { username, temporaryPassword } = response.data.data.credentials;
+
+        // Validate credentials
+        if (!username || !temporaryPassword) {
+            throw new Error('Credenziali incomplete nella risposta');
+        }
+
+        showNotification('Password resettata con successo', 'success');
+        
+        return {
+            username,
+            temporaryPassword
+        };
+    } catch (error) {
+        console.error('Reset password error details:', {
+            error: error.message,
+            response: error.response?.data,
+            status: error.response?.status
+        });
+        
+        // Enhanced error handling
+        const errorMessage = error.response?.data?.error?.message 
+            || error.message 
+            || 'Errore nel reset della password';
+            
+        showNotification(errorMessage, 'error');
+        throw error;
+    }
+};
+
     return (
         <StudentContext.Provider value={{
             ...state,
@@ -854,7 +931,9 @@ const batchAssignToSchool = async (studentIds, schoolId) => {
             batchAssignStudents,
             fetchUnassignedToSchoolStudents,
             batchAssignToSchool,
-            createStudentWithClass
+            createStudentWithClass,
+            generateCredentials,
+            resetPassword
         }}>
             {children}
         </StudentContext.Provider>

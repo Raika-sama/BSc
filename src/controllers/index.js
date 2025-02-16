@@ -10,6 +10,7 @@ const { User } = require('../models');
 const SessionService = require('../services/SessionService');
 const AuthService = require('../services/AuthService');
 const UserService = require('../services/UserService');
+const StudentAuthService = require('../services/StudentAuthService'); // Nuovo
 
 // Import dei Controller
 const AuthController = require('./authController');
@@ -18,6 +19,7 @@ const SchoolController = require('./schoolController');
 const ClassController = require('./classController');
 const StudentController = require('./studentController');
 const TestController = require('./testController');
+const StudentAuthController = require('./StudentAuthController'); // Nuovo
 
 
 
@@ -29,13 +31,19 @@ const {
     classRepository,
     schoolRepository,
     studentRepository,
-    testRepository 
+    testRepository,
+    studentAuthRepository  // Nuovo
 } = require('../repositories');
 
 // Inizializzazione servizi con tutte le dipendenze necessarie
 const sessionService = new SessionService(userRepository);
 const authService = new AuthService(authRepository, sessionService, userRepository);
 const userService = new UserService(userRepository, authService, sessionService);
+const studentAuthService = new StudentAuthService(  // Nuovo
+    studentAuthRepository,
+    studentRepository,
+    sessionService
+);
 
 // Inizializzazione controllers con le dipendenze corrette
 const controllers = {
@@ -44,7 +52,8 @@ const controllers = {
     school: new SchoolController(schoolRepository, userService),
     class: new ClassController(classRepository, schoolRepository, userService),
     student: new StudentController(studentRepository, classRepository, schoolRepository),
-    test: new TestController(testRepository, studentRepository, classRepository)
+    test: new TestController(testRepository, studentRepository, classRepository),
+    studentAuth: new StudentAuthController(studentAuthService, studentRepository) // Nuovo
 };
 
 const requiredMethods = {
@@ -53,7 +62,8 @@ const requiredMethods = {
     'user': [],
     'class': [],
     'student': [],
-    'test': []
+    'test': [],
+    'studentAuth': ['login', 'logout', 'handleFirstAccess', 'generateCredentials'] // Nuovo
 };
 
 // Funzione helper per verificare se un metodo esiste
