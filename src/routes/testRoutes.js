@@ -2,7 +2,7 @@
  * @file testRoutes.js
  * @description Router per la gestione dei test
  * @author Raika-sama
- * @date 2025-02-01 10:23:21
+ * @date 2025-02-16 17:17:28
  */
 
 const express = require('express');
@@ -14,7 +14,7 @@ const createTestRouter = ({ authMiddleware, testController }) => {
     if (!testController) throw new Error('TestController is required');
 
     const router = express.Router();
-    const { protect, restrictTo } = authMiddleware;
+    const { protect, protectStudent, restrictTo } = authMiddleware;
 
     // Utility per gestione async
     const asyncHandler = (fn) => (req, res, next) => {
@@ -42,33 +42,51 @@ const createTestRouter = ({ authMiddleware, testController }) => {
         next();
     });
 
-    // Middleware di protezione globale
-    router.use(protect);
+    // Route per test con token (non richiedono autenticazione)
+    router.post('/start-token',
+        asyncHandler(testController.startTest.bind(testController))
+    );
 
-    // Route per la gestione dei test
-    router.route('/')
-        .get(
-            restrictTo('teacher', 'admin'),
-            asyncHandler(testController.getAll.bind(testController))
-        )
-        .post(
-            restrictTo('student'),
-            asyncHandler(testController.startTest.bind(testController))
-        );
+    // Route che richiedono autenticazione docente/admin
+    router.use(['/all', '/assign', '/:testId/stats'], protect);
 
+    router.get('/all',
+        restrictTo('teacher', 'admin'),
+        asyncHandler(testController.getAll.bind(testController))
+    );
+
+    router.post('/assign',
+        restrictTo('teacher', 'admin'),
+        asyncHandler(testController.assignTest.bind(testController))
+    );
+
+    // Route che richiedono autenticazione studente
+    router.get('/my-tests',
+        protectStudent,
+        asyncHandler(testController.getMyTests.bind(testController))
+    );
+
+    router.post('/start-assigned/:testId',
+        protectStudent,
+        asyncHandler(testController.startAssignedTest.bind(testController))
+    );
+
+    // Route comuni
     router.route('/:id')
         .get(
+            protect,
             restrictTo('teacher', 'admin', 'student'),
             asyncHandler(testController.getById.bind(testController))
         );
 
     router.get('/:testId/stats',
+        protect,
         restrictTo('teacher', 'admin'),
         asyncHandler(testController.getTestStats.bind(testController))
     );
 
     router.post('/:testId/submit',
-        restrictTo('student'),
+        protectStudent,
         asyncHandler(testController.submitTest.bind(testController))
     );
 
@@ -135,16 +153,24 @@ module.exports = createTestRouter;
 /**
  * @summary Documentazione delle Route
  * 
- * Route Protette (richiede autenticazione):
- * GET    /tests                  - Lista tutti i test (teacher/admin)
- * GET    /tests/:id             - Dettaglio test (teacher/admin/student)
- * GET    /tests/:testId/stats   - Statistiche test (teacher/admin)
- * POST   /tests                 - Inizia un test (student)
- * POST   /tests/:testId/submit  - Invia risposte test (student)
+ * Route Pubbliche (accesso con token):
+ * POST   /tests/start-token         - Inizia test con token
+ * 
+ * Route Protette (richiede autenticazione docente/admin):
+ * GET    /tests/all                 - Lista tutti i test
+ * POST   /tests/assign              - Assegna test a studente
+ * GET    /tests/:testId/stats       - Statistiche test
+ * 
+ * Route Protette (richiede autenticazione studente):
+ * GET    /tests/my-tests           - Lista test assegnati
+ * POST   /tests/start-assigned/:id  - Inizia test assegnato
+ * POST   /tests/:testId/submit     - Invia risposte test
+ * 
+ * Route Protette (accesso misto):
+ * GET    /tests/:id               - Dettaglio test (auth richiesta)
  * 
  * Controllo Accessi:
- * - Admin: accesso completo visualizzazione
- * - Teacher: accesso completo visualizzazione
- * - Student: solo accesso al proprio test e invio risposte
- * - Altri: nessun accesso
+ * - Admin/Teacher: accesso completo gestione e visualizzazione
+ * - Student: accesso ai propri test assegnati
+ * - Token: accesso limitato al test specifico
  */

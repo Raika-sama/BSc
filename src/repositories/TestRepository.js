@@ -13,6 +13,75 @@ class TestRepository extends BaseRepository {
         this.CSIResult = CSIResult;
     }
 
+
+    async assignTestToStudent(testData, studentId, assignedBy) {
+        try {
+            const test = await this.model.create({
+                ...testData,
+                studentId,
+                assignedBy,
+                assignedAt: new Date(),
+                status: 'pending',
+                tokenEnabled: false // Usiamo l'accesso tramite account
+            });
+    
+            return test;
+        } catch (error) {
+            logger.error('Error assigning test:', {
+                error: error.message,
+                studentId
+            });
+            throw error;
+        }
+    }
+    
+    async getStudentTests(studentId, status = null) {
+        try {
+            const query = { 
+                studentId,
+                tokenEnabled: false
+            };
+            
+            if (status) {
+                query.status = status;
+            }
+    
+            return await this.model.find(query)
+                .sort({ assignedAt: -1 });
+        } catch (error) {
+            logger.error('Error getting student tests:', {
+                error: error.message,
+                studentId
+            });
+            throw error;
+        }
+    }
+    
+    async updateTestStatus(testId, status, data = {}) {
+        try {
+            const update = {
+                status,
+                ...data
+            };
+    
+            if (status === 'in_progress') {
+                update.attempts = { $inc: 1 };
+            }
+    
+            return await this.model.findByIdAndUpdate(
+                testId,
+                update,
+                { new: true }
+            );
+        } catch (error) {
+            logger.error('Error updating test status:', {
+                error: error.message,
+                testId
+            });
+            throw error;
+        }
+    }
+    
     /**
      * Trova un test tramite token
      * @param {string} token - Token del test

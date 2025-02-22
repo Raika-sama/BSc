@@ -121,6 +121,22 @@ const testSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    assignedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    assignedAt: {
+        type: Date
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'in_progress', 'completed'],
+        default: 'pending'
+    },
+    attempts: {
+        type: Number,
+        default: 0
+    },
     csiConfig: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'CSIConfig',

@@ -161,3 +161,27 @@
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-16T16:28:36.437Z"}
 {"duration":"11ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1739723316428_muwe88fev","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-02-16T16:28:36.439Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
 {"hasSessionToken":true,"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-02-16T16:28:37.737Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/tests/csi/results/student/679c7494bdb941a2c47766c8","timestamp":"2025-02-16T16:58:03.131Z"}
+{"duration":"327ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1739725082805_2j5v2h7or","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-02-16T16:58:03.132Z","url":"/api/v1/tests/csi/results/student/679c7494bdb941a2c47766c8","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-16T17:15:20.246Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-16T17:15:20.290Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-02-16T17:15:21.058Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-16T17:15:21.059Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-16T17:15:21.061Z"}
+{"error":"Cannot read properties of undefined (reading 'bind')","level":"error","message":"Errore durante l'avvio del server:","stack":"TypeError: Cannot read properties of undefined (reading 'bind')\n    at createTestRouter (C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\testRoutes.js:50:53)\n    at startServer (C:\\Users\\ricca\\Desktop\\BSc\\src\\app.js:280:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-02-16T17:15:21.285Z"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-16T17:17:14.033Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-16T17:17:14.071Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-02-16T17:17:15.210Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-16T17:17:15.212Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-16T17:17:15.213Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-16T17:17:15.587Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-16T17:17:15.592Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-16T17:17:15.593Z"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-16T17:18:43.734Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-16T17:18:43.774Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-02-16T17:18:44.531Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-16T17:18:44.532Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-16T17:18:44.534Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-16T17:18:44.810Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-16T17:18:44.814Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-16T17:18:44.814Z"}
