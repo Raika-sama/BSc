@@ -11,13 +11,14 @@ const authService = {
                 password 
             });
             
-            if (response.data.status === 'success' && response.data.data) {
+            console.log('📦 Server response:', {
+                status: response.data.status,
+                hasUser: !!response.data.data?.user
+            });
+    
+            if (response.data.status === 'success' && response.data.data?.user) {
                 const { user } = response.data.data;
                 
-                if (!user) {
-                    throw new Error('Dati utente mancanti nella risposta');
-                }
-
                 // Salviamo solo i dati utente non sensibili
                 const userData = {
                     ...user,
@@ -27,6 +28,7 @@ const authService = {
                 localStorage.setItem('userData', JSON.stringify(userData));
                 return response.data;
             }
+            
             throw new Error('Risposta non valida dal server');
         } catch (error) {
             console.error('❌ Login error:', {
@@ -80,6 +82,7 @@ const authService = {
             return false;
         }
     },
+
 
     handleAuthError: async (error) => {
         if (error.response?.status === 401) {

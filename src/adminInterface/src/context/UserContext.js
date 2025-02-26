@@ -1,5 +1,5 @@
 // src/context/UserContext.js
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { axiosInstance } from '../services/axiosConfig';
 import { useNotification } from './NotificationContext';
 
@@ -12,60 +12,60 @@ export const UserProvider = ({ children }) => {
     const [totalUsers, setTotalUsers] = useState(0); // Aggiunto per la paginazione
     const { showNotification } = useNotification();
 
-    const getUsers = async (filters = {}) => {
-        try {
-            console.log('UserContext: Getting users with filters:', filters);
+  // Wrappa getUsers in useCallback
+  const getUsers = useCallback(async (filters = {}) => {
+    try {
+        setLoading(true);
+        console.log('UserContext: Getting users with filters:', filters);
+        
+        const queryParams = new URLSearchParams({
+            page: filters.page || 1,
+            limit: filters.limit || 10,
+            search: filters.search || '',
+            sort: filters.sort || '-createdAt'
+        });
+
+        if (filters.schoolId) {
+            queryParams.append('schoolId', filters.schoolId);
+        }
+
+        if (filters.role) {
+            queryParams.append('role', filters.role);
+        }
+
+        const response = await axiosInstance.get(`/users?${queryParams.toString()}`);
+        
+        if (response.data.status === 'success') {
+            const { users, total, page: currentPage } = response.data.data.data;
             
-            // Costruiamo i parametri della query
-            const queryParams = new URLSearchParams({
-                page: filters.page || 1,
-                limit: filters.limit || 10,
-                search: filters.search || '',
-                sort: filters.sort || '-createdAt'
-            });
-    
-            // Aggiungiamo schoolId solo se presente
-            if (filters.schoolId) {
-                queryParams.append('schoolId', filters.schoolId);
-            }
-    
-            // Aggiungiamo role solo se presente
-            if (filters.role) {
-                queryParams.append('role', filters.role);
-            }
-    
-            const response = await axiosInstance.get(`/users?${queryParams.toString()}`);
-            console.log('UserContext: Response received:', response.data);
-    
-            if (response.data.status === 'success') {
-                const { users, total, page: currentPage } = response.data.data.data;
-                
-                setUsers(users || []);
-                setTotalUsers(total || 0);
-                setError(null);
-                
-                return {
-                    users,
-                    total,
-                    page: currentPage,
-                    limit: filters.limit
-                };
-            }
-            
-            throw new Error('Struttura dati non valida');
-        } catch (error) {
-            console.error('UserContext: Error in getUsers:', error);
-            setError(error.message);
-            showNotification(error.message, 'error');
+            setUsers(users || []);
+            setTotalUsers(total || 0);
+            setError(null);
             
             return {
-                users: [],
-                total: 0,
-                page: filters.page || 1,
-                limit: filters.limit || 10
+                users,
+                total,
+                page: currentPage,
+                limit: filters.limit
             };
         }
-    };
+        
+        throw new Error('Struttura dati non valida');
+    } catch (error) {
+        console.error('UserContext: Error in getUsers:', error);
+        setError(error.message);
+        showNotification(error.message, 'error');
+        
+        return {
+            users: [],
+            total: 0,
+            page: filters.page || 1,
+            limit: filters.limit || 10
+        };
+    } finally {
+        setLoading(false);
+    }
+}, []); // dipende solo da showNotification che è stabile
 
     const getUserById = async (userId) => {
         try {

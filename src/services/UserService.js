@@ -121,11 +121,11 @@ class UserService {
      */
     async createUser(userData, options = {}) {
         try {
-            console.log('UserService: Validating user data:', {
+            console.log('UserService: Creating user with data:', {
                 ...userData,
                 password: '[REDACTED]'
             });
-
+    
             // Validazione
             const validationErrors = this.validateUserData(userData, true);
             if (validationErrors) {
@@ -136,11 +136,11 @@ class UserService {
                     { errors: validationErrors }
                 );
             }
-
+    
             // Hash password
             const hashedPassword = await this.hashPassword(userData.password);
-
-            // Preparazione dati
+    
+            // Preparazione dati base
             let userToCreate = {
                 ...userData,
                 password: hashedPassword,
@@ -150,29 +150,63 @@ class UserService {
                     changedAt: new Date()
                 }]
             };
-
-            console.log('UserService: Creating user with prepared data');
-
-            // Inizializza permessi e accesso basati sul ruolo
-            if (this.permissionService) {
-                userToCreate = this.permissionService.initializeUserPermissions(userToCreate);
-                console.log('UserService: Permissions initialized', {
-                    role: userToCreate.role,
-                    permissionsCount: userToCreate.permissions.length,
-                    testAccessLevel: userToCreate.testAccessLevel,
-                    hasAdminAccess: userToCreate.hasAdminAccess
-                });
+    
+            // Inizializzazione permessi e accessi basati sul ruolo
+            if (userData.role === 'admin') {
+                userToCreate = {
+                    ...userToCreate,
+                    hasAdminAccess: true,
+                    testAccessLevel: 0, // Admin ha accesso completo
+                    permissions: [
+                        {
+                            resource: 'users',
+                            actions: ['read', 'create', 'update', 'delete', 'manage'],
+                            scope: 'all'
+                        },
+                        {
+                            resource: 'schools',
+                            actions: ['read', 'create', 'update', 'delete', 'manage'],
+                            scope: 'all'
+                        },
+                        {
+                            resource: 'classes',
+                            actions: ['read', 'create', 'update', 'delete', 'manage'],
+                            scope: 'all'
+                        },
+                        {
+                            resource: 'students',
+                            actions: ['read', 'create', 'update', 'delete', 'manage'],
+                            scope: 'all'
+                        },
+                        {
+                            resource: 'tests',
+                            actions: ['read', 'create', 'update', 'delete', 'manage'],
+                            scope: 'all'
+                        },
+                        {
+                            resource: 'analytics',
+                            actions: ['read', 'create', 'update', 'delete', 'manage'],
+                            scope: 'all'
+                        },
+                        {
+                            resource: 'materials',
+                            actions: ['read', 'create', 'update', 'delete', 'manage'],
+                            scope: 'all'
+                        }
+                    ]
+                };
             }
-
+    
             // Creazione utente
             const user = await this.userRepository.create(userToCreate);
             console.log('UserService: User created successfully:', {
                 id: user._id,
                 email: user.email,
                 role: user.role,
-                permissions: user.permissions?.length || 0
+                permissions: user.permissions?.length || 0,
+                testAccessLevel: user.testAccessLevel
             });
-
+    
             return this.sanitizeUser(user);
         } catch (error) {
             console.error('UserService: Error creating user:', error);

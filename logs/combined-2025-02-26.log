@@ -117,3 +117,208 @@
 {"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-26T09:28:48.052Z"}
 {"level":"info","message":"Ambiente: development","timestamp":"2025-02-26T09:28:48.053Z"}
 {"hasSessionToken":true,"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-02-26T09:28:48.672Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-26T09:36:00.181Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-26T09:36:00.234Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-02-26T09:36:01.302Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-26T09:36:01.304Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-26T09:36:01.305Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-26T09:36:01.647Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-26T09:36:01.651Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-26T09:36:01.651Z"}
+{"level":"info","message":"User created","timestamp":"2025-02-26T09:36:41.437Z","userId":"67bee0a92b329a2e51b46b8f"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/users/67bee0a92b329a2e51b46b8f/history","timestamp":"2025-02-26T09:39:51.638Z"}
+{"duration":"169ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1740562791471_lmzkzk1v0","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-02-26T09:39:51.640Z","url":"/api/v1/users/67bee0a92b329a2e51b46b8f/history","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"User created","timestamp":"2025-02-26T09:59:27.964Z","userId":"67bee5ff2b329a2e51b4afa6"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/users/67bee0a92b329a2e51b46b8f/history","timestamp":"2025-02-26T10:04:00.148Z"}
+{"duration":"230ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1740564239919_s7u9qtzhi","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-02-26T10:04:00.149Z","url":"/api/v1/users/67bee0a92b329a2e51b46b8f/history","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/users/67bee0a92b329a2e51b46b8f/history","timestamp":"2025-02-26T10:04:13.154Z"}
+{"duration":"1033ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1740564252122_o6htn34cc","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-02-26T10:04:13.155Z","url":"/api/v1/users/67bee0a92b329a2e51b46b8f/history","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/users/67bee0a92b329a2e51b46b8f/history","timestamp":"2025-02-26T10:04:18.389Z"}
+{"duration":"149ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1740564258241_79b1mf019","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-02-26T10:04:18.390Z","url":"/api/v1/users/67bee0a92b329a2e51b46b8f/history","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/tests/csi/results/student/67a7a77e242b430cbd8c5909","timestamp":"2025-02-26T10:05:19.478Z"}
+{"duration":"232ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1740564319247_lof3uz7pz","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-02-26T10:05:19.479Z","url":"/api/v1/tests/csi/results/student/67a7a77e242b430cbd8c5909","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/tests/csi/results/student/67a7ab79242b430cbd8c5b4b","timestamp":"2025-02-26T10:05:44.705Z"}
+{"duration":"222ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1740564344485_e1x77vam6","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-02-26T10:05:44.707Z","url":"/api/v1/tests/csi/results/student/67a7ab79242b430cbd8c5b4b","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-26T10:11:00.262Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-26T10:11:00.265Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T10:11:00.267Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T10:11:00.269Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"130ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740564660144_i58zdfl6s","responseSize":"401 Bytes","statusCode":500,"timestamp":"2025-02-26T10:11:00.274Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"hasSessionToken":true,"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-02-26T10:11:07.964Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-26T10:11:47.020Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-26T10:11:47.021Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T10:11:47.022Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T10:11:47.022Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"85ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740564706939_vy84rinv2","responseSize":"401 Bytes","statusCode":500,"timestamp":"2025-02-26T10:11:47.024Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:12:00.103Z"}
+{"code":"AUTH_001","level":"error","message":"Credenziali non valide","metadata":{},"status":401,"timestamp":"2025-02-26T10:12:00.103Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:12:00.104Z"}
+{"duration":"189ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740564719917_b1qfstke2","responseSize":"143 Bytes","statusCode":500,"timestamp":"2025-02-26T10:12:00.106Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:12:04.426Z"}
+{"code":"AUTH_001","level":"error","message":"Credenziali non valide","metadata":{},"status":401,"timestamp":"2025-02-26T10:12:04.427Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:12:04.428Z"}
+{"duration":"187ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740564724242_38oqcnf02","responseSize":"143 Bytes","statusCode":500,"timestamp":"2025-02-26T10:12:04.429Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"email":"hangar79@gmail.com","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:12:22.823Z"}
+{"code":"AUTH_001","level":"error","message":"Credenziali non valide","metadata":{},"status":401,"timestamp":"2025-02-26T10:12:22.823Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:12:22.824Z"}
+{"duration":"173ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740564742653_rb36xhm7f","responseSize":"143 Bytes","statusCode":500,"timestamp":"2025-02-26T10:12:22.826Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"hasSessionToken":true,"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-02-26T10:12:32.400Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"User created","timestamp":"2025-02-26T10:14:08.144Z","userId":"67bee96f2b329a2e51b4e448"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-26T10:14:13.011Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-26T10:14:13.012Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T10:14:13.013Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T10:14:13.014Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"83ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740564852932_n1dagzlw4","responseSize":"401 Bytes","statusCode":500,"timestamp":"2025-02-26T10:14:13.015Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"email":"hangar79@gmail.com","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:14:20.570Z"}
+{"code":"AUTH_001","level":"error","message":"Credenziali non valide","metadata":{},"status":401,"timestamp":"2025-02-26T10:14:20.571Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:14:20.571Z"}
+{"duration":"164ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740564860408_lelx0wxbe","responseSize":"143 Bytes","statusCode":500,"timestamp":"2025-02-26T10:14:20.572Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"email":"valentina@merazzi.it","error":"Utente non trovato","level":"error","message":"Login error:","timestamp":"2025-02-26T10:15:42.468Z"}
+{"level":"error","message":"Utente non trovato","metadata":{},"timestamp":"2025-02-26T10:15:42.468Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{"message":"Utente non trovato","metadata":{}}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:15:42.469Z"}
+{"duration":"26ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740564942444_wmm6kg6pg","responseSize":"143 Bytes","statusCode":500,"timestamp":"2025-02-26T10:15:42.470Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"email":"valentina@merazzi.it","error":"Utente non trovato","level":"error","message":"Login error:","timestamp":"2025-02-26T10:15:48.566Z"}
+{"level":"error","message":"Utente non trovato","metadata":{},"timestamp":"2025-02-26T10:15:48.567Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{"message":"Utente non trovato","metadata":{}}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:15:48.567Z"}
+{"duration":"45ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740564948524_lytlr2fpm","responseSize":"143 Bytes","statusCode":500,"timestamp":"2025-02-26T10:15:48.569Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"hasSessionToken":true,"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-02-26T10:15:52.352Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-26T10:19:05.719Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-26T10:19:05.795Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-02-26T10:19:06.884Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-26T10:19:06.886Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-26T10:19:06.888Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-26T10:19:07.257Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-26T10:19:07.262Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-26T10:19:07.262Z"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-26T10:20:50.528Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-26T10:20:50.590Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-02-26T10:20:51.629Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-26T10:20:51.630Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-26T10:20:51.632Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-26T10:20:52.013Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-26T10:20:52.017Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-26T10:20:52.018Z"}
+{"level":"info","message":"User created","timestamp":"2025-02-26T10:29:18.754Z","userId":"67beecfe89b14d472b1c897f"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:29:42.545Z"}
+{"code":"AUTH_001","level":"error","message":"Credenziali non valide","metadata":{},"status":401,"timestamp":"2025-02-26T10:29:42.546Z"}
+{"error":{"message":"Errore durante il login","metadata":{"originalError":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401}}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:29:42.547Z"}
+{"duration":"197ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740565782357_a8gznswtj","responseSize":"143 Bytes","statusCode":500,"timestamp":"2025-02-26T10:29:42.554Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-26T10:36:28.607Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-26T10:36:28.665Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-02-26T10:36:29.603Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-26T10:36:29.604Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-26T10:36:29.605Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-26T10:36:29.938Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-26T10:36:29.945Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-26T10:36:29.946Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:36:45.992Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:36:45.993Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:36:45.994Z"}
+{"duration":"202ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566205796_8iha8pr0y","responseSize":"81 Bytes","statusCode":401,"timestamp":"2025-02-26T10:36:45.998Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-02-26T10:36:46.006Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:36:46.008Z"}
+{"duration":"7ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566206002_xg9y043ls","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-02-26T10:36:46.009Z","url":"/api/v1/auth/refresh-token","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"email":"riccardonicolilb@gmail.com","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:36:56.948Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:36:56.949Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:36:56.949Z"}
+{"duration":"175ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566216775_hq8ya75oa","responseSize":"81 Bytes","statusCode":401,"timestamp":"2025-02-26T10:36:56.951Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-02-26T10:36:56.958Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:36:56.958Z"}
+{"duration":"4ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566216955_puv1p2e8v","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-02-26T10:36:56.959Z","url":"/api/v1/auth/refresh-token","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"},"timestamp":"2025-02-26T10:37:01.608Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Login successful","timestamp":"2025-02-26T10:37:01.609Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-26T10:37:13.978Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-26T10:37:13.979Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T10:37:13.980Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T10:37:13.981Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"88ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566233894_mgopxnibb","responseSize":"401 Bytes","statusCode":500,"timestamp":"2025-02-26T10:37:13.982Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:37:21.009Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:37:21.010Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:37:21.010Z"}
+{"duration":"166ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566240846_5mxh75lqs","responseSize":"81 Bytes","statusCode":401,"timestamp":"2025-02-26T10:37:21.012Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"error":{},"level":"error","message":"Token refresh failed","timestamp":"2025-02-26T10:37:21.094Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:37:21.095Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:37:21.096Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"82ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566241015_tj0n4fswg","responseSize":"1.24 KB","statusCode":500,"timestamp":"2025-02-26T10:37:21.097Z","url":"/api/v1/auth/refresh-token","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:39:58.313Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:39:58.314Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:39:58.314Z"}
+{"duration":"191ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566398125_qlc40pk8g","responseSize":"81 Bytes","statusCode":401,"timestamp":"2025-02-26T10:39:58.316Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"error":{},"level":"error","message":"Token refresh failed","timestamp":"2025-02-26T10:39:58.404Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:39:58.405Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:39:58.405Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"84ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566398323_agnq044j0","responseSize":"1.24 KB","statusCode":500,"timestamp":"2025-02-26T10:39:58.407Z","url":"/api/v1/auth/refresh-token","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-26T10:40:11.494Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-26T10:40:11.566Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-02-26T10:40:12.474Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-26T10:40:12.475Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-26T10:40:12.476Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-26T10:40:12.814Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-26T10:40:12.817Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-26T10:40:12.818Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:40:20.325Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:40:20.326Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:40:20.327Z"}
+{"duration":"247ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566420084_fenl3hwkt","responseSize":"81 Bytes","statusCode":401,"timestamp":"2025-02-26T10:40:20.331Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"error":{},"level":"error","message":"Token refresh failed","timestamp":"2025-02-26T10:40:20.429Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:40:20.430Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:40:20.431Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"97ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566420336_bmzwczgqs","responseSize":"1.24 KB","statusCode":500,"timestamp":"2025-02-26T10:40:20.433Z","url":"/api/v1/auth/refresh-token","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-02-26T10:40:48.205Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Login successful","timestamp":"2025-02-26T10:40:48.208Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"User created","timestamp":"2025-02-26T10:41:04.878Z","userId":"67beefc04a1504befbbf8b08"}
+{"level":"info","message":"User created","timestamp":"2025-02-26T10:41:37.166Z","userId":"67beefe14a1504befbbf8b58"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:41:44.284Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:41:44.285Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:41:44.286Z"}
+{"duration":"173ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566504114_1qerd0uke","responseSize":"81 Bytes","statusCode":401,"timestamp":"2025-02-26T10:41:44.287Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"error":{},"level":"error","message":"Token refresh failed","timestamp":"2025-02-26T10:41:44.367Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:41:44.368Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:41:44.369Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"78ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566504292_an1ft6xfd","responseSize":"1.24 KB","statusCode":500,"timestamp":"2025-02-26T10:41:44.370Z","url":"/api/v1/auth/refresh-token","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:41:51.719Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:41:51.720Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:41:51.721Z"}
+{"duration":"163ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566511559_pmm1liexk","responseSize":"81 Bytes","statusCode":401,"timestamp":"2025-02-26T10:41:51.722Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"error":{},"level":"error","message":"Token refresh failed","timestamp":"2025-02-26T10:41:51.804Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:41:51.805Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:41:51.805Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"81ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566511726_v91fbvydb","responseSize":"1.24 KB","statusCode":500,"timestamp":"2025-02-26T10:41:51.807Z","url":"/api/v1/auth/refresh-token","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:42:18.757Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:42:18.759Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:42:18.760Z"}
+{"duration":"182ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566538581_r5z4v8686","responseSize":"81 Bytes","statusCode":401,"timestamp":"2025-02-26T10:42:18.763Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"error":{},"level":"error","message":"Token refresh failed","timestamp":"2025-02-26T10:42:18.847Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:42:18.848Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:42:18.849Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"82ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740566538768_ygk6jn17c","responseSize":"1.24 KB","statusCode":500,"timestamp":"2025-02-26T10:42:18.850Z","url":"/api/v1/auth/refresh-token","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-26T10:55:01.765Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-26T10:55:01.769Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T10:55:01.773Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T10:55:01.776Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"154ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740567301626_b24lg7i25","responseSize":"401 Bytes","statusCode":500,"timestamp":"2025-02-26T10:55:01.780Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-26T10:55:52.726Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-26T10:55:52.849Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-02-26T10:55:54.362Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-26T10:55:54.367Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-26T10:55:54.371Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-26T10:55:54.858Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-26T10:55:54.870Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-26T10:55:54.871Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:56:29.778Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:56:29.785Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:56:29.791Z"}
+{"duration":"1110ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740567388697_650ff8gna","responseSize":"81 Bytes","statusCode":401,"timestamp":"2025-02-26T10:56:29.807Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-02-26T10:56:29.846Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:56:29.851Z"}
+{"duration":"32ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740567389826_w9o6yep4t","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-02-26T10:56:29.858Z","url":"/api/v1/auth/refresh-token","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-02-26T10:56:34.971Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Login successful","timestamp":"2025-02-26T10:56:34.980Z","userId":"677bfe44f6789c907c9f3766"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:56:56.139Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T10:56:56.141Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T10:56:56.142Z"}
+{"duration":"327ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740567415818_f3rjl4ixy","responseSize":"81 Bytes","statusCode":401,"timestamp":"2025-02-26T10:56:56.145Z","url":"/api/v1/auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"error":{},"level":"error","message":"Token refresh failed","timestamp":"2025-02-26T10:56:56.261Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:56:56.263Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:56:56.265Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"116ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740567416152_n2ogt51d5","responseSize":"1.24 KB","statusCode":500,"timestamp":"2025-02-26T10:56:56.268Z","url":"/api/v1/auth/refresh-token","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}

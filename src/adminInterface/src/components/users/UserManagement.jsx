@@ -1,5 +1,5 @@
 // src/components/users/UserManagement.jsx
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { 
     Box, 
@@ -45,82 +45,100 @@ const UserManagement = () => {
 
     const { users, loading, totalUsers, createUser, getUsers } = useUser();
 
-// Load users
-const loadUsers = useCallback(async () => {
-    try {
-        await getUsers({
-            page: page + 1,
-            limit: pageSize,
-            ...filters
-        });
-    } catch (error) {
-        console.error('Error loading users:', error);
-    }
-}, [page, pageSize, filters, getUsers]);
 
-const debouncedFilters = useMemo(() => ({
-    search: filters.search,
-    role: filters.role,
-    status: filters.status,
-    sort: filters.sort
-}), [filters.search, filters.role, filters.status, filters.sort]);
+    // Ref per prevenire la prima chiamata automatica
+    const isInitialMount = useRef(true);
+    // Ref per il debounce
+    const debounceTimeout = useRef(null);
 
-// Fix: Using separate useEffect with explicit dependencies instead of [loadUsers]
-useEffect(() => {
-    loadUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [page, pageSize, debouncedFilters, getUsers]);
-
-    const calculateTrendData = useCallback((roleFilter = null) => {
+    // Funzione per caricare gli utenti
+    const loadUsers = useCallback(async () => {
         try {
-            if (!users?.length) return null;
-    
-            const filteredUsers = roleFilter 
-                ? users.filter(u => u && u.role === roleFilter)
-                : users;
-    
-            const groupedData = filteredUsers.reduce((acc, user) => {
-                if (!user?.createdAt) return acc;
-                
-                const date = new Date(user.createdAt);
-                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-                
-                acc[monthKey] = (acc[monthKey] || 0) + 1;
-                return acc;
-            }, {});
-    
-            const last6Months = Object.keys(groupedData)
-                .sort()
-                .slice(-6);
-    
-            return {
-                labels: last6Months.map(date => {
-                    const [year, month] = date.split('-');
-                    return new Date(year, month - 1).toLocaleDateString('it-IT', { month: 'short' });
-                }),
-                data: last6Months.map(month => groupedData[month] || 0)
-            };
+            await getUsers({
+                page: page + 1,
+                limit: pageSize,
+                ...filters
+            });
         } catch (error) {
-            console.error('Error calculating trend data:', error);
-            return null;
+            console.error('Error loading users:', error);
         }
+    }, [page, pageSize, filters, getUsers]);
+
+    // Effect principale per il caricamento dati
+    useEffect(() => {
+        // Salta la prima chiamata automatica
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            loadUsers(); // Caricamento iniziale
+            return;
+        }
+
+        // Gestione del debounce per le ricerche
+        if (debounceTimeout.current) {
+            clearTimeout(debounceTimeout.current);
+        }
+
+        // Applica il debounce solo per le ricerche testuali
+        if (filters.search) {
+            debounceTimeout.current = setTimeout(loadUsers, 500);
+        } else {
+            loadUsers();
+        }
+
+        // Cleanup
+        return () => {
+            if (debounceTimeout.current) {
+                clearTimeout(debounceTimeout.current);
+            }
+        };
+    }, [loadUsers]);
+
+    // Calcolo dei dati per i trend
+    const calculateTrendData = useCallback((roleFilter = null) => {
+        if (!users?.length) return null;
+
+        const filteredUsers = roleFilter 
+            ? users.filter(u => u && u.role === roleFilter)
+            : users;
+
+        const groupedData = filteredUsers.reduce((acc, user) => {
+            if (!user?.createdAt) return acc;
+            
+            const date = new Date(user.createdAt);
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            
+            acc[monthKey] = (acc[monthKey] || 0) + 1;
+            return acc;
+        }, {});
+
+        const last6Months = Object.keys(groupedData)
+            .sort()
+            .slice(-6);
+
+        return {
+            labels: last6Months.map(date => {
+                const [year, month] = date.split('-');
+                return new Date(year, month - 1).toLocaleDateString('it-IT', { month: 'short' });
+            }),
+            data: last6Months.map(month => groupedData[month] || 0)
+        };
     }, [users]);
-    
-    // Calcola il trend percentuale con gestione null-safe
+
+    // Calcolo del trend percentuale
     const calculateTrend = useCallback((roleFilter = null) => {
         try {
             if (!users?.length) return 0;
-    
+
             const currentCount = roleFilter 
                 ? users.filter(u => u && u.role === roleFilter)?.length ?? 0
                 : users.length;
             
             const trendData = calculateTrendData(roleFilter);
             if (!trendData?.data?.length || trendData.data.length < 2) return 0;
-    
+
             const previousCount = trendData.data[trendData.data.length - 2] || 0;
             if (previousCount === 0) return 0;
-    
+
             return ((currentCount - previousCount) / previousCount * 100).toFixed(1);
         } catch (error) {
             console.error('Error calculating trend:', error);
@@ -128,48 +146,47 @@ useEffect(() => {
         }
     }, [users, calculateTrendData]);
 
-// Memorizza i conteggi filtrati con valori di default
-const userCounts = useMemo(() => ({
-    admin: users?.filter(u => u && u.role === 'admin')?.length ?? 0,
-    teacher: users?.filter(u => u && u.role === 'teacher')?.length ?? 0,
-    school_admin: users?.filter(u => u && u.role === 'school_admin')?.length ?? 0,
-    total: totalUsers ?? 0
-}), [users, totalUsers]);
+    // Memorizzazione dei conteggi degli utenti
+    const userCounts = useMemo(() => ({
+        admin: users?.filter(u => u && u.role === 'admin')?.length ?? 0,
+        teacher: users?.filter(u => u && u.role === 'teacher')?.length ?? 0,
+        school_admin: users?.filter(u => u && u.role === 'school_admin')?.length ?? 0,
+        total: totalUsers ?? 0
+    }), [users, totalUsers]);
 
+    // Configurazione delle card statistiche
+    const statsCards = useMemo(() => [
+        {
+            title: 'Utenti Totali',
+            value: userCounts.total,
+            icon: PersonIcon,
+            color: 'primary',
+            description: 'Numero totale degli utenti nel sistema'
+        },
+        {
+            title: 'Amministratori',
+            value: userCounts.admin,
+            icon: AdminIcon,
+            color: 'error',
+            description: 'Amministratori di sistema'
+        },
+        {
+            title: 'Docenti',
+            value: userCounts.teacher,
+            icon: TeacherIcon,
+            color: 'success',
+            description: 'Docenti registrati nel sistema'
+        },
+        {
+            title: 'Admin Scuola',
+            value: userCounts.school_admin,
+            icon: SchoolIcon,
+            color: 'secondary',
+            description: 'Amministratori delle scuole'
+        }
+    ], [userCounts]);
 
-const statsCards = useMemo(() => [
-    {
-        title: 'Utenti Totali',
-        value: userCounts.total,
-        icon: PersonIcon,
-        color: 'primary',
-        description: 'Numero totale degli utenti nel sistema'
-    },
-    {
-        title: 'Amministratori',
-        value: userCounts.admin,
-        icon: AdminIcon,
-        color: 'error',
-        description: 'Amministratori di sistema'
-    },
-    {
-        title: 'Docenti',
-        value: userCounts.teacher,
-        icon: TeacherIcon,
-        color: 'success',
-        description: 'Docenti registrati nel sistema'
-    },
-    {
-        title: 'Admin Scuola',
-        value: userCounts.school_admin,
-        icon: SchoolIcon,
-        color: 'secondary',
-        description: 'Amministratori delle scuole'
-    }
-], [userCounts]);
-
-// Table columns configuration
-
+    // Configurazione delle colonne della tabella
     const columns = useMemo(() => [
         {
             field: 'fullName',
@@ -281,26 +298,37 @@ const statsCards = useMemo(() => [
         try {
             await createUser(userData);
             setIsFormOpen(false);
-            await loadUsers(); // Ensure we reload the users list after creating a new user
+            await loadUsers(false); // Ricarica immediata dopo la creazione
         } catch (error) {
             console.error('Error creating user:', error);
         }
     };
 
+    // Handler per la ricerca con debounce incorporato
     const handleSearch = useCallback((value) => {
         setFilters(prev => ({ ...prev, search: value }));
+        setPage(0); // Reset pagina quando cambia la ricerca
     }, []);
-    
+
+    // Handler per i filtri
     const handleFiltersChange = useCallback((newFilters) => {
         setFilters(prev => ({ ...prev, ...newFilters }));
+        setPage(0); // Reset pagina quando cambiano i filtri
     }, []);
 
-    const handleDeleteUser = (user) => {
-        console.log('Delete user:', user);
-        // Implementare logica eliminazione
-    };
+    // Handler per il cambio pagina
+    const handlePageChange = useCallback((newPage) => {
+        setPage(newPage);
+    }, []);
 
-    // Breadcrumbs configuration
+    // Handler per il cambio dimensione pagina
+    const handlePageSizeChange = useCallback((newPageSize) => {
+        setPageSize(newPageSize);
+        setPage(0); // Reset alla prima pagina quando cambia la dimensione
+    }, []);
+
+
+    // Configurazione breadcrumbs
     const breadcrumbs = [
         { text: 'Dashboard', path: '/admin' },
         { text: 'Utenti', path: '/admin/users' }
@@ -339,12 +367,12 @@ const statsCards = useMemo(() => [
                             columns={columns}
                             getRowId={(row) => row?._id || Math.random().toString()}
                             pageSize={pageSize}
-                            onPageSizeChange={setPageSize}
+                            onPageSizeChange={handlePageSizeChange}
                             loading={loading}
                             paginationMode="server"
                             rowCount={totalUsers}
                             page={page}
-                            onPageChange={setPage}
+                            onPageChange={handlePageChange}
                             onSearch={handleSearch}
                             onRefresh={loadUsers}
                             searchPlaceholder="Cerca utenti..."

@@ -72,6 +72,8 @@ class AuthService {
     }
 
 
+
+
     /**
      * Verifica un token JWT
      * @param {string} token - Token da verificare
@@ -117,6 +119,12 @@ class AuthService {
     
             // Verifica credenziali
             const user = await this.authRepository.findByEmail(email);
+            
+            logger.debug('User found:', {
+                exists: !!user,
+                hasPassword: !!user?.password
+            });
+    
             if (!user) {
                 throw createError(
                     ErrorTypes.AUTH.USER_NOT_FOUND,
@@ -142,7 +150,7 @@ class AuthService {
                 );
             }
     
-            // Crea prima il token di sessione
+            // Crea token di sessione
             const sessionToken = jwt.sign(
                 { 
                     userId: user._id,
@@ -151,14 +159,7 @@ class AuthService {
                 this.JWT_SECRET
             );
     
-            // Log per debug della creazione sessione
-            logger.debug('Creating session', {
-                userId: user._id,
-                sessionToken: sessionToken.substring(0, 10) + '...',
-                metadata
-            });
-    
-            // Crea la sessione nel database
+            // Crea la sessione
             await this.sessionService.createSession(user, sessionToken, {
                 userAgent: metadata.userAgent,
                 ipAddress: metadata.ipAddress,
@@ -166,18 +167,8 @@ class AuthService {
                 token: sessionToken
             });
     
-            // Genera i tokens includendo il sessionId
+            // Genera i tokens
             const { accessToken, refreshToken } = this.generateTokens(user, sessionToken);
-    
-            // Log dei dati di sessione creati
-            logger.debug('Session creation data:', {
-                hasUser: !!user,
-                hasSessionToken: !!sessionToken,
-                metadata: {
-                    ...metadata,
-                    expiresIn: this.REFRESH_TOKEN_EXPIRES_IN
-                }
-            });
     
             // Aggiorna info login
             await this.authRepository.updateLoginInfo(user._id);
@@ -187,7 +178,6 @@ class AuthService {
     
             logger.info('Login successful', { 
                 userId: user._id,
-                hasSessionToken: !!sessionToken,
                 metadata 
             });
     

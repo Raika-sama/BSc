@@ -209,6 +209,31 @@ async createSession(user, token, metadata) {
             }
         }, this.CLEANUP_INTERVAL);
     }
+
+    async updateSessionLastUsed(userId, sessionToken) {
+        try {
+            const user = await this.userModel.findById(userId);
+            if (!user || !user.sessionTokens) {
+                throw new Error('User or sessions not found');
+            }
+    
+            const sessionIndex = user.sessionTokens.findIndex(
+                session => session.token === sessionToken
+            );
+    
+            if (sessionIndex === -1) {
+                throw new Error('Session not found');
+            }
+    
+            user.sessionTokens[sessionIndex].lastUsedAt = new Date();
+            await user.save();
+    
+            return true;
+        } catch (error) {
+            logger.error('Error updating session last used:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = SessionService;

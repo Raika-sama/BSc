@@ -67,6 +67,14 @@ class AuthController extends BaseController {
     login = async (req, res, next) => {
         try {
             const { email, password } = req.body;
+            
+            if (!email || !password) {
+                throw createError(
+                    ErrorTypes.VALIDATION.MISSING_FIELDS,
+                    'Email e password sono richiesti'
+                );
+            }
+    
             logger.debug('Login attempt:', { email });
     
             const { user, accessToken, refreshToken } = await this.authService.login(
@@ -81,6 +89,8 @@ class AuthController extends BaseController {
             // Imposta i cookie
             this.setTokenCookies(res, accessToken, refreshToken);
     
+            logger.info('Login successful', { userId: user._id });
+    
             res.status(200).json({
                 status: 'success',
                 data: {
@@ -91,12 +101,11 @@ class AuthController extends BaseController {
             });
     
         } catch (error) {
-            logger.error('Login error details:', error);
-            next(createError(
-                ErrorTypes.AUTH.LOGIN_FAILED,
-                'Errore durante il login',
-                { originalError: error }
-            ));
+            logger.error('Login error:', {
+                error: error.message,
+                stack: error.stack
+            });
+            next(error);
         }
     }
 
