@@ -51,20 +51,30 @@ const setupAxiosInterceptors = () => {
             isRefreshing = true;
 
             try {
-                const response = await axiosInstance.post('/auth/refresh-token');
+                console.log('Attempting token refresh');
+                const response = await axiosInstance.post('/auth/refresh-token', {}, {
+                    withCredentials: true
+                });
                 
+                console.log('Refresh response:', {
+                    status: response.data.status,
+                    hasAccessToken: !!response.data.data?.accessToken
+                });
+            
                 if (response.data.status === 'success') {
+                    const { accessToken } = response.data.data;
+                    // Aggiorna il token nelle richieste future
+                    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
                     processQueue(null);
                     return axiosInstance(originalRequest);
                 }
                 throw new Error('Refresh token failed');
             } catch (refreshError) {
+                console.error('Refresh token error:', refreshError);
                 processQueue(refreshError);
-                const userData = localStorage.getItem('userData');
-                if (userData) {
-                    localStorage.removeItem('userData');
-                }
-                window.location.href = '/unauthorized';
+                // Pulisci lo storage e reindirizza
+                localStorage.removeItem('userData');
+                window.location.href = '/login';
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;

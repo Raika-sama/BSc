@@ -114,3 +114,122 @@
 {"error":{},"level":"error","message":"Token refresh failed","timestamp":"2025-02-26T10:56:56.261Z"}
 {"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:56:56.263Z"}
 {"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T10:56:56.265Z","userId":"677bfe44f6789c907c9f3766"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:12:45.892Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:12:45.895Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:12:45.899Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:12:46.531Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:12:46.533Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:12:46.536Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:12:56.957Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:12:56.959Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:12:56.961Z"}
+{"error":"jwt malformed","level":"error","message":"Token refresh failed:","stack":"JsonWebTokenError: jwt malformed\n    at module.exports [as verify] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\jsonwebtoken\\verify.js:70:17)\n    at AuthService.refreshTokens (C:\\Users\\ricca\\Desktop\\BSc\\src\\services\\AuthService.js:79:33)\n    at AuthController.refreshToken (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\authController.js:156:40)\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\authRoutes.js:15:25\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)","timestamp":"2025-02-26T11:12:57.082Z"}
+{"error":{"message":"Token di refresh non valido","metadata":{}},"level":"error","message":"Token refresh failed","timestamp":"2025-02-26T11:12:57.085Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T11:12:57.086Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T11:12:57.088Z","userId":"677bfe44f6789c907c9f3766"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:14:31.211Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:14:31.215Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:14:31.219Z"}
+{"error":"jwt malformed","level":"error","message":"Token refresh failed:","stack":"JsonWebTokenError: jwt malformed\n    at module.exports [as verify] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\jsonwebtoken\\verify.js:70:17)\n    at AuthService.refreshTokens (C:\\Users\\ricca\\Desktop\\BSc\\src\\services\\AuthService.js:86:33)\n    at AuthController.refreshToken (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\authController.js:156:40)\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\authRoutes.js:15:25\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)","timestamp":"2025-02-26T11:14:31.419Z"}
+{"error":{"message":"Token di refresh non valido","metadata":{}},"level":"error","message":"Token refresh failed","timestamp":"2025-02-26T11:14:31.423Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T11:14:31.426Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T11:14:31.431Z","userId":"677bfe44f6789c907c9f3766"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:17:32.058Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:17:32.059Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:17:32.061Z"}
+{"error":"jwt malformed","level":"error","message":"JWT verification failed","timestamp":"2025-02-26T11:17:32.200Z","type":"JsonWebTokenError"}
+{"error":"Token di refresh non valido","level":"error","message":"Token refresh failed:","timestamp":"2025-02-26T11:17:32.201Z"}
+{"error":"Token di refresh non valido","level":"error","message":"Token refresh failed","timestamp":"2025-02-26T11:17:32.202Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T11:17:32.203Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T11:17:32.204Z","userId":"677bfe44f6789c907c9f3766"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:24:09.235Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:24:09.237Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:24:09.239Z"}
+{"error":"jwt malformed","level":"error","message":"JWT verification failed","timestamp":"2025-02-26T11:24:09.441Z","type":"JsonWebTokenError"}
+{"error":"Token di refresh non valido","level":"error","message":"Token refresh failed:","timestamp":"2025-02-26T11:24:09.446Z"}
+{"error":"Token di refresh non valido","level":"error","message":"Token refresh failed","timestamp":"2025-02-26T11:24:09.448Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T11:24:09.453Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T11:24:09.456Z","userId":"677bfe44f6789c907c9f3766"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:27:10.603Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:27:10.606Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:27:10.610Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-02-26T11:27:10.665Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T11:27:10.671Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:27:13.711Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:27:13.714Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:27:13.715Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-02-26T11:27:13.733Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T11:27:13.735Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:27:51.510Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:27:51.513Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:27:51.515Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-02-26T11:27:51.547Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T11:27:51.550Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-26T11:29:13.205Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-26T11:29:13.209Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T11:29:13.213Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T11:29:13.216Z","userId":"677bfe44f6789c907c9f3766"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:29:17.476Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:29:17.479Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:29:17.481Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:29:18.397Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:29:18.401Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:29:18.404Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:29:23.413Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:29:23.416Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:29:23.419Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:29:24.155Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:29:24.156Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:29:24.156Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:29:39.199Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:29:39.202Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:29:39.204Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-02-26T11:29:39.237Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T11:29:39.240Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:38:33.898Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:38:33.900Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:38:33.902Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-02-26T11:38:33.923Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-02-26T11:38:33.925Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-26T11:39:06.676Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-26T11:39:06.679Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T11:39:06.682Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T11:39:06.684Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-02-26T11:43:30.422Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-02-26T11:43:30.426Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T11:43:30.430Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-26T11:43:30.433Z","userId":"677bfe44f6789c907c9f3766"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:43:33.403Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:43:33.407Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:43:33.410Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:43:34.294Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:43:34.298Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:43:34.300Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:43:48.226Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:43:48.230Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:43:48.232Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:43:48.917Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:43:48.919Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:43:48.921Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:44:10.187Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:44:10.191Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:44:10.193Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:44:11.188Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:44:11.191Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:44:11.194Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:45:03.105Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:45:03.109Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:45:03.113Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:45:03.921Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T11:45:03.924Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T11:45:03.927Z"}
+{"code":"RES_001","level":"error","message":"Utente non trovato","metadata":{},"status":404,"timestamp":"2025-02-26T11:55:22.884Z"}
+{"level":"error","message":"PermissionService not available during user creation","timestamp":"2025-02-26T11:55:35.511Z"}
+{"error":"next is not a function","level":"error","message":"User Route Error:","method":"POST","path":"/api/v1/users","timestamp":"2025-02-26T11:55:35.514Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":"next is not a function","level":"error","message":"User Route Error:","method":"POST","path":"/api/v1/users","stack":"TypeError: next is not a function\n    at UserController.sendError (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\baseController.js:42:13)\n    at UserController.create (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\userController.js:58:29)","timestamp":"2025-02-26T11:55:35.517Z","userId":"677bfe44f6789c907c9f3766"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T12:07:04.816Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T12:07:04.818Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T12:07:04.821Z"}
+{"email":"valentina@merazzi.it","error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T12:07:05.671Z"}
+{"error":"Credenziali non valide","level":"error","message":"Login error:","timestamp":"2025-02-26T12:07:05.674Z"}
+{"error":{"code":"AUTH_001","message":"Credenziali non valide","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/login","timestamp":"2025-02-26T12:07:05.677Z"}

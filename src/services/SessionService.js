@@ -65,44 +65,57 @@ async createSession(user, token, metadata) {
      * Verifica validità sessione
      * @param {string} token - Token di sessione
      */
-    async validateSession(token) {
+    validateSession = async (token) => {
         try {
+            logger.debug('Validating session token', { 
+                tokenExists: !!token,
+                tokenLength: token?.length 
+            });
+    
             const user = await this.userRepository.findOne({
                 'sessionTokens.token': token
             });
-
+    
+            logger.debug('Session validation results', {
+                userFound: !!user,
+                hasSessionTokens: user ? !!user.sessionTokens : false,
+                sessionTokensCount: user?.sessionTokens?.length
+            });
+    
             if (!user) {
                 throw createError(
                     ErrorTypes.SESSION.NOT_FOUND,
                     'Sessione non trovata'
                 );
             }
-
+    
             const session = user.sessionTokens.find(s => s.token === token);
-
+    
             if (!session) {
                 throw createError(
                     ErrorTypes.SESSION.NOT_FOUND,
                     'Sessione non trovata'
                 );
             }
-
+    
             if (session.expiresAt < new Date()) {
-                // Rimuovi sessione scaduta
                 await this.removeSession(user._id, token);
                 throw createError(
                     ErrorTypes.SESSION.EXPIRED,
                     'Sessione scaduta'
                 );
             }
-
+    
             // Aggiorna lastUsedAt
             session.lastUsedAt = new Date();
             await user.save();
-
+    
             return { user, session };
         } catch (error) {
-            logger.error('Session validation error', { error });
+            logger.error('Session validation error', { 
+                error: error.message,
+                stack: error.stack 
+            });
             throw error;
         }
     }
@@ -210,27 +223,41 @@ async createSession(user, token, metadata) {
         }, this.CLEANUP_INTERVAL);
     }
 
-    async updateSessionLastUsed(userId, sessionToken) {
+    updateSessionLastUsed = async (userId, sessionToken) => {
         try {
-            const user = await this.userModel.findById(userId);
+            const user = await this.userRepository.findById(userId);
+            
             if (!user || !user.sessionTokens) {
-                throw new Error('User or sessions not found');
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente o sessioni non trovate'
+                );
             }
     
-            const sessionIndex = user.sessionTokens.findIndex(
-                session => session.token === sessionToken
-            );
-    
-            if (sessionIndex === -1) {
-                throw new Error('Session not found');
+            const session = user.sessionTokens.find(s => s.token === sessionToken);
+            
+            if (!session) {
+                throw createError(
+                    ErrorTypes.SESSION.NOT_FOUND,
+                    'Sessione non trovata'
+                );
             }
     
-            user.sessionTokens[sessionIndex].lastUsedAt = new Date();
+            session.lastUsedAt = new Date();
             await user.save();
+    
+            logger.debug('Session last used timestamp updated', {
+                userId,
+                sessionToken: sessionToken.substring(0, 10) + '...'
+            });
     
             return true;
         } catch (error) {
-            logger.error('Error updating session last used:', error);
+            logger.error('Error updating session last used:', {
+                error: error.message,
+                userId,
+                sessionToken: sessionToken?.substring(0, 10) + '...'
+            });
             throw error;
         }
     }

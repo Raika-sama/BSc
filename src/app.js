@@ -50,6 +50,7 @@ const SessionService = require('./services/SessionService');
 const AuthService = require('./services/AuthService');
 const UserService = require('./services/UserService');
 const StudentAuthService = require('./services/StudentAuthService');
+const PermissionService = require('./services/PermissionService');
 
 // Import Controllers
 const AuthController = require('./controllers/authController');
@@ -102,7 +103,8 @@ const studentAuthRepository = new StudentAuthRepository(mongoose.model('StudentA
 // Inizializza Services (ordine corretto per evitare dipendenze circolari)
 const sessionService = new SessionService(userRepository);
 const authService = new AuthService(authRepository, sessionService, userRepository);
-const userService = new UserService(userRepository, authService, sessionService);
+const permissionService = new PermissionService(userRepository);
+const userService = new UserService(userRepository, authService, sessionService, permissionService);
 const studentAuthService = new StudentAuthService(
     studentAuthRepository,
     studentRepository,
@@ -250,6 +252,7 @@ const startServer = async () => {
             userService,
             sessionService,
             studentAuthService,     // aggiungi qui
+            permissionService,
             // Middleware
             authMiddleware,
             bulkImportValidation,

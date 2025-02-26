@@ -77,7 +77,7 @@ class AuthController extends BaseController {
     
             logger.debug('Login attempt:', { email });
     
-            const { user, accessToken, refreshToken } = await this.authService.login(
+            const result = await this.authService.login(
                 email, 
                 password, 
                 {
@@ -87,16 +87,21 @@ class AuthController extends BaseController {
             );
     
             // Imposta i cookie
-            this.setTokenCookies(res, accessToken, refreshToken);
+            this.setTokenCookies(res, result.accessToken, result.refreshToken);
     
-            logger.info('Login successful', { userId: user._id });
+            logger.debug('Login successful, cookies set', {
+                userId: result.user._id,
+                tokensSet: {
+                    access: !!result.accessToken,
+                    refresh: !!result.refreshToken
+                }
+            });
     
             res.status(200).json({
                 status: 'success',
                 data: {
-                    user,
-                    accessToken,
-                    refreshToken
+                    user: result.user,
+                    accessToken: result.accessToken
                 }
             });
     
@@ -143,32 +148,50 @@ class AuthController extends BaseController {
      */
     refreshToken = async (req, res) => {
         try {
+            logger.debug('Refresh token request received', {
+                cookies: req.cookies,
+                headers: req.headers
+            });
+    
             const refreshToken = req.cookies['refresh-token'];
-
-            if (!refreshToken) {
+    
+            if (!refreshToken || refreshToken === 'undefined') {
                 throw createError(
                     ErrorTypes.AUTH.NO_TOKEN,
                     'Token di refresh non trovato'
                 );
             }
-
-            const { user, accessToken, newRefreshToken } = 
-                await this.authService.refreshTokens(refreshToken);
-
-            // Aggiorna cookie
-            this.setTokenCookies(res, accessToken, newRefreshToken);
-
-            logger.info('Token refreshed', { 
-                userId: user._id 
+    
+            const result = await this.authService.refreshTokens(refreshToken);
+    
+            // Imposta i nuovi cookie
+            this.setTokenCookies(res, result.accessToken, result.refreshToken);
+    
+            logger.debug('Refresh token successful', {
+                userId: result.user.id,
+                newTokens: {
+                    accessToken: result.accessToken ? `${result.accessToken.substring(0, 10)}...` : null,
+                    refreshToken: result.refreshToken ? `${result.refreshToken.substring(0, 10)}...` : null
+                }
             });
-
-            this.sendResponse(res, {
+    
+            return this.sendResponse(res, {
                 status: 'success',
-                accessToken
+                data: {
+                    user: result.user,
+                    accessToken: result.accessToken
+                }
             });
         } catch (error) {
-            logger.error('Token refresh failed', { error });
-            this.handleError(res, error);
+            logger.error('Refresh token failed', {
+                error: error.message,
+                stack: error.stack
+            });
+    
+            // Se il token non è valido, pulisci i cookie
+            this.clearTokenCookies(res);
+            
+            return this.handleError(res, error);
         }
     }
 
@@ -276,27 +299,49 @@ class AuthController extends BaseController {
      * Utility per impostare i cookie dei token
      */
     setTokenCookies = (res, accessToken, refreshToken) => {
-        res.cookie('access-token', accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 60 * 60 * 1000 // 60 minuti
+        logger.debug('Setting token cookies', {
+            accessToken: accessToken ? `${accessToken.substring(0, 10)}...` : null,
+            refreshToken: refreshToken ? `${refreshToken.substring(0, 10)}...` : null
         });
-
-        res.cookie('refresh-token', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 giorni
-        });
+    
+        if (accessToken) {
+            res.cookie('access-token', accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax', // Cambiato da 'strict' a 'lax' per migliore compatibilità
+                maxAge: 60 * 60 * 1000 // 1 ora
+            });
+        }
+    
+        if (refreshToken) {
+            res.cookie('refresh-token', refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax', // Cambiato da 'strict' a 'lax' per migliore compatibilità
+                maxAge: 7 * 24 * 60 * 60 * 1000 // 7 giorni
+            });
+        }
     }
 
     /**
      * Utility per rimuovere i cookie dei token
      */
     clearTokenCookies = (res) => {
-        res.clearCookie('access-token');
-        res.clearCookie('refresh-token');
+        res.cookie('access-token', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            expires: new Date(0)
+        });
+    
+        res.cookie('refresh-token', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            expires: new Date(0)
+        });
+    
+        logger.debug('Cookies cleared');
     }
 }
 

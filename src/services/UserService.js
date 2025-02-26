@@ -119,6 +119,7 @@ class UserService {
      * @param {Object} userData - Dati utente
      * @param {Object} options - Opzioni aggiuntive
      */
+
     async createUser(userData, options = {}) {
         try {
             console.log('UserService: Creating user with data:', {
@@ -151,50 +152,15 @@ class UserService {
                 }]
             };
     
-            // Inizializzazione permessi e accessi basati sul ruolo
-            if (userData.role === 'admin') {
-                userToCreate = {
-                    ...userToCreate,
-                    hasAdminAccess: true,
-                    testAccessLevel: 0, // Admin ha accesso completo
-                    permissions: [
-                        {
-                            resource: 'users',
-                            actions: ['read', 'create', 'update', 'delete', 'manage'],
-                            scope: 'all'
-                        },
-                        {
-                            resource: 'schools',
-                            actions: ['read', 'create', 'update', 'delete', 'manage'],
-                            scope: 'all'
-                        },
-                        {
-                            resource: 'classes',
-                            actions: ['read', 'create', 'update', 'delete', 'manage'],
-                            scope: 'all'
-                        },
-                        {
-                            resource: 'students',
-                            actions: ['read', 'create', 'update', 'delete', 'manage'],
-                            scope: 'all'
-                        },
-                        {
-                            resource: 'tests',
-                            actions: ['read', 'create', 'update', 'delete', 'manage'],
-                            scope: 'all'
-                        },
-                        {
-                            resource: 'analytics',
-                            actions: ['read', 'create', 'update', 'delete', 'manage'],
-                            scope: 'all'
-                        },
-                        {
-                            resource: 'materials',
-                            actions: ['read', 'create', 'update', 'delete', 'manage'],
-                            scope: 'all'
-                        }
-                    ]
-                };
+            // Inizializza permessi e accessi usando il PermissionService
+            if (this.permissionService) {
+                userToCreate = this.permissionService.initializeUserPermissions(userToCreate);
+            } else {
+                logger.error('PermissionService not available during user creation');
+                throw createError(
+                    ErrorTypes.SYSTEM.OPERATION_FAILED,
+                    'Errore durante l\'inizializzazione dei permessi'
+                );
             }
     
             // Creazione utente

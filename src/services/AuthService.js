@@ -71,7 +71,96 @@ class AuthService {
         }
     }
 
+    /**
+     * Refresh dei token
+     * @param {string} refreshToken - Token di refresh da verificare
+     */
+    refreshTokens = async (refreshToken) => {
+        try {
+            logger.debug('Starting token refresh process', { 
+                tokenExists: !!refreshToken,
+                tokenLength: refreshToken?.length 
+            });
 
+            if (!refreshToken || typeof refreshToken !== 'string') {
+                throw createError(
+                    ErrorTypes.AUTH.INVALID_TOKEN,
+                    'Token di refresh non valido'
+                );
+            }
+
+            // Verifica il refresh token
+            let decoded;
+            try {
+                decoded = jwt.verify(refreshToken, this.JWT_REFRESH_SECRET);
+                logger.debug('Token decoded successfully', { 
+                    userId: decoded.id,
+                    sessionId: decoded.sessionId
+                });
+            } catch (jwtError) {
+                logger.error('JWT verification failed', { 
+                    error: jwtError.message,
+                    type: jwtError.name 
+                });
+                throw createError(
+                    ErrorTypes.AUTH.INVALID_TOKEN,
+                    'Token di refresh non valido'
+                );
+            }
+
+            // Recupera l'utente
+            const user = await this.userRepository.findById(decoded.id);
+            if (!user) {
+                throw createError(
+                    ErrorTypes.AUTH.USER_NOT_FOUND,
+                    'Utente non trovato'
+                );
+            }
+
+            // Verifica la sessione
+            const session = user.sessionTokens?.find(s => s.token === decoded.sessionId);
+            if (!session) {
+                throw createError(
+                    ErrorTypes.AUTH.INVALID_SESSION,
+                    'Sessione non trovata'
+                );
+            }
+
+            // Verifica scadenza sessione
+            if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
+                // Rimuovi la sessione scaduta
+                await this.sessionService.removeSession(user._id, decoded.sessionId);
+                throw createError(
+                    ErrorTypes.AUTH.SESSION_EXPIRED,
+                    'Sessione scaduta'
+                );
+            }
+
+            // Genera nuovi token
+            const tokens = this.generateTokens(user, decoded.sessionId);
+            
+            // Aggiorna il timestamp della sessione
+            await this.sessionService.updateSessionLastUsed(user._id, decoded.sessionId);
+
+            logger.info('Tokens refreshed successfully', { 
+                userId: user._id,
+                sessionId: decoded.sessionId
+            });
+
+            return {
+                user: this.sanitizeUser(user),
+                accessToken: tokens.accessToken,
+                refreshToken: tokens.refreshToken
+            };
+
+        } catch (error) {
+            logger.error('Token refresh failed:', {
+                error: error.message,
+                stack: error.stack
+            });
+            throw error;
+        }
+    }
 
 
     /**
@@ -150,15 +239,21 @@ class AuthService {
                 );
             }
     
-            // Crea token di sessione
-            const sessionToken = jwt.sign(
+               // Crea token di sessione con più informazioni
+               const sessionToken = jwt.sign(
                 { 
                     userId: user._id,
-                    createdAt: Date.now() 
+                    createdAt: Date.now(),
+                    userAgent: metadata.userAgent
                 }, 
                 this.JWT_SECRET
             );
-    
+
+            logger.debug('Session token created', {
+                userId: user._id,
+                tokenLength: sessionToken.length
+            });
+
             // Crea la sessione
             await this.sessionService.createSession(user, sessionToken, {
                 userAgent: metadata.userAgent,
@@ -166,10 +261,16 @@ class AuthService {
                 expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
                 token: sessionToken
             });
-    
-            // Genera i tokens
+
+            // Genera i tokens includendo il sessionToken
             const { accessToken, refreshToken } = this.generateTokens(user, sessionToken);
-    
+
+            logger.debug('Tokens generated', {
+                hasAccessToken: !!accessToken,
+                hasRefreshToken: !!refreshToken,
+                refreshTokenLength: refreshToken.length
+            });
+
             // Aggiorna info login
             await this.authRepository.updateLoginInfo(user._id);
     
@@ -261,13 +362,43 @@ class AuthService {
         }
     }
 
+    /**
+     * Aggiornamento del metodo updatePassword per gestire correttamente l'utente
+     */
     async updatePassword(userId, currentPassword, newPassword) {
-        // Verifica la password corrente
-        const user = await this.authRepository.verifyCredentials(user.email, currentPassword);
-        
-        // Se la verifica passa, aggiorna la password
-        return this.authRepository.updatePassword(userId, newPassword);
-    }
+            try {
+                // Recupera l'utente
+                const user = await this.userRepository.findById(userId);
+                if (!user) {
+                    throw createError(
+                        ErrorTypes.RESOURCE.NOT_FOUND,
+                        'Utente non trovato'
+                    );
+                }
+
+                // Verifica la password corrente
+                const isValid = await bcrypt.compare(currentPassword, user.password);
+                if (!isValid) {
+                    throw createError(
+                        ErrorTypes.AUTH.INVALID_CREDENTIALS,
+                        'Password corrente non valida'
+                    );
+                }
+
+                // Hash della nuova password
+                const salt = await bcrypt.genSalt(10);
+                const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+                // Aggiorna la password
+                return this.authRepository.updatePassword(userId, hashedPassword);
+            } catch (error) {
+                logger.error('Password update error:', {
+                    error: error.message,
+                    userId
+                });
+                throw error;
+            }
+        }
 
     /**
      * Sanitizza oggetto utente per risposta
