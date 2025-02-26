@@ -73,3 +73,47 @@
 {"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-26T08:40:29.392Z"}
 {"level":"info","message":"Ambiente: development","timestamp":"2025-02-26T08:40:29.392Z"}
 {"hasSessionToken":true,"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-02-26T08:40:33.009Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"User created","timestamp":"2025-02-26T09:06:36.363Z","userId":"67bed99ce954309c74079c0d"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-26T09:11:22.895Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-26T09:11:22.940Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-02-26T09:11:23.823Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-26T09:11:23.825Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-26T09:11:23.827Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-26T09:11:24.154Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-26T09:11:24.159Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-26T09:11:24.160Z"}
+{"level":"info","message":"User created","timestamp":"2025-02-26T09:12:24.455Z","userId":"67bedaf8bd0c9bba027409e3"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-26T09:15:06.155Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-26T09:15:06.204Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-02-26T09:15:06.997Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-26T09:15:06.998Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-26T09:15:07.000Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-26T09:15:07.264Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-26T09:15:07.270Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-26T09:15:07.270Z"}
+{"level":"info","message":"User created","timestamp":"2025-02-26T09:15:41.314Z","userId":"67bedbbd3725dd2e5d04f568"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-26T09:18:18.838Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-26T09:18:18.894Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-02-26T09:18:19.826Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-26T09:18:19.828Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-26T09:18:19.830Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-26T09:18:20.293Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-26T09:18:20.303Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-26T09:18:20.304Z"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-26T09:21:48.729Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-26T09:21:48.776Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-02-26T09:21:49.627Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-26T09:21:49.629Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-26T09:21:49.631Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-26T09:21:49.925Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-26T09:21:49.930Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-26T09:21:49.931Z"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-26T09:28:46.438Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-26T09:28:46.533Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-02-26T09:28:47.687Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-26T09:28:47.688Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-26T09:28:47.690Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-26T09:28:48.043Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-26T09:28:48.052Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-26T09:28:48.053Z"}
+{"hasSessionToken":true,"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-02-26T09:28:48.672Z","userId":"677bfe44f6789c907c9f3766"}

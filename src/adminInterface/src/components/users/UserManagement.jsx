@@ -1,5 +1,5 @@
 // src/components/users/UserManagement.jsx
-import React, { useState, useMemo, useCallback, userCounts } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { 
     Box, 
@@ -45,7 +45,6 @@ const UserManagement = () => {
 
     const { users, loading, totalUsers, createUser, getUsers } = useUser();
 
-    // Load users
 // Load users
 const loadUsers = useCallback(async () => {
     try {
@@ -57,7 +56,7 @@ const loadUsers = useCallback(async () => {
     } catch (error) {
         console.error('Error loading users:', error);
     }
-}, [page, pageSize, filters]); // Rimuovi getUsers dalle dipendenze
+}, [page, pageSize, filters, getUsers]);
 
 const debouncedFilters = useMemo(() => ({
     search: filters.search,
@@ -66,16 +65,18 @@ const debouncedFilters = useMemo(() => ({
     sort: filters.sort
 }), [filters.search, filters.role, filters.status, filters.sort]);
 
-React.useEffect(() => {
+// Fix: Using separate useEffect with explicit dependencies instead of [loadUsers]
+useEffect(() => {
     loadUsers();
-}, [page, pageSize, debouncedFilters]); // Usa debouncedFilters invece di loadUsers
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [page, pageSize, debouncedFilters, getUsers]);
 
     const calculateTrendData = useCallback((roleFilter = null) => {
         try {
             if (!users?.length) return null;
     
             const filteredUsers = roleFilter 
-                ? users.filter(u => u.role === roleFilter)
+                ? users.filter(u => u && u.role === roleFilter)
                 : users;
     
             const groupedData = filteredUsers.reduce((acc, user) => {
@@ -111,7 +112,7 @@ React.useEffect(() => {
             if (!users?.length) return 0;
     
             const currentCount = roleFilter 
-                ? users.filter(u => u.role === roleFilter)?.length ?? 0
+                ? users.filter(u => u && u.role === roleFilter)?.length ?? 0
                 : users.length;
             
             const trendData = calculateTrendData(roleFilter);
@@ -129,9 +130,9 @@ React.useEffect(() => {
 
 // Memorizza i conteggi filtrati con valori di default
 const userCounts = useMemo(() => ({
-    admin: users?.filter(u => u.role === 'admin')?.length ?? 0,
-    teacher: users?.filter(u => u.role === 'teacher')?.length ?? 0,
-    school_admin: users?.filter(u => u.role === 'school_admin')?.length ?? 0,
+    admin: users?.filter(u => u && u.role === 'admin')?.length ?? 0,
+    teacher: users?.filter(u => u && u.role === 'teacher')?.length ?? 0,
+    school_admin: users?.filter(u => u && u.role === 'school_admin')?.length ?? 0,
     total: totalUsers ?? 0
 }), [users, totalUsers]);
 
@@ -165,7 +166,7 @@ const statsCards = useMemo(() => [
         color: 'secondary',
         description: 'Amministratori delle scuole'
     }
-], [userCounts, calculateTrend, calculateTrendData]);
+], [userCounts]);
 
 // Table columns configuration
 
@@ -280,7 +281,7 @@ const statsCards = useMemo(() => [
         try {
             await createUser(userData);
             setIsFormOpen(false);
-            loadUsers();
+            await loadUsers(); // Ensure we reload the users list after creating a new user
         } catch (error) {
             console.error('Error creating user:', error);
         }
@@ -336,7 +337,7 @@ const statsCards = useMemo(() => [
                             }
                             rows={users || []}
                             columns={columns}
-                            getRowId={(row) => row._id}
+                            getRowId={(row) => row?._id || Math.random().toString()}
                             pageSize={pageSize}
                             onPageSizeChange={setPageSize}
                             loading={loading}

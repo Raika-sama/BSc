@@ -141,7 +141,7 @@ class UserService {
             const hashedPassword = await this.hashPassword(userData.password);
 
             // Preparazione dati
-            const userToCreate = {
+            let userToCreate = {
                 ...userData,
                 password: hashedPassword,
                 status: options.status || 'active',
@@ -155,14 +155,22 @@ class UserService {
 
             // Inizializza permessi e accesso basati sul ruolo
             if (this.permissionService) {
-                this.permissionService.initializeUserPermissions(userToCreate);
+                userToCreate = this.permissionService.initializeUserPermissions(userToCreate);
+                console.log('UserService: Permissions initialized', {
+                    role: userToCreate.role,
+                    permissionsCount: userToCreate.permissions.length,
+                    testAccessLevel: userToCreate.testAccessLevel,
+                    hasAdminAccess: userToCreate.hasAdminAccess
+                });
             }
 
             // Creazione utente
             const user = await this.userRepository.create(userToCreate);
             console.log('UserService: User created successfully:', {
                 id: user._id,
-                email: user.email
+                email: user.email,
+                role: user.role,
+                permissions: user.permissions?.length || 0
             });
 
             return this.sanitizeUser(user);
