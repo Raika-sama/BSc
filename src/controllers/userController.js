@@ -3,6 +3,7 @@ const BaseController = require('./baseController');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const mongoose = require('mongoose');
+
 class UserController extends BaseController {
     constructor(userService, sessionService) {
         super(null, 'user'); // Passiamo null come repository perché useremo il service
@@ -14,6 +15,8 @@ class UserController extends BaseController {
         this.getAll = this.getAll.bind(this);
         this.getById = this.getById.bind(this);
         this.getAvailableManagers = this.getAvailableManagers.bind(this);
+        this.assignResources = this.assignResources.bind(this);
+        this.updatePermissions = this.updatePermissions.bind(this);
     }
 
     /**
@@ -65,90 +68,88 @@ class UserController extends BaseController {
         }
     }
 
+    // Chiama tutti gli utenti
+    async getAll(req, res) {
+        try {
+            const { page = 1, limit = 10, search = '', sort = '-createdAt', schoolId, role } = req.query;
+            
+            console.log('Controller getAll received raw query:', req.query);
+            console.log('Controller getAll parsed params:', {
+                page,
+                limit,
+                search,
+                sort,
+                schoolId,
+                role,
+                user: req.user?.id
+            });
 
-// Chiama tutti gli utenti
-async getAll(req, res) {
-    try {
-        const { page = 1, limit = 10, search = '', sort = '-createdAt', schoolId, role } = req.query;
-        
-        console.log('Controller getAll received raw query:', req.query);
-        console.log('Controller getAll parsed params:', {
-            page,
-            limit,
-            search,
-            sort,
-            schoolId,
-            role,
-            user: req.user?.id
-        });
-
-        // Validazione schoolId
-        if (schoolId && !mongoose.Types.ObjectId.isValid(schoolId)) {
-            return this.sendError(res, createError(
-                ErrorTypes.VALIDATION.INVALID_ID,
-                'ID scuola non valido'
-            ));
-        }
-
-        const result = await this.userService.listUsers({
-            page: parseInt(page),
-            limit: parseInt(limit),
-            search,
-            schoolId,
-            role,
-            sort
-        });
-
-        return this.sendResponse(res, {
-            status: 'success',
-            data: {
-                users: result.users,
-                total: result.total,
-                page: parseInt(page),
-                limit: parseInt(limit)
+            // Validazione schoolId
+            if (schoolId && !mongoose.Types.ObjectId.isValid(schoolId)) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.INVALID_ID,
+                    'ID scuola non valido'
+                ));
             }
-        });
-    } catch (error) {
-        console.error('Controller Error:', error);
-        return this.sendError(res, error);
+
+            const result = await this.userService.listUsers({
+                page: parseInt(page),
+                limit: parseInt(limit),
+                search,
+                schoolId,
+                role,
+                sort
+            });
+
+            return this.sendResponse(res, {
+                status: 'success',
+                data: {
+                    users: result.users,
+                    total: result.total,
+                    page: parseInt(page),
+                    limit: parseInt(limit)
+                }
+            });
+        } catch (error) {
+            console.error('Controller Error:', error);
+            return this.sendError(res, error);
+        }
     }
-}
 
     /**
      * Ottiene utente per ID
      */
-// src/controllers/UserController.js
-async getById(req, res) {
-    try {
-        const { id } = req.params;
-        console.log('UserController: Getting user by ID:', {
-            requestedId: id,
-            requestingUser: req.user?.id
-        });
+    async getById(req, res) {
+        try {
+            const { id } = req.params;
+            console.log('UserController: Getting user by ID:', {
+                requestedId: id,
+                requestingUser: req.user?.id
+            });
 
-        const user = await this.userService.getUserById(id);
-        
-        console.log('UserController: User found:', {
-            found: !!user,
-            userData: user ? { id: user._id, email: user.email } : null
-        });
+            const user = await this.userService.getUserById(id);
+            
+            console.log('UserController: User found:', {
+                found: !!user,
+                userData: user ? { id: user._id, email: user.email } : null
+            });
 
-        if (!user) {
-            return this.sendError(res, createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Utente non trovato'
-            ));
+            if (!user) {
+                return this.sendError(res, createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente non trovato'
+                ));
+            }
+
+            return this.sendResponse(res, {
+                status: 'success',
+                data: { user }
+            });
+        } catch (error) {
+            console.error('UserController: Get user failed:', error);
+            return this.sendError(res, error);
         }
-
-        return this.sendResponse(res, {
-            status: 'success',
-            data: { user }
-        });
-    } catch (error) {
-        console.error('UserController: Get user failed:', error);
-        return this.sendError(res, error);
     }
-}
 
     /**
      * Recupera gli utenti disponibili per il ruolo di manager
@@ -184,6 +185,102 @@ async getById(req, res) {
     }
 
     /**
+     * Assegna risorse a un utente (scuola, classi, studenti)
+     */
+    async assignResources(req, res) {
+        try {
+            const { id } = req.params;
+            const { schoolId, classIds, studentIds } = req.body;
+
+            logger.debug('Assigning resources to user', {
+                userId: id,
+                schoolId,
+                classCount: classIds?.length,
+                studentCount: studentIds?.length
+            });
+
+            // Valida i dati in base al ruolo
+            const user = await this.userService.getUserById(id);
+            
+            // Verifica che le risorse siano appropriate per il ruolo
+            if (['manager', 'pcto'].includes(user.role) && !schoolId) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.MISSING_FIELDS,
+                    'ID scuola richiesto per questo ruolo'
+                ));
+            }
+
+            if (user.role === 'teacher' && (!classIds || classIds.length === 0)) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.MISSING_FIELDS,
+                    'Almeno una classe deve essere assegnata per questo ruolo'
+                ));
+            }
+
+            if (user.role === 'tutor' && (!studentIds || studentIds.length === 0)) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.MISSING_FIELDS,
+                    'Almeno uno studente deve essere assegnato per questo ruolo'
+                ));
+            }
+
+            const updatedUser = await this.userService.assignResources(id, {
+                schoolId,
+                classIds,
+                studentIds
+            });
+
+            logger.info('Resources assigned successfully', {
+                userId: id
+            });
+
+            return this.sendResponse(res, {
+                status: 'success',
+                data: { user: updatedUser }
+            });
+        } catch (error) {
+            logger.error('Error assigning resources', { error });
+            return this.sendError(res, error);
+        }
+    }
+
+    /**
+     * Aggiorna i permessi di un utente
+     */
+    async updatePermissions(req, res) {
+        try {
+            const { id } = req.params;
+            const { permissions } = req.body;
+
+            logger.debug('Updating user permissions', {
+                userId: id,
+                permissionsCount: permissions?.length
+            });
+
+            if (!Array.isArray(permissions)) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.INVALID_DATA,
+                    'Il campo permissions deve essere un array'
+                ));
+            }
+
+            const updatedUser = await this.userService.updateUserPermissions(id, permissions);
+
+            logger.info('Permissions updated successfully', {
+                userId: id
+            });
+
+            return this.sendResponse(res, {
+                status: 'success',
+                data: { user: updatedUser }
+            });
+        } catch (error) {
+            logger.error('Error updating permissions', { error });
+            return this.sendError(res, error);
+        }
+    }
+
+    /**
      * Aggiorna utente
      */
     async update(req, res) {
@@ -200,13 +297,13 @@ async getById(req, res) {
 
             logger.info('User updated', { userId: id });
 
-            this.sendResponse(res, {
+            return this.sendResponse(res, {
                 status: 'success',
                 data: { user }
             });
         } catch (error) {
             logger.error('User update failed', { error });
-            this.handleError(res, error);
+            return this.handleError(res, error);
         }
     }
 
@@ -224,13 +321,13 @@ async getById(req, res) {
 
             logger.info('User deleted', { userId: id });
 
-            this.sendResponse(res, {
+            return this.sendResponse(res, {
                 status: 'success',
                 message: 'Utente eliminato con successo'
             });
         } catch (error) {
             logger.error('User deletion failed', { error });
-            this.handleError(res, error);
+            return this.handleError(res, error);
         }
     }
 
@@ -242,13 +339,13 @@ async getById(req, res) {
             const userId = req.user.id;
             const user = await this.userService.getUserById(userId);
 
-            this.sendResponse(res, {
+            return this.sendResponse(res, {
                 status: 'success',
                 data: { user }
             });
         } catch (error) {
             logger.error('Get profile failed', { error });
-            this.handleError(res, error);
+            return this.handleError(res, error);
         }
     }
 
@@ -269,13 +366,13 @@ async getById(req, res) {
 
             logger.info('Profile updated', { userId });
 
-            this.sendResponse(res, {
+            return this.sendResponse(res, {
                 status: 'success',
                 data: { user }
             });
         } catch (error) {
             logger.error('Profile update failed', { error });
-            this.handleError(res, error);
+            return this.handleError(res, error);
         }
     }
 
@@ -311,13 +408,13 @@ async getById(req, res) {
                 action 
             });
 
-            this.sendResponse(res, {
+            return this.sendResponse(res, {
                 status: 'success',
                 data: { user }
             });
         } catch (error) {
             logger.error('Permission management failed', { error });
-            this.handleError(res, error);
+            return this.handleError(res, error);
         }
     }
 
@@ -333,13 +430,42 @@ async getById(req, res) {
                 limit: parseInt(limit) || 10
             });
 
-            this.sendResponse(res, {
+            return this.sendResponse(res, {
                 status: 'success',
                 data: result
             });
         } catch (error) {
             logger.error('List users failed', { error });
-            this.handleError(res, error);
+            return this.handleError(res, error);
+        }
+    }
+
+    /**
+     * Cambia lo stato di un utente (attivo/inattivo/sospeso)
+     */
+    async changeStatus(req, res) {
+        try {
+            const { id } = req.params;
+            const { status } = req.body;
+
+            if (!status) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.MISSING_FIELDS,
+                    'Stato richiesto'
+                ));
+            }
+
+            const user = await this.userService.changeUserStatus(id, status);
+            
+            logger.info('User status changed', { userId: id, status });
+
+            return this.sendResponse(res, {
+                status: 'success',
+                data: { user }
+            });
+        } catch (error) {
+            logger.error('Change status failed', { error });
+            return this.handleError(res, error);
         }
     }
 
@@ -349,42 +475,14 @@ async getById(req, res) {
             
             console.log('Getting teachers for school:', schoolId);
     
-            const school = await mongoose.model('School')
-                .findById(schoolId)
-                .populate('manager', 'firstName lastName email role')
-                .populate('users.user', 'firstName lastName email role')
-                .select('manager users');
-    
-            if (!school) {
-                return this.sendError(res, createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Scuola non trovata'
-                ));
-            }
-    
-            const teachers = [];
-    
-            // Aggiungi il manager se esiste
-            if (school.manager) {
-                teachers.push(school.manager);
-            }
-    
-            // Aggiungi gli insegnanti
-            if (school.users && school.users.length > 0) {
-                const teacherUsers = school.users
-                    .filter(u => u.role === 'teacher' && u.user)
-                    .map(u => u.user);
-                teachers.push(...teacherUsers);
-            }
+            const teachers = await this.userService.getSchoolTeachers(schoolId);
     
             console.log(`Found ${teachers.length} teachers for school ${schoolId}`);
-            console.log('Teachers data:', teachers);
     
-            // Assicuriamoci che la risposta sia strutturata correttamente
             return this.sendResponse(res, {
                 status: 'success',
                 data: {
-                    teachers // Rimuovi il livello extra di nidificazione
+                    teachers
                 }
             });
         } catch (error) {
@@ -392,7 +490,6 @@ async getById(req, res) {
             return this.sendError(res, error);
         }
     }
-    
 }
 
 module.exports = UserController;

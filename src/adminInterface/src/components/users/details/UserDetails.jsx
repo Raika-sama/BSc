@@ -11,19 +11,26 @@ import {
     Avatar,
     Chip,
     Alert,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem
+    Button,
+    Divider,
+    Grid
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useUser } from '../../../context/UserContext';
-import { useSchool } from '../../../context/SchoolContext';  // Aggiungi questo
+import { useSchool } from '../../../context/SchoolContext';
 import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
 import UserSessions from './UserSessions';
 import UserHistory from './UserHistory';
+import UserRoleInfo from './UserRoleInfo';
+import UserResourcesAssignment from './UserResourcesAssignment';
 
+// Icone per i badge di status
+import {
+    CheckCircle as ActiveIcon,
+    Cancel as InactiveIcon,
+    Block as SuspendedIcon
+} from '@mui/icons-material';
 
 const UserDetails = () => {
     const { id } = useParams();
@@ -50,7 +57,8 @@ const UserDetails = () => {
                 id: data._id,
                 email: data.email,
                 firstName: data.firstName,
-                lastName: data.lastName
+                lastName: data.lastName,
+                role: data.role
             });
 
             setUserData(data);
@@ -67,6 +75,34 @@ const UserDetails = () => {
             loadUserData();
         }
     }, [id]);
+
+    // Ottieni l'icona di stato
+    const getStatusIcon = (status) => {
+        switch (status) {
+            case 'active':
+                return <ActiveIcon color="success" />;
+            case 'inactive':
+                return <InactiveIcon color="warning" />;
+            case 'suspended':
+                return <SuspendedIcon color="error" />;
+            default:
+                return null;
+        }
+    };
+
+    // Ottieni il colore per il chip di stato
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'active':
+                return 'success';
+            case 'inactive':
+                return 'warning';
+            case 'suspended':
+                return 'error';
+            default:
+                return 'default';
+        }
+    };
 
     if (loading) {
         return (
@@ -96,7 +132,6 @@ const UserDetails = () => {
         );
     }
 
-
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -106,45 +141,71 @@ const UserDetails = () => {
             <Box sx={{ p: 3 }}>
                 {/* Header */}
                 <Paper sx={{ p: 3, mb: 3 }}>
-                    <Box display="flex" alignItems="center" gap={3}>
-                        <Avatar
-                            sx={{ 
-                                width: 80, 
-                                height: 80,
-                                bgcolor: 'primary.main'
-                            }}
-                        >
-                            {userData.firstName[0]}{userData.lastName[0]}
-                        </Avatar>
-                        <Box>
-                            <Typography variant="h5">
-                                {userData.firstName} {userData.lastName}
-                            </Typography>
-                            <Typography color="textSecondary">
-                                {userData.email}
-                            </Typography>
-                            <Box sx={{ mt: 1 }}>
-                            <Chip
-                                    label={userData.role?.toUpperCase()}
-                                    color="primary"
-                                    size="small"
-                                    sx={{ mr: 1 }}
-                                />
-                                <Chip
-                                    label={userData.status?.toUpperCase()}
-                                    color={
-                                        userData.status === 'active' ? 'success' :
-                                        userData.status === 'inactive' ? 'warning' :
-                                        'error'
-                                    }
-                                    size="small"
-                                />
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                            <Box display="flex" alignItems="center" gap={3}>
+                                <Avatar
+                                    sx={{ 
+                                        width: 80, 
+                                        height: 80,
+                                        bgcolor: 'primary.main'
+                                    }}
+                                >
+                                    {userData.firstName[0]}{userData.lastName[0]}
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="h5">
+                                        {userData.firstName} {userData.lastName}
+                                    </Typography>
+                                    <Typography color="textSecondary">
+                                        {userData.email}
+                                    </Typography>
+                                    <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                                        <Chip
+                                            label={userData.role?.toUpperCase()}
+                                            color="primary"
+                                            size="small"
+                                        />
+                                        <Chip
+                                            label={userData.status?.toUpperCase()}
+                                            color={getStatusColor(userData.status)}
+                                            icon={getStatusIcon(userData.status)}
+                                            size="small"
+                                        />
+                                        {userData.hasAdminAccess && (
+                                            <Chip
+                                                label="ADMIN ACCESS"
+                                                color="error"
+                                                size="small"
+                                            />
+                                        )}
+                                    </Box>
+                                </Box>
                             </Box>
-                        </Box>
-                    </Box>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <Box display="flex" justifyContent="flex-end" height="100%" alignItems="center">
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => navigate(`/admin/users/${id}/edit`)}
+                                    sx={{ mr: 1 }}
+                                >
+                                    Modifica
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    color="secondary"
+                                    onClick={() => navigate('/admin/users')}
+                                >
+                                    Torna alla lista
+                                </Button>
+                            </Box>
+                        </Grid>
+                    </Grid>
                 </Paper>
 
-                {/* Tabs modificati per includere la gestione scuola */}
+                {/* Tabs */}
                 <Paper sx={{ mb: 3 }}>
                     <Tabs
                         value={currentTab}
@@ -152,9 +213,11 @@ const UserDetails = () => {
                         sx={{ borderBottom: 1, borderColor: 'divider' }}
                     >
                         <Tab label="Informazioni" />
-                        <Tab label="Permessi e Ruoli" />
-                        <Tab label="Sessioni Attive" />
-                        <Tab label="Storico Modifiche" />
+                        <Tab label="Ruolo" />
+                        <Tab label="Permessi" />
+                        <Tab label="Risorse Assegnate" />
+                        <Tab label="Sessioni" />
+                        <Tab label="Storico" />
                     </Tabs>
 
                     <Box sx={{ p: 3 }}>
@@ -165,20 +228,31 @@ const UserDetails = () => {
                             />
                         )}
                         {currentTab === 1 && (
+                            <UserRoleInfo 
+                                role={userData.role} 
+                            />
+                        )}
+                        {currentTab === 2 && (
                             <UserPermissions 
                                 userData={userData} 
                                 onUpdate={loadUserData} 
                             />
                         )}
-                        {currentTab === 2 && (
+                        {currentTab === 3 && (
+                            <UserResourcesAssignment 
+                                userData={userData} 
+                                onUpdate={loadUserData}
+                            />
+                        )}
+                        {currentTab === 4 && (
                             <UserSessions 
                                 userData={userData} 
                                 onUpdate={loadUserData} 
                             />
                         )}
-                        {currentTab === 3 && (
+                        {currentTab === 5 && (
                             <UserHistory 
-                                userData={userData} 
+                                userData={userData}
                             />
                         )}
                     </Box>

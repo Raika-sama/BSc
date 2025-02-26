@@ -31,16 +31,41 @@ const sessionTokenSchema = new mongoose.Schema({
     }
 }, { _id: true });
 
+// Definizione schema della singola permission
+const permissionSchema = new mongoose.Schema({
+    resource: {
+        type: String,
+        required: true,
+        enum: [
+            'users', 'schools', 'classes', 'students', 
+            'tests', 'api', 'finance', 'services', 
+            'analytics', 'materials', 'results', 'engines' // Aggiunti results ed engines
+        ]
+    },
+    actions: [{
+        type: String,
+        enum: ['read', 'create', 'update', 'delete', 'manage', 'write'], // Aggiunto write
+        required: true
+    }],
+    scope: {
+        type: String,
+        enum: ['all', 'school', 'class', 'assigned', 'own'],
+        default: 'own'
+    }
+}, { _id: false });
+
 const userSchema = new mongoose.Schema({
     firstName: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        description: 'Nome dell\'utente'
     },
     lastName: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        description: 'Cognome dell\'utente'
     },
     email: {
         type: String,
@@ -53,56 +78,95 @@ const userSchema = new mongoose.Schema({
                 return /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(v);
             },
             message: props => `${props.value} non è un'email valida!`
-        }
+        },
+        description: 'Email dell\'utente (usata per il login)'
     },
     password: {
         type: String,
         required: true,
         minlength: 8,
         select: false,
-        /*validate: {
-            validator: function(v) {
-                return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(v);
-            },
-            message: 'La password deve contenere almeno 8 caratteri, una maiuscola, una minuscola, un numero e un carattere speciale'
-        }*/
+        description: 'Password dell\'utente (criptata)'
     },
+    
+    // Aggiornamento del campo ruolo con tutti i ruoli
     role: {
         type: String,
-        enum: ['teacher', 'admin', 'manager'],
-        required: true
+        enum: ['admin', 'developer', 'manager', 'pcto', 'teacher', 'tutor', 'researcher', 'health', 'student'],
+        required: true,
+        description: 'Ruolo utente nel sistema'
     },
-    permissions: [{
-        type: String,
-        enum: [
-            'users:read', 'users:write',
-            'schools:read', 'schools:write',
-            'classes:read', 'classes:write',
-            'tests:read', 'tests:write',
-            'results:read', 'results:write'
-        ]
+    
+    // Permessi espliciti
+    permissions: [permissionSchema],
+    
+    // Campi per gestire gli ambiti di visibilità
+    assignedSchoolId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'School',
+        description: 'Scuola assegnata per ruoli con visibilità limitata'
+    },
+    
+    assignedClassIds: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Class',
+        description: 'Classi assegnate per insegnanti e tutor'
     }],
+    
+    assignedStudentIds: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Student',
+        description: 'Studenti assegnati per tutor'
+    }],
+    
+    // Gestione accesso ai test
+    testAccessLevel: {
+        type: Number,
+        min: 0,
+        max: 8,
+        default: 8,
+        description: 'Livello di accesso ai test (0-8 come da specifiche)'
+    },
+    
+    // Flag per accesso al frontend pubblico e admin
+    hasAdminAccess: {
+        type: Boolean,
+        default: false,
+        description: 'Utente può accedere al frontend amministrativo'
+    },
+    
+    // Mantenere i campi esistenti
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'School',
-        /*required: function() {
-            return this.role === 'teacher' || this.role === 'manager';
-        }*/
-        required: false  // Cambiamo da required function a false
-
+        required: false,
+        description: 'Scuola a cui l\'utente appartiene (per retrocompatibilità)'
     },
+    
     status: {
         type: String,
         enum: ['active', 'inactive', 'suspended'],
-        default: 'active'
+        default: 'active',
+        description: 'Stato corrente dell\'utente'
     },
-    lastLogin: Date,
+    
+    lastLogin: {
+        type: Date,
+        description: 'Data e ora dell\'ultimo login'
+    },
+    
     loginAttempts: {
         type: Number,
         default: 0,
-        min: 0
+        min: 0,
+        description: 'Numero di tentativi di login falliti'
     },
-    lockUntil: Date,
+    
+    lockUntil: {
+        type: Date,
+        description: 'Account bloccato fino a questa data'
+    },
+    
     passwordHistory: [{
         password: String,
         changedAt: {
@@ -110,10 +174,26 @@ const userSchema = new mongoose.Schema({
             default: Date.now
         }
     }],
+    
     passwordResetToken: String,
     passwordResetExpires: Date,
-    sessionTokens: [sessionTokenSchema],
-    default: []
+    
+    sessionTokens: {
+        type: [sessionTokenSchema],
+        default: []
+    },
+    
+    // Flag per soft delete
+    isDeleted: {
+        type: Boolean,
+        default: false,
+        description: 'Flag per indicare se l\'utente è stato rimosso (soft delete)'
+    },
+    
+    deletedAt: {
+        type: Date,
+        description: 'Data e ora della cancellazione (soft delete)'
+    }
 }, {
     timestamps: true
 });
@@ -125,18 +205,14 @@ userSchema.index({ schoolId: 1 });
 userSchema.index({ status: 1 });
 userSchema.index({ 'sessionTokens.token': 1 });
 userSchema.index({ 'sessionTokens.expiresAt': 1 });
-userSchema.index({ firstName: 1, lastName: 1 });  // Nuovo
-userSchema.index({ createdAt: -1 });  // Nuovo
-userSchema.index({ role: 1, status: 1 });  // Nuovo
-userSchema.index({ lastLogin: -1 });  // Nuovo
-
-
-userSchema.pre('save', function(next) {
-    if (!this.sessionTokens) {
-        this.sessionTokens = [];
-    }
-    next();
-});
+userSchema.index({ firstName: 1, lastName: 1 });
+userSchema.index({ createdAt: -1 });
+userSchema.index({ role: 1, status: 1 });
+userSchema.index({ lastLogin: -1 });
+userSchema.index({ assignedSchoolId: 1 });
+userSchema.index({ assignedClassIds: 1 });
+userSchema.index({ assignedStudentIds: 1 });
+userSchema.index({ isDeleted: 1 });
 
 // Metodi di utilità per la gestione delle sessioni
 userSchema.methods.addSessionToken = function(tokenData) {
@@ -234,5 +310,58 @@ userSchema.methods.getAuditHistory = async function() {
 userSchema.methods.isLocked = function() {
     return this.lockUntil && this.lockUntil > Date.now();
 };
+
+// Metodo per inizializzare permessi basati sul ruolo
+userSchema.methods.initializePermissions = function() {
+    const permissionService = require('../services/PermissionService');
+    const service = new permissionService();
+    return service.initializeUserPermissions(this);
+};
+
+// Metodo virtuale per ottenere il nome completo
+userSchema.virtual('fullName').get(function() {
+    return `${this.firstName} ${this.lastName}`;
+});
+
+// Pre-save hook per hashare la password
+userSchema.pre('save', async function(next) {
+    // Hasha la password solo se è stata modificata o è nuova
+    if (!this.isModified('password')) return next();
+    
+    try {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Pre-save hook per impostare valori predefiniti basati sul ruolo
+userSchema.pre('save', function(next) {
+    if (this.isNew) {
+        // Imposta accesso all'admin per admin e developer
+        if (['admin', 'developer'].includes(this.role)) {
+            this.hasAdminAccess = true;
+        }
+        
+        // Imposta livello di accesso ai test basato sul ruolo
+        const testAccessLevels = {
+            admin: 0,       // Tutti i test
+            developer: 1,   // Tutti i test
+            manager: 2,     // Test nella propria scuola
+            pcto: 3,        // Test nella propria scuola
+            teacher: 4,     // Test nelle proprie classi
+            tutor: 5,       // Test assegnati ai propri studenti
+            researcher: 6,  // Analytics con quotazione
+            health: 7,      // Test con quotazione
+            student: 8      // Test assegnati a se stesso
+        };
+        
+        this.testAccessLevel = testAccessLevels[this.role] || 8;
+    }
+    
+    next();
+});
 
 module.exports = mongoose.model('User', userSchema);

@@ -1,12 +1,17 @@
 // src/middleware/index.js
 const createAuthMiddleware = require('./authMiddleware');
-const { authService, sessionService } = require('../services');
+const studentValidation = require('./studentValidation');
+const services = require('../services');
 
-// Inizializza il middleware di autenticazione
-const authMiddleware = createAuthMiddleware(authService, sessionService);
+// Creazione del middleware di autenticazione con tutti i servizi necessari
+const authMiddleware = createAuthMiddleware(
+    services.authService, 
+    services.sessionService,
+    services.permissionService,
+    services.studentAuthService
+);
 
 module.exports = {
-    protect: authMiddleware.protect,
-    restrictTo: authMiddleware.restrictTo,
-    loginLimiter: authMiddleware.loginLimiter
+    authMiddleware,
+    studentValidation
 };

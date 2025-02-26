@@ -6,46 +6,6 @@
     "auditLog": "logs\\.a721fb9705beba3a2de2d85d5f0df2bf5caef257-audit.json",
     "files": [
         {
-            "date": 1738537262683,
-            "name": "logs\\access-2025-02-03.log",
-            "hash": "7eb251ace4f18c72c35b64b99f34804906541251d27213d161130d631e62b726"
-        },
-        {
-            "date": 1738623620653,
-            "name": "logs\\access-2025-02-04.log",
-            "hash": "b6091fcddcb2bdc78ccc6aedccde9fdb0a055e5699b087aa840a2731382e584b"
-        },
-        {
-            "date": 1738703961123,
-            "name": "logs\\access-2025-02-04.log.1",
-            "hash": "ba69f2f0e735cbec4a53d0b9db942ded2a9f3c709cca555d3d587dc2778ef749"
-        },
-        {
-            "date": 1738741619933,
-            "name": "logs\\access-2025-02-05.log",
-            "hash": "d4ebc1319c769f29435206d57a149867599aa4401acc0f06c8a286c886d43b10"
-        },
-        {
-            "date": 1738796401192,
-            "name": "logs\\access-2025-02-06.log",
-            "hash": "c86aef87c6a5131da3c75396e5c36241a9722f7fba9b00a4e0aadce9bb555840"
-        },
-        {
-            "date": 1738883818886,
-            "name": "logs\\access-2025-02-07.log",
-            "hash": "105882fce82b382c1f9063ebacc4c44b195b639c4dbbaa599719e51e71477b30"
-        },
-        {
-            "date": 1738969249612,
-            "name": "logs\\access-2025-02-08.log",
-            "hash": "4e1ffa24408ee894f75f2843008f2a5082ae18e1035c82c12b396382dfa97357"
-        },
-        {
-            "date": 1739106942836,
-            "name": "logs\\access-2025-02-09.log",
-            "hash": "113bc697ed6a5115deacca777ad8a8e3813f0b2317c405d3f4523304906ce759"
-        },
-        {
             "date": 1739442688794,
             "name": "logs\\access-2025-02-13.log",
             "hash": "89007e8e707edbe3622064e795ed3bd360cb645f3079e880c6f87dea4be50f6b"
@@ -54,6 +14,16 @@
             "date": 1739718570325,
             "name": "logs\\access-2025-02-16.log",
             "hash": "181ac6988b1873d0f207d4093903ba09aad15495569a687191678e470b3043ee"
+        },
+        {
+            "date": 1740222724757,
+            "name": "logs\\access-2025-02-22.log",
+            "hash": "17ebda60a32f7f442548741a57d1e5df2512503c701f7f8b7aa78ee855e9bce1"
+        },
+        {
+            "date": 1740556393077,
+            "name": "logs\\access-2025-02-26.log",
+            "hash": "c546d11a3f25224d97a3ad077ab34f4b37957a286fcb85687592c490513f2f90"
         }
     ],
     "hashType": "sha256"

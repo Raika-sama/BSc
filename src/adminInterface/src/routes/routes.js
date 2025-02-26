@@ -3,27 +3,27 @@ import Dashboard from '../components/Dashboard';
 import UserManagement from '../components/users/UserManagement';
 import SchoolManagement from '../components/school/SchoolManagement';
 import SchoolDetails from '../components/school/SchoolDetails';
-import ClassManagement from '../components/classes/ClassManagement';    // Importa la pagina delle classi
-import ClassDetails from '../components/classes/details/ClassDetails';    // Nuovo componente
-import ClassTests from '../components/classes/details/detailscomponents/ClassTests';        // Nuovo componente
+import ClassManagement from '../components/classes/ClassManagement';
+import ClassDetails from '../components/classes/details/ClassDetails';
+import ClassTests from '../components/classes/details/detailscomponents/ClassTests';
 import SchoolWizard from '../components/school/wizard/SchoolWizard';
-import SchoolUsersManagement from '../components/school/schoolComponents/SchoolUsersManagement'; // Aggiungi questo import
-import StudentList from '../components/students/StudentList'; // Aggiungi questo import
-import ClassPopulate from '../components/classes/details/ClassPopulate';    // Aggiungi questo import
-import Profile from '../components/profile/Profile'; // Aggiungi questo import
-import PersonalTest from '../components/profile/PersonalTest';  // Aggiungi questo import
+import SchoolUsersManagement from '../components/school/schoolComponents/SchoolUsersManagement';
+import StudentList from '../components/students/StudentList';
+import ClassPopulate from '../components/classes/details/ClassPopulate';
+import Profile from '../components/profile/Profile';
+import PersonalTest from '../components/profile/PersonalTest';
 import SectionManagement from '../components/school/schoolComponents/SectionManagement';
 import AssignSchoolDialog from '../components/students/AssignSchoolDialog';
 import ApiExplorer from '../components/api-explorer/ApiExplorer';
 import StudentIndex from '../components/students/list/details/studentIndex';
-import UserDetails from '../components/users/details/UserDetails';  // Aggiungi questo import
+import UserDetails from '../components/users/details/UserDetails';
 import EnginesManagement from '../components/engines/EnginesManagement';
 import { Assessment as AssessmentIcon } from '@mui/icons-material';
 import CSITestView from '../components/engines/CSI/CSITestView';
 import CSIQuestionsPanel from '../components/engines/CSI/CSIQuestionsPanel';
 import PublicCSITest from '../components/engines/CSI/publicCSI';
-import StudentForm from '../components/students/StudentForm';  // Aggiungi questo import
-import StudentEditForm from '../components/students/list/tabs/InfoTab';  // Aggiungi questo import
+import StudentForm from '../components/students/StudentForm';
+import StudentEditForm from '../components/students/list/tabs/InfoTab';
 
 // Importa le icone da Material-UI
 import {
@@ -32,37 +32,76 @@ import {
     School as SchoolIcon,
     Class as ClassIcon,
     Assignment as TestIcon,
+    HealthAndSafety as HealthIcon,
+    Science as ResearcherIcon,
+    Analytics as AnalyticsIcon,
+    Security as SecurityIcon,
 } from '@mui/icons-material';
+
+// Aggiornamento delle definizioni dei permessi
 const PERMISSIONS = {
     USERS: {
         READ: 'users:read',
-        WRITE: 'users:write'
+        WRITE: 'users:write',
+        MANAGE: 'users:manage'
     },
     SCHOOLS: {
         READ: 'schools:read',
-        WRITE: 'schools:write'
+        WRITE: 'schools:write',
+        MANAGE: 'schools:manage'
     },
     CLASSES: {
         READ: 'classes:read',
-        WRITE: 'classes:write'
+        WRITE: 'classes:write',
+        MANAGE: 'classes:manage'
     },
     STUDENTS: {
         READ: 'students:read',
-        WRITE: 'students:write'
+        WRITE: 'students:write',
+        MANAGE: 'students:manage'
     },
     TESTS: {
         READ: 'tests:read',
-        WRITE: 'tests:write'
+        WRITE: 'tests:write',
+        MANAGE: 'tests:manage'
     },
     RESULTS: {
         READ: 'results:read',
-        WRITE: 'results:write'
+        WRITE: 'results:write',
+        MANAGE: 'results:manage'
     },
     ENGINES: {
         READ: 'engines:read',
-        WRITE: 'engines:write'
+        WRITE: 'engines:write',
+        MANAGE: 'engines:manage'
+    },
+    API: {
+        READ: 'api:read',
+        WRITE: 'api:write',
+        MANAGE: 'api:manage'
+    },
+    ANALYTICS: {
+        READ: 'analytics:read',
+        WRITE: 'analytics:write',
+        MANAGE: 'analytics:manage'
+    },
+    MATERIALS: {
+        READ: 'materials:read',
+        WRITE: 'materials:write',
+        MANAGE: 'materials:manage'
+    },
+    FINANCE: {
+        READ: 'finance:read',
+        WRITE: 'finance:write',
+        MANAGE: 'finance:manage'
+    },
+    SERVICES: {
+        READ: 'services:read',
+        WRITE: 'services:write',
+        MANAGE: 'services:manage'
     }
 };
+
 export const publicRoutes = [
     {
         path: 'test/csi/:token',
@@ -71,6 +110,7 @@ export const publicRoutes = [
         showInMenu: false
     }
 ];
+
 export const adminRoutes = [
     {
         path: 'dashboard',
@@ -87,15 +127,17 @@ export const adminRoutes = [
         icon: PersonIcon,
         permissions: [PERMISSIONS.USERS.READ],
         writePermission: PERMISSIONS.USERS.WRITE,
+        managePermission: PERMISSIONS.USERS.MANAGE,
         showInMenu: true
     },
     {
         path: 'users/:id',
-        element: UserDetails,  // Il componente che abbiamo creato
+        element: UserDetails,
         title: 'Dettagli Utente',
         icon: PersonIcon,
         permissions: [PERMISSIONS.USERS.READ],
         writePermission: PERMISSIONS.USERS.WRITE,
+        managePermission: PERMISSIONS.USERS.MANAGE,
         showInMenu: false
     },
     {
@@ -105,6 +147,7 @@ export const adminRoutes = [
         icon: SchoolIcon,
         permissions: [PERMISSIONS.SCHOOLS.READ],
         writePermission: PERMISSIONS.SCHOOLS.WRITE,
+        managePermission: PERMISSIONS.SCHOOLS.MANAGE,
         showInMenu: true
     },
     {
@@ -114,6 +157,7 @@ export const adminRoutes = [
         icon: SchoolIcon,
         permissions: [PERMISSIONS.SCHOOLS.READ],
         writePermission: PERMISSIONS.SCHOOLS.WRITE,
+        managePermission: PERMISSIONS.SCHOOLS.MANAGE,
         showInMenu: false
     },
     {
@@ -123,6 +167,7 @@ export const adminRoutes = [
         icon: ClassIcon,
         permissions: [PERMISSIONS.CLASSES.READ],
         writePermission: PERMISSIONS.CLASSES.WRITE,
+        managePermission: PERMISSIONS.CLASSES.MANAGE,
         showInMenu: true
     },
     {
@@ -130,6 +175,7 @@ export const adminRoutes = [
         element: SchoolWizard,
         title: 'Crea Scuola',
         permissions: [PERMISSIONS.SCHOOLS.WRITE],
+        managePermission: PERMISSIONS.SCHOOLS.MANAGE,
         showInMenu: false
     },
     {
@@ -139,6 +185,7 @@ export const adminRoutes = [
         icon: PersonIcon,
         permissions: [PERMISSIONS.USERS.READ, PERMISSIONS.SCHOOLS.READ],
         writePermission: PERMISSIONS.USERS.WRITE,
+        managePermission: PERMISSIONS.USERS.MANAGE,
         showInMenu: false
     },
     {
@@ -148,6 +195,7 @@ export const adminRoutes = [
         icon: SchoolIcon,
         permissions: [PERMISSIONS.SCHOOLS.READ],
         writePermission: PERMISSIONS.SCHOOLS.WRITE,
+        managePermission: PERMISSIONS.SCHOOLS.MANAGE,
         showInMenu: false
     },
     {
@@ -157,15 +205,17 @@ export const adminRoutes = [
         icon: ClassIcon,
         permissions: [PERMISSIONS.CLASSES.READ],
         writePermission: PERMISSIONS.CLASSES.WRITE,
+        managePermission: PERMISSIONS.CLASSES.MANAGE,
         showInMenu: false
     },
     {
-        path: 'classes/:classId/populate',  // Aggiungi questa nuova rotta
+        path: 'classes/:classId/populate',
         element: ClassPopulate,
         title: 'Popola Classe',
         icon: ClassIcon,
         permissions: [PERMISSIONS.CLASSES.READ, PERMISSIONS.STUDENTS.READ],
         writePermission: PERMISSIONS.CLASSES.WRITE,
+        managePermission: PERMISSIONS.CLASSES.MANAGE,
         showInMenu: false
     },
     {
@@ -175,6 +225,7 @@ export const adminRoutes = [
         icon: TestIcon,
         permissions: [PERMISSIONS.CLASSES.READ, PERMISSIONS.TESTS.READ],
         writePermission: PERMISSIONS.TESTS.WRITE,
+        managePermission: PERMISSIONS.TESTS.MANAGE,
         showInMenu: false
     },
     {
@@ -184,6 +235,7 @@ export const adminRoutes = [
         icon: PersonIcon,
         permissions: [PERMISSIONS.STUDENTS.READ],
         writePermission: PERMISSIONS.STUDENTS.WRITE,
+        managePermission: PERMISSIONS.STUDENTS.MANAGE,
         showInMenu: true
     },
     {
@@ -192,14 +244,16 @@ export const adminRoutes = [
         title: 'Assegnazione Studenti',
         icon: PersonIcon,
         permissions: [PERMISSIONS.STUDENTS.WRITE, PERMISSIONS.SCHOOLS.READ],
+        managePermission: PERMISSIONS.STUDENTS.MANAGE,
         showInMenu: false
     },
     {
         path: 'students/new',
-        element: StudentForm,  // Il nuovo componente
+        element: StudentForm,
         title: 'Nuovo Studente',
         icon: PersonIcon,
         permissions: [PERMISSIONS.STUDENTS.WRITE],
+        managePermission: PERMISSIONS.STUDENTS.MANAGE,
         showInMenu: false
     },
     {
@@ -209,6 +263,7 @@ export const adminRoutes = [
         icon: PersonIcon,
         permissions: [PERMISSIONS.STUDENTS.READ],
         writePermission: PERMISSIONS.STUDENTS.WRITE,
+        managePermission: PERMISSIONS.STUDENTS.MANAGE,
         showInMenu: false
     },
     {
@@ -237,9 +292,12 @@ export const adminRoutes = [
         path: 'api-explorer',
         element: ApiExplorer,
         title: 'Api Explorer',
-        permissions: null, // solo admin
-        adminOnly: true,
-        showInMenu: true
+        icon: SecurityIcon,
+        permissions: [PERMISSIONS.API.READ],
+        writePermission: PERMISSIONS.API.WRITE,
+        managePermission: PERMISSIONS.API.MANAGE,
+        showInMenu: true,
+        rolesAllowed: ['admin', 'developer'] // Solo admin e developer possono accedere
     },
     {
         path: 'engines',
@@ -248,7 +306,19 @@ export const adminRoutes = [
         icon: AssessmentIcon,
         permissions: [PERMISSIONS.ENGINES.READ],
         writePermission: PERMISSIONS.ENGINES.WRITE,
+        managePermission: PERMISSIONS.ENGINES.MANAGE,
         showInMenu: true
+    },
+    {
+        path: 'analytics',
+        element: Dashboard, // Cambiare con il componente Analytics quando sarà disponibile
+        title: 'Analytics',
+        icon: AnalyticsIcon,
+        permissions: [PERMISSIONS.ANALYTICS.READ],
+        writePermission: PERMISSIONS.ANALYTICS.WRITE,
+        managePermission: PERMISSIONS.ANALYTICS.MANAGE,
+        showInMenu: true,
+        rolesAllowed: ['admin', 'developer', 'researcher'] // Permesso anche ai ricercatori
     },
     // Rotte CSI
     {
@@ -258,6 +328,7 @@ export const adminRoutes = [
         icon: AssessmentIcon,
         permissions: [PERMISSIONS.ENGINES.READ],
         writePermission: PERMISSIONS.ENGINES.WRITE,
+        managePermission: PERMISSIONS.ENGINES.MANAGE,
         showInMenu: false
     },
     {
@@ -267,9 +338,22 @@ export const adminRoutes = [
         icon: AssessmentIcon,
         permissions: [PERMISSIONS.ENGINES.READ],
         writePermission: PERMISSIONS.ENGINES.WRITE,
+        managePermission: PERMISSIONS.ENGINES.MANAGE,
         showInMenu: false
+    },
+    // Rotte per professionisti sanitari
+    {
+        path: 'health',
+        element: EnginesManagement, // Sostituire con componente dedicato quando disponibile
+        title: 'Test Sanitari',
+        icon: HealthIcon,
+        permissions: [PERMISSIONS.ENGINES.READ],
+        writePermission: PERMISSIONS.ENGINES.WRITE,
+        showInMenu: true,
+        rolesAllowed: ['admin', 'developer', 'health'] // Solo admin, developer e professionisti sanitari
     }
 ];
+
 // Aggiungi questa verifica in development
 if (process.env.NODE_ENV === 'development') {
     const paths = adminRoutes.map(route => route.path);
@@ -278,16 +362,47 @@ if (process.env.NODE_ENV === 'development') {
         console.warn('Trovati path duplicati nelle route:', duplicates);
     }
 }
-// Utility per verificare i permessi delle rotte
-export const hasRoutePermission = (route, checkPermission) => {
-    // Se non ci sono permessi richiesti o l'utente è admin, concedi accesso
+
+// Utility aggiornata per verificare i permessi delle rotte
+export const hasRoutePermission = (route, user, checkPermission) => {
+    // Verifica ruoli specifici se definiti
+    if (route.rolesAllowed && !route.rolesAllowed.includes(user.role)) {
+        return false;
+    }
+    
+    // Se non ci sono permessi richiesti, concedi accesso
     if (!route.permissions) return true;
     
-    // Verifica tutti i permessi richiesti
+    // Admin hanno sempre accesso completo
+    if (user.role === 'admin') return true;
+    
+    // Developer hanno accesso a tutto tranne finanza
+    if (user.role === 'developer' && !route.path.includes('finance')) return true;
+    
+    // Per gli altri ruoli, verifica i permessi specifici
     return route.permissions.every(permission => checkPermission(permission));
 };
 
-export const canWriteInRoute = (route, checkPermission) => {
-    if (!route.writePermission) return true;
+export const canWriteInRoute = (route, user, checkPermission) => {
+    // Admin hanno sempre permessi di scrittura
+    if (user.role === 'admin') return true;
+    
+    // Developer hanno permessi di scrittura ovunque tranne finanza
+    if (user.role === 'developer' && !route.path.includes('finance')) return true;
+    
+    // Per gli altri ruoli, verifica i permessi specifici
+    if (!route.writePermission) return false;
     return checkPermission(route.writePermission);
+};
+
+export const canManageInRoute = (route, user, checkPermission) => {
+    // Admin hanno sempre permessi di gestione
+    if (user.role === 'admin') return true;
+    
+    // Developer hanno permessi di gestione ovunque tranne finanza
+    if (user.role === 'developer' && !route.path.includes('finance')) return true;
+    
+    // Per gli altri ruoli, verifica i permessi specifici
+    if (!route.managePermission) return false;
+    return checkPermission(route.managePermission);
 };

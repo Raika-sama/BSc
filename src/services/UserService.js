@@ -4,10 +4,11 @@ const logger = require('../utils/errors/logger/logger');
 const bcrypt = require('bcryptjs');
 
 class UserService {
-    constructor(userRepository, authService, sessionService) {
+    constructor(userRepository, authService, sessionService, permissionService) {
         this.userRepository = userRepository;
         this.authService = authService;
         this.sessionService = sessionService;
+        this.permissionService = permissionService;
         this.SALT_ROUNDS = 10;
         this.PASSWORD_HISTORY_LIMIT = 5;
     }
@@ -80,7 +81,7 @@ class UserService {
         }
     }
 
-     // Aggiungiamo il metodo validateUserData
+    // Aggiungiamo il metodo validateUserData
     validateUserData(userData, isNewUser = true) {
         const errors = {};
 
@@ -105,14 +106,13 @@ class UserService {
         }
 
         // Validazione ruolo
-        const validRoles = ['teacher', 'admin', 'manager'];
+        const validRoles = ['admin', 'developer', 'manager', 'pcto', 'teacher', 'tutor', 'researcher', 'health', 'student'];
         if (!userData.role || !validRoles.includes(userData.role)) {
             errors.role = 'Ruolo non valido';
         }
 
         return Object.keys(errors).length > 0 ? errors : null;
     }
-
 
     /**
      * Crea un nuovo utente
@@ -153,6 +153,11 @@ class UserService {
 
             console.log('UserService: Creating user with prepared data');
 
+            // Inizializza permessi e accesso basati sul ruolo
+            if (this.permissionService) {
+                this.permissionService.initializeUserPermissions(userToCreate);
+            }
+
             // Creazione utente
             const user = await this.userRepository.create(userToCreate);
             console.log('UserService: User created successfully:', {
@@ -167,7 +172,58 @@ class UserService {
         }
     }
 
-    // Nuovo metodo per lista utenti
+    // Metodo per assegnare risorse a un utente
+    async assignResources(userId, resources) {
+        try {
+            logger.debug('Assigning resources to user', { userId, resources });
+
+            if (!this.permissionService) {
+                throw createError(
+                    ErrorTypes.SYSTEM.OPERATION_FAILED,
+                    'Servizio permessi non disponibile'
+                );
+            }
+
+            const user = await this.permissionService.assignResources(userId, resources);
+            
+            logger.info('Resources assigned successfully', {
+                userId,
+                schoolId: resources.schoolId,
+                classCount: resources.classIds?.length,
+                studentCount: resources.studentIds?.length
+            });
+
+            return this.sanitizeUser(user);
+        } catch (error) {
+            logger.error('Error assigning resources', { error, userId });
+            throw error;
+        }
+    }
+
+    // Metodo per aggiornare i permessi di un utente
+    async updateUserPermissions(userId, permissions) {
+        try {
+            logger.debug('Updating user permissions', { userId });
+
+            if (!this.permissionService) {
+                throw createError(
+                    ErrorTypes.SYSTEM.OPERATION_FAILED,
+                    'Servizio permessi non disponibile'
+                );
+            }
+
+            const user = await this.permissionService.updateUserPermissions(userId, permissions);
+            
+            logger.info('User permissions updated successfully', { userId });
+
+            return this.sanitizeUser(user);
+        } catch (error) {
+            logger.error('Error updating user permissions', { error, userId });
+            throw error;
+        }
+    }
+
+    // Metodo per lista utenti
     async listUsers(filters = {}, options = {}) {
         try {
             console.log('UserService: Received filters:', filters);
@@ -215,6 +271,24 @@ class UserService {
     async updateUser(userId, updateData) {
         try {
             logger.debug('Updating user', { userId });
+
+            // Se il ruolo viene cambiato, reinizializza i permessi
+            if (updateData.role && this.permissionService) {
+                const user = await this.userRepository.findById(userId);
+                
+                if (user.role !== updateData.role) {
+                    // Crea un oggetto temporaneo con il nuovo ruolo per inizializzare i permessi
+                    const tempUser = { ...user.toObject(), role: updateData.role };
+                    
+                    // Inizializza i permessi basati sul nuovo ruolo
+                    this.permissionService.initializeUserPermissions(tempUser);
+                    
+                    // Aggiungi i permessi e il livello di accesso all'oggetto di aggiornamento
+                    updateData.permissions = tempUser.permissions;
+                    updateData.testAccessLevel = tempUser.testAccessLevel;
+                    updateData.hasAdminAccess = tempUser.hasAdminAccess;
+                }
+            }
 
             // Se viene aggiornata la password
             if (updateData.password) {
@@ -277,7 +351,6 @@ class UserService {
         await this.sessionService.removeAllSessions(userId);
     }
 
-
     prepareUserData(userData, hashedPassword, options) {
         return {
             ...userData,
@@ -289,7 +362,6 @@ class UserService {
             }]
         };
     }
-
 
     /**
      * Cambia lo stato di un utente
@@ -390,28 +462,26 @@ class UserService {
         }
     }
 
-        /**
+    /**
      * Soft delete utente
      * @param {string} userId - ID utente
      */
-        async softDeleteUser(userId) {
-            const user = await this.userRepository.findById(userId);
-            if (!user) {
-                throw createError(ErrorTypes.RESOURCE.NOT_FOUND, 'Utente non trovato');
-            }
-    
-            // Business logic per soft delete
-            const updateData = {
-                isDeleted: true,
-                deletedAt: new Date(),
-                status: 'inactive'
-            };
-    
-            await this.sessionService.removeAllSessions(userId);
-            return this.userRepository.update(userId, updateData);
+    async softDeleteUser(userId) {
+        const user = await this.userRepository.findById(userId);
+        if (!user) {
+            throw createError(ErrorTypes.RESOURCE.NOT_FOUND, 'Utente non trovato');
         }
-    
-    
+
+        // Business logic per soft delete
+        const updateData = {
+            isDeleted: true,
+            deletedAt: new Date(),
+            status: 'inactive'
+        };
+
+        await this.sessionService.removeAllSessions(userId);
+        return this.userRepository.update(userId, updateData);
+    }
 
     /**
      * Hash password
@@ -426,23 +496,23 @@ class UserService {
      * Sanitizza oggetto utente per risposta
      * @param {Object} user - Utente da sanitizzare
      */
-sanitizeUser(user) {
-    if (!user) return null;
-    
-    // Se l'oggetto è già un plain object (da .lean())
-    const userData = user.toObject ? user.toObject() : { ...user };
-    
-    // Rimuovi i campi sensibili
-    const {
-        password,
-        passwordHistory,
-        passwordResetToken,
-        passwordResetExpires,
-        ...safeUser
-    } = userData;
-    
-    return safeUser;
-}
+    sanitizeUser(user) {
+        if (!user) return null;
+        
+        // Se l'oggetto è già un plain object (da .lean())
+        const userData = user.toObject ? user.toObject() : { ...user };
+        
+        // Rimuovi i campi sensibili
+        const {
+            password,
+            passwordHistory,
+            passwordResetToken,
+            passwordResetExpires,
+            ...safeUser
+        } = userData;
+        
+        return safeUser;
+    }
 }
 
 module.exports = UserService;

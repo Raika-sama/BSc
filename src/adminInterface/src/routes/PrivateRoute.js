@@ -24,6 +24,7 @@ const PrivateRoute = ({ children }) => {
         isAuthenticated,
         hasUser: !!user,
         userStatus,
+        userRole: user?.role,
         loading,
         currentPath: location.pathname
     });
@@ -56,14 +57,14 @@ const PrivateRoute = ({ children }) => {
         />;
     }
 
-    // Verifica ruolo admin
-    if (user.role !== 'admin') {
-        console.log('⛔ PrivateRoute: Utente non admin');
+    // Verifica accesso al frontend admin
+    if (!user.hasAdminAccess && !['admin', 'developer'].includes(user.role)) {
+        console.log('⛔ PrivateRoute: Utente non ha accesso al frontend admin');
         return <Navigate 
             to="/unauthorized" 
             state={{ 
                 reason: 'insufficient_permissions',
-                message: 'Non hai i permessi necessari per accedere a questa sezione.' 
+                message: 'Non hai i permessi necessari per accedere al pannello amministrativo.' 
             }} 
             replace 
         />;

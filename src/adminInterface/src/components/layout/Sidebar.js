@@ -140,7 +140,7 @@ const Sidebar = ({ open, drawerWidth }) => {
     const filteredMenuItems = adminRoutes.filter(route => {
         if (!route.showInMenu) return false;
         if (route.adminOnly && user?.role !== 'admin') return false;
-        return hasRoutePermission(route, checkPermission);
+        return hasRoutePermission(route, user, checkPermission);
     });
 
     const handleNavigation = (path) => {

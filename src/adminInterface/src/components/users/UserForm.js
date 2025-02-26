@@ -11,9 +11,11 @@ import {
     InputLabel, 
     Select, 
     MenuItem,
-    FormHelperText,  // Aggiungiamo questa importazione
+    FormHelperText,
     CircularProgress,
-    Box 
+    Box,
+    Typography,
+    Divider
 } from '@mui/material';
 import { useUser } from '../../context/UserContext';
 
@@ -91,6 +93,18 @@ const UserForm = ({ open, onClose, onSave, initialData, isLoading }) => {
         setFormData(INITIAL_FORM_STATE);
         setErrors({});
         onClose();
+    };
+
+    // Descrizioni dei ruoli per tooltip/info
+    const roleDescriptions = {
+        admin: 'Accesso completo a tutte le funzionalità del sistema, inclusi finanza e gestione servizi.',
+        developer: 'Accesso completo a tutte le funzionalità tranne finanza.',
+        manager: 'Gestisce una scuola assegnata, inclusi classi, studenti e test.',
+        pcto: 'Responsabile PCTO con accesso in lettura a classi/studenti e gestione test.',
+        teacher: 'Insegnante con accesso in lettura alle proprie classi e gestione test per esse.',
+        tutor: 'Tutoraggio di studenti assegnati e gestione dei test per loro.',
+        researcher: 'Accesso in sola lettura alle analitiche.',
+        health: 'Professionisti della salute mentale con accesso a test esistenti e creazione di nuovi.'
     };
 
     return (
@@ -181,14 +195,27 @@ const UserForm = ({ open, onClose, onSave, initialData, isLoading }) => {
                             label="Ruolo"
                             required
                         >
-                            <MenuItem value="teacher">Insegnante</MenuItem>
-                            <MenuItem value="manager">Responsabile</MenuItem>
                             <MenuItem value="admin">Amministratore</MenuItem>
+                            <MenuItem value="developer">Sviluppatore</MenuItem>
+                            <MenuItem value="manager">Referente Scolastico</MenuItem>
+                            <MenuItem value="pcto">Responsabile PCTO</MenuItem>
+                            <MenuItem value="teacher">Insegnante</MenuItem>
+                            <MenuItem value="tutor">Tutor</MenuItem>
+                            <MenuItem value="researcher">Ricercatore</MenuItem>
+                            <MenuItem value="health">Professionista Sanitario</MenuItem>
                         </Select>
                         {errors.role && (
                             <FormHelperText>{errors.role}</FormHelperText>
                         )}
                     </FormControl>
+
+                    {formData.role && (
+                        <Box mt={2}>
+                            <Typography variant="caption" color="textSecondary">
+                                {roleDescriptions[formData.role]}
+                            </Typography>
+                        </Box>
+                    )}
                 </DialogContent>
 
                 <DialogActions>
