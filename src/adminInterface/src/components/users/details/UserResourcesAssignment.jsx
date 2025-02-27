@@ -189,42 +189,57 @@ const UserResourcesAssignment = ({ userData, onUpdate }) => {
     };
 
     // Salva le assegnazioni
+
     const handleSave = async () => {
         try {
             setSaving(true);
             setError(null);
-
+    
             // Validazione
             if (roleRequirements.needsSchool && !selectedSchool) {
                 setError('È necessario selezionare una scuola');
                 return;
             }
-
+    
             if (roleRequirements.needsClasses && selectedClasses.length === 0) {
                 setError('È necessario selezionare almeno una classe');
                 return;
             }
-
+    
             if (roleRequirements.needsStudents && selectedStudents.length === 0) {
                 setError('È necessario selezionare almeno uno studente');
                 return;
             }
-
+    
             // Prepara i dati da aggiornare
             const updateData = {
-                assignedSchoolId: selectedSchool,
-                assignedClassIds: selectedClasses,
-                assignedStudentIds: selectedStudents
+                assignedSchoolId: selectedSchool || null,
+                assignedClassIds: selectedClasses || [],
+                assignedStudentIds: selectedStudents || []
             };
-
+            
+            console.log('Salvataggio risorse - UserResourcesAssignment - updateData:', updateData, 'userId:', userData._id);
+    
+            // Verifica che l'ID utente sia valido
+            if (!userData._id) {
+                setError('ID utente mancante');
+                console.error('ID utente mancante');
+                return;
+            }
+    
             // Aggiorna l'utente
             await updateUser(userData._id, updateData);
             
             // Notifica il componente padre
-            onUpdate();
+            if (typeof onUpdate === 'function') {
+                onUpdate();
+            } else {
+                console.warn('onUpdate non è una funzione o non è definita');
+            }
+            
         } catch (error) {
-            console.error('Error saving resource assignments:', error);
-            setError('Errore durante il salvataggio delle assegnazioni');
+            console.error('Errore completo durante il salvataggio delle risorse:', error);
+            setError('Errore durante il salvataggio delle assegnazioni: ' + (error.message || 'Errore sconosciuto'));
         } finally {
             setSaving(false);
         }

@@ -287,49 +287,67 @@ class UserController extends BaseController {
         try {
             const { id } = req.params;
             const updateData = req.body;
-
+    
             logger.debug('Updating user', { 
                 userId: id,
-                updates: updateData
+                updates: updateData,
+                keys: Object.keys(updateData)
             });
-
+    
+            // Controllo che l'ID sia valido
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.INVALID_ID,
+                    'ID utente non valido'
+                ));
+            }
+    
+            // Controllo che ci siano dati da aggiornare
+            if (!updateData || Object.keys(updateData).length === 0) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.MISSING_FIELDS,
+                    'Nessun dato fornito per l\'aggiornamento'
+                ));
+            }
+    
             const user = await this.userService.updateUser(id, updateData);
-
+    
             logger.info('User updated', { userId: id });
-
+    
             return this.sendResponse(res, {
                 status: 'success',
                 data: { user }
             });
         } catch (error) {
             logger.error('User update failed', { error });
-            return this.handleError(res, error);
+            return this.sendError(res, error);
         }
     }
 
-    /**
-     * Elimina utente
-     */
-    async delete(req, res) {
-        try {
-            const { id } = req.params;
-            
-            logger.debug('Deleting user', { userId: id });
 
-            await this.userService.deleteUser(id);
-            await this.sessionService.removeAllSessions(id);
+/**
+ * Elimina utente (soft delete)
+ */
+async delete(req, res) {
+    try {
+        const { id } = req.params;
+        
+        logger.debug('Deleting user', { userId: id });
 
-            logger.info('User deleted', { userId: id });
+        // Utilizziamo il servizio per gestire l'eliminazione
+        const deleted = await this.userService.deleteUser(id);
 
-            return this.sendResponse(res, {
-                status: 'success',
-                message: 'Utente eliminato con successo'
-            });
-        } catch (error) {
-            logger.error('User deletion failed', { error });
-            return this.handleError(res, error);
-        }
+        logger.info('User deleted', { userId: id, success: deleted });
+
+        return this.sendResponse(res, {
+            status: 'success',
+            message: 'Utente eliminato con successo'
+        });
+    } catch (error) {
+        logger.error('User deletion failed', { error });
+        return this.sendError(res, error);
     }
+}
 
     /**
      * Ottiene profilo utente corrente

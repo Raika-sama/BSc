@@ -345,23 +345,26 @@ userSchema.pre('save', function(next) {
             this.hasAdminAccess = true;
         }
         
-        // Imposta livello di accesso ai test basato sul ruolo
-        const testAccessLevels = {
-            admin: 0,       // Tutti i test
-            developer: 1,   // Tutti i test
-            manager: 2,     // Test nella propria scuola
-            pcto: 3,        // Test nella propria scuola
-            teacher: 4,     // Test nelle proprie classi
-            tutor: 5,       // Test assegnati ai propri studenti
-            researcher: 6,  // Analytics con quotazione
-            health: 7,      // Test con quotazione
-            student: 8      // Test assegnati a se stesso
-        };
-        
-        this.testAccessLevel = testAccessLevels[this.role] || 8;
+        // Imposta livello di accesso ai test basato sul ruolo solo se non è già stato impostato
+        if (this.testAccessLevel === undefined) {
+            const testAccessLevels = {
+                admin: 0,       // Tutti i test
+                developer: 1,   // Tutti i test
+                manager: 2,     // Test nella propria scuola
+                pcto: 3,        // Test nella propria scuola
+                teacher: 4,     // Test nelle proprie classi
+                tutor: 5,       // Test assegnati ai propri studenti
+                researcher: 6,  // Analytics con quotazione
+                health: 7,      // Test con quotazione
+                student: 8      // Test assegnati a se stesso
+            };
+            
+            this.testAccessLevel = testAccessLevels[this.role] || 8;
+        }
     }
     
     next();
 });
+
 
 module.exports = mongoose.model('User', userSchema);

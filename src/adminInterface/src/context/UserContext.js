@@ -172,32 +172,120 @@ export const UserProvider = ({ children }) => {
         }
     };
 
-    const updateUser = async (userId, userData) => {
-        try {
-            const validationErrors = validateUserData(userData);
-            if (validationErrors) {
-                throw new Error('Validation Error', { cause: validationErrors });
-            }
 
-            const response = await axiosInstance.put(`/users/${userId}`, userData);
+/**
+ * Aggiorna un utente esistente
+ * @param {string} userId - ID dell'utente
+ * @param {Object} userData - Dati da aggiornare
+ * @returns {Promise<Object>} - Utente aggiornato
+ */
+const updateUser = async (userId, userData) => {
+    try {
+        // Assicuriamoci che userId sia valido
+        if (!userId) {
+            console.error("ID utente mancante");
+            throw new Error("ID utente mancante");
+        }
+        
+        console.log(`Aggiornamento utente ${userId} con dati:`, userData);
+        
+        // Se includes testAccessLevel, assicuriamoci che sia un numero
+        if (userData && 'testAccessLevel' in userData) {
+            userData.testAccessLevel = Number(userData.testAccessLevel);
+            console.log(`testAccessLevel convertito a numero:`, userData.testAccessLevel);
+        }
+        
+        // Determina se è un aggiornamento parziale
+        const isPartialUpdate = 
+            (userData && userData.permissions !== undefined) || 
+            (userData && userData.testAccessLevel !== undefined) ||
+            (userData && userData.hasAdminAccess !== undefined);
             
-            if (response.data.status === 'success') {
-                setUsers(prev => prev.map(user => 
-                    user._id === userId ? response.data.data.user : user
-                ));
-                showNotification('Utente aggiornato con successo', 'success');
-                return response.data.data.user;
+        console.log("Tipo di aggiornamento:", isPartialUpdate ? "Parziale" : "Completo");
+        
+        // Validazione con supporto per aggiornamenti parziali
+        const validationErrors = validateUserData(userData, false, isPartialUpdate);
+        
+        if (validationErrors) {
+            console.error('Errori di validazione:', validationErrors);
+            throw new Error('Validation Error');
+        }
+        
+        // Chiamata API
+        const response = await axiosInstance.put(`/users/${userId}`, userData);
+        
+        console.log(`Risposta completa dal server:`, response);
+        console.log(`Dati della risposta:`, response.data);
+        
+        // Verifica che la risposta abbia il formato corretto
+        if (response.data && response.data.status === 'success') {
+            // CORREZIONE: Gestisci diversi possibili formati della risposta
+            let updatedUser;
+            
+            // Opzione 1: user è direttamente nell'oggetto data
+            if (response.data.data && response.data.data.user) {
+                updatedUser = response.data.data.user;
+                console.log("Utente trovato in response.data.data.user:", updatedUser);
+            } 
+            // Opzione 2: l'intero oggetto data è l'utente
+            else if (response.data.data) {
+                updatedUser = response.data.data;
+                console.log("Utente trovato in response.data.data:", updatedUser);
             }
-        } catch (error) {
-            if (error.message === 'Validation Error') {
-                showNotification('Dati utente non validi', 'error');
-                throw error.cause;
+            // Opzione 3: non c'è un utente nella risposta, ricarica l'utente
+            else {
+                console.log("Utente non trovato nella risposta, ricarico i dati");
+                try {
+                    // Ricarica i dati dell'utente
+                    updatedUser = await getUserById(userId);
+                    console.log("Utente ricaricato:", updatedUser);
+                } catch (err) {
+                    console.error("Errore nel recupero dell'utente aggiornato:", err);
+                    // Prosegui comunque, al peggio non aggiorniamo la UI ma è già stato aggiornato sul DB
+                }
             }
-            const errorMessage = error.response?.data?.error?.message || 'Errore nell\'aggiornamento dell\'utente';
-            showNotification(errorMessage, 'error');
+            
+            // Anche se non abbiamo l'utente, mostriamo un messaggio di successo
+            // perché sappiamo che l'update nel DB è avvenuto
+            if (!updatedUser) {
+                console.warn("Non è stato possibile recuperare i dati dell'utente aggiornato");
+                showNotification('Aggiornamento eseguito, ma è necessario ricaricare la pagina per vedere le modifiche', 'warning');
+                return null;
+            }
+            
+            // Aggiorna lo stato con l'utente recuperato
+            setUsers(prev => prev.map(user => 
+                user._id === userId ? updatedUser : user
+            ));
+            
+            showNotification('Utente aggiornato con successo', 'success');
+            return updatedUser;
+        } else {
+            console.error('Risposta del server non valida:', response.data);
+            throw new Error('Risposta del server non valida');
+        }
+    } catch (error) {
+        console.error('Errore completo:', error);
+        
+        // Gestisci diversi tipi di errori
+        if (error.message === 'Validation Error') {
+            showNotification('Dati utente non validi. Verifica i campi inseriti.', 'error');
             throw error;
         }
-    };
+        
+        if (error.response?.data?.error) {
+            const serverError = error.response.data.error;
+            console.error('Errore dal server:', serverError);
+            showNotification(serverError.message || 'Errore dal server', 'error');
+            throw new Error(serverError.message || 'Errore dal server');
+        }
+        
+        // Errore generico
+        const errorMessage = error.message || 'Errore nell\'aggiornamento dell\'utente';
+        showNotification(errorMessage, 'error');
+        throw error;
+    }
+};
 
 
     const deleteUser = async (userId) => {
@@ -215,29 +303,152 @@ export const UserProvider = ({ children }) => {
         }
     };
 
-    const validateUserData = (userData, isNewUser = false) => {
-        const errors = {};
+/**
+ * Cambia lo stato di un utente (attivo/inattivo/sospeso)
+ * @param {string} userId - ID dell'utente
+ * @param {string} newStatus - Nuovo stato (active, inactive, suspended)
+ * @returns {Promise<Object>} - Utente aggiornato
+ */
+const changeUserStatus = async (userId, newStatus) => {
+    try {
+        setLoading(true);
         
-        // Validazione secondo lo schema mongoose
+        if (!userId) {
+            throw new Error('ID utente mancante');
+        }
+        
+        if (!['active', 'inactive', 'suspended'].includes(newStatus)) {
+            throw new Error('Stato non valido');
+        }
+        
+        console.log(`Cambio stato utente ${userId} a ${newStatus}`);
+        
+        const response = await axiosInstance.put(`/users/${userId}/status`, { 
+            status: newStatus 
+        });
+        
+        if (response.data.status === 'success') {
+            let updatedUser;
+            
+            // Gestione delle diverse possibili strutture di risposta
+            if (response.data.data?.user) {
+                updatedUser = response.data.data.user;
+            } else if (response.data.data) {
+                updatedUser = response.data.data;
+            } else {
+                // Se non troviamo l'utente nella risposta, ricarichiamolo
+                updatedUser = await getUserById(userId);
+            }
+            
+            if (updatedUser) {
+                // Aggiorna lo stato locale
+                setUsers(prev => prev.map(user => 
+                    user._id === userId ? updatedUser : user
+                ));
+                
+                // Messaggio personalizzato in base all'operazione
+                let message = '';
+                if (newStatus === 'active') {
+                    message = 'Utente riattivato con successo';
+                } else if (newStatus === 'inactive') {
+                    message = 'Utente disattivato con successo';
+                } else {
+                    message = 'Stato utente aggiornato con successo';
+                }
+                
+                showNotification(message, 'success');
+                return updatedUser;
+            }
+        }
+        
+        throw new Error('Risposta del server non valida');
+    } catch (error) {
+        console.error('Errore nel cambio stato utente:', error);
+        const errorMessage = error.response?.data?.error?.message || 
+                            error.message || 
+                            'Errore durante il cambio stato dell\'utente';
+        showNotification(errorMessage, 'error');
+        throw error;
+    } finally {
+        setLoading(false);
+    }
+};
+
+/**
+ * Valida i dati utente, supportando sia la creazione che l'aggiornamento parziale
+ * @param {Object} userData - Dati utente da validare
+ * @param {boolean} isNewUser - Indica se è un nuovo utente (true) o un aggiornamento (false)
+ * @param {boolean} isPartialUpdate - Indica se si tratta di un aggiornamento parziale (true) o completo (false)
+ * @returns {Object|null} - Errori di validazione o null se tutto ok
+ */
+const validateUserData = (userData, isNewUser = false, isPartialUpdate = false) => {
+    console.log("Validating user data:", userData, "isNewUser:", isNewUser, "isPartialUpdate:", isPartialUpdate);
+    
+    // Se i dati sono vuoti o nulli, fallisce immediatamente
+    if (!userData) {
+        console.error("userData è null o undefined");
+        return { general: "Dati utente mancanti" };
+    }
+    
+    const errors = {};
+    
+    if (isPartialUpdate) {
+        // Per aggiornamenti parziali, valida solo i campi presenti
+        console.log("Performing partial validation");
+        
+        if ('email' in userData) {
+            if (!userData.email?.trim() || !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(userData.email)) {
+                errors.email = 'Email non valida';
+            }
+        }
+        
+        if ('firstName' in userData && !userData.firstName?.trim()) {
+            errors.firstName = 'Nome richiesto';
+        }
+        
+        if ('lastName' in userData && !userData.lastName?.trim()) {
+            errors.lastName = 'Cognome richiesto';
+        }
+        
+        if ('role' in userData) {
+            const validRoles = ['admin', 'developer', 'manager', 'pcto', 'teacher', 'tutor', 'researcher', 'health', 'student'];
+            if (!validRoles.includes(userData.role)) {
+                errors.role = 'Ruolo non valido';
+            }
+        }
+        
+        // Non validare i campi che non sono inclusi nei dati
+        console.log("Partial validation completed with errors:", Object.keys(errors).length > 0 ? errors : "No errors");
+    } else {
+        // Validazione completa per creazione o aggiornamento completo
+        console.log("Performing full validation");
+        
         if (!userData.firstName?.trim()) {
             errors.firstName = 'Nome richiesto';
         }
+        
         if (!userData.lastName?.trim()) {
             errors.lastName = 'Cognome richiesto';
         }
+        
         if (!userData.email?.trim() || !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(userData.email)) {
             errors.email = 'Email non valida';
         }
+        
         if (isNewUser && (!userData.password || userData.password.length < 8)) {
             errors.password = 'La password deve essere di almeno 8 caratteri';
         }
-        if (!userData.role || !['teacher', 'manager', 'admin'].includes(userData.role)) {
+        
+        const validRoles = ['admin', 'developer', 'manager', 'pcto', 'teacher', 'tutor', 'researcher', 'health', 'student'];
+        if (!userData.role || !validRoles.includes(userData.role)) {
             errors.role = 'Ruolo non valido';
         }
         
-        return Object.keys(errors).length > 0 ? errors : null;
-    };
-
+        console.log("Full validation completed with errors:", Object.keys(errors).length > 0 ? errors : "No errors");
+    }
+    
+    return Object.keys(errors).length > 0 ? errors : null;
+};
 
     
     const getUserHistory = async (userId) => {
@@ -281,7 +492,8 @@ export const UserProvider = ({ children }) => {
         updateUser,
         deleteUser,
         validateUserData,
-        terminateSession
+        terminateSession,
+        changeUserStatus
     };
 
     return (

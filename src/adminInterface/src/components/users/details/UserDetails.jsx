@@ -41,26 +41,28 @@ const UserDetails = () => {
     const [error, setError] = useState(null);
     const { getUserById } = useUser();
 
+
     const loadUserData = async () => {
         try {
             console.log('UserDetails: Loading data for user ID:', id);
             setLoading(true);
             setError(null);
-
+    
             const data = await getUserById(id);
             
             if (!data || !data._id) {
                 throw new Error('Dati utente non validi');
             }
-
+    
             console.log('UserDetails: Successfully loaded user data:', {
                 id: data._id,
                 email: data.email,
                 firstName: data.firstName,
                 lastName: data.lastName,
-                role: data.role
+                role: data.role,
+                testAccessLevel: data.testAccessLevel // Logging importante
             });
-
+    
             setUserData(data);
         } catch (error) {
             console.error('UserDetails: Error loading user data:', error);

@@ -138,18 +138,19 @@ class UserService {
                 );
             }
     
-            // Hash password
-            const hashedPassword = await this.hashPassword(userData.password);
+            // Hash password - commentta perché viene hashata nel modello
+            // const hashedPassword = await this.hashPassword(userData.password);
     
             // Preparazione dati base
             let userToCreate = {
                 ...userData,
-                password: hashedPassword,
+                // password: hashedPassword,
                 status: options.status || 'active',
-                passwordHistory: [{
-                    password: hashedPassword,
-                    changedAt: new Date()
-                }]
+                 // Modifica anche questo perché la password verrà hashata dal pre-save hook
+            passwordHistory: [{
+                password: userData.password, // usa la password non hashata
+                changedAt: new Date()
+            }]
             };
     
             // Inizializza permessi e accessi usando il PermissionService
@@ -278,7 +279,24 @@ class UserService {
      */
     async updateUser(userId, updateData) {
         try {
-            logger.debug('Updating user', { userId });
+            logger.debug('Updating user', { 
+                userId,
+                updateDataKeys: Object.keys(updateData),
+                testAccessLevel: updateData.testAccessLevel 
+            });
+
+            // Se è presente testAccessLevel, assicuriamoci che sia un numero
+        if ('testAccessLevel' in updateData) {
+            updateData.testAccessLevel = parseInt(updateData.testAccessLevel, 10);
+            
+            // Verifica che sia un numero valido
+            if (isNaN(updateData.testAccessLevel)) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_DATA,
+                    'Livello di accesso ai test non valido'
+                );
+            }
+        }
 
             // Se il ruolo viene cambiato, reinizializza i permessi
             if (updateData.role && this.permissionService) {
@@ -304,8 +322,15 @@ class UserService {
                 delete updateData.password;
             }
 
-            const updatedUser = await this.userRepository.updateUser(userId, updateData);
+            const updatedUser = await this.userRepository.update(userId, updateData);
             logger.info('User updated successfully', { userId });
+
+            // Log dopo l'aggiornamento per verificare
+        logger.info('User updated successfully', { 
+            userId,
+            updatedFields: Object.keys(updateData),
+            testAccessLevel: updatedUser.testAccessLevel 
+        });
 
             return this.sanitizeUser(updatedUser);
         } catch (error) {
@@ -446,29 +471,52 @@ class UserService {
         }
     }
 
-    /**
-     * Elimina un utente
-     * @param {string} userId - ID utente
-     */
-    async deleteUser(userId) {
-        try {
-            await this.sessionService.removeAllSessions(userId);
-            const result = await this.userRepository.delete(userId);
-            
-            if (!result) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Utente non trovato'
-                );
-            }
 
-            logger.info('User deleted successfully', { userId });
-            return true;
-        } catch (error) {
-            logger.error('Error deleting user', { error });
-            throw error;
+/**
+ * Elimina un utente e tutte le sue relazioni
+ * @param {string} userId - ID utente da eliminare
+ * @returns {Promise<boolean>} - True se l'eliminazione è avvenuta con successo
+ */
+async deleteUser(userId) {
+    try {
+        logger.debug('Starting user deletion process', { userId });
+
+        // Prima di eliminare l'utente, ottieni tutte le informazioni necessarie
+        const user = await this.userRepository.findById(userId);
+        if (!user) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Utente non trovato'
+            );
         }
+
+        // Log delle informazioni dell'utente prima dell'eliminazione
+        logger.info('Found user to delete', { 
+            userId, 
+            role: user.role,
+            schoolId: user.schoolId || user.assignedSchoolId,
+            hasClasses: user.assignedClassIds?.length > 0,
+            hasStudents: user.assignedStudentIds?.length > 0
+        });
+
+        // Chiamiamo il repository per eliminare l'utente e tutte le sue relazioni
+        const result = await this.userRepository.deleteUser(userId);
+        
+        if (!result) {
+            throw createError(
+                ErrorTypes.SYSTEM.OPERATION_FAILED,
+                'Eliminazione utente fallita'
+            );
+        }
+
+        logger.info('User deleted successfully', { userId });
+        return true;
+    } catch (error) {
+        logger.error('Error deleting user', { error, userId });
+        throw error;
     }
+}
+
 
     /**
      * Soft delete utente

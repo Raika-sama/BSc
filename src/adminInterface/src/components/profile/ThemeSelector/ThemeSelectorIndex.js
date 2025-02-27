@@ -20,7 +20,7 @@ import { motion } from 'framer-motion';
 import { themes } from '../../../context/ThemeContext/themes';
 
 const ThemeSelectorIndex = () => {
-    const { currentTheme, changeTheme, customColor, setCustomThemeColor } = useTheme();
+    const { currentTheme, changeTheme, customColor, setCustomThemeColor, toggleTheme, darkMode } = useTheme();
 
     // Mapping dei nomi dei temi in italiano
     const themeNames = {
@@ -34,35 +34,45 @@ const ThemeSelectorIndex = () => {
         forestDark: 'Foresta Scura',
         lavender: 'Lavanda',
         lavenderDark: 'Lavanda Scura',
-        cyberpunk: 'cyberpunkTheme',
-        candy: 'candyTheme',
-        retrowave: 'retroWaveTheme',
-        nature: 'natureTheme',
-        galaxy: 'galaxyTheme',
-        sunsetBeach: 'sunsetBeachTheme',
-        custom: 'Personalizzatoo'
+        cyberpunk: 'Cyberpunk',
+        candy: 'Candy',
+        retroWave: 'Retrowave',
+        nature: 'Nature',
+        galaxy: 'Galaxy',
+        sunsetBeach: 'Sunset Beach',
+        custom: 'Personalizzato'
     };
 
-    const isDarkMode = currentTheme.toLowerCase().includes('dark');
+    // Helper per ottenere il tema base senza "Dark"
+    const getBaseThemeName = (themeName) => {
+        return themeName.replace('Dark', '');
+    };
 
     // Prepara i temi per la preview
-    const themeOptions = Object.keys(themes)
-        .filter(key => key !== 'getCustomTheme')
-        .reduce((acc, key) => ({
-            ...acc,
-            [key]: {
-                palette: {
-                    ...themes[key].palette,
-                    mode: key.toLowerCase().includes('dark') ? 'dark' : 'light'
-                },
-                name: themeNames[key] || key
-            }
-        }), {});
+    const baseThemes = Object.keys(themes)
+        .filter(key => key !== 'getCustomTheme' && !key.includes('Dark'))
+        .reduce((acc, key) => {
+            // Verifica se esiste una variante scura
+            const darkKey = `${key}Dark`;
+            const hasDarkVariant = themes[darkKey] !== undefined;
+            
+            return {
+                ...acc,
+                [key]: {
+                    palette: {
+                        ...themes[key].palette,
+                        mode: 'light'
+                    },
+                    name: themeNames[key] || key,
+                    hasDarkVariant
+                }
+            };
+        }, {});
 
     // Aggiungi il tema personalizzato
-    themeOptions.custom = {
+    baseThemes.custom = {
         palette: {
-            mode: isDarkMode ? 'dark' : 'light',
+            mode: darkMode ? 'dark' : 'light',
             primary: {
                 main: customColor,
                 light: lightenColor(customColor, 0.2),
@@ -70,35 +80,38 @@ const ThemeSelectorIndex = () => {
                 contrastText: getContrastText(customColor)
             },
             background: {
-                default: isDarkMode ? '#121212' : '#FFFFFF',
-                paper: isDarkMode ? '#1E1E1E' : '#FFFFFF'
+                default: darkMode ? '#121212' : '#FFFFFF',
+                paper: darkMode ? '#1E1E1E' : '#FFFFFF'
             },
             text: {
-                primary: isDarkMode ? '#FFFFFF' : '#000000',
-                secondary: isDarkMode ? '#B0BEC5' : '#546E7A'
+                primary: darkMode ? '#FFFFFF' : '#000000',
+                secondary: darkMode ? '#B0BEC5' : '#546E7A'
             }
         },
-        name: 'Personalizzato'
+        name: 'Personalizzato',
+        hasDarkVariant: true
     };
 
     // Theme change handler
     const handleThemeChange = (newTheme) => {
-        changeTheme(newTheme);
+        // Se in modalità scura e il tema ha una variante scura, usa quella
+        if (darkMode && baseThemes[newTheme]?.hasDarkVariant && newTheme !== 'custom') {
+            changeTheme(`${newTheme}Dark`);
+        } else {
+            changeTheme(newTheme);
+        }
     };
 
-    // Dark mode toggle handler
-    const handleDarkModeToggle = (e) => {
-        const isCurrentlyDark = e.target.checked;
-        const baseTheme = currentTheme.replace(/Dark$/, '');
-        const newTheme = isCurrentlyDark ? `${baseTheme}Dark` : baseTheme;
-        changeTheme(newTheme);
-    };
+    // Ottieni il tema base corrente (senza il suffisso "Dark")
+    const currentBaseTheme = currentTheme === 'custom' ? 'custom' : getBaseThemeName(currentTheme);
 
     return (
         <Card sx={{ mt: 3 }}>
             <CardContent>
                 <Box sx={{ mb: 1 }}>
-                  
+                    <Typography variant="h6" gutterBottom>
+                        Seleziona il Tema
+                    </Typography>
                 </Box>
 
                 {/* Light/Dark Mode Switch */}
@@ -106,16 +119,16 @@ const ThemeSelectorIndex = () => {
                     <FormControlLabel
                         control={
                             <Switch
-                                checked={isDarkMode}
-                                onChange={handleDarkModeToggle}
+                                checked={darkMode}
+                                onChange={toggleTheme}
                                 color="primary"
                             />
                         }
                         label={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                {isDarkMode ? <DarkMode /> : <LightMode />}
+                                {darkMode ? <DarkMode /> : <LightMode />}
                                 <Typography>
-                                    {isDarkMode ? 'Modalità Scura' : 'Modalità Chiara'}
+                                    {darkMode ? 'Modalità Scura' : 'Modalità Chiara'}
                                 </Typography>
                             </Box>
                         }
@@ -124,22 +137,17 @@ const ThemeSelectorIndex = () => {
 
                 {/* Theme Previews */}
                 <Grid container spacing={3}>
-                    {Object.entries(themeOptions)
-                        .filter(([key]) => {
-                            if (key === 'custom') return true;
-                            const isDark = key.toLowerCase().includes('dark');
-                            return isDarkMode ? isDark : !isDark;
-                        })
-                        .map(([key, theme]) => (
-                            <Grid item xs={12} sm={6} md={4} key={key}>
-                                <ThemePreview
-                                    themeData={theme}
-                                    themeName={theme.name}
-                                    selected={currentTheme === key}
-                                    onClick={() => handleThemeChange(key)}
-                                />
-                            </Grid>
-                        ))}
+                    {Object.entries(baseThemes).map(([key, theme]) => (
+                        <Grid item xs={12} sm={6} md={4} key={key}>
+                            <ThemePreview
+                                themeData={theme}
+                                themeName={theme.name}
+                                selected={currentBaseTheme === key}
+                                onClick={() => handleThemeChange(key)}
+                                disabled={darkMode && !theme.hasDarkVariant}
+                            />
+                        </Grid>
+                    ))}
                 </Grid>
 
                 {/* Custom Theme Color Picker */}

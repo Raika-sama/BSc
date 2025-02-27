@@ -204,14 +204,20 @@ class AuthService {
      */
     async login(email, password, metadata) {
         try {
-            logger.debug('Authentication attempt', { email });
+            logger.debug('Authentication attempt', { 
+                email,
+                hasPassword: !!password,
+                passwordLength: password?.length 
+            });
     
             // Verifica credenziali
             const user = await this.authRepository.findByEmail(email);
             
             logger.debug('User found:', {
                 exists: !!user,
-                hasPassword: !!user?.password
+                hasPassword: !!user?.password,
+                storedPasswordLength: user?.password?.length,
+                loginAttempts: user?.loginAttempts
             });
     
             if (!user) {
@@ -229,8 +235,21 @@ class AuthService {
                 );
             }
     
+            // Log pre-verifica password
+            logger.debug('Attempting password comparison', {
+                providedPassword: !!password,
+                storedPassword: !!user.password
+            });
+    
             // Verifica password
             const isMatch = await bcrypt.compare(password, user.password);
+            
+            // Log post-verifica password
+            logger.debug('Password comparison result:', {
+                isMatch,
+                loginAttempts: user.loginAttempts
+            });
+    
             if (!isMatch) {
                 await this.handleFailedLogin(user);
                 throw createError(
@@ -387,8 +406,13 @@ class AuthService {
 
                 // Hash della nuova password
                 const salt = await bcrypt.genSalt(10);
-                const hashedPassword = await bcrypt.hash(newPassword, salt);
-
+                const hashedPassword = await this.hashPassword(userData.password);
+                logger.debug('Password hashing:', {
+                    originalLength: userData.password.length,
+                    hashedLength: hashedPassword.length,
+                    isHashed: hashedPassword.startsWith('$2')
+                });
+                
                 // Aggiorna la password
                 return this.authRepository.updatePassword(userId, hashedPassword);
             } catch (error) {

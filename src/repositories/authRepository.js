@@ -28,12 +28,13 @@ class AuthRepository {
   async findByEmail(email) {
     try {
         const user = await this.model.findOne({ email })
-            .select('+password +sessionTokens')  // Assicuriamoci che password sia inclusa
+            .select('+password +sessionTokens')
             .exec();
         
         logger.debug('User lookup result:', {
             found: !!user,
             hasPassword: !!user?.password,
+            passwordLength: user?.password?.length, // Aggiungi questa riga
             email: email
         });
 

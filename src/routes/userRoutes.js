@@ -132,7 +132,8 @@ const createUserRouter = ({ authMiddleware, userController }) => {
     }
 
     if (typeof userController.changeStatus === 'function') {
-        router.post('/:id/status',
+        // Cambio da POST a PUT per corrispondere alla chiamata del frontend
+        router.put('/:id/status',
             restrictTo('admin', 'developer'),
             asyncHandler(userController.changeStatus.bind(userController))
         );
@@ -224,7 +225,7 @@ module.exports = createUserRouter;
  * DELETE /users/:id             - Elimina utente
  * POST   /users/:id/permissions - Aggiorna permessi utente
  * POST   /users/:id/resources   - Assegna risorse a utente (scuola, classi, studenti)
- * POST   /users/:id/status      - Cambia stato utente (attivo/inattivo/sospeso)
+ * PUT    /users/:id/status      - Cambia stato utente (attivo/inattivo/sospeso)
  * 
  * Route Manager:
  * GET    /users                 - Lista utenti (filtrata per propria scuola)

@@ -9,7 +9,9 @@ import {
     Typography,
     useTheme,
     alpha,
-    Chip
+    Chip,
+    Alert,
+    Snackbar
 } from '@mui/material';
 import { 
     Visibility,
@@ -42,9 +44,31 @@ const UserManagement = () => {
         status: '',
         sort: '-createdAt'
     });
+    // Add notification state
+    const [notification, setNotification] = useState({
+        open: false,
+        message: '',
+        severity: 'info'
+    });
 
-    const { users, loading, totalUsers, createUser, getUsers } = useUser();
+    const { users, loading, totalUsers, createUser, getUsers, deleteUser } = useUser();
 
+    // Function to show notifications
+    const showNotification = (message, severity = 'info') => {
+        setNotification({
+            open: true,
+            message,
+            severity
+        });
+    };
+
+    // Handle closing notifications
+    const handleCloseNotification = () => {
+        setNotification(prev => ({
+            ...prev,
+            open: false
+        }));
+    };
 
     // Ref per prevenire la prima chiamata automatica
     const isInitialMount = useRef(true);
@@ -61,15 +85,16 @@ const UserManagement = () => {
             });
         } catch (error) {
             console.error('Error loading users:', error);
+            showNotification('Errore durante il caricamento degli utenti', 'error');
         }
-    }, [page, pageSize, filters, getUsers]);
+    }, [page, pageSize, filters, getUsers, showNotification]);
 
-    // Effect principale per il caricamento dati
+    // Effect principale per il caricamento dati - fixing the infinite loop
     useEffect(() => {
-        // Salta la prima chiamata automatica
+        // Caricamento solo quando necessario
         if (isInitialMount.current) {
             isInitialMount.current = false;
-            loadUsers(); // Caricamento iniziale
+            loadUsers(); 
             return;
         }
 
@@ -78,12 +103,7 @@ const UserManagement = () => {
             clearTimeout(debounceTimeout.current);
         }
 
-        // Applica il debounce solo per le ricerche testuali
-        if (filters.search) {
-            debounceTimeout.current = setTimeout(loadUsers, 500);
-        } else {
-            loadUsers();
-        }
+        debounceTimeout.current = setTimeout(loadUsers, 500);
 
         // Cleanup
         return () => {
@@ -91,7 +111,7 @@ const UserManagement = () => {
                 clearTimeout(debounceTimeout.current);
             }
         };
-    }, [loadUsers]);
+    }, [page, pageSize, filters]);  // Rimuovere loadUsers dalla dipendenza, viene già utilizzato getUsers e gli altri stati
 
     // Calcolo dei dati per i trend
     const calculateTrendData = useCallback((roleFilter = null) => {
@@ -207,15 +227,18 @@ const UserManagement = () => {
             headerName: 'Ruolo',
             width: 150,
             renderCell: (params) => {
+                // Verifica che params.value esista prima di accedere a charAt
+                const role = params.value || '';
+                
                 const roleConfigs = {
                     admin: { icon: AdminIcon, label: 'Admin', color: 'error' },
                     teacher: { icon: TeacherIcon, label: 'Docente', color: 'primary' },
                     school_admin: { icon: SchoolIcon, label: 'Admin Scuola', color: 'secondary' }
                 };
 
-                const config = roleConfigs[params.value] || { 
+                const config = roleConfigs[role] || { 
                     icon: PersonIcon, 
-                    label: params.value.charAt(0).toUpperCase() + params.value.slice(1), 
+                    label: role ? (role.charAt(0).toUpperCase() + role.slice(1)) : 'N/A', 
                     color: 'default' 
                 };
                 const Icon = config.icon;
@@ -298,9 +321,37 @@ const UserManagement = () => {
         try {
             await createUser(userData);
             setIsFormOpen(false);
-            await loadUsers(false); // Ricarica immediata dopo la creazione
+            showNotification('Utente creato con successo', 'success');
+            loadUsers(); // Ricarica immediata dopo la creazione
         } catch (error) {
             console.error('Error creating user:', error);
+            showNotification('Errore durante la creazione dell\'utente', 'error');
+        }
+    };
+
+    const handleDeleteUser = async (user) => {
+        // Chiedi conferma prima di procedere con l'eliminazione
+        if (!window.confirm(`Sei sicuro di voler eliminare l'utente ${user.firstName} ${user.lastName}?`)) {
+            return;
+        }
+    
+        try {
+            console.log('Avvio eliminazione utente:', user._id);
+            
+            if (typeof deleteUser === 'function') {
+                await deleteUser(user._id);
+                showNotification('Utente eliminato con successo', 'success');
+                await loadUsers(); // Ricarica la lista dopo l'eliminazione
+            } else {
+                console.error('deleteUser function is not available');
+                showNotification('Funzionalità non disponibile', 'warning');
+            }
+        } catch (error) {
+            console.error('Errore durante l\'eliminazione dell\'utente:', error);
+            showNotification(
+                error.response?.data?.error?.message || 'Errore durante l\'eliminazione dell\'utente', 
+                'error'
+            );
         }
     };
 
@@ -335,62 +386,80 @@ const UserManagement = () => {
     ];
 
     return (
-        <ContentLayout
-            title="Gestione Utenti"
-            subtitle="Gestisci gli account e i permessi degli utenti"
-            breadcrumbs={breadcrumbs}
-            actions={
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => setIsFormOpen(true)}
-                    sx={{ borderRadius: 2 }}
-                >
-                    Nuovo Utente
-                </Button>
-            }
-        >
-            <Routes>
-                <Route 
-                    index 
-                    element={
-                        <ListLayout
-                            statsCards={statsCards}
-                            isFilterOpen={isFilterOpen}
-                            filterComponent={
-                                <UsersFilters
-                                    filters={filters}
-                                    onFiltersChange={handleFiltersChange}
-                                />
-                            }
-                            rows={users || []}
-                            columns={columns}
-                            getRowId={(row) => row?._id || Math.random().toString()}
-                            pageSize={pageSize}
-                            onPageSizeChange={handlePageSizeChange}
-                            loading={loading}
-                            paginationMode="server"
-                            rowCount={totalUsers}
-                            page={page}
-                            onPageChange={handlePageChange}
-                            onSearch={handleSearch}
-                            onRefresh={loadUsers}
-                            searchPlaceholder="Cerca utenti..."
-                            emptyStateMessage="Nessun utente trovato"
-                        />
-                    } 
-                />
-                <Route path=":id" element={<UserDetails />} />
-            </Routes>
+        <>
+            <ContentLayout
+                title="Gestione Utenti"
+                subtitle="Gestisci gli account e i permessi degli utenti"
+                breadcrumbs={breadcrumbs}
+                actions={
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => setIsFormOpen(true)}
+                        sx={{ borderRadius: 2 }}
+                    >
+                        Nuovo Utente
+                    </Button>
+                }
+            >
+                <Routes>
+                    <Route 
+                        index 
+                        element={
+                            <ListLayout
+                                statsCards={statsCards}
+                                isFilterOpen={isFilterOpen}
+                                filterComponent={
+                                    <UsersFilters
+                                        filters={filters}
+                                        onFiltersChange={handleFiltersChange}
+                                    />
+                                }
+                                rows={users || []}
+                                columns={columns}
+                                getRowId={(row) => row?._id || Math.random().toString()}
+                                pageSize={pageSize}
+                                onPageSizeChange={handlePageSizeChange}
+                                loading={loading}
+                                paginationMode="server"
+                                rowCount={totalUsers}
+                                page={page}
+                                onPageChange={handlePageChange}
+                                onSearch={handleSearch}
+                                onRefresh={loadUsers}
+                                searchPlaceholder="Cerca utenti..."
+                                emptyStateMessage="Nessun utente trovato"
+                            />
+                        } 
+                    />
+                    <Route path=":id" element={<UserDetails />} />
+                </Routes>
 
-            <UserForm
-                open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
-                onSave={handleCreateUser}
-                initialData={null}
-                isLoading={false}
-            />
-        </ContentLayout>
+                <UserForm
+                    open={isFormOpen}
+                    onClose={() => setIsFormOpen(false)}
+                    onSave={handleCreateUser}
+                    initialData={null}
+                    isLoading={false}
+                />
+
+                {/* Add notification component */}
+                <Snackbar 
+                    open={notification.open} 
+                    autoHideDuration={6000} 
+                    onClose={handleCloseNotification}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                    <Alert 
+                        onClose={handleCloseNotification} 
+                        severity={notification.severity} 
+                        sx={{ width: '100%' }}
+                    >
+                        {notification.message}
+                    </Alert>
+                </Snackbar>
+            </ContentLayout>
+        </>
     );
 };
 

@@ -131,7 +131,7 @@ const UserPermissions = ({ userData, onUpdate }) => {
     // Stato per i permessi in formato strutturato
     const [permissions, setPermissions] = useState([]);
     // Stato per il livello di accesso ai test
-    const [testAccessLevel, setTestAccessLevel] = useState(8);
+    const [testAccessLevel, setTestAccessLevel] = useState(userData.testAccessLevel || 8);
     // Stato per l'accesso al frontend admin
     const [hasAdminAccess, setHasAdminAccess] = useState(false);
 
@@ -141,11 +141,12 @@ const UserPermissions = ({ userData, onUpdate }) => {
             // Inizializza i permessi
             setPermissions(userData.permissions || []);
             // Inizializza il livello di accesso ai test
-            setTestAccessLevel(userData.testAccessLevel || getDefaultTestAccessLevel(userData.role));
+            setTestAccessLevel(userData.testAccessLevel !== undefined ? userData.testAccessLevel : getDefaultTestAccessLevel(userData.role));
             // Inizializza l'accesso admin
             setHasAdminAccess(userData.hasAdminAccess || ['admin', 'developer'].includes(userData.role));
         }
-    }, [userData]);
+    }, [userData]); // Dipende solo da userData
+    
 
     // Funzione per ottenere il livello di accesso ai test predefinito in base al ruolo
     const getDefaultTestAccessLevel = (role) => {
@@ -222,25 +223,91 @@ const UserPermissions = ({ userData, onUpdate }) => {
     };
 
     // Gestisci il salvataggio dei permessi
-    const handleSave = async () => {
-        try {
-            setLoading(true);
-            setError(null);
+
+// Assicuriamoci che l'oggetto updateData sia costruito correttamente
+const handleSave = async () => {
+    try {
+        setLoading(true);
+        setError(null);
+        
+        // Controlla che testAccessLevel sia definito prima di convertirlo
+        let numericTestAccessLevel;
+        if (testAccessLevel !== undefined && testAccessLevel !== null) {
+            numericTestAccessLevel = parseInt(testAccessLevel, 10);
             
-            const updateData = {
-                permissions,
-                testAccessLevel,
-                hasAdminAccess
-            };
-            
-            await updateUser(userData._id, updateData);
-            onUpdate();
-        } catch (err) {
-            setError(err.message || 'Errore durante il salvataggio dei permessi');
-        } finally {
-            setLoading(false);
+            // Verifica che sia un numero valido
+            if (isNaN(numericTestAccessLevel) || numericTestAccessLevel < 0 || numericTestAccessLevel > 8) {
+                setError(`Livello di accesso ai test non valido. Deve essere un numero tra 0 e 8, valore attuale: ${testAccessLevel}`);
+                setLoading(false);
+                return;
+            }
         }
-    };
+        
+        // Costruisci oggetto updateData solo con campi definiti
+        const updateData = {};
+        
+        // Aggiungi solo i campi definiti
+        if (permissions !== undefined) {
+            updateData.permissions = permissions;
+        }
+        
+        if (numericTestAccessLevel !== undefined) {
+            updateData.testAccessLevel = numericTestAccessLevel;
+        }
+        
+        if (hasAdminAccess !== undefined) {
+            updateData.hasAdminAccess = hasAdminAccess;
+        }
+        
+        console.log('Salvataggio livello accesso ai test:', updateData);
+        
+        // Controlla che updateData non sia vuoto
+        if (Object.keys(updateData).length === 0) {
+            setError('Nessun dato da aggiornare');
+            setLoading(false);
+            return;
+        }
+        
+        // Controlla che userData._id sia definito
+        if (!userData || !userData._id) {
+            setError('ID utente mancante');
+            setLoading(false);
+            return;
+        }
+        
+        try {
+            await updateUser(userData._id, updateData);
+            // Usa setError al posto di showNotification
+            setError(null); // Pulisci gli errori precedenti
+            
+            // Importante: chiamare onUpdate per aggiornare i dati nel componente padre
+            if (typeof onUpdate === 'function') {
+                onUpdate();
+            }
+        } catch (updateError) {
+            // Se l'errore è solo che non abbiamo ricevuto l'utente aggiornato, ma
+            // sappiamo che l'update è stato fatto nel DB, consideriamo l'operazione un successo
+            if (updateError.message === 'Dati utente mancanti nella risposta del server') {
+                console.log('Aggiornamento DB riuscito ma dati non ricevuti, ricarico i dati');
+                // Usa setError invece di showNotification
+                setError('Permessi aggiornati, ricaricamento dati...');
+                
+                // Ricarica i dati
+                if (typeof onUpdate === 'function') {
+                    onUpdate();
+                }
+            } else {
+                // Per altri errori, li mostriamo normalmente
+                throw updateError;
+            }
+        }
+    } catch (err) {
+        console.error('Errore durante il salvataggio dei permessi:', err);
+        setError(err.message || 'Errore durante il salvataggio dei permessi');
+    } finally {
+        setLoading(false);
+    }
+};
 
     // Converti i permessi in formato leggibile
     const formatPermissions = (permissions) => {

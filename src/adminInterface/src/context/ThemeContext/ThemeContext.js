@@ -23,58 +23,104 @@ export const ThemeProvider = ({ children }) => {
         return isValidTheme(savedTheme) ? savedTheme : defaultTheme;
     });
 
+    // Stato per la modalità (light/dark)
+    const [darkMode, setDarkMode] = useState(() => {
+        const savedMode = localStorage.getItem('darkMode');
+        // Se il tema salvato contiene "Dark", impostiamo darkMode a true
+        if (savedMode !== null) {
+            return savedMode === 'true';
+        }
+        // Altrimenti verifichiamo se il tema corrente contiene "Dark"
+        return currentTheme.includes('Dark');
+    });
+
     // Stato per il colore personalizzato (per il tema custom)
     const [customColor, setCustomColor] = useState(() => {
         return localStorage.getItem('customThemeColor') || '#64B5F6';
     });
 
-    // Genera il tema Material-UI
-    const theme = React.useMemo(() => {
-        if (currentTheme === 'custom') {
-            // Per il tema personalizzato, determina la modalità basandosi sul tema corrente
-            const baseTheme = localStorage.getItem('theme') || defaultTheme;
-            const mode = baseTheme.includes('Dark') ? 'dark' : 'light';
-            return createTheme(themes.getCustomTheme(customColor, mode));
-        }
-        return createTheme(themes[currentTheme]);
-    }, [currentTheme, customColor]);
+    // Funzione per ottenere il nome del tema base (senza "Dark")
+    const getBaseTheme = (themeName) => {
+        return themeName.replace('Dark', '');
+    };
 
-    // Funzione per cambiare tema
-    const changeTheme = (newTheme) => {
-        if (isValidTheme(newTheme)) {
-            localStorage.setItem('theme', newTheme);
-            setCurrentTheme(newTheme);
-        } else if (newTheme === 'custom') {
-            // Per il tema personalizzato, mantieni la modalità corrente
-            setCurrentTheme('custom');
-        }
+    // Funzione per ottenere il nome del tema con o senza "Dark"
+    const getThemeVariant = (themeName, wantDark) => {
+        if (themeName === 'custom') return themeName;
+        
+        const baseTheme = getBaseTheme(themeName);
+        return wantDark ? `${baseTheme}Dark` : baseTheme;
     };
 
     // Funzione per determinare se un tema è in modalità dark
     const isDarkTheme = (themeName) => {
+        if (themeName === 'custom') {
+            return darkMode;
+        }
         return themeName.includes('Dark');
     };
 
-    // Funzione per ottenere la versione light/dark di un tema
-    const getThemeVariant = (themeName, wantDark) => {
-        if (themeName === 'custom') return themeName;
+    // Determina il tema effettivo da utilizzare basandosi sul tema corrente e sulla modalità dark
+    const getEffectiveTheme = () => {
+        if (currentTheme === 'custom') {
+            return 'custom';
+        }
         
-        const baseTheme = themeName.replace('Dark', '');
-        return wantDark ? `${baseTheme}Dark` : baseTheme;
+        const baseTheme = getBaseTheme(currentTheme);
+        const darkVariant = `${baseTheme}Dark`;
+        
+        // Verifica se esiste la variante desiderata
+        if (darkMode) {
+            return isValidTheme(darkVariant) ? darkVariant : currentTheme;
+        } else {
+            return isValidTheme(baseTheme) ? baseTheme : currentTheme;
+        }
     };
 
-    // Funzione per toggleTheme che supporta i nuovi temi
-    const toggleTheme = () => {
-        const currentIsDark = isDarkTheme(currentTheme);
-        if (currentTheme === 'custom') {
-            // Per il tema custom, toggle tra light e dark mantenendo il colore personalizzato
-            const newMode = currentIsDark ? 'light' : 'dark';
-            localStorage.setItem('theme', newMode);
+    // Genera il tema Material-UI
+    const theme = React.useMemo(() => {
+        const effectiveTheme = getEffectiveTheme();
+        
+        if (effectiveTheme === 'custom') {
+            // Per il tema personalizzato, usa la modalità corrente
+            const mode = darkMode ? 'dark' : 'light';
+            return createTheme(themes.getCustomTheme(customColor, mode));
+        }
+        
+        return createTheme(themes[effectiveTheme]);
+    }, [currentTheme, customColor, darkMode]);
+
+    // Funzione per cambiare tema
+    const changeTheme = (newTheme) => {
+        if (isValidTheme(newTheme)) {
+            const isNewThemeDark = newTheme.includes('Dark');
+            localStorage.setItem('theme', newTheme);
+            localStorage.setItem('darkMode', isNewThemeDark.toString());
+            setCurrentTheme(newTheme);
+            setDarkMode(isNewThemeDark);
+        } else if (newTheme === 'custom') {
+            // Per il tema personalizzato
+            localStorage.setItem('theme', newTheme);
             setCurrentTheme('custom');
-        } else {
-            // Per i temi predefiniti, passa tra le versioni light e dark
-            const newTheme = getThemeVariant(currentTheme, !currentIsDark);
-            changeTheme(newTheme);
+        }
+    };
+
+    // Funzione per toggleTheme che supporta tutti i temi
+    const toggleTheme = () => {
+        const newDarkMode = !darkMode;
+        localStorage.setItem('darkMode', newDarkMode.toString());
+        setDarkMode(newDarkMode);
+        
+        // Se non è un tema personalizzato, aggiorna anche il tema corrente
+        if (currentTheme !== 'custom') {
+            const baseTheme = getBaseTheme(currentTheme);
+            const newTheme = newDarkMode ? `${baseTheme}Dark` : baseTheme;
+            
+            // Verifica se il nuovo tema esiste
+            if (isValidTheme(newTheme)) {
+                localStorage.setItem('theme', newTheme);
+                setCurrentTheme(newTheme);
+            }
         }
     };
 
@@ -92,6 +138,9 @@ export const ThemeProvider = ({ children }) => {
         const handleStorageChange = (e) => {
             if (e.key === 'theme' && e.newValue !== currentTheme) {
                 setCurrentTheme(isValidTheme(e.newValue) ? e.newValue : defaultTheme);
+            }
+            if (e.key === 'darkMode') {
+                setDarkMode(e.newValue === 'true');
             }
         };
 
@@ -113,6 +162,7 @@ export const ThemeProvider = ({ children }) => {
     const value = {
         theme,                  // Il tema Material-UI corrente
         currentTheme,          // Nome del tema corrente
+        darkMode,              // Se la modalità scura è attiva
         customColor,           // Colore personalizzato corrente
         changeTheme,          // Funzione per cambiare tema
         toggleTheme,          // Funzione per alternare tra light e dark
