@@ -1,27 +1,5 @@
 # Authentication System Documentation
 
-## Table of Contents
-1. [System Overview](#system-overview)
-2. [Architecture](#architecture)
-3. [Regular User Authentication](#regular-user-authentication)
-   - [Models](#user-auth-models)
-   - [Services](#user-auth-services)
-   - [Controllers](#user-auth-controllers)
-   - [Repositories](#user-auth-repositories)
-   - [Routes](#user-auth-routes)
-4. [Student Authentication](#student-authentication)
-   - [Models](#student-auth-models)
-   - [Services](#student-auth-services)
-   - [Controllers](#student-auth-controllers)
-   - [Repositories](#student-auth-repositories)
-   - [Routes](#student-auth-routes)
-5. [Middleware](#middleware)
-6. [Security Measures](#security-measures)
-7. [Error Handling](#error-handling)
-8. [Frontend Integration](#frontend-integration)
-9. [Session Management](#session-management)
-10. [API Reference](#api-reference)
-
 ## System Overview
 
 The authentication system implements a comprehensive solution for managing user authentication, authorization, and session management in a web application focused on educational settings. It consists of two parallel authentication pathways:

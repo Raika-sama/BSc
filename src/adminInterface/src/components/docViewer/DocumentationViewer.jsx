@@ -1,18 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Typography, Box, Select, MenuItem, Button, Alert, CircularProgress } from '@mui/material';
+import { ArrowBack as LeftOutlineIcon, ArrowForward as RightOutlineIcon } from '@mui/icons-material';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Breadcrumb, Card, Tabs, Spin, Alert, Select, Button } from 'antd';
-import { LeftOutlined, RightOutlined, FileTextOutlined, HomeOutlined } from '@ant-design/icons';
-
-// Importiamo la documentazione come file statici
-import authDoc from '../../docs/AUTHENTICATION_SYSTEM_DOCUMENTATION.md';
-import userDoc from '../../docs/USER_MANAGEMENT_SYSTEM_DOCUMENTATION.md';
-
-const { TabPane } = Tabs;
-const { Option } = Select;
+import ContentLayout from '../common/ContentLayout';
+import { useTheme } from '@mui/material/styles';
 
 const DocumentationViewer = () => {
   const [activeDoc, setActiveDoc] = useState('auth');
@@ -20,28 +14,39 @@ const DocumentationViewer = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [toc, setToc] = useState([]);
+  const theme = useTheme();
+  const contentRef = useRef(null);
 
   // Carica la documentazione in base al tipo selezionato
   const loadDocumentation = async (docType) => {
     try {
       setLoading(true);
       
-      let docContent;
+      let docPath = '';
       if (docType === 'auth') {
-        docContent = authDoc; // Utilizziamo il contenuto importato
+        docPath = '/docs/AUTH_DOC.md';
       } else if (docType === 'user') {
-        docContent = userDoc;
+        docPath = '/docs/USER_DOC.md';
+    } else if (docType === 'user-management') { // Aggiungi questa condizione
+        docPath = '/docs/USER_MANAGEMENT_DOC.md';
       } else {
         throw new Error('Tipo di documentazione non supportato');
       }
       
+      // Carica il file markdown dalla cartella public
+      const response = await fetch(docPath);
+      if (!response.ok) {
+        throw new Error(`Impossibile caricare la documentazione: ${response.statusText}`);
+      }
+      
+      const docContent = await response.text();
       setContent(docContent);
       
       // Estrazione indice dal contenuto markdown
       const headings = docContent.match(/^##\s(.+)$/gm) || [];
       const extractedToc = headings.map(heading => {
         const text = heading.replace('## ', '');
-        const anchor = text.toLowerCase().replace(/\s+/g, '-');
+        const anchor = text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
         return { text, anchor };
       });
       
@@ -55,17 +60,56 @@ const DocumentationViewer = () => {
     }
   };
 
-  // Carica la documentazione al mount del componente
   useEffect(() => {
     loadDocumentation(activeDoc);
   }, [activeDoc]);
 
-  // Gestione del cambio di documentazione
-  const handleDocChange = (value) => {
-    setActiveDoc(value);
+  // Effetto per aggiungere gli ID agli headers h2 dopo il rendering del markdown
+  useEffect(() => {
+    if (contentRef.current && !loading) {
+      // Aggiungi un breve ritardo per assicurarci che il markdown sia stato renderizzato
+      const timer = setTimeout(() => {
+        const headers = contentRef.current.querySelectorAll('h2');
+        toc.forEach((item, index) => {
+          if (headers[index]) {
+            headers[index].id = item.anchor;
+          }
+        });
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [toc, loading]);
+
+  const handleDocChange = (event) => {
+    setActiveDoc(event.target.value);
   };
 
-  // Personalizzazione rendering dei blocchi di codice
+  // Componente personalizzato per i link - importante per il funzionamento corretto dei link interni
+  const MarkdownLink = ({ href, children }) => {
+    // Gestisci i link interni (ancore)
+    if (href.startsWith('#')) {
+      return (
+        <a
+          href={href}
+          onClick={(e) => {
+            e.preventDefault();
+            const targetId = href.substring(1);
+            const element = document.getElementById(targetId);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        >
+          {children}
+        </a>
+      );
+    }
+    
+    // Link esterni normali
+    return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>;
+  };
+
   const components = {
     code({node, inline, className, children, ...props}) {
       const match = /language-(\w+)/.exec(className || '');
@@ -83,99 +127,202 @@ const DocumentationViewer = () => {
           {children}
         </code>
       );
-    }
+    },
+    // Componente personalizzato per gli heading h2
+    h2: ({node, children, ...props}) => {
+      const text = children.toString();
+      const anchor = text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+      
+      return (
+        <h2 id={anchor} {...props}>
+          {children}
+        </h2>
+      );
+    },
+    // Gestione personalizzata dei link
+    a: MarkdownLink
   };
 
-  return (
-    <div className="documentation-container" style={{ padding: '20px' }}>
-      <Breadcrumb style={{ marginBottom: '16px' }}>
-        <Breadcrumb.Item>
-          <Link to="/dashboard"><HomeOutlined /> Dashboard</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>
-          <FileTextOutlined /> Documentazione
-        </Breadcrumb.Item>
-      </Breadcrumb>
+  const breadcrumbs = [
+    { text: 'Dashboard', path: '/admin/dashboard' },
+    { text: 'Documentazione', path: '/admin/docs' }
+  ];
 
-      <Card 
-        title="Documentazione Sistema" 
-        extra={
-          <Select 
-            defaultValue={activeDoc} 
-            onChange={handleDocChange}
-            style={{ width: 240 }}
-          >
-            <Option value="auth">Sistema di Autenticazione</Option>
-            <Option value="user">Gestione Utenti</Option>
-          </Select>
-        }
-      >
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '50px' }}>
-            <Spin size="large" />
-            <p>Caricamento documentazione...</p>
-          </div>
-        ) : error ? (
-          <Alert message="Errore" description={error} type="error" showIcon />
-        ) : (
-          <div className="documentation-layout" style={{ display: 'flex' }}>
-            {/* Indice laterale */}
-            <div className="documentation-toc" style={{ 
-              width: '250px', 
-              borderRight: '1px solid #f0f0f0',
-              paddingRight: '16px',
-              marginRight: '16px'
-            }}>
-              <h3>Indice</h3>
-              <ul style={{ listStyleType: 'none', padding: 0 }}>
-                {toc.map((item, index) => (
-                  <li key={index} style={{ margin: '8px 0' }}>
-                    <a 
-                      href={`#${item.anchor}`}
-                      style={{ color: '#1890ff', textDecoration: 'none' }}
-                    >
-                      {item.text}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            {/* Contenuto principale */}
-            <div className="documentation-content" style={{ flex: 1 }}>
+  const actions = (
+    <Select
+      value={activeDoc}
+      onChange={handleDocChange}
+      sx={{ minWidth: 200 }}
+    >
+      <MenuItem value="auth">Sistema di Autenticazione</MenuItem>
+      <MenuItem value="user">Gestione Utenti</MenuItem>
+      <MenuItem value="user-management">Guida Gestione Utenze</MenuItem>
+
+    </Select>
+  );
+
+  return (
+    <ContentLayout
+      title="Documentazione Sistema"
+      subtitle="Documentazione tecnica completa per sviluppatori"
+      breadcrumbs={breadcrumbs}
+      actions={actions}
+      loading={false}
+    >
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <CircularProgress />
+        </Box>
+      ) : error ? (
+        <Alert severity="error">{error}</Alert>
+      ) : (
+        <Box sx={{ display: 'flex', height: '100%' }}>
+          {/* Indice laterale */}
+          <Box sx={{ 
+            width: '250px', 
+            borderRight: `1px solid ${theme.palette.divider}`,
+            pr: 2,
+            mr: 2,
+            overflowY: 'auto'
+          }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>Indice</Typography>
+            <Box component="ul" sx={{ listStyleType: 'none', p: 0 }}>
+              {toc.map((item, index) => (
+                <Box component="li" key={index} sx={{ mb: 1 }}>
+                  <Box
+                    component="a"
+                    href={`#${item.anchor}`} 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const element = document.getElementById(item.anchor);
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                      } else {
+                        console.warn(`Elemento con id ${item.anchor} non trovato`);
+                      }
+                    }}
+                    sx={{ 
+                      color: theme.palette.primary.main, 
+                      textDecoration: 'none',
+                      display: 'block',
+                      padding: '4px 0',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {item.text}
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+          
+          {/* Contenuto principale */}
+          <Box sx={{ flex: 1, overflowY: 'auto' }}>
+            <Box
+              ref={contentRef}
+              sx={{ 
+                maxWidth: '900px',
+                "& h1": {
+                  fontSize: "2.2em",
+                  marginBottom: "0.7em",
+                  borderBottom: `2px solid ${theme.palette.divider}`,
+                  paddingBottom: "0.3em",
+                },
+                "& h2": { 
+                  scrollMarginTop: "80px",
+                  fontSize: "1.8em",
+                  borderBottom: "1px solid #eaecef",
+                  paddingBottom: "0.3em",
+                  marginTop: "1.5em"
+                },
+                "& h3": {
+                  scrollMarginTop: "80px",
+                  fontSize: "1.4em",
+                  marginTop: "1.5em"
+                },
+                "& pre": {
+                  backgroundColor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#f6f8fa',
+                  borderRadius: "3px",
+                  padding: "16px",
+                  overflow: "auto"
+                },
+                "& code": {
+                  backgroundColor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#f6f8fa',
+                  borderRadius: "3px",
+                  padding: "0.2em 0.4em",
+                  fontFamily: "SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace"
+                },
+                "& table": {
+                  borderCollapse: "collapse",
+                  width: "100%",
+                  marginBottom: "16px",
+                  "& th, & td": {
+                    padding: "6px 13px",
+                    border: `1px solid ${theme.palette.mode === 'dark' ? '#3e3e3e' : '#dfe2e5'}`
+                  },
+                  "& tr": {
+                    backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+                    borderTop: `1px solid ${theme.palette.mode === 'dark' ? '#3e3e3e' : '#c6cbd1'}`
+                  },
+                  "& tr:nth-of-type(2n)": {
+                    backgroundColor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#f6f8fa'
+                  }
+                },
+                "& blockquote": {
+                  padding: "0 1em",
+                  color: theme.palette.mode === 'dark' ? '#a0a0a0' : '#6a737d',
+                  borderLeft: `0.25em solid ${theme.palette.mode === 'dark' ? '#3e3e3e' : '#dfe2e5'}`,
+                  margin: "0 0 16px 0"
+                },
+                "& a": {
+                  color: theme.palette.primary.main,
+                  textDecoration: "none",
+                  "&:hover": {
+                    textDecoration: "underline"
+                  }
+                },
+                "& ul, & ol": {
+                  paddingLeft: "2em"
+                },
+                "& li": {
+                  marginBottom: "0.5em"
+                }
+              }}
+            >
               <ReactMarkdown 
-                children={content} 
-                remarkPlugins={[remarkGfm]} 
-                components={components} 
-              />
-              
-              <div style={{ 
-                marginTop: '40px',
-                padding: '20px 0', 
-                borderTop: '1px solid #f0f0f0', 
-                display: 'flex',
-                justifyContent: 'space-between'
-              }}>
-                <Button 
-                  icon={<LeftOutlined />}
-                  onClick={() => setActiveDoc(activeDoc === 'auth' ? 'user' : 'auth')}
-                >
-                  {activeDoc === 'auth' ? 'Gestione Utenti' : 'Sistema Autenticazione'}
-                </Button>
-                <Button 
-                  type="primary"
-                  onClick={() => setActiveDoc(activeDoc === 'auth' ? 'user' : 'auth')}
-                  icon={<RightOutlined />}
-                  iconPosition="right"
-                >
-                  {activeDoc === 'auth' ? 'Gestione Utenti' : 'Sistema Autenticazione'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </Card>
-    </div>
+                remarkPlugins={[remarkGfm]}
+                components={components}
+              >
+                {content}
+              </ReactMarkdown>
+            </Box>
+            
+            <Box sx={{ 
+              mt: 4,
+              pt: 2, 
+              borderTop: `1px solid ${theme.palette.divider}`, 
+              display: 'flex',
+              justifyContent: 'space-between'
+            }}>
+              <Button 
+                variant="outlined"
+                startIcon={<LeftOutlineIcon />}
+                onClick={() => setActiveDoc(activeDoc === 'auth' ? 'user' : 'auth')}
+              >
+                {activeDoc === 'auth' ? 'Gestione Utenti' : 'Sistema Autenticazione'}
+              </Button>
+              <Button 
+                variant="contained"
+                endIcon={<RightOutlineIcon />}
+                onClick={() => setActiveDoc(activeDoc === 'auth' ? 'user' : 'auth')}
+              >
+                {activeDoc === 'auth' ? 'Gestione Utenti' : 'Sistema Autenticazione'}
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      )}
+    </ContentLayout>
   );
 };
 

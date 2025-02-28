@@ -24,6 +24,7 @@ import CSIQuestionsPanel from '../components/engines/CSI/CSIQuestionsPanel';
 import PublicCSITest from '../components/engines/CSI/publicCSI';
 import StudentForm from '../components/students/StudentForm';
 import StudentEditForm from '../components/students/list/tabs/InfoTab';
+import DocumentationViewer from '../components/docViewer/DocumentationViewer';
 
 // Importa le icone da Material-UI
 import {
@@ -36,6 +37,7 @@ import {
     Science as ResearcherIcon,
     Analytics as AnalyticsIcon,
     Security as SecurityIcon,
+    Description as DescriptionIcon, // Aggiungi questa riga per importare l'icona Description
 } from '@mui/icons-material';
 
 // Aggiornamento delle definizioni dei permessi
@@ -351,6 +353,14 @@ export const adminRoutes = [
         writePermission: PERMISSIONS.ENGINES.WRITE,
         showInMenu: true,
         rolesAllowed: ['admin', 'developer', 'health'] // Solo admin, developer e professionisti sanitari
+    },
+    {
+        path: 'docs',
+        element: DocumentationViewer,
+        title: 'Documentazione',
+        icon: DescriptionIcon, // Importa questa icona in cima al file
+        permissions: null, // accessibile a tutti gli utenti autenticati
+        showInMenu: true // Mostra nel menu sidebar
     }
 ];
 

@@ -1,19 +1,5 @@
 # Guida alla Gestione Utenze
 
-## Indice
-1. [Panoramica del Sistema](#panoramica-del-sistema)
-2. [Ruoli Utente](#ruoli-utente)
-3. [Sistema di Permessi](#sistema-di-permessi)
-   - [Permessi Predefiniti](#permessi-predefiniti)
-   - [Permessi Granulari](#permessi-granulari)
-4. [Accesso ai Test](#accesso-ai-test)
-5. [Accesso al Frontend Amministrativo](#accesso-al-frontend-amministrativo)
-6. [Gestione delle Sessioni](#gestione-delle-sessioni)
-7. [Flusso di Autenticazione](#flusso-di-autenticazione)
-8. [Guida Pratica per Amministratori](#guida-pratica-per-amministratori)
-9. [Debugging Comune](#debugging-comune)
-10. [Best Practices](#best-practices)
-
 ## Panoramica del Sistema
 
 Il sistema di gestione utenze implementa un modello di controllo degli accessi basato su:

@@ -1,38 +1,5 @@
 # Documentazione del Sistema di Gestione Utenti
 
-## Indice
-1. [Panoramica del Sistema](#panoramica-del-sistema)
-2. [Architettura](#architettura)
-3. [Modello Utente](#modello-utente)
-   - [Struttura dello Schema](#struttura-dello-schema)
-   - [Indici](#indici)
-   - [Metodi](#metodi)
-   - [Hook](#hook)
-4. [Sistema di Audit Utente](#sistema-di-audit-utente)
-5. [Servizi di Gestione Utenti](#servizi-di-gestione-utenti)
-   - [Servizi Principali](#servizi-principali)
-   - [Gestione Permessi](#gestione-permessi)
-   - [Funzionalità di Sicurezza](#funzionalità-di-sicurezza)
-6. [Controller](#controller)
-   - [Profilo Utente](#profilo-utente)
-   - [Amministrazione Utenti](#amministrazione-utenti)
-   - [Gestione Risposte](#gestione-risposte)
-7. [Repository](#repository)
-   - [Operazioni CRUD](#operazioni-crud)
-   - [Ricerca e Filtri](#ricerca-e-filtri)
-   - [Gestione Relazioni](#gestione-relazioni)
-8. [Route API](#route-api)
-   - [Route Pubbliche](#route-pubbliche)
-   - [Route Protette](#route-protette)
-   - [Route Amministrative](#route-amministrative)
-9. [Integrazione Frontend](#integrazione-frontend)
-   - [Context degli Utenti](#context-degli-utenti)
-   - [Validazione Dati](#validazione-dati)
-   - [Operazioni sugli Utenti](#operazioni-sugli-utenti)
-10. [Misure di Sicurezza](#misure-di-sicurezza)
-11. [Gestione Errori](#gestione-errori)
-12. [Best Practices](#best-practices)
-
 ## Panoramica del Sistema
 
 Il sistema di gestione utenti fornisce una soluzione completa per la gestione degli utenti all'interno di una piattaforma educativa. È progettato per gestire diversi ruoli utente, permessi e livelli di accesso, con particolare attenzione ai contesti educativi come scuole, classi e studenti.
