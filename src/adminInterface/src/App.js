@@ -17,6 +17,7 @@ import PublicCSI from './components/engines/CSI/publicCSI';
 import { CircularProgress, Box } from '@mui/material';
 import HomePage from './components/home/HomePage';
 import { TestingProvider } from './context/TestContext/TestingProvider';
+import DocumentationViewer from './components/docViewer/DocumentationViewer';
 
 
 import './styles.css';
@@ -97,6 +98,7 @@ function App() {
                                     </PrivateRoute>
                                 } 
                             />
+                            <Route path="/docs" element={<DocumentationViewer />} />
                         </Routes>
                     </Suspense>
                 </AuthProvider>

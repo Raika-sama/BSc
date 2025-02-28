@@ -1,0 +1,89 @@
+.documentation-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .documentation-content {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+  }
+  
+  .documentation-content h1 {
+    font-size: 2.2em;
+    border-bottom: 1px solid #eaecef;
+    padding-bottom: 0.3em;
+    margin-top: 1.5em;
+  }
+  
+  .documentation-content h2 {
+    font-size: 1.8em;
+    border-bottom: 1px solid #eaecef;
+    padding-bottom: 0.3em;
+    margin-top: 2em;
+  }
+  
+  .documentation-content h3 {
+    font-size: 1.4em;
+    margin-top: 1.8em;
+  }
+  
+  .documentation-content code {
+    background-color: #f6f8fa;
+    border-radius: 3px;
+    padding: 0.2em 0.4em;
+    font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  
+  .documentation-content pre {
+    background-color: #f6f8fa;
+    border-radius: 3px;
+    padding: 16px;
+    overflow: auto;
+  }
+  
+  .documentation-content blockquote {
+    padding: 0 1em;
+    color: #6a737d;
+    border-left: 0.25em solid #dfe2e5;
+    margin: 0 0 16px 0;
+  }
+  
+  .documentation-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+  
+  .documentation-content table th,
+  .documentation-content table td {
+    padding: 6px 13px;
+    border: 1px solid #dfe2e5;
+  }
+  
+  .documentation-content table tr {
+    background-color: #fff;
+    border-top: 1px solid #c6cbd1;
+  }
+  
+  .documentation-content table tr:nth-child(2n) {
+    background-color: #f6f8fa;
+  }
+  
+  .documentation-toc a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Stile per migliorare la leggibilità dei diagrammi di architettura */
+  .documentation-content pre code {
+    font-family: 'Courier New', monospace;
+  }
+  
+  /* Animazione per il caricamento tra documentazioni */
+  .documentation-content {
+    animation: fadeIn 0.3s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
