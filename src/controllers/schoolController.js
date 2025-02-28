@@ -32,6 +32,7 @@ class SchoolController extends BaseController {
         this.setupInitialConfiguration = this.setupInitialConfiguration.bind(this);
         this.removeManagerFromSchool = this.removeManagerFromSchool.bind(this);
         this.addManagerToSchool = this.addManagerToSchool.bind(this);
+        this.removeUserFromSchool = this.removeUserFromSchool.bind(this);
     }
 
     // Aggiungi questi metodi di utility
@@ -380,29 +381,6 @@ class SchoolController extends BaseController {
         }
     }
 
-    async addUserToSchool(req, res) {
-        try {
-            const { id } = req.params;
-            const { userId, role } = req.body;
-    
-            logger.debug('Adding user to school', {
-                schoolId: id,
-                userId,
-                role
-            });
-    
-            const school = await this.repository.addUser(id, userId, role);
-            
-            return this.sendResponse(res, {
-                school
-            });
-        } catch (error) {
-            logger.error('Error adding user to school', error);
-            return this.sendError(res, error);
-        }
-    }
-
-
     /**
      * Aggiunge un manager a una scuola
      * @param {Request} req - Express request object
@@ -542,6 +520,150 @@ class SchoolController extends BaseController {
                     code: error.code || 'INTERNAL_SERVER_ERROR'
                 }
             });
+        }
+    }
+
+    /**
+     * Aggiunge un utente a una scuola
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     */
+    async addUserToSchool(req, res) {
+        try {
+            const { id } = req.params;
+            const { userId, role, email } = req.body;
+
+            logger.debug('Adding user to school', {
+                schoolId: id,
+                userId,
+                email,
+                role
+            });
+
+            // Verifica autorizzazioni: solo admin, developer o manager della scuola
+            const school = await this.repository.findById(id);
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+
+            if (req.user.role !== 'admin' && req.user.role !== 'developer' && 
+                (!school.manager || school.manager.toString() !== req.user._id.toString())) {
+                throw createError(
+                    ErrorTypes.AUTHORIZATION.FORBIDDEN,
+                    'Non autorizzato ad aggiungere utenti alla scuola'
+                );
+            }
+
+            // Se è stato fornito l'email invece dell'userId, cerca l'utente
+            let actualUserId = userId;
+            if (!userId && email) {
+                const User = mongoose.model('User');
+                const user = await User.findOne({ email }).select('_id');
+                if (!user) {
+                    throw createError(
+                        ErrorTypes.RESOURCE.NOT_FOUND,
+                        `Nessun utente trovato con email: ${email}`
+                    );
+                }
+                actualUserId = user._id;
+            }
+
+            if (!actualUserId) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'ID utente o email richiesto'
+                );
+            }
+
+            // Verifica che il ruolo sia valido
+            const validRoles = ['teacher', 'admin'];
+            if (!validRoles.includes(role)) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Ruolo non valido. Valori accettati: teacher, admin'
+                );
+            }
+
+            const updatedSchool = await this.repository.addUser(id, actualUserId, role);
+            
+            return this.sendResponse(res, {
+                school: updatedSchool,
+                message: 'Utente aggiunto con successo'
+            });
+        } catch (error) {
+            logger.error('Error adding user to school', error);
+            return this.sendError(res, error);
+        }
+    }
+
+
+
+    /**
+     * Rimuove un utente da una scuola
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     */
+    async removeUserFromSchool(req, res) {
+        try {
+            logger.debug('Inizio rimozione utente dalla scuola', { 
+                schoolId: req.params.id,
+                userId: req.body.userId,
+                requestedBy: req.user._id
+            });
+
+            const schoolId = req.params.id;
+            const { userId } = req.body;
+
+            if (!userId) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'ID utente non fornito'
+                );
+            }
+
+            const school = await this.repository.findById(schoolId);
+            
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+
+            // Verifica autorizzazioni: solo admin, developer o manager della scuola
+            if (req.user.role !== 'admin' && req.user.role !== 'developer' && 
+                (!school.manager || school.manager.toString() !== req.user._id.toString())) {
+                throw createError(
+                    ErrorTypes.AUTHORIZATION.FORBIDDEN,
+                    'Non autorizzato a rimuovere utenti dalla scuola'
+                );
+            }
+
+            // Esegui la rimozione attraverso il repository
+            const result = await this.repository.removeUser(schoolId, userId);
+
+            // Invia la risposta
+            return this.sendResponse(res, {
+                school: result.school,
+                message: 'Utente rimosso con successo',
+                stats: {
+                    classesUpdated: result.classesUpdated || 0,
+                    studentsUpdated: result.studentsUpdated || 0
+                }
+            });
+
+        } catch (error) {
+            logger.error('Errore nella rimozione dell\'utente dalla scuola:', {
+                error: error.message,
+                schoolId: req.params.id,
+                userId: req.body.userId,
+                stack: error.stack
+            });
+
+            return this.sendError(res, error);
         }
     }
 

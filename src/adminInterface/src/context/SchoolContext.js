@@ -295,6 +295,137 @@ export const SchoolProvider = ({ children }) => {
         }
     };
 
+    const removeUserFromSchool = async (schoolId, userId) => {
+        try {
+            setLoading(true);
+            setError(null);
+    
+            console.log('Removing user from school:', { schoolId, userId });
+    
+            const response = await axiosInstance.delete(`/schools/${schoolId}/users`, {
+                data: { userId }
+            });
+    
+            if (response.data.status === 'success') {
+                // Aggiorna lo stato locale
+                if (selectedSchool?._id === schoolId) {
+                    setSelectedSchool(prev => {
+                        if (!prev) return null;
+                        
+                        return {
+                            ...prev,
+                            users: prev.users.filter(u => {
+                                const userIdToCheck = u.user._id || u.user;
+                                return userIdToCheck.toString() !== userId.toString();
+                            })
+                        };
+                    });
+                }
+                
+                // Aggiorna la lista scuole se necessario
+                setSchools(prev => 
+                    prev.map(school => {
+                        if (school._id === schoolId) {
+                            return {
+                                ...school,
+                                users: school.users.filter(u => {
+                                    const userIdToCheck = u.user._id || u.user;
+                                    return userIdToCheck.toString() !== userId.toString();
+                                })
+                            };
+                        }
+                        return school;
+                    })
+                );
+    
+                showNotification(
+                    response.data.message || 'Utente rimosso dalla scuola con successo', 
+                    'success'
+                );
+                
+                return response.data;
+            }
+        } catch (error) {
+            console.error('Error removing user from school:', error);
+            const errorMessage = error.response?.data?.error?.message || 
+                              'Errore nella rimozione dell\'utente dalla scuola';
+            setError(errorMessage);
+            showNotification(errorMessage, 'error');
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const addMultipleUsersToSchool = async (schoolId, usersData) => {
+        try {
+            setLoading(true);
+            setError(null);
+    
+            console.log('Adding multiple users to school:', { schoolId, usersCount: usersData.length });
+    
+            // Array per tenere traccia delle promesse di aggiunta
+            const addPromises = [];
+            const successfulAdds = [];
+            const failedAdds = [];
+    
+            // Creiamo una promessa per ogni utente da aggiungere
+            for (const userData of usersData) {
+                const promise = axiosInstance.post(`/schools/${schoolId}/users`, {
+                    userId: userData.userId,
+                    role: userData.role
+                })
+                .then(response => {
+                    if (response.data.status === 'success') {
+                        successfulAdds.push(userData.userId);
+                        return response.data;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding user:', { userId: userData.userId, error });
+                    failedAdds.push(userData.userId);
+                    return null;
+                });
+    
+                addPromises.push(promise);
+            }
+    
+            // Attendiamo che tutte le promesse siano risolte
+            await Promise.all(addPromises);
+    
+            // Aggiorniamo la scuola selezionata dopo tutte le aggiunte
+            if (successfulAdds.length > 0) {
+                // Dopo aver aggiunto gli utenti, ricarica i dettagli della scuola
+                await getSchoolById(schoolId);
+                
+                showNotification(
+                    `${successfulAdds.length} utenti aggiunti con successo${failedAdds.length > 0 ? `, ${failedAdds.length} non aggiunti` : ''}`,
+                    'success'
+                );
+            } else if (failedAdds.length > 0) {
+                showNotification(
+                    `Nessun utente aggiunto. Ci sono stati ${failedAdds.length} errori.`,
+                    'error'
+                );
+            }
+    
+            return {
+                successCount: successfulAdds.length,
+                failCount: failedAdds.length,
+                totalCount: usersData.length
+            };
+        } catch (error) {
+            console.error('Error in bulk user addition:', error);
+            const errorMessage = error.response?.data?.error?.message || 
+                               'Errore nell\'aggiunta di utenti alla scuola';
+            setError(errorMessage);
+            showNotification(errorMessage, 'error');
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };    
+
     const removeManagerFromSchool = async (schoolId) => {
         try {
             setLoading(true);
@@ -568,6 +699,8 @@ const getSectionStudents = async (schoolId, sectionName) => {
             updateSchool,
             deleteSchool,
             addUserToSchool,
+            removeUserFromSchool,
+            addMultipleUsersToSchool,
             removeManagerFromSchool,
             fetchAvailableManagers,
             addManagerToSchool,

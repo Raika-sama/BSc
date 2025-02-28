@@ -1,0 +1,18 @@
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-02-28T19:17:41.065Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-02-28T19:17:41.132Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-02-28T19:17:42.163Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-02-28T19:17:42.165Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-02-28T19:17:42.167Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-02-28T19:17:42.514Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-02-28T19:17:42.521Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-02-28T19:17:42.522Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-02-28T19:18:20.382Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-02-28T19:18:20.383Z"}
+{"duration":"13ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1740770300375_ypl7se6ha","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-02-28T19:18:20.390Z","url":"/api/v1/auth/verify","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-02-28T19:18:20.406Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-02-28T19:18:20.407Z"}
+{"duration":"4ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740770300404_c8fvn5bnb","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-02-28T19:18:20.408Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-02-28T19:18:32.748Z","userId":"677bfe44f6789c907c9f3766"}
+{"classesUpdated":0,"level":"info","message":"Utente rimosso con successo dalla scuola","schoolId":"679fdad474255ebc8afab683","studentsUpdated":0,"timestamp":"2025-02-28T19:53:12.595Z","userId":"67c0c560285a82c16495c615"}
+{"level":"error","message":"ID utente non valido","metadata":{},"timestamp":"2025-02-28T19:53:44.291Z"}
+{"duration":"182ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1740772424113_h740s8ok1","responseSize":"92 Bytes","statusCode":500,"timestamp":"2025-02-28T19:53:44.295Z","url":"/api/v1/users/create","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}

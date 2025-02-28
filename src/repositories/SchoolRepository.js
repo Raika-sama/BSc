@@ -215,45 +215,123 @@ class SchoolRepository extends BaseRepository {
      * @param {String} userId - ID dell'utente
      * @returns {Promise} Scuola aggiornata
      */
-    async removeUser(schoolId, userId) {
-        try {
-            const school = await this.findById(schoolId);
+/**
+ * Rimuove un utente dalla scuola e aggiorna tutte le associazioni
+ * @param {String} schoolId - ID della scuola
+ * @param {String} userId - ID dell'utente
+ * @returns {Promise} Risultato dell'operazione con statistiche
+ */
+async removeUser(schoolId, userId) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-            // Verifica se è l'ultimo admin
-            const isLastAdmin = school.users.filter(u => u.role === 'admin').length === 1 &&
-                              school.users.find(u => u.user.toString() === userId)?.role === 'admin';
+    try {
+        logger.debug('Repository: Inizio rimozione utente dalla scuola', { 
+            schoolId, 
+            userId 
+        });
 
-            if (isLastAdmin) {
-                logger.warn('Tentativo di rimuovere l\'ultimo admin della scuola', { 
-                    schoolId, 
-                    userId 
-                });
-                throw createError(
-                    ErrorTypes.BUSINESS.INVALID_OPERATION,
-                    'Impossibile rimuovere l\'ultimo admin della scuola'
-                );
-            }
-
-            school.users = school.users.filter(
-                u => u.user.toString() !== userId
+        // 1. Trova la scuola
+        const school = await this.model.findById(schoolId).session(session);
+        if (!school) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
             );
+        }
 
-            await school.save();
-            return school;
-        } catch (error) {
-            if (error.code) throw error;
-            logger.error('Errore nella rimozione dell\'utente dalla scuola', { 
-                error, 
+        // 2. Verifica se è l'ultimo admin
+        const isLastAdmin = school.users.filter(u => u.role === 'admin').length === 1 &&
+                          school.users.find(u => u.user.toString() === userId)?.role === 'admin';
+
+        if (isLastAdmin) {
+            logger.warn('Tentativo di rimuovere l\'ultimo admin della scuola', { 
                 schoolId, 
                 userId 
             });
             throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella rimozione dell\'utente dalla scuola',
-                { originalError: error.message }
+                ErrorTypes.BUSINESS.INVALID_OPERATION,
+                'Impossibile rimuovere l\'ultimo admin della scuola'
             );
         }
+
+        // 3. Controlla se l'utente è il manager
+        if (school.manager && school.manager.toString() === userId) {
+            throw createError(
+                ErrorTypes.BUSINESS.INVALID_OPERATION,
+                'Non è possibile rimuovere il manager della scuola con questo metodo. Usa removeManagerFromSchool'
+            );
+        }
+
+        // 4. Rimuovi l'utente dall'array users
+        school.users = school.users.filter(
+            u => u.user.toString() !== userId
+        );
+        
+        // 5. Salva le modifiche alla scuola
+        await school.save({ session });
+
+        // 6. Aggiorna le classi dove l'utente è mainTeacher
+        const classesUpdate = await Class.updateMany(
+            {
+                schoolId,
+                mainTeacher: userId
+            },
+            {
+                $set: {
+                    mainTeacherIsTemporary: true,
+                    previousMainTeacher: userId,
+                    mainTeacher: school.manager // Assegna temporaneamente il manager
+                }
+            },
+            { session }
+        );
+
+        // 7. Aggiorna gli studenti
+        const studentsUpdate = await Student.updateMany(
+            {
+                schoolId,
+                $or: [
+                    { mainTeacher: userId },
+                    { teachers: userId }
+                ]
+            },
+            {
+                $set: { 
+                    mainTeacher: school.manager // Assegna temporaneamente il manager
+                },
+                $pull: { teachers: userId }
+            },
+            { session }
+        );
+
+        await session.commitTransaction();
+        
+        logger.info('Utente rimosso con successo dalla scuola', {
+            schoolId,
+            userId,
+            classesUpdated: classesUpdate.modifiedCount,
+            studentsUpdated: studentsUpdate.modifiedCount
+        });
+
+        return {
+            school,
+            classesUpdated: classesUpdate.modifiedCount,
+            studentsUpdated: studentsUpdate.modifiedCount
+        };
+
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Errore nella rimozione dell\'utente dalla scuola:', {
+            error: error.message,
+            schoolId,
+            userId
+        });
+        throw error;
+    } finally {
+        session.endSession();
     }
+}
 
     /**
      * Trova tutte le scuole attive in una regione
