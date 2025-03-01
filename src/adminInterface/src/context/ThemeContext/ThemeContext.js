@@ -99,7 +99,6 @@ export const ThemeProvider = ({ children }) => {
     };
 
     // Genera il tema Material-UI
-    // Genera il tema Material-UI
     const theme = React.useMemo(() => {
         const effectiveTheme = getEffectiveTheme();
         
@@ -117,7 +116,7 @@ export const ThemeProvider = ({ children }) => {
         
         return createTheme(themes[effectiveTheme]);
     }, [currentTheme, customColor, customSecondaryColor, darkMode]);
-    
+
     // Funzione per cambiare tema
     const changeTheme = (newTheme) => {
         if (isValidTheme(newTheme)) {
