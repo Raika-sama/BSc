@@ -29,6 +29,8 @@ const DocumentationViewer = () => {
         docPath = '/docs/USER_DOC.md';
     } else if (docType === 'user-management') { // Aggiungi questa condizione
         docPath = '/docs/USER_MANAGEMENT_DOC.md';
+      } else if (docType === 'School-Year&Section') { // Aggiungi questa condizione
+        docPath = '/docs/ACCAD_YEAR_DOC.md';
       } else {
         throw new Error('Tipo di documentazione non supportato');
       }
@@ -157,7 +159,8 @@ const DocumentationViewer = () => {
       <MenuItem value="auth">Sistema di Autenticazione</MenuItem>
       <MenuItem value="user">Gestione Utenti</MenuItem>
       <MenuItem value="user-management">Guida Gestione Utenze</MenuItem>
-
+      <MenuItem value="School-Year&Section">Scuole: Anno accademico e sezioni</MenuItem>
+      
     </Select>
   );
 

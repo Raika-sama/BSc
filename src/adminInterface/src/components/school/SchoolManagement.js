@@ -112,6 +112,77 @@ const SchoolManagement = () => {
             width: 130
         },
         {
+            field: 'manager',
+            headerName: 'Manager',
+            width: 180,
+            renderCell: (params) => {
+                const manager = params.value;
+                if (!manager) return <Chip label="Non assegnato" color="default" size="small" />;
+                return (
+                    <Tooltip title={`${manager.firstName} ${manager.lastName} (${manager.email})`}>
+                        <Chip 
+                            label={`${manager.firstName} ${manager.lastName}`} 
+                            color="primary" 
+                            size="small" 
+                            variant="outlined"
+                        />
+                    </Tooltip>
+                );
+            }
+        },
+        // Nuova colonna per il numero di classi attive
+        {
+            field: 'sections',
+            headerName: 'Classi Attive',
+            width: 120,
+            valueGetter: (params) => {
+                const sections = params.value || [];
+                // Conteggia le sezioni attive
+                return sections.filter(section => !section.hasOwnProperty('isActive') || section.isActive).length;
+            },
+            renderCell: (params) => {
+                const activeSections = params.value;
+                return (
+                    <Chip 
+                        label={activeSections}
+                        color={activeSections > 0 ? "success" : "default"}
+                        size="small"
+                    />
+                );
+            }
+        },
+        // Nuova colonna per lo stato
+        {
+            field: 'status',
+            headerName: 'Stato',
+            width: 120,
+            valueGetter: (params) => {
+                const hasManager = !!params.row.manager;
+                const hasActiveSections = (params.row.sections || [])
+                    .some(section => !section.hasOwnProperty('isActive') || section.isActive);
+                
+                if (hasManager && hasActiveSections) return 'Attiva';
+                if (hasManager) return 'Parziale';
+                return 'Inattiva';
+            },
+            renderCell: (params) => {
+                const status = params.value;
+                const colors = {
+                    'Attiva': 'success',
+                    'Parziale': 'warning',
+                    'Inattiva': 'error'
+                };
+                
+                return (
+                    <Chip 
+                        label={status}
+                        color={colors[status]}
+                        size="small"
+                    />
+                );
+            }
+        },
+        {
             field: 'actions',
             type: 'actions',
             headerName: 'Azioni',
