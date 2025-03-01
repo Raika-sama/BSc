@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Button, Typography } from '@mui/material';
 import { 
@@ -17,7 +17,8 @@ import {
 import { ContentLayout } from '../common/commonIndex';
 import CardsLayout from '../common/ui/CardsLayout';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '@mui/material/styles';
+import { useTheme as useMuiTheme } from '@mui/material/styles';
+import { useTheme as useAppTheme } from '../../context/ThemeContext/ThemeContextIndex';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Creiamo i componenti motion all'inizio
@@ -26,9 +27,13 @@ const MotionBox = motion.create(Box);
 
 const EnginesManagement = () => {
     const { checkPermission } = useAuth();
-    const theme = useTheme();
+    const muiTheme = useMuiTheme();
     const navigate = useNavigate();
     const location = useLocation();
+    
+    // Determina il colore in base alla modalità del tema
+    const isDarkMode = muiTheme.palette.mode === 'dark';
+    const themeColor = isDarkMode ? "secondary" : "primary";
     
     const handleCSINavigation = () => {
         console.log('Current location:', location);
@@ -48,15 +53,15 @@ const EnginesManagement = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onClick}
+            color={themeColor}
             sx={{
                 mt: 2,
                 borderRadius: 2,
                 textTransform: 'none',
-                borderColor: theme.palette.primary.main,
-                color: theme.palette.primary.main,
                 '&:hover': {
-                    borderColor: theme.palette.primary.dark,
-                    backgroundColor: 'rgba(33, 150, 243, 0.08)',
+                    backgroundColor: isDarkMode 
+                        ? 'rgba(156, 39, 176, 0.08)' // Viola più chiaro per tema scuro
+                        : 'rgba(33, 150, 243, 0.08)', // Blu per tema chiaro
                 }
             }}
         >
@@ -64,13 +69,25 @@ const EnginesManagement = () => {
         </MotionButton>
     );
 
+    // Componente per renderizzare l'icona con il colore appropriato
+    const ThemedIcon = ({ icon, size = 50 }) => {
+        const IconComponent = icon;
+        return (
+            <IconComponent 
+                sx={{ 
+                    fontSize: size, 
+                    color: isDarkMode ? muiTheme.palette.secondary.main : muiTheme.palette.primary.main 
+                }} 
+            />
+        );
+    };
 
     const cards = [
         {
             title: 'CSI - Cognitive Style Index',
             description: 'Test per la valutazione dello stile cognitivo',
-            icon: <Psychology sx={{ fontSize: 50 }} />,
-            centerContent: true, // Aggiungi questa prop
+            icon: <ThemedIcon icon={Psychology} />,
+            centerContent: true,
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -83,8 +100,8 @@ const EnginesManagement = () => {
         {
             title: 'Capacità di Memoria',
             description: 'Test per la valutazione delle capacità mnemoniche',
-            icon: <Memory sx={{ fontSize: 50 }} />,
-            centerContent: true, // Aggiungi questa prop
+            icon: <ThemedIcon icon={Memory} />,
+            centerContent: true,
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -97,8 +114,8 @@ const EnginesManagement = () => {
         {
             title: 'Intelligenza Emotiva (EQ)',
             description: 'Valutazione delle competenze emotive',
-            icon: <Favorite sx={{ fontSize: 50 }} />,
-            centerContent: true, // Aggiungi questa prop
+            icon: <ThemedIcon icon={Favorite} />,
+            centerContent: true,
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -111,8 +128,8 @@ const EnginesManagement = () => {
         {
             title: 'Intelligenze Multiple',
             description: 'Test delle Intelligenze Multiple di Gardner',
-            icon: <Extension sx={{ fontSize: 50 }} />,
-            centerContent: true, // Aggiungi questa prop
+            icon: <ThemedIcon icon={Extension} />,
+            centerContent: true,
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -125,8 +142,8 @@ const EnginesManagement = () => {
         {
             title: 'Problem Solving',
             description: 'Valutazione capacità di risoluzione problemi',
-            icon: <LightbulbOutlined sx={{ fontSize: 50 }} />,
-            centerContent: true, // Aggiungi questa prop
+            icon: <ThemedIcon icon={LightbulbOutlined} />,
+            centerContent: true,
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -139,8 +156,8 @@ const EnginesManagement = () => {
         {
             title: 'Abitudini di Studio',
             description: 'Analisi delle metodologie di studio',
-            icon: <MenuBook sx={{ fontSize: 50 }} />,
-            centerContent: true, // Aggiungi questa prop
+            icon: <ThemedIcon icon={MenuBook} />,
+            centerContent: true,
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -153,8 +170,8 @@ const EnginesManagement = () => {
         {
             title: 'Big Five Personality',
             description: 'Test dei cinque grandi fattori della personalità',
-            icon: <Mood sx={{ fontSize: 50 }} />,
-            centerContent: true, // Aggiungi questa prop
+            icon: <ThemedIcon icon={Mood} />,
+            centerContent: true,
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -167,8 +184,8 @@ const EnginesManagement = () => {
         {
             title: 'MBTI',
             description: 'Myers-Briggs Type Indicator',
-            icon: <Person sx={{ fontSize: 50 }} />,
-            centerContent: true, // Aggiungi questa prop
+            icon: <ThemedIcon icon={Person} />,
+            centerContent: true,
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -181,8 +198,8 @@ const EnginesManagement = () => {
         {
             title: 'Test QI',
             description: 'Test del Quoziente Intellettivo',
-            icon: <School sx={{ fontSize: 50 }} />,
-            centerContent: true, // Aggiungi questa prop
+            icon: <ThemedIcon icon={School} />,
+            centerContent: true,
             content: (
                 <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -203,17 +220,16 @@ const EnginesManagement = () => {
             actions={
                 canCreateEngine && (
                     <MotionButton
-                        whileHover={{ scale: 1.05 }}
+                        whileHover={{ scale: 1.05, boxShadow: 6 }}
                         whileTap={{ scale: 0.95 }}
                         variant="contained"
+                        color={themeColor}
                         startIcon={<AddIcon />}
                         sx={{
-                            bgcolor: theme.palette.primary.main,
                             borderRadius: 2,
                             textTransform: 'none',
                             boxShadow: 2,
                             '&:hover': {
-                                bgcolor: theme.palette.primary.dark,
                                 boxShadow: 4,
                             }
                         }}

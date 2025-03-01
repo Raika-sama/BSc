@@ -26,8 +26,12 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
     const navigate = useNavigate();
     const [anchorEl, setAnchorEl] = useState(null);
     const muiTheme = useMuiTheme();
-    // Estrai sia il tema corrente che il tema MUI
-    const { currentTheme, theme: customTheme } = useTheme();
+    // Estrai sia il tema corrente che il tema MUI e controlla se è bicolore
+    const { currentTheme, theme: customTheme, isBicolorTheme } = useTheme();
+    
+    // Verifica se il tema corrente è bicolore
+    const isThemeBicolor = isBicolorTheme(currentTheme);
+
     const handleMenu = (event) => {
         setAnchorEl(event.currentTarget);
     };
@@ -51,94 +55,136 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
         logout();
     };
 
-    return (
-        <AppBar
-        position="fixed"
-        sx={{
-            width: '100%',
-            bgcolor: 'primary.main',
-            // Gradiente potenziato con più colori e maggiore opacità
-            backgroundImage: customTheme.palette.mode === 'dark'
+    // Ottieni il colore per il gradiente, usando anche il secondario se disponibile
+    const getGradientColors = () => {
+        if (isThemeBicolor && customTheme.palette.secondary) {
+            return customTheme.palette.mode === 'dark'
                 ? `linear-gradient(135deg, 
                     ${alpha(customTheme.palette.primary.dark, 0.95)} 0%,
                     ${alpha(customTheme.palette.primary.main, 0.90)} 30%,
-                    ${alpha(customTheme.palette.primary.light, 0.85)} 70%,
-                    ${alpha(customTheme.palette.primary.main, 0.95)} 100%)`
+                    ${alpha(customTheme.palette.secondary.main, 0.85)} 70%,
+                    ${alpha(customTheme.palette.secondary.dark, 0.95)} 100%)`
                 : `linear-gradient(135deg, 
                     ${alpha(customTheme.palette.primary.light, 0.95)} 0%,
                     ${alpha(customTheme.palette.primary.main, 1)} 40%,
-                    ${alpha(customTheme.palette.primary.dark, 0.9)} 80%,
-                    ${alpha(customTheme.palette.primary.main, 0.95)} 100%)`,
-            boxShadow: customTheme.palette.mode === 'dark'
-                ? '0 2px 12px rgba(0, 0, 0, 0.4)'
-                : '0 2px 12px rgba(100, 181, 246, 0.3)',
-            zIndex: muiTheme.zIndex.drawer + 1,
-            transition: theme => theme.transitions.create(
-                ['background-color', 'box-shadow', 'background-image', 'transform'],
-                {
-                    duration: theme.transitions.duration.standard,
-                    easing: theme.transitions.easing.easeInOut,
-                }
-            ),
-            // Effetto hover potenziato
-            '&:hover': {
-                backgroundImage: customTheme.palette.mode === 'dark'
-                    ? `linear-gradient(135deg, 
-                        ${alpha(customTheme.palette.primary.dark, 1)} 0%,
-                        ${alpha(customTheme.palette.primary.main, 0.95)} 35%,
-                        ${alpha(customTheme.palette.primary.light, 0.9)} 65%,
-                        ${alpha(customTheme.palette.primary.dark, 1)} 100%)`
-                    : `linear-gradient(135deg, 
-                        ${alpha(customTheme.palette.primary.light, 1)} 0%,
-                        ${alpha(customTheme.palette.primary.main, 0.95)} 45%,
-                        ${alpha(customTheme.palette.primary.dark, 0.95)} 75%,
-                        ${alpha(customTheme.palette.primary.main, 1)} 100%)`,
+                    ${alpha(customTheme.palette.secondary.main, 0.9)} 70%,
+                    ${alpha(customTheme.palette.secondary.dark, 0.95)} 100%)`;
+        }
+        
+        // Fallback al gradiente monocolore
+        return customTheme.palette.mode === 'dark'
+            ? `linear-gradient(135deg, 
+                ${alpha(customTheme.palette.primary.dark, 0.95)} 0%,
+                ${alpha(customTheme.palette.primary.main, 0.90)} 30%,
+                ${alpha(customTheme.palette.primary.light, 0.85)} 70%,
+                ${alpha(customTheme.palette.primary.main, 0.95)} 100%)`
+            : `linear-gradient(135deg, 
+                ${alpha(customTheme.palette.primary.light, 0.95)} 0%,
+                ${alpha(customTheme.palette.primary.main, 1)} 40%,
+                ${alpha(customTheme.palette.primary.dark, 0.9)} 80%,
+                ${alpha(customTheme.palette.primary.main, 0.95)} 100%)`;
+    };
+    
+    // Ottieni il gradiente di hover
+    const getHoverGradient = () => {
+        if (isThemeBicolor && customTheme.palette.secondary) {
+            return customTheme.palette.mode === 'dark'
+                ? `linear-gradient(135deg, 
+                    ${alpha(customTheme.palette.primary.dark, 1)} 0%,
+                    ${alpha(customTheme.palette.primary.main, 0.95)} 35%,
+                    ${alpha(customTheme.palette.secondary.main, 0.9)} 65%,
+                    ${alpha(customTheme.palette.secondary.dark, 1)} 100%)`
+                : `linear-gradient(135deg, 
+                    ${alpha(customTheme.palette.primary.light, 1)} 0%,
+                    ${alpha(customTheme.palette.primary.main, 0.95)} 45%,
+                    ${alpha(customTheme.palette.secondary.main, 0.95)} 75%,
+                    ${alpha(customTheme.palette.secondary.dark, 1)} 100%)`;
+        }
+        
+        // Fallback al gradiente monocolore
+        return customTheme.palette.mode === 'dark'
+            ? `linear-gradient(135deg, 
+                ${alpha(customTheme.palette.primary.dark, 1)} 0%,
+                ${alpha(customTheme.palette.primary.main, 0.95)} 35%,
+                ${alpha(customTheme.palette.primary.light, 0.9)} 65%,
+                ${alpha(customTheme.palette.primary.dark, 1)} 100%)`
+            : `linear-gradient(135deg, 
+                ${alpha(customTheme.palette.primary.light, 1)} 0%,
+                ${alpha(customTheme.palette.primary.main, 0.95)} 45%,
+                ${alpha(customTheme.palette.primary.dark, 0.95)} 75%,
+                ${alpha(customTheme.palette.primary.main, 1)} 100%)`;
+    };
+
+    return (
+        <AppBar
+            position="fixed"
+            sx={{
+                width: '100%',
+                bgcolor: 'primary.main',
+                // Gradiente con supporto bicolore
+                backgroundImage: getGradientColors(),
                 boxShadow: customTheme.palette.mode === 'dark'
-                    ? '0 4px 15px rgba(0, 0, 0, 0.5)'
-                    : '0 4px 15px rgba(100, 181, 246, 0.4)',
-                '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: `linear-gradient(45deg, 
-                        ${alpha(customTheme.palette.primary.main, 0)} 30%, 
-                        ${alpha(customTheme.palette.primary.light, 0.1)} 50%,
-                        ${alpha(customTheme.palette.primary.main, 0)} 70%)`,
-                    animation: 'shimmer 2s infinite',
+                    ? '0 2px 12px rgba(0, 0, 0, 0.4)'
+                    : '0 2px 12px rgba(100, 181, 246, 0.3)',
+                zIndex: muiTheme.zIndex.drawer + 1,
+                transition: theme => theme.transitions.create(
+                    ['background-color', 'box-shadow', 'background-image', 'transform'],
+                    {
+                        duration: theme.transitions.duration.standard,
+                        easing: theme.transitions.easing.easeInOut,
+                    }
+                ),
+                // Effetto hover potenziato
+                '&:hover': {
+                    backgroundImage: getHoverGradient(),
+                    boxShadow: customTheme.palette.mode === 'dark'
+                        ? '0 4px 15px rgba(0, 0, 0, 0.5)'
+                        : '0 4px 15px rgba(100, 181, 246, 0.4)',
+                    '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: `linear-gradient(45deg, 
+                            ${alpha(customTheme.palette.primary.main, 0)} 30%, 
+                            ${alpha(isThemeBicolor && customTheme.palette.secondary 
+                                ? customTheme.palette.secondary.light 
+                                : customTheme.palette.primary.light, 0.1)} 50%,
+                            ${alpha(customTheme.palette.primary.main, 0)} 70%)`,
+                        animation: 'shimmer 2s infinite',
+                    },
                 },
-            },
-            // Aggiungiamo un'animazione di shimmer
-            '@keyframes shimmer': {
-                '0%': {
-                    transform: 'translateX(-100%)',
+                // Aggiungiamo un'animazione di shimmer
+                '@keyframes shimmer': {
+                    '0%': {
+                        transform: 'translateX(-100%)',
+                    },
+                    '100%': {
+                        transform: 'translateX(100%)',
+                    },
                 },
-                '100%': {
-                    transform: 'translateX(100%)',
-                },
-            },
-        }}
-    >
+            }}
+        >
             <Toolbar>
                 <IconButton
-                color="inherit"
-                aria-label="open drawer"
-                edge="start"
-                onClick={onDrawerToggle}
-                sx={{ 
-                    mr: 2,
-                    '&:hover': {
-                        backgroundColor: 'rgba(255,255,255,0.15)',
-                        transform: 'scale(1.1)',
-                        boxShadow: '0 0 10px rgba(255,255,255,0.2)',
-                    },
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                }}
-            >
-                <MenuIcon />
-            </IconButton>
+                    color="inherit"
+                    aria-label="open drawer"
+                    edge="start"
+                    onClick={onDrawerToggle}
+                    sx={{ 
+                        mr: 2,
+                        '&:hover': {
+                            backgroundColor: 'rgba(255,255,255,0.15)',
+                            transform: 'scale(1.1)',
+                            boxShadow: '0 0 10px rgba(255,255,255,0.2)',
+                        },
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                    }}
+                >
+                    <MenuIcon />
+                </IconButton>
                 <Typography 
                     variant="h6" 
                     noWrap 
@@ -176,9 +222,11 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                             sx={{ 
                                 width: 32, 
                                 height: 32, 
-                                bgcolor: customTheme.palette.mode === 'dark' 
-                                    ? customTheme.palette.primary.light 
-                                    : customTheme.palette.primary.dark,
+                                bgcolor: isThemeBicolor && customTheme.palette.secondary
+                                    ? customTheme.palette.secondary.main
+                                    : customTheme.palette.mode === 'dark' 
+                                        ? customTheme.palette.primary.light 
+                                        : customTheme.palette.primary.dark,
                                 fontSize: '1rem',
                                 fontWeight: 500,
                                 border: '2px solid rgba(255,255,255,0.8)',
@@ -234,7 +282,7 @@ const Header = ({ open, drawerWidth, onDrawerToggle }) => {
                         </Box>
                         <Divider sx={{ my: 1 }} />
                         <MenuItem onClick={handleProfile}>
-                            <PersonIcon sx={{ mr: 1, color: 'primary.main' }} /> Profilo
+                            <PersonIcon sx={{ mr: 1, color: isThemeBicolor && customTheme.palette.secondary ? 'secondary.main' : 'primary.main' }} /> Profilo
                         </MenuItem>
                         <MenuItem onClick={handlePersonalTest}>
                             <AssignmentIcon sx={{ mr: 1, color: 'primary.main' }} /> Test Personale

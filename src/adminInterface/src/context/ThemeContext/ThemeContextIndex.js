@@ -7,4 +7,19 @@ export {
     darkenColor,
     getContrastText,
     isValidTheme
- } from './themes';
+} from './themes';
+export {
+    saveTheme,
+    getSavedTheme,
+    saveDarkMode,
+    getSavedDarkMode,
+    saveCustomColor,
+    getSavedCustomColor,
+    saveCustomSecondaryColor,
+    getSavedCustomSecondaryColor,
+    saveAllPreferences,
+    getAllPreferences,
+    clearAllPreferences,
+    hasStoredPreferences,
+    STORAGE_KEYS
+} from './ThemeStorage';

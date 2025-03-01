@@ -3,6 +3,7 @@ import { Box, Card, CardContent, Typography, Grid, Chip, IconButton, Tooltip, al
 import { useTheme } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import { HelpOutline as HelpIcon, Star as StarIcon } from '@mui/icons-material';
+import { useTheme as useAppTheme } from '../../../context/ThemeContext/ThemeContextIndex';
 
 // Define motion components correctly
 const MotionCard = motion.create(Card);
@@ -17,6 +18,15 @@ const CardsLayout = ({
     loading = false 
 }) => {
     const theme = useTheme();
+    const { isBicolorTheme, currentTheme } = useAppTheme();
+    
+    // Verifica se il tema corrente è bicolore
+    const isCurrentThemeBicolor = isBicolorTheme(currentTheme);
+    
+    // Determina il colore secondario da usare
+    const secondaryColor = isCurrentThemeBicolor && theme.palette.secondary 
+        ? theme.palette.secondary.main 
+        : theme.palette.primary.light;
 
     const container = {
         hidden: { opacity: 0 },
@@ -40,17 +50,26 @@ const CardsLayout = ({
         }
     };
 
-    const generateGlowAnimation = (color) => ({
+    const generateGlowAnimation = (color1, color2) => ({
         '@keyframes glow': {
             '0%': {
-                boxShadow: `0 0 2px ${alpha(color, 0.2)}, 0 0 4px ${alpha(color, 0.2)}`
+                boxShadow: `0 0 2px ${alpha(color1, 0.2)}, 0 0 4px ${alpha(color1, 0.2)}`
             },
             '50%': {
-                boxShadow: `0 0 8px ${alpha(color, 0.3)}, 0 0 16px ${alpha(color, 0.3)}`
+                boxShadow: `0 0 8px ${alpha(color2, 0.3)}, 0 0 16px ${alpha(color2, 0.3)}`
             },
             '100%': {
-                boxShadow: `0 0 2px ${alpha(color, 0.2)}, 0 0 4px ${alpha(color, 0.2)}`
+                boxShadow: `0 0 2px ${alpha(color1, 0.2)}, 0 0 4px ${alpha(color1, 0.2)}`
             }
+        }
+    });
+
+    // Genera un effetto di sfumatura di colore per i bordi
+    const generateColorShiftAnimation = (color1, color2) => ({
+        '@keyframes colorShift': {
+            '0%': { borderColor: color1 },
+            '50%': { borderColor: color2 },
+            '100%': { borderColor: color1 }
         }
     });
 
@@ -94,10 +113,21 @@ const CardsLayout = ({
                             bgcolor: theme.palette.mode === 'dark' 
                                 ? alpha(theme.palette.primary.main, 0.05)
                                 : alpha(theme.palette.primary.main, 0.02),
-                            ...generateGlowAnimation(theme.palette.primary.main),
+                            ...generateGlowAnimation(
+                                theme.palette.primary.main, 
+                                secondaryColor
+                            ),
+                            ...generateColorShiftAnimation(
+                                theme.palette.primary.main,
+                                secondaryColor
+                            ),
                             ...(card.highlighted && {
-                                animation: 'glow 2s infinite',
-                                borderColor: 'primary.main',
+                                animation: isCurrentThemeBicolor 
+                                    ? 'glow 2s infinite, colorShift 4s infinite' 
+                                    : 'glow 2s infinite',
+                                borderColor: isCurrentThemeBicolor 
+                                    ? secondaryColor 
+                                    : theme.palette.primary.main,
                             }),
                             '&::before': {
                                 content: '""',
@@ -106,7 +136,9 @@ const CardsLayout = ({
                                 left: 0,
                                 right: 0,
                                 height: '4px',
-                                background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                                background: isCurrentThemeBicolor
+                                    ? `linear-gradient(90deg, ${theme.palette.primary.main}, ${secondaryColor})`
+                                    : `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
                                 opacity: 0,
                                 transition: 'opacity 0.3s ease'
                             },
@@ -129,8 +161,13 @@ const CardsLayout = ({
                                 right: 0,
                                 bottom: 0,
                                 opacity: 0.03,
-                                backgroundImage: `radial-gradient(circle at 20px 20px, 
-                                    ${theme.palette.primary.main} 2px, transparent 0)`,
+                                backgroundImage: isCurrentThemeBicolor
+                                    ? `radial-gradient(circle at 20px 20px, 
+                                        ${theme.palette.primary.main} 2px, transparent 0),
+                                       radial-gradient(circle at 40px 40px, 
+                                        ${secondaryColor} 2px, transparent 0)`
+                                    : `radial-gradient(circle at 20px 20px, 
+                                        ${theme.palette.primary.main} 2px, transparent 0)`,
                                 backgroundSize: '40px 40px',
                                 transition: 'transform 0.5s ease',
                                 zIndex: 0
@@ -168,8 +205,16 @@ const CardsLayout = ({
                                             width: 40,
                                             height: 40,
                                             borderRadius: '12px',
-                                            bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                            color: 'primary.main'
+                                            background: isCurrentThemeBicolor
+                                                ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)}, ${alpha(secondaryColor, 0.15)})`
+                                                : alpha(theme.palette.primary.main, 0.1),
+                                            color: isCurrentThemeBicolor ? secondaryColor : 'primary.main',
+                                            transition: 'all 0.3s ease',
+                                            '&:hover': {
+                                                background: isCurrentThemeBicolor
+                                                    ? `linear-gradient(135deg, ${alpha(secondaryColor, 0.15)}, ${alpha(theme.palette.primary.main, 0.15)})`
+                                                    : alpha(theme.palette.primary.main, 0.15),
+                                            }
                                         }}
                                     >
                                         {card.icon}
@@ -178,7 +223,10 @@ const CardsLayout = ({
                                 {card.helpText && !card.centerContent && (
                                     <Tooltip title={card.helpText} arrow>
                                         <IconButton size="small">
-                                            <HelpIcon sx={{ fontSize: 20 }} />
+                                            <HelpIcon sx={{ 
+                                                fontSize: 20,
+                                                color: isCurrentThemeBicolor ? secondaryColor : 'primary.main' 
+                                            }} />
                                         </IconButton>
                                     </Tooltip>
                                 )}
@@ -205,18 +253,26 @@ const CardsLayout = ({
                                         component="div"
                                         sx={{ 
                                             fontWeight: 600,
-                                            backgroundImage: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                                            backgroundImage: isCurrentThemeBicolor
+                                                ? `linear-gradient(45deg, ${theme.palette.primary.main}, ${secondaryColor})`
+                                                : `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
                                             backgroundClip: 'text',
                                             WebkitBackgroundClip: 'text',
                                             color: 'transparent',
-                                            textAlign: card.centerContent ? 'center' : 'left'
+                                            textAlign: card.centerContent ? 'center' : 'left',
+                                            transition: 'all 0.3s ease',
+                                            '&:hover': {
+                                                backgroundImage: isCurrentThemeBicolor
+                                                    ? `linear-gradient(45deg, ${secondaryColor}, ${theme.palette.primary.main})`
+                                                    : `linear-gradient(45deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
+                                            }
                                         }}
                                     >
                                         {card.title}
                                     </Typography>
                                     {card.highlighted && (
                                         <StarIcon sx={{ 
-                                            color: 'primary.main',
+                                            color: isCurrentThemeBicolor ? secondaryColor : 'primary.main',
                                             fontSize: 20,
                                             animation: 'pulse 1.5s infinite',
                                             '@keyframes pulse': {
@@ -251,20 +307,25 @@ const CardsLayout = ({
                                     flexWrap: 'wrap',
                                     justifyContent: card.centerContent ? 'center' : 'flex-start'
                                 }}>
-                                    {card.chips.map((chip, idx) => (
-                                        <Chip
-                                            key={idx}
-                                            {...chip}
-                                            size="small"
-                                            sx={{
-                                                borderRadius: '8px',
-                                                '&:hover': {
-                                                    transform: 'translateY(-2px)',
-                                                },
-                                                transition: 'transform 0.2s ease'
-                                            }}
-                                        />
-                                    ))}
+                                    {card.chips.map((chip, idx) => {
+                                        // Alternare colore primario e secondario per i chip
+                                        const useSecondaryColor = isCurrentThemeBicolor && idx % 2 === 1;
+                                        return (
+                                            <Chip
+                                                key={idx}
+                                                {...chip}
+                                                size="small"
+                                                color={useSecondaryColor ? "secondary" : "primary"}
+                                                sx={{
+                                                    borderRadius: '8px',
+                                                    '&:hover': {
+                                                        transform: 'translateY(-2px)',
+                                                    },
+                                                    transition: 'transform 0.2s ease'
+                                                }}
+                                            />
+                                        );
+                                    })}
                                 </Box>
                             )}
 
@@ -278,7 +339,28 @@ const CardsLayout = ({
                                     alignItems: 'center'
                                 })
                             }}>
-                                {card.content}
+                                {/* Se il contenuto contiene button, aggiungiamo gli stili secondari */}
+                                {React.Children.map(card.content, child => {
+                                    // Modifica i pulsanti per usare il colore secondario nei temi bicolore
+                                    if (isCurrentThemeBicolor && React.isValidElement(child) && 
+                                        (child.type === 'button' || 
+                                         child.type?.displayName === 'Button' || 
+                                         (typeof child.type === 'string' && child.type.toLowerCase() === 'button'))) {
+                                        
+                                        return React.cloneElement(child, {
+                                            ...child.props,
+                                            color: 'secondary',
+                                            sx: {
+                                                ...(child.props.sx || {}),
+                                                '&:hover': {
+                                                    background: `linear-gradient(135deg, ${secondaryColor}, ${alpha(secondaryColor, 0.8)})`,
+                                                    transform: 'translateY(-2px)'
+                                                }
+                                            }
+                                        });
+                                    }
+                                    return child;
+                                }) || card.content}
                             </Box>
                         </CardContent>
                     </MotionCard>

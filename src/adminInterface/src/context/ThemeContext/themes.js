@@ -465,18 +465,574 @@ const sunsetBeachTheme = {
     }
 };
 
-const getCustomTheme = (primaryColor, mode = 'light') => ({
+// Nuovi temi bicolore
+const blueOrangeTheme = {
     palette: {
-        ...(mode === 'dark' ? darkTheme.palette : lightTheme.palette),
-        mode: mode,
+        mode: 'light',
         primary: {
-            main: primaryColor,
-            light: lightenColor(primaryColor, 0.2),
-            dark: darkenColor(primaryColor, 0.2),
-            contrastText: getContrastText(primaryColor)
+            main: '#1976D2',       // Blu principale
+            light: '#64B5F6',
+            dark: '#0D47A1',
+            contrastText: '#FFFFFF'
+        },
+        secondary: {
+            main: '#FF9800',       // Arancione secondario
+            light: '#FFB74D',
+            dark: '#F57C00',
+            contrastText: '#000000'
+        },
+        background: {
+            default: '#F5F7FA',
+            paper: '#FFFFFF'
+        },
+        text: {
+            primary: '#2C3E50',
+            secondary: '#546E7A'
+        },
+        sidebar: {
+            background: '#FFFFFF',
+            hover: '#E3F2FD',
+            selected: '#BBDEFB',
+            text: '#1976D2'
         }
     }
-});
+};
+
+const blueOrangeDarkTheme = {
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#64B5F6',       // Blu chiaro principale
+            light: '#90CAF9',
+            dark: '#1976D2',
+            contrastText: '#000000'
+        },
+        secondary: {
+            main: '#FFB74D',       // Arancione chiaro secondario
+            light: '#FFCC80',
+            dark: '#FF9800',
+            contrastText: '#000000'
+        },
+        background: {
+            default: '#121212',
+            paper: '#1E1E1E'
+        },
+        text: {
+            primary: '#FFFFFF',
+            secondary: '#B0BEC5'
+        },
+        sidebar: {
+            background: '#1E1E1E',
+            hover: '#2C2C2C',
+            selected: '#383838',
+            text: '#64B5F6'
+        }
+    }
+};
+
+const purpleGreenTheme = {
+    palette: {
+        mode: 'light',
+        primary: {
+            main: '#6A1B9A',       // Viola principale
+            light: '#9C27B0',
+            dark: '#4A148C',
+            contrastText: '#FFFFFF'
+        },
+        secondary: {
+            main: '#2E7D32',       // Verde secondario
+            light: '#4CAF50',
+            dark: '#1B5E20',
+            contrastText: '#FFFFFF'
+        },
+        background: {
+            default: '#F9F5FF',
+            paper: '#FFFFFF'
+        },
+        text: {
+            primary: '#2C3E50',
+            secondary: '#546E7A'
+        },
+        sidebar: {
+            background: '#FFFFFF',
+            hover: '#F3E5F5',
+            selected: '#E1BEE7',
+            text: '#6A1B9A'
+        }
+    }
+};
+
+const purpleGreenDarkTheme = {
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#AB47BC',       // Viola chiaro principale
+            light: '#CE93D8',
+            dark: '#7B1FA2',
+            contrastText: '#FFFFFF'
+        },
+        secondary: {
+            main: '#66BB6A',       // Verde chiaro secondario
+            light: '#81C784',
+            dark: '#388E3C',
+            contrastText: '#000000'
+        },
+        background: {
+            default: '#121212',
+            paper: '#1E1E1E'
+        },
+        text: {
+            primary: '#FFFFFF',
+            secondary: '#B0BEC5'
+        },
+        sidebar: {
+            background: '#1E1E1E',
+            hover: '#2C2C2C',
+            selected: '#383838',
+            text: '#AB47BC'
+        }
+    }
+};
+
+const redTealTheme = {
+    palette: {
+        mode: 'light',
+        primary: {
+            main: '#D32F2F',       // Rosso principale
+            light: '#EF5350',
+            dark: '#B71C1C',
+            contrastText: '#FFFFFF'
+        },
+        secondary: {
+            main: '#00897B',       // Teal secondario
+            light: '#26A69A',
+            dark: '#00695C',
+            contrastText: '#FFFFFF'
+        },
+        background: {
+            default: '#FFEBEE',
+            paper: '#FFFFFF'
+        },
+        text: {
+            primary: '#2C3E50',
+            secondary: '#546E7A'
+        },
+        sidebar: {
+            background: '#FFFFFF',
+            hover: '#FFCDD2',
+            selected: '#EF9A9A',
+            text: '#D32F2F'
+        }
+    }
+};
+
+const redTealDarkTheme = {
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#EF5350',       // Rosso chiaro principale
+            light: '#E57373',
+            dark: '#C62828',
+            contrastText: '#FFFFFF'
+        },
+        secondary: {
+            main: '#26A69A',       // Teal chiaro secondario
+            light: '#4DB6AC',
+            dark: '#00796B',
+            contrastText: '#000000'
+        },
+        background: {
+            default: '#121212',
+            paper: '#1E1E1E'
+        },
+        text: {
+            primary: '#FFFFFF',
+            secondary: '#B0BEC5'
+        },
+        sidebar: {
+            background: '#1E1E1E',
+            hover: '#2C2C2C',
+            selected: '#383838',
+            text: '#EF5350'
+        }
+    }
+};
+
+// Nuovi temi bicolore
+
+// 1. Magenta e Lime
+const magentaLimeTheme = {
+    palette: {
+        mode: 'light',
+        primary: {
+            main: '#C2185B',       // Magenta
+            light: '#E91E63',
+            dark: '#880E4F',
+            contrastText: '#FFFFFF'
+        },
+        secondary: {
+            main: '#CDDC39',       // Lime
+            light: '#D4E157',
+            dark: '#9E9D24',
+            contrastText: '#000000'
+        },
+        background: {
+            default: '#FCF4F9',
+            paper: '#FFFFFF'
+        },
+        text: {
+            primary: '#2C3E50',
+            secondary: '#546E7A'
+        },
+        sidebar: {
+            background: '#FFFFFF',
+            hover: '#FCE4EC',
+            selected: '#F8BBD0',
+            text: '#C2185B'
+        }
+    }
+};
+
+const magentaLimeDarkTheme = {
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#E91E63',       // Magenta chiaro
+            light: '#F06292',
+            dark: '#C2185B',
+            contrastText: '#FFFFFF'
+        },
+        secondary: {
+            main: '#DCE775',       // Lime chiaro
+            light: '#E6EE9C',
+            dark: '#CDDC39',
+            contrastText: '#000000'
+        },
+        background: {
+            default: '#121212',
+            paper: '#1E1E1E'
+        },
+        text: {
+            primary: '#FFFFFF',
+            secondary: '#B0BEC5'
+        },
+        sidebar: {
+            background: '#1E1E1E',
+            hover: '#2C2C2C',
+            selected: '#383838',
+            text: '#E91E63'
+        }
+    }
+};
+
+// 2. Ambra e Indaco
+const amberIndigoTheme = {
+    palette: {
+        mode: 'light',
+        primary: {
+            main: '#FFC107',       // Ambra
+            light: '#FFD54F',
+            dark: '#FFA000',
+            contrastText: '#000000'
+        },
+        secondary: {
+            main: '#3F51B5',       // Indaco
+            light: '#5C6BC0',
+            dark: '#303F9F',
+            contrastText: '#FFFFFF'
+        },
+        background: {
+            default: '#FFF8E1',
+            paper: '#FFFFFF'
+        },
+        text: {
+            primary: '#2C3E50',
+            secondary: '#546E7A'
+        },
+        sidebar: {
+            background: '#FFFFFF',
+            hover: '#FFF8E1',
+            selected: '#FFECB3',
+            text: '#FFA000'
+        }
+    }
+};
+
+const amberIndigoDarkTheme = {
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#FFD54F',       // Ambra chiaro
+            light: '#FFE082',
+            dark: '#FFC107',
+            contrastText: '#000000'
+        },
+        secondary: {
+            main: '#5C6BC0',       // Indaco chiaro
+            light: '#7986CB',
+            dark: '#3F51B5',
+            contrastText: '#FFFFFF'
+        },
+        background: {
+            default: '#121212',
+            paper: '#1E1E1E'
+        },
+        text: {
+            primary: '#FFFFFF',
+            secondary: '#B0BEC5'
+        },
+        sidebar: {
+            background: '#1E1E1E',
+            hover: '#2C2C2C',
+            selected: '#383838',
+            text: '#FFD54F'
+        }
+    }
+};
+
+// 3. Teal e Rosa
+const tealPinkTheme = {
+    palette: {
+        mode: 'light',
+        primary: {
+            main: '#009688',       // Teal
+            light: '#4DB6AC',
+            dark: '#00796B',
+            contrastText: '#FFFFFF'
+        },
+        secondary: {
+            main: '#EC407A',       // Rosa
+            light: '#F48FB1',
+            dark: '#D81B60',
+            contrastText: '#FFFFFF'
+        },
+        background: {
+            default: '#E0F2F1',
+            paper: '#FFFFFF'
+        },
+        text: {
+            primary: '#2C3E50',
+            secondary: '#546E7A'
+        },
+        sidebar: {
+            background: '#FFFFFF',
+            hover: '#E0F2F1',
+            selected: '#B2DFDB',
+            text: '#00796B'
+        }
+    }
+};
+
+const tealPinkDarkTheme = {
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#4DB6AC',       // Teal chiaro
+            light: '#80CBC4',
+            dark: '#009688',
+            contrastText: '#000000'
+        },
+        secondary: {
+            main: '#F48FB1',       // Rosa chiaro
+            light: '#F8BBD0',
+            dark: '#EC407A',
+            contrastText: '#000000'
+        },
+        background: {
+            default: '#121212',
+            paper: '#1E1E1E'
+        },
+        text: {
+            primary: '#FFFFFF',
+            secondary: '#B0BEC5'
+        },
+        sidebar: {
+            background: '#1E1E1E',
+            hover: '#2C2C2C',
+            selected: '#383838',
+            text: '#4DB6AC'
+        }
+    }
+};
+
+// Nuovi temi pazzerelli
+
+// 1. Neon Party
+const neonPartyTheme = {
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#FF00FF',      // Magenta neon
+            light: '#FF33FF',
+            dark: '#CC00CC',
+            contrastText: '#FFFFFF'
+        },
+        secondary: {
+            main: '#00FFFF',      // Cyan neon
+            light: '#33FFFF',
+            dark: '#00CCCC',
+            contrastText: '#000000'
+        },
+        background: {
+            default: '#000000',   // Nero
+            paper: '#121212'      // Nero più chiaro
+        },
+        text: {
+            primary: '#FFFFFF',   // Bianco
+            secondary: '#FFFF00'  // Giallo neon
+        },
+        sidebar: {
+            background: '#121212',
+            hover: '#1E1E1E',
+            selected: '#2A2A2A',
+            text: '#00FF00'       // Verde neon
+        }
+    }
+};
+
+// 2. Pastello
+const pastelTheme = {
+    palette: {
+        mode: 'light',
+        primary: {
+            main: '#FFB6C1',      // Rosa pastello
+            light: '#FFC1E3',
+            dark: '#FF99B3',
+            contrastText: '#000000'
+        },
+        secondary: {
+            main: '#B0E0E6',      // Azzurro pastello
+            light: '#CCF2F4',
+            dark: '#97D2D9',
+            contrastText: '#000000'
+        },
+        background: {
+            default: '#F8F9FA',   // Bianco sporco
+            paper: '#FFFFFF'      // Bianco
+        },
+        text: {
+            primary: '#6C757D',   // Grigio scuro
+            secondary: '#ADB5BD'  // Grigio chiaro
+        },
+        sidebar: {
+            background: '#FFFFFF',
+            hover: '#F8F9FA',
+            selected: '#FFE4E1',  // Misty rose
+            text: '#FF99B3'
+        }
+    }
+};
+
+// 3. Minecraft
+const minecraftTheme = {
+    palette: {
+        mode: 'light',
+        primary: {
+            main: '#5D7C15',      // Verde Minecraft
+            light: '#7BAA20',
+            dark: '#435C08',
+            contrastText: '#FFFFFF'
+        },
+        secondary: {
+            main: '#825432',      // Marrone terra
+            light: '#9C6B42',
+            dark: '#5F3E25',
+            contrastText: '#FFFFFF'
+        },
+        background: {
+            default: '#90A4AE',   // Grigio cielo
+            paper: '#B0BEC5'      // Grigio chiaro
+        },
+        text: {
+            primary: '#212121',   // Quasi nero
+            secondary: '#4E342E'  // Marrone scuro
+        },
+        sidebar: {
+            background: '#78909C', // Grigio bluastro
+            hover: '#607D8B',
+            selected: '#546E7A',
+            text: '#FFFFFF'
+        }
+    }
+};
+
+// 4. Cosmic
+const cosmicTheme = {
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#673AB7',      // Viola cosmico
+            light: '#9575CD',
+            dark: '#4527A0',
+            contrastText: '#FFFFFF'
+        },
+        secondary: {
+            main: '#FF4081',      // Rosa cosmico
+            light: '#FF80AB',
+            dark: '#C51162',
+            contrastText: '#FFFFFF'
+        },
+        background: {
+            default: '#0B0B19',   // Blu spazio profondo
+            paper: '#171732'      // Blu notte
+        },
+        text: {
+            primary: '#F5F5F5',   // Quasi bianco
+            secondary: '#B39DDB'  // Lavanda
+        },
+        sidebar: {
+            background: '#171732',
+            hover: '#232347',
+            selected: '#2E2E5A',
+            text: '#F5F5F5'
+        }
+    }
+};
+
+const getCustomTheme = (primaryColor, secondaryColor = null, mode = 'light') => {
+    console.log('Creating custom theme with:', { primaryColor, secondaryColor, mode });
+    
+    // Verifica che i colori siano validi
+    if (!primaryColor || typeof primaryColor !== 'string' || !primaryColor.startsWith('#')) {
+        console.warn('Primary color is invalid:', primaryColor);
+        primaryColor = mode === 'dark' ? '#64B5F6' : '#2196F3';
+    }
+
+    // Base theme to start from
+    const baseTheme = mode === 'dark' ? darkTheme : lightTheme;
+    
+    // Create theme config starting from a base theme completo
+    const themeConfig = {
+        ...JSON.parse(JSON.stringify(baseTheme)), // Clone profondo del tema base
+        palette: {
+            ...JSON.parse(JSON.stringify(baseTheme.palette)), // Clone profondo della palette
+            mode: mode,
+            primary: {
+                main: primaryColor,
+                light: lightenColor(primaryColor, 0.2),
+                dark: darkenColor(primaryColor, 0.2),
+                contrastText: getContrastText(primaryColor)
+            }
+        }
+    };
+    
+    // Assicuriamoci che il tema abbia sempre una palette secondary
+    if (secondaryColor && typeof secondaryColor === 'string' && secondaryColor.startsWith('#')) {
+        console.log('Setting custom secondary color:', secondaryColor);
+        themeConfig.palette.secondary = {
+            main: secondaryColor,
+            light: lightenColor(secondaryColor, 0.2),
+            dark: darkenColor(secondaryColor, 0.2),
+            contrastText: getContrastText(secondaryColor)
+        };
+    } else {
+        // Lasciamo il colore secondario del tema base
+        console.log('Using default secondary color from base theme');
+    }
+    
+    console.log('Final theme config:', themeConfig);
+    return themeConfig;
+};
 
 export const themes = {
     light: lightTheme,
@@ -495,6 +1051,24 @@ export const themes = {
     nature: natureTheme,
     galaxy: galaxyTheme,
     sunsetBeach: sunsetBeachTheme,
+    blueOrange: blueOrangeTheme,
+    blueOrangeDark: blueOrangeDarkTheme,
+    purpleGreen: purpleGreenTheme,
+    purpleGreenDark: purpleGreenDarkTheme,
+    redTeal: redTealTheme,
+    redTealDark: redTealDarkTheme,
+    // Nuovi temi bicolore
+    magentaLime: magentaLimeTheme,
+    magentaLimeDark: magentaLimeDarkTheme,
+    amberIndigo: amberIndigoTheme,
+    amberIndigoDark: amberIndigoDarkTheme,
+    tealPink: tealPinkTheme,
+    tealPinkDark: tealPinkDarkTheme,
+    // Nuovi temi pazzerelli
+    neonParty: neonPartyTheme,
+    pastel: pastelTheme,
+    minecraft: minecraftTheme,
+    cosmic: cosmicTheme,
     getCustomTheme
 };
 

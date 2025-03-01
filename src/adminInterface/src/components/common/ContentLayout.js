@@ -10,9 +10,10 @@ import {
     Tooltip,
     IconButton
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { useTheme as useMuiTheme } from '@mui/material/styles';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
+import { useTheme as useAppTheme } from '../../context/ThemeContext/ThemeContextIndex'; // Aggiusta il percorso se necessario
 
 const ContentLayout = ({ 
     title, 
@@ -27,15 +28,19 @@ const ContentLayout = ({
     loading,
     animation = true
 }) => {
-    const theme = useTheme();
-    const isDarkMode = theme.palette.mode === 'dark';
+    const muiTheme = useMuiTheme();
+    const { isBicolorTheme, currentTheme } = useAppTheme();
+    
+    // Determina se il tema corrente è bicolore
+    const isCurrentThemeBicolor = isBicolorTheme(currentTheme);
+    const isDarkMode = muiTheme.palette.mode === 'dark';
 
     // Definizione degli stili in base al tema
     const styles = {
         wrapper: {
             background: isDarkMode
-                ? alpha(theme.palette.background.default, 0.6)
-                : theme.palette.background.default,
+                ? alpha(muiTheme.palette.background.default, 0.6)
+                : muiTheme.palette.background.default,
             borderRadius: 2,
             transition: 'all 0.3s ease',
         },
@@ -43,33 +48,47 @@ const ContentLayout = ({
             borderRadius: 3,
             overflow: 'hidden',
             bgcolor: isDarkMode
-                ? alpha(theme.palette.background.paper, 0.85)
-                : theme.palette.background.paper,
+                ? alpha(muiTheme.palette.background.paper, 0.85)
+                : muiTheme.palette.background.paper,
             boxShadow: isDarkMode
-                ? `0 4px 20px ${alpha(theme.palette.common.black, 0.35)}`
-                : `0 4px 20px ${alpha(theme.palette.primary.main, 0.15)}`,
+                ? `0 4px 20px ${alpha(muiTheme.palette.common.black, 0.35)}`
+                : `0 4px 20px ${alpha(muiTheme.palette.primary.main, 0.15)}`,
             backgroundImage: `linear-gradient(135deg, 
-                ${alpha(theme.palette.background.paper, isDarkMode ? 0.98 : 1)} 0%,
-                ${alpha(theme.palette.background.paper, isDarkMode ? 0.95 : 0.98)} 50%,
-                ${alpha(theme.palette.background.paper, isDarkMode ? 0.92 : 0.95)} 100%)`,
+                ${alpha(muiTheme.palette.background.paper, isDarkMode ? 0.98 : 1)} 0%,
+                ${alpha(muiTheme.palette.background.paper, isDarkMode ? 0.95 : 0.98)} 50%,
+                ${alpha(muiTheme.palette.background.paper, isDarkMode ? 0.92 : 0.95)} 100%)`,
             backdropFilter: 'blur(10px)',
             transition: 'all 0.3s ease',
             p: 3,
             '&:hover': {
                 boxShadow: isDarkMode
-                    ? `0 6px 25px ${alpha(theme.palette.common.black, 0.45)}`
-                    : `0 6px 25px ${alpha(theme.palette.primary.main, 0.25)}`,
+                    ? `0 6px 25px ${alpha(muiTheme.palette.common.black, 0.45)}`
+                    : `0 6px 25px ${alpha(muiTheme.palette.primary.main, 0.25)}`,
             }
         },
         title: {
             fontWeight: 600,
-            background: isDarkMode
-                ? `linear-gradient(135deg, 
-                    ${theme.palette.primary.main}, 
-                    ${theme.palette.primary.light})`
-                : `linear-gradient(135deg, 
-                    ${theme.palette.primary.main}, 
-                    ${theme.palette.primary.dark})`,
+            background: (() => {
+                if (isCurrentThemeBicolor) {
+                    // Se è un tema bicolore, usa un gradiente tra primario e secondario
+                    return isDarkMode
+                        ? `linear-gradient(135deg, 
+                            ${muiTheme.palette.primary.main}, 
+                            ${muiTheme.palette.secondary.main})`
+                        : `linear-gradient(135deg, 
+                            ${muiTheme.palette.primary.main}, 
+                            ${muiTheme.palette.secondary.main})`;
+                } else {
+                    // Se è un tema monocolore, usa il gradiente con variazioni del colore primario
+                    return isDarkMode
+                        ? `linear-gradient(135deg, 
+                            ${muiTheme.palette.primary.main}, 
+                            ${muiTheme.palette.primary.light})`
+                        : `linear-gradient(135deg, 
+                            ${muiTheme.palette.primary.main}, 
+                            ${muiTheme.palette.primary.dark})`;
+                }
+            })(),
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
             color: 'transparent',
@@ -79,41 +98,55 @@ const ContentLayout = ({
             transition: 'all 0.3s ease',
             '&:hover': {
                 transform: 'scale(1.01)',
-                background: isDarkMode
-                    ? `linear-gradient(135deg, 
-                        ${theme.palette.primary.light}, 
-                        ${theme.palette.primary.main})`
-                    : `linear-gradient(135deg, 
-                        ${theme.palette.primary.dark}, 
-                        ${theme.palette.primary.main})`,
+                background: (() => {
+                    if (isCurrentThemeBicolor) {
+                        // Inverti il gradiente all'hover per temi bicolore
+                        return isDarkMode
+                            ? `linear-gradient(135deg, 
+                                ${muiTheme.palette.secondary.main}, 
+                                ${muiTheme.palette.primary.main})`
+                            : `linear-gradient(135deg, 
+                                ${muiTheme.palette.secondary.main}, 
+                                ${muiTheme.palette.primary.main})`;
+                    } else {
+                        // Inverti il gradiente all'hover per temi monocolore
+                        return isDarkMode
+                            ? `linear-gradient(135deg, 
+                                ${muiTheme.palette.primary.light}, 
+                                ${muiTheme.palette.primary.main})`
+                            : `linear-gradient(135deg, 
+                                ${muiTheme.palette.primary.dark}, 
+                                ${muiTheme.palette.primary.main})`;
+                    }
+                })(),
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
             }
         },
         breadcrumbs: {
             '& .MuiLink-root': {
-                color: theme.palette.text.secondary,
+                color: muiTheme.palette.text.secondary,
                 fontSize: '0.875rem',
                 transition: 'color 0.2s',
                 '&:hover': {
-                    color: theme.palette.primary.main
+                    color: muiTheme.palette.primary.main
                 }
             }
         },
         backButton: {
-            color: theme.palette.text.secondary,
+            color: muiTheme.palette.text.secondary,
             '&:hover': {
-                color: theme.palette.primary.main,
-                backgroundColor: alpha(theme.palette.primary.main, 0.08)
+                color: muiTheme.palette.primary.main,
+                backgroundColor: alpha(muiTheme.palette.primary.main, 0.08)
             }
         },
         helpIcon: {
             fontSize: '1.2rem',
-            color: theme.palette.text.secondary,
+            color: muiTheme.palette.text.secondary,
             cursor: 'help'
         },
         subtitle: {
-            color: theme.palette.text.secondary,
+            color: muiTheme.palette.text.secondary,
             opacity: 0.8,
             transition: 'color 0.3s ease'
         }

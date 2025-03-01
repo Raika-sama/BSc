@@ -1,6 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { createTheme } from '@mui/material';
 import { themes, defaultTheme, isValidTheme } from './themes';
+import {
+    saveTheme,
+    getSavedTheme,
+    saveDarkMode,
+    getSavedDarkMode,
+    saveCustomColor,
+    getSavedCustomColor,
+    saveCustomSecondaryColor,
+    getSavedCustomSecondaryColor,
+    getAllPreferences
+} from './ThemeStorage';
 
 // Creiamo il context
 const ThemeContext = createContext();
@@ -16,28 +27,27 @@ export const useTheme = () => {
 
 // Theme Provider component
 export const ThemeProvider = ({ children }) => {
+    // Recupera le preferenze salvate
+    const savedPreferences = getAllPreferences({ theme: defaultTheme });
+    
     // Stato per il tema corrente
-    const [currentTheme, setCurrentTheme] = useState(() => {
-        // Recupera il tema salvato dal localStorage o usa il default
-        const savedTheme = localStorage.getItem('theme');
-        return isValidTheme(savedTheme) ? savedTheme : defaultTheme;
-    });
+    const [currentTheme, setCurrentTheme] = useState(savedPreferences.theme);
 
     // Stato per la modalità (light/dark)
     const [darkMode, setDarkMode] = useState(() => {
-        const savedMode = localStorage.getItem('darkMode');
         // Se il tema salvato contiene "Dark", impostiamo darkMode a true
-        if (savedMode !== null) {
-            return savedMode === 'true';
+        if (savedPreferences.darkMode !== undefined) {
+            return savedPreferences.darkMode;
         }
         // Altrimenti verifichiamo se il tema corrente contiene "Dark"
-        return currentTheme.includes('Dark');
+        return savedPreferences.theme.includes('Dark');
     });
 
-    // Stato per il colore personalizzato (per il tema custom)
-    const [customColor, setCustomColor] = useState(() => {
-        return localStorage.getItem('customThemeColor') || '#64B5F6';
-    });
+    // Stato per il colore personalizzato primario (per il tema custom)
+    const [customColor, setCustomColor] = useState(savedPreferences.customColor);
+    
+    // Stato per il colore personalizzato secondario
+    const [customSecondaryColor, setCustomSecondaryColor] = useState(savedPreferences.customSecondaryColor);
 
     // Funzione per ottenere il nome del tema base (senza "Dark")
     const getBaseTheme = (themeName) => {
@@ -60,6 +70,17 @@ export const ThemeProvider = ({ children }) => {
         return themeName.includes('Dark');
     };
 
+    // Funzione per verificare se un tema è bicolore
+    const isBicolorTheme = (themeName) => {
+        if (themeName === 'custom') {
+            return customSecondaryColor !== null && customSecondaryColor !== undefined;
+        }
+        
+        const baseTheme = getBaseTheme(themeName);
+        const themeObj = themes[baseTheme] || themes[themeName];
+        return themeObj?.palette?.secondary?.main !== undefined;
+    };
+
     // Determina il tema effettivo da utilizzare basandosi sul tema corrente e sulla modalità dark
     const getEffectiveTheme = () => {
         if (currentTheme === 'custom') {
@@ -78,29 +99,36 @@ export const ThemeProvider = ({ children }) => {
     };
 
     // Genera il tema Material-UI
+    // Genera il tema Material-UI
     const theme = React.useMemo(() => {
         const effectiveTheme = getEffectiveTheme();
         
         if (effectiveTheme === 'custom') {
             // Per il tema personalizzato, usa la modalità corrente
             const mode = darkMode ? 'dark' : 'light';
-            return createTheme(themes.getCustomTheme(customColor, mode));
+            
+            // Crea il tema con getCustomTheme
+            // Passiamo il colore secondario solo se è effettivamente specificato
+            const themeConfig = themes.getCustomTheme(customColor, customSecondaryColor, mode);
+            
+            console.log('Creating Material-UI theme with config:', themeConfig);
+            return createTheme(themeConfig);
         }
         
         return createTheme(themes[effectiveTheme]);
-    }, [currentTheme, customColor, darkMode]);
-
+    }, [currentTheme, customColor, customSecondaryColor, darkMode]);
+    
     // Funzione per cambiare tema
     const changeTheme = (newTheme) => {
         if (isValidTheme(newTheme)) {
             const isNewThemeDark = newTheme.includes('Dark');
-            localStorage.setItem('theme', newTheme);
-            localStorage.setItem('darkMode', isNewThemeDark.toString());
+            saveTheme(newTheme);
+            saveDarkMode(isNewThemeDark);
             setCurrentTheme(newTheme);
             setDarkMode(isNewThemeDark);
         } else if (newTheme === 'custom') {
             // Per il tema personalizzato
-            localStorage.setItem('theme', newTheme);
+            saveTheme(newTheme);
             setCurrentTheme('custom');
         }
     };
@@ -108,7 +136,7 @@ export const ThemeProvider = ({ children }) => {
     // Funzione per toggleTheme che supporta tutti i temi
     const toggleTheme = () => {
         const newDarkMode = !darkMode;
-        localStorage.setItem('darkMode', newDarkMode.toString());
+        saveDarkMode(newDarkMode);
         setDarkMode(newDarkMode);
         
         // Se non è un tema personalizzato, aggiorna anche il tema corrente
@@ -118,20 +146,40 @@ export const ThemeProvider = ({ children }) => {
             
             // Verifica se il nuovo tema esiste
             if (isValidTheme(newTheme)) {
-                localStorage.setItem('theme', newTheme);
+                saveTheme(newTheme);
                 setCurrentTheme(newTheme);
             }
         }
     };
 
-    // Funzione per impostare un colore personalizzato
+    // Funzione per impostare un colore primario personalizzato
     const setCustomThemeColor = (color) => {
         setCustomColor(color);
-        localStorage.setItem('customThemeColor', color);
+        saveCustomColor(color);
         if (currentTheme !== 'custom') {
             changeTheme('custom');
         }
     };
+
+    // Funzione per impostare un colore secondario personalizzato
+// Funzione per impostare un colore secondario personalizzato
+const setCustomThemeSecondaryColor = (color) => {
+    console.log('Setting custom secondary color:', color);
+    
+    // Validazione del colore
+    if (color !== null && (!color.startsWith('#') || color.length !== 7)) {
+        console.warn('Invalid color format:', color);
+        return;
+    }
+    
+    setCustomSecondaryColor(color);
+    saveCustomSecondaryColor(color);
+    
+    // Sempre cambio a tema personalizzato quando si imposta un colore
+    if (currentTheme !== 'custom') {
+        changeTheme('custom');
+    }
+};
 
     // Effetto per sincronizzare il tema con il localStorage
     useEffect(() => {
@@ -141,6 +189,12 @@ export const ThemeProvider = ({ children }) => {
             }
             if (e.key === 'darkMode') {
                 setDarkMode(e.newValue === 'true');
+            }
+            if (e.key === 'customThemeColor') {
+                setCustomColor(e.newValue);
+            }
+            if (e.key === 'customThemeSecondaryColor') {
+                setCustomSecondaryColor(e.newValue);
             }
         };
 
@@ -163,12 +217,15 @@ export const ThemeProvider = ({ children }) => {
         theme,                  // Il tema Material-UI corrente
         currentTheme,          // Nome del tema corrente
         darkMode,              // Se la modalità scura è attiva
-        customColor,           // Colore personalizzato corrente
+        customColor,           // Colore primario personalizzato corrente
+        customSecondaryColor,  // Colore secondario personalizzato corrente
         changeTheme,          // Funzione per cambiare tema
         toggleTheme,          // Funzione per alternare tra light e dark
-        setCustomThemeColor,  // Funzione per impostare un colore personalizzato
+        setCustomThemeColor,  // Funzione per impostare un colore personalizzato primario
+        setCustomThemeSecondaryColor, // Funzione per impostare un colore personalizzato secondario
         isValidTheme,        // Utility function per validare i temi
-        isDarkTheme          // Utility function per verificare se un tema è dark
+        isDarkTheme,          // Utility function per verificare se un tema è dark
+        isBicolorTheme       // Utility function per verificare se un tema è bicolore
     };
 
     return (

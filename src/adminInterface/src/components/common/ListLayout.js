@@ -25,7 +25,9 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import { useTheme } from '@mui/material/styles';
+import { useTheme as useMuiTheme } from '@mui/material/styles';
+// Importa la funzione useTheme dal tuo contesto
+import { useTheme as useAppTheme } from '../../context/ThemeContext/ThemeContextIndex'; // Aggiusta il percorso se necessario
 //import CardsLayout from './ui/CardsLayout'; // Importiamo il nuovo CardsLayout
 import  StatsCardsLayout  from './ui/StatsCardsLayout';
 
@@ -57,13 +59,22 @@ const ListLayout = ({
     onSelectionModelChange,
     selectionModel
 }) => {
-    const theme = useTheme();
+    const muiTheme = useMuiTheme();
     const [searchValue, setSearchValue] = useState('');
     const [columnsMenu, setColumnsMenu] = useState(null);
     const [localIsFilterOpen, setLocalIsFilterOpen] = useState(false); // stato locale per i filtri
     const [visibleColumns, setVisibleColumns] = useState(
+        
         columns.reduce((acc, col) => ({ ...acc, [col.field]: true }), {})
     );
+
+    const { isBicolorTheme, currentTheme } = useAppTheme();
+
+    React.useEffect(() => {
+        console.log('Tema corrente:', muiTheme);
+        console.log('Colore primario:', muiTheme.palette.primary.main);
+        console.log('Colore secondario:', muiTheme.palette.secondary?.main);
+    }, [muiTheme]); // Usa muiTheme come dipendenza
 
      // Usiamo lo stato dei filtri da props se fornito, altrimenti usiamo lo stato locale
      const isFilterOpen = propIsFilterOpen !== undefined ? propIsFilterOpen : localIsFilterOpen;
@@ -86,63 +97,76 @@ const ListLayout = ({
         }));
     };
 
-
-    const standardDataGridStyle = {
-        border: 'none',
-        '& .MuiDataGrid-cell': {
-            fontSize: '0.875rem',
-            py: 1,
-            transition: 'all 0.2s ease'
-        },
-        '& .MuiDataGrid-columnHeaders': {
-            backgroundColor: theme => theme.palette.mode === 'dark' 
+ // Determina se il tema attuale è bicolore
+ const isCurrentThemeBicolor = isBicolorTheme(currentTheme);
+ 
+ const standardDataGridStyle = {
+    border: 'none',
+    '& .MuiDataGrid-cell': {
+        fontSize: '0.875rem',
+        py: 1,
+        transition: 'all 0.2s ease'
+    },
+    '& .MuiDataGrid-columnHeaders': {
+        backgroundColor: theme => isCurrentThemeBicolor
+            ? (theme.palette.mode === 'dark' 
+                ? alpha(theme.palette.secondary.main, 0.15)
+                : alpha(theme.palette.secondary.main, 0.08))
+            : (theme.palette.mode === 'dark' 
                 ? alpha(theme.palette.primary.main, 0.15)
-                : alpha(theme.palette.primary.main, 0.08),
-            backgroundImage: theme => `linear-gradient(135deg, 
+                : alpha(theme.palette.primary.main, 0.08)),
+        backgroundImage: theme => isCurrentThemeBicolor
+            ? `linear-gradient(135deg, 
+                ${alpha(theme.palette.primary.main, 0.12)} 0%,
+                ${alpha(theme.palette.secondary.main, 0.08)} 50%,
+                ${alpha(theme.palette.primary.main, 0.12)} 100%)`
+            : `linear-gradient(135deg, 
                 ${alpha(theme.palette.primary.main, 0.12)} 0%,
                 ${alpha(theme.palette.primary.light, 0.08)} 50%,
                 ${alpha(theme.palette.primary.main, 0.12)} 100%)`,
-            borderBottom: 1,
-            borderColor: 'divider'
-        },
-        '& .MuiDataGrid-row': {
-            transition: 'all 0.2s ease',
-            '&:nth-of-type(even)': {
-                backgroundColor: theme => theme.palette.mode === 'dark'
+        borderBottom: 1,
+        borderColor: 'divider'
+    },
+    '& .MuiDataGrid-row': {
+        transition: 'all 0.2s ease',
+        '&:nth-of-type(even)': {
+            backgroundColor: theme => isCurrentThemeBicolor
+                ? (theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.secondary.main, 0.05)
+                    : alpha(theme.palette.secondary.light, 0.05))
+                : (theme.palette.mode === 'dark'
                     ? alpha(theme.palette.primary.main, 0.05)
-                    : alpha(theme.palette.primary.light, 0.05),
-            },
-            '&:hover': {
-                backgroundColor: theme => theme.palette.mode === 'dark'
+                    : alpha(theme.palette.primary.light, 0.05)),
+        },
+        '&:hover': {
+            backgroundColor: theme => isCurrentThemeBicolor
+                ? (theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.secondary.main, 0.12)
+                    : alpha(theme.palette.secondary.light, 0.12))
+                : (theme.palette.mode === 'dark'
                     ? alpha(theme.palette.primary.main, 0.12)
-                    : alpha(theme.palette.primary.light, 0.12),
-                transform: 'translateY(-1px)',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-            }
-        },
-        // Qui aggiungiamo lo stile per le righe selezionate
-        '& .MuiDataGrid-row.Mui-selected': {
-            backgroundColor: theme => theme.palette.mode === 'dark'
+                    : alpha(theme.palette.primary.light, 0.12)),
+            transform: 'translateY(-1px)',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+        }
+    },
+    '& .MuiDataGrid-row.Mui-selected': {
+        backgroundColor: theme => isCurrentThemeBicolor
+            ? (theme.palette.mode === 'dark'
+                ? alpha(theme.palette.secondary.main, 0.2)
+                : alpha(theme.palette.secondary.light, 0.2))
+            : (theme.palette.mode === 'dark'
                 ? alpha(theme.palette.primary.main, 0.2)
-                : alpha(theme.palette.primary.light, 0.2),
-            '&:hover': {
-                backgroundColor: theme => theme.palette.mode === 'dark'
+                : alpha(theme.palette.primary.light, 0.2)),
+        '&:hover': {
+            backgroundColor: theme => isCurrentThemeBicolor
+                ? (theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.secondary.main, 0.25)
+                    : alpha(theme.palette.secondary.light, 0.25))
+                : (theme.palette.mode === 'dark'
                     ? alpha(theme.palette.primary.main, 0.25)
-                    : alpha(theme.palette.primary.light, 0.25),
-            }
-        },
-        '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
-            outline: 'none'
-        },
-        '& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within': {
-            outline: 'none'
-        },
-        '& .MuiDataGrid-virtualScroller': {
-        '::-webkit-scrollbar': {
-            display: 'none'
-        },
-        msOverflowStyle: 'none',
-        scrollbarWidth: 'none',
+                    : alpha(theme.palette.primary.light, 0.25)),
+        }
     },
         ...sx
     };
@@ -153,7 +177,7 @@ const ListLayout = ({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: alpha(theme.palette.background.paper, 0.7),
+        backgroundColor: alpha(muiTheme.palette.background.paper, 0.7), // Usa muiTheme invece di theme
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

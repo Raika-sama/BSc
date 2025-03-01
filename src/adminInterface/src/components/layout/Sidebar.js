@@ -20,7 +20,10 @@ const Sidebar = ({ open, drawerWidth }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, checkPermission } = useAuth();
-    const { theme: customTheme } = useTheme();
+    const { theme: customTheme, currentTheme, isBicolorTheme } = useTheme();
+    
+    // Verifica se il tema corrente è bicolore
+    const isCurrentThemeBicolor = isBicolorTheme(currentTheme);
 
     // Animazioni
     const itemVariants = {
@@ -46,15 +49,31 @@ const Sidebar = ({ open, drawerWidth }) => {
             width: drawerWidth,
             boxSizing: 'border-box',
             bgcolor: 'transparent',
-            backgroundImage: theme => theme.palette.mode === 'dark'
-                ? `linear-gradient(135deg, 
-                    ${alpha(theme.palette.background.paper, 0.98)} 0%,
-                    ${alpha(theme.palette.background.paper, 0.95)} 50%,
-                    ${alpha(theme.palette.background.paper, 0.92)} 100%)`
-                : `linear-gradient(135deg, 
-                    ${alpha(theme.palette.background.paper, 0.98)} 0%,
-                    ${alpha(theme.palette.background.paper, 0.95)} 50%,
-                    ${alpha(theme.palette.background.paper, 0.92)} 100%)`,
+            backgroundImage: theme => {
+                // Usa un gradiente più sofisticato per i temi bicolore
+                if (isCurrentThemeBicolor && theme.palette.secondary) {
+                    return theme.palette.mode === 'dark'
+                        ? `linear-gradient(135deg, 
+                            ${alpha(theme.palette.background.paper, 0.98)} 0%,
+                            ${alpha(theme.palette.background.paper, 0.95)} 70%,
+                            ${alpha(theme.palette.secondary.dark, 0.05)} 100%)`
+                        : `linear-gradient(135deg, 
+                            ${alpha(theme.palette.background.paper, 0.98)} 0%,
+                            ${alpha(theme.palette.background.paper, 0.95)} 70%,
+                            ${alpha(theme.palette.secondary.light, 0.05)} 100%)`;
+                }
+                
+                // Gradiente standard
+                return theme.palette.mode === 'dark'
+                    ? `linear-gradient(135deg, 
+                        ${alpha(theme.palette.background.paper, 0.98)} 0%,
+                        ${alpha(theme.palette.background.paper, 0.95)} 50%,
+                        ${alpha(theme.palette.background.paper, 0.92)} 100%)`
+                    : `linear-gradient(135deg, 
+                        ${alpha(theme.palette.background.paper, 0.98)} 0%,
+                        ${alpha(theme.palette.background.paper, 0.95)} 50%,
+                        ${alpha(theme.palette.background.paper, 0.92)} 100%)`;
+            },
             borderRight: theme => `1px solid ${
                 theme.palette.mode === 'dark'
                     ? alpha(theme.palette.primary.main, 0.15)
@@ -76,10 +95,21 @@ const Sidebar = ({ open, drawerWidth }) => {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                background: theme => `linear-gradient(45deg, 
-                    ${alpha(theme.palette.primary.main, 0)} 30%, 
-                    ${alpha(theme.palette.primary.light, 0.05)} 50%,
-                    ${alpha(theme.palette.primary.main, 0)} 70%)`,
+                background: theme => {
+                    // Usa un effetto shimmer bicolore per i temi bicolore
+                    if (isCurrentThemeBicolor && theme.palette.secondary) {
+                        return `linear-gradient(45deg, 
+                            ${alpha(theme.palette.primary.main, 0)} 30%, 
+                            ${alpha(theme.palette.secondary.light, 0.05)} 50%,
+                            ${alpha(theme.palette.primary.main, 0)} 70%)`;
+                    }
+                    
+                    // Effetto shimmer standard
+                    return `linear-gradient(45deg, 
+                        ${alpha(theme.palette.primary.main, 0)} 30%, 
+                        ${alpha(theme.palette.primary.light, 0.05)} 50%,
+                        ${alpha(theme.palette.primary.main, 0)} 70%)`;
+                },
                 animation: 'shimmerSidebar 3s infinite',
                 pointerEvents: 'none'
             },
@@ -106,7 +136,20 @@ const Sidebar = ({ open, drawerWidth }) => {
         },
     };
 
-    const listItemStyles = (isSelected) => ({
+    // Funzione che restituisce il colore appropriato per gli elementi della sidebar
+    // in base al tema (monocolore o bicolore)
+    const getItemColor = (isSelected) => {
+        if (!isSelected) return 'text.secondary';
+        
+        if (isCurrentThemeBicolor && customTheme.palette.secondary) {
+            // Alterna i colori primario e secondario in base alla posizione nell'elenco
+            return index => index % 2 === 0 ? 'primary.main' : 'secondary.main';
+        }
+        
+        return 'primary.main';
+    };
+
+    const listItemStyles = (isSelected, index) => ({
         border: 'none',
         width: '90%',
         py: 1.2,
@@ -114,21 +157,51 @@ const Sidebar = ({ open, drawerWidth }) => {
         mx: 'auto',
         borderRadius: 2,
         background: isSelected
-            ? theme => `linear-gradient(135deg, 
-                ${alpha(theme.palette.primary.main, 0.15)} 0%,
-                ${alpha(theme.palette.primary.light, 0.12)} 50%,
-                ${alpha(theme.palette.primary.main, 0.15)} 100%)`
+            ? theme => {
+                // Usa un gradiente con colore primario e secondario per i temi bicolore
+                if (isCurrentThemeBicolor && theme.palette.secondary) {
+                    return `linear-gradient(135deg, 
+                        ${alpha(theme.palette.primary.main, 0.15)} 0%,
+                        ${alpha(theme.palette.primary.light, 0.12)} 30%,
+                        ${alpha(theme.palette.secondary.light, 0.1)} 70%,
+                        ${alpha(theme.palette.secondary.main, 0.15)} 100%)`;
+                }
+                
+                // Gradiente standard
+                return `linear-gradient(135deg, 
+                    ${alpha(theme.palette.primary.main, 0.15)} 0%,
+                    ${alpha(theme.palette.primary.light, 0.12)} 50%,
+                    ${alpha(theme.palette.primary.main, 0.15)} 100%)`;
+            }
             : 'transparent',
         '&:hover': {
-            background: theme => theme.palette.mode === 'dark'
-                ? `linear-gradient(135deg, 
-                    ${alpha(theme.palette.primary.main, 0.18)} 0%,
-                    ${alpha(theme.palette.primary.light, 0.15)} 50%,
-                    ${alpha(theme.palette.primary.main, 0.18)} 100%)`
-                : `linear-gradient(135deg, 
-                    ${alpha(theme.palette.primary.main, 0.12)} 0%,
-                    ${alpha(theme.palette.primary.light, 0.09)} 50%,
-                    ${alpha(theme.palette.primary.main, 0.12)} 100%)`,
+            background: theme => {
+                // Usa un gradiente hover con colore primario e secondario per i temi bicolore
+                if (isCurrentThemeBicolor && theme.palette.secondary) {
+                    return theme.palette.mode === 'dark'
+                        ? `linear-gradient(135deg, 
+                            ${alpha(theme.palette.primary.main, 0.18)} 0%,
+                            ${alpha(theme.palette.primary.light, 0.15)} 30%,
+                            ${alpha(theme.palette.secondary.light, 0.12)} 70%,
+                            ${alpha(theme.palette.secondary.main, 0.18)} 100%)`
+                        : `linear-gradient(135deg, 
+                            ${alpha(theme.palette.primary.main, 0.12)} 0%,
+                            ${alpha(theme.palette.primary.light, 0.09)} 30%,
+                            ${alpha(theme.palette.secondary.light, 0.07)} 70%,
+                            ${alpha(theme.palette.secondary.main, 0.12)} 100%)`;
+                }
+                
+                // Gradiente hover standard
+                return theme.palette.mode === 'dark'
+                    ? `linear-gradient(135deg, 
+                        ${alpha(theme.palette.primary.main, 0.18)} 0%,
+                        ${alpha(theme.palette.primary.light, 0.15)} 50%,
+                        ${alpha(theme.palette.primary.main, 0.18)} 100%)`
+                    : `linear-gradient(135deg, 
+                        ${alpha(theme.palette.primary.main, 0.12)} 0%,
+                        ${alpha(theme.palette.primary.light, 0.09)} 50%,
+                        ${alpha(theme.palette.primary.main, 0.12)} 100%)`;
+            },
             '& .MuiListItemIcon-root': {
                 transform: 'scale(1.1) translateX(2px)',
             }
@@ -168,10 +241,15 @@ const Sidebar = ({ open, drawerWidth }) => {
             >
                 <List sx={{ pt: 1, pb: 2 }}>
                     <AnimatePresence mode="wait">
-                        {filteredMenuItems.map((route) => {
+                        {filteredMenuItems.map((route, index) => {
                             const basePath = route.path.split('/')[0];
                             const isSelected = location.pathname.startsWith(`/admin/${basePath}`);
                             const Icon = route.icon || DashboardIcon;
+                            
+                            // Determina il colore da usare in base all'indice e allo stato selezionato
+                            const itemColor = typeof getItemColor(isSelected) === 'function' 
+                                ? getItemColor(isSelected)(index) 
+                                : getItemColor(isSelected);
                             
                             return (
                                 <motion.div
@@ -184,11 +262,11 @@ const Sidebar = ({ open, drawerWidth }) => {
                                     <ListItem
                                         onClick={() => handleNavigation(route.path)}
                                         selected={isSelected}
-                                        sx={listItemStyles(isSelected)}
+                                        sx={listItemStyles(isSelected, index)}
                                     >
                                         <ListItemIcon 
                                             sx={{
-                                                color: isSelected ? 'primary.main' : 'text.secondary',
+                                                color: isSelected ? itemColor : 'text.secondary',
                                                 minWidth: 35,
                                                 marginRight: 1,
                                                 transition: 'all 0.3s ease'
@@ -202,7 +280,7 @@ const Sidebar = ({ open, drawerWidth }) => {
                                                 sx: {
                                                     fontSize: '0.95rem',
                                                     fontWeight: isSelected ? 600 : 400,
-                                                    color: isSelected ? 'primary.main' : 'text.primary',
+                                                    color: isSelected ? itemColor : 'text.primary',
                                                     letterSpacing: '0.02em',
                                                     transition: 'all 0.3s ease'
                                                 }

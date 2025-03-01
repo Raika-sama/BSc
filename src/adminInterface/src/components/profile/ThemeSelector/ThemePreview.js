@@ -1,8 +1,8 @@
 import React from 'react';
 import { Box, Paper, Typography, useTheme, Tooltip } from '@mui/material';
-import { Check, Brightness3, BrightnessHigh } from '@mui/icons-material';
+import { Check, Brightness3, BrightnessHigh, ColorLens } from '@mui/icons-material';
 
-const ThemePreview = ({ themeData, themeName, selected, onClick, disabled = false }) => {
+const ThemePreview = ({ themeData, themeName, selected, onClick, disabled = false, isBicolor = false }) => {
     const currentTheme = useTheme();
 
     // Verifica che themeData abbia le proprietà necessarie
@@ -10,6 +10,20 @@ const ThemePreview = ({ themeData, themeName, selected, onClick, disabled = fals
         console.warn('Theme data is missing required properties:', themeName);
         return null;
     }
+
+    // Controlla se questo tema è effettivamente bicolore
+    // Modificato per essere più robusto e considerare sia l'intento (isBicolor) che i dati effettivi
+    const hasSecondaryColor = themeData.palette.secondary && themeData.palette.secondary.main;
+    const isActuallyBicolor = isBicolor && hasSecondaryColor;
+
+    // Log per debug
+    console.log(`Rendering theme preview for ${themeName}:`, {
+        isBicolorProp: isBicolor,
+        hasSecondary: !!themeData.palette.secondary,
+        hasSecondaryMain: themeData.palette?.secondary?.main,
+        isActuallyBicolor,
+        hasSecondaryColorProp: themeData.hasSecondaryColor
+    });
 
     // Contenuto della preview
     const previewContent = (
@@ -34,8 +48,8 @@ const ThemePreview = ({ themeData, themeName, selected, onClick, disabled = fals
                 position: 'relative'
             }}
         >
-            {/* Indicatore se il tema ha variante scura */}
-            {themeData.hasDarkVariant && (
+            {/* Badge per temi bicolore - mostra il badge solo se il tema è effettivamente bicolore o è marcato come tale */}
+            {(isActuallyBicolor || themeData.hasSecondaryColor) && (
                 <Box
                     sx={{
                         position: 'absolute',
@@ -43,11 +57,17 @@ const ThemePreview = ({ themeData, themeName, selected, onClick, disabled = fals
                         left: 8,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 0.5
+                        gap: 0.5,
+                        backgroundColor: 'rgba(0,0,0,0.1)',
+                        borderRadius: 10,
+                        px: 1,
+                        py: 0.2
                     }}
                 >
-                    <BrightnessHigh sx={{ fontSize: 14, color: themeData.palette.text?.secondary }} />
-                    <Brightness3 sx={{ fontSize: 14, color: themeData.palette.text?.secondary }} />
+                    <ColorLens sx={{ fontSize: 14, color: themeData.palette.text?.secondary || 'gray' }} />
+                    <Typography variant="caption" sx={{ fontSize: '0.6rem', color: themeData.palette.text?.secondary || 'gray' }}>
+                        Bicolore
+                    </Typography>
                 </Box>
             )}
             
@@ -71,41 +91,106 @@ const ThemePreview = ({ themeData, themeName, selected, onClick, disabled = fals
                 </Box>
             )}
             
-            {/* Colori del tema */}
-            <Box sx={{ display: 'flex', gap: 1 }}>
-                {/* Colore principale */}
-                <Box
-                    sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: '50%',
-                        backgroundColor: themeData.palette.primary.main,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            {/* Colori del tema - modifica per gestire in modo uniforme temi bicolore e monocolore */}
+            {(isActuallyBicolor || themeData.hasSecondaryColor) ? (
+                // Visualizzazione dei colori per temi bicolore
+                <Box 
+                    sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        alignItems: 'center', 
+                        gap: 1,
+                        width: '100%'
                     }}
-                />
-                {/* Colore secondario (light o dark in base al tema) */}
-                <Box
-                    sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: '50%',
-                        backgroundColor: themeData.palette.mode === 'dark' 
-                            ? themeData.palette.primary.light 
-                            : themeData.palette.primary.dark,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                    }}
-                />
-            </Box>
+                >
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%', justifyContent: 'center' }}>
+                        <Box
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: '50%',
+                                backgroundColor: themeData.palette.primary.main,
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            }}
+                        />
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', color: themeData.palette.text?.secondary || 'gray' }}>
+                            Primario
+                        </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%', justifyContent: 'center' }}>
+                        <Box
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: '50%',
+                                backgroundColor: themeData.palette.secondary.main,
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            }}
+                        />
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', color: themeData.palette.text?.secondary || 'gray' }}>
+                            Secondario
+                        </Typography>
+                    </Box>
+                </Box>
+            ) : (
+                // Visualizzazione per temi monocolore
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    {/* Colore principale */}
+                    <Box
+                        sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            backgroundColor: themeData.palette.primary.main,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}
+                    />
+                    
+                    {/* Colore variante per i temi monocolore (light o dark in base al tema) */}
+                    <Box
+                        sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            backgroundColor: themeData.palette.mode === 'dark' 
+                                ? themeData.palette.primary.light 
+                                : themeData.palette.primary.dark,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}
+                    />
+                </Box>
+            )}
 
             <Typography 
                 variant="caption"
                 sx={{
                     fontWeight: selected ? 'bold' : 'normal',
-                    color: themeData.palette.text?.primary
+                    color: themeData.palette.text?.primary || 'inherit',
+                    textAlign: 'center',
+                    width: '100%'
                 }}
             >
                 {themeName}
             </Typography>
+            
+            {/* Indicatore se il tema ha variante scura */}
+            {themeData.hasDarkVariant && (
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 0.5,
+                        mt: -1
+                    }}
+                >
+                    <BrightnessHigh sx={{ fontSize: 12, color: themeData.palette.text?.secondary || 'gray' }} />
+                    <Typography variant="caption" sx={{ fontSize: '0.6rem', color: themeData.palette.text?.secondary || 'gray' }}>
+                        /
+                    </Typography>
+                    <Brightness3 sx={{ fontSize: 12, color: themeData.palette.text?.secondary || 'gray' }} />
+                </Box>
+            )}
         </Paper>
     );
 

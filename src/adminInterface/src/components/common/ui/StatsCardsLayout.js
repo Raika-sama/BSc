@@ -1,7 +1,7 @@
 // src/components/common/ui/StatsCardsLayout.js
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Grid, Card, CardContent, Typography, Box } from '@mui/material';
+import { Grid, Card, CardContent, Typography, Box, alpha } from '@mui/material';
 import { motion } from 'framer-motion';
 
 const StatsCardsLayout = ({ cards, loading, spacing = 3, maxColumns = 5 }) => {
@@ -23,8 +23,22 @@ const StatsCardsLayout = ({ cards, loading, spacing = 3, maxColumns = 5 }) => {
                                 borderRadius: 2,
                                 border: '1px solid',
                                 borderColor: 'divider',
-                                background: theme => 
-                                    `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
+                                background: theme => {
+                                    // Verifica se esiste un colore secondario nel tema
+                                    const hasSecondary = !!theme.palette.secondary?.main;
+                                    
+                                    if (hasSecondary) {
+                                        // Se disponibile, usa un gradiente sottile dal colore secondario al background
+                                        return `linear-gradient(135deg, 
+                                            ${theme.palette.background.paper} 0%, 
+                                            ${alpha(theme.palette.secondary.main, 0.05)} 100%)`;
+                                    } else {
+                                        // Altrimenti usa il gradiente originale
+                                        return `linear-gradient(135deg, 
+                                            ${theme.palette.background.paper} 0%, 
+                                            ${theme.palette.background.default} 100%)`;
+                                    }
+                                },
                                 transition: 'all 0.3s ease',
                                 '&:hover': {
                                     transform: 'translateY(-4px)',
