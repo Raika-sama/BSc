@@ -147,7 +147,6 @@ class UserRepository extends BaseRepository {
  * @returns {Promise<boolean>} - True se l'eliminazione è avvenuta con successo
  */
 async deleteUser(userId) {
-    // Usiamo una sessione di transazione per garantire integrità
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -162,23 +161,43 @@ async deleteUser(userId) {
 
         // 2. Aggiorna le scuole in cui l'utente è manager
         const School = mongoose.model('School');
-        const schoolsAsManager = await School.find({ manager: userId }).session(session);
+        const userObjectId = new mongoose.Types.ObjectId(userId);
         
+        console.log(`UserRepository: Looking for schools where user ${userId} is manager`);
+        
+        // Trova scuole dove l'utente è manager
+        const schoolsAsManager = await School.find({ 
+            manager: { $eq: userObjectId } 
+        }).session(session);
+        
+        console.log(`UserRepository: Found ${schoolsAsManager.length} schools where user is manager`);
+        
+        // *** MANTIENI SOLO QUESTO CICLO CON _skipManagerValidation ***
+        // Nel deleteUser, aggiungi il FLAG 'SKIPMANAGERVALIDATION' presente nel modello school 
+       // prima di salvare altrimenti darebbe errore perché non può non esserci un manager della scuola (ma se un admin vuole toglierlo può farlo)
         for (const school of schoolsAsManager) {
-            console.log(`UserRepository: User is manager of school ${school._id}`);
-            // Imposta un messaggio di avviso sulla scuola
-            school.notes = `${school.notes || ''}\n[AVVISO] Il manager precedente (${user.firstName} ${user.lastName}) è stato rimosso il ${new Date().toLocaleString()}. Assegnare un nuovo manager.`;
-            // Rimuovi l'utente come manager
+            console.log(`UserRepository: Removing user as manager from school ${school._id}`);
             school.manager = null;
+            school.notes = `${school.notes || ''}\n[AVVISO] Il manager precedente (${user.firstName} ${user.lastName}) è stato rimosso il ${new Date().toLocaleString()}. Assegnare un nuovo manager.`;
+            
+            // Aggiungi la flag per saltare la validazione
+            school._skipManagerValidation = true;
+            
             await school.save({ session });
+            console.log(`UserRepository: School ${school._id} updated, manager is now null`);
         }
 
         // 3. Rimuovi l'utente dagli utenti della scuola
-        await School.updateMany(
-            { 'users.user': userId },
-            { $pull: { users: { user: userId } } },
+        console.log(`UserRepository: Removing user from schools' users arrays`);
+        
+        const schoolsWithUserResult = await School.updateMany(
+            { 'users.user': { $eq: userObjectId } },
+            { $pull: { users: { user: { $eq: userObjectId } } } },
             { session }
         );
+        
+        console.log(`UserRepository: Updated ${schoolsWithUserResult.matchedCount} schools, modified ${schoolsWithUserResult.modifiedCount}`);
+
 
         // 4. Aggiorna le classi in cui l'utente è mainTeacher
         const Class = mongoose.model('Class');
@@ -225,11 +244,21 @@ async deleteUser(userId) {
         user.status = 'inactive';
         user.email = `deleted_${Date.now()}_${user.email}`; // Modifica email per evitare conflitti futuri
         
+        // Pulizia dei campi di assegnazione - AGGIUNTA
+        user.assignedSchoolIds = [];
+        user.assignedClassIds = [];
+        user.assignedStudentIds = [];
+
+        /* Commento perché i campi nel modello user sono cambiati
+        user.schoolId = null;
+        user.assignedSchoolId = null; // Per retrocompatibilità con il vecchio campo
+        */
+
         // Clear session tokens directly on the user object instead of using sessionService
         if (user.sessionTokens && Array.isArray(user.sessionTokens)) {
             user.sessionTokens = [];
         }
-        
+
         await user.save({ session });
 
         // Removed the problematic line that was causing the error:

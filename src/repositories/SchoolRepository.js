@@ -170,14 +170,17 @@ class SchoolRepository extends BaseRepository {
      * @returns {Promise} Scuola aggiornata
      */
     async addUser(schoolId, userId, role) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        
         try {
-            const school = await this.findById(schoolId);
-
+            const school = await this.findById(schoolId).session(session);
+    
             // Verifica se l'utente è già presente
             const existingUser = school.users.find(
                 u => u.user.toString() === userId
             );
-
+    
             if (existingUser) {
                 logger.warn('Tentativo di aggiungere un utente già presente nella scuola', { 
                     schoolId, 
@@ -188,13 +191,24 @@ class SchoolRepository extends BaseRepository {
                     'Utente già associato alla scuola'
                 );
             }
-
-            // Aggiungi il nuovo utente
+    
+            // Aggiungi il nuovo utente alla scuola
             school.users.push({ user: userId, role });
-            await school.save();
-
+            await school.save({ session });
+            
+            // Aggiorna l'utente aggiungendo la scuola all'array assignedSchoolIds
+            // Modificato per usare assignedSchoolIds con $addToSet per evitare duplicati
+            const User = mongoose.model('User');
+            await User.findByIdAndUpdate(
+                userId,
+                { $addToSet: { assignedSchoolIds: schoolId } },
+                { session }
+            );
+            
+            await session.commitTransaction();
             return school;
         } catch (error) {
+            await session.abortTransaction();
             if (error.code) throw error;
             logger.error('Errore nell\'aggiunta dell\'utente alla scuola', { 
                 error, 
@@ -206,132 +220,137 @@ class SchoolRepository extends BaseRepository {
                 'Errore nell\'aggiunta dell\'utente alla scuola',
                 { originalError: error.message }
             );
+        } finally {
+            session.endSession();
         }
     }
 
     /**
-     * Rimuove un utente dalla scuola
+     * Rimuove un utente dalla scuola e aggiorna tutte le associazioni
      * @param {String} schoolId - ID della scuola
      * @param {String} userId - ID dell'utente
-     * @returns {Promise} Scuola aggiornata
+     * @returns {Promise} Risultato dell'operazione con statistiche
      */
-/**
- * Rimuove un utente dalla scuola e aggiorna tutte le associazioni
- * @param {String} schoolId - ID della scuola
- * @param {String} userId - ID dell'utente
- * @returns {Promise} Risultato dell'operazione con statistiche
- */
-async removeUser(schoolId, userId) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    async removeUser(schoolId, userId) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
-    try {
-        logger.debug('Repository: Inizio rimozione utente dalla scuola', { 
-            schoolId, 
-            userId 
-        });
-
-        // 1. Trova la scuola
-        const school = await this.model.findById(schoolId).session(session);
-        if (!school) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Scuola non trovata'
-            );
-        }
-
-        // 2. Verifica se è l'ultimo admin
-        const isLastAdmin = school.users.filter(u => u.role === 'admin').length === 1 &&
-                          school.users.find(u => u.user.toString() === userId)?.role === 'admin';
-
-        if (isLastAdmin) {
-            logger.warn('Tentativo di rimuovere l\'ultimo admin della scuola', { 
+        try {
+            logger.debug('Repository: Inizio rimozione utente dalla scuola', { 
                 schoolId, 
                 userId 
             });
-            throw createError(
-                ErrorTypes.BUSINESS.INVALID_OPERATION,
-                'Impossibile rimuovere l\'ultimo admin della scuola'
+
+            // 1. Trova la scuola
+            const school = await this.model.findById(schoolId).session(session);
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+
+            // 2. Verifica se è l'ultimo admin
+            const isLastAdmin = school.users.filter(u => u.role === 'admin').length === 1 &&
+                            school.users.find(u => u.user.toString() === userId)?.role === 'admin';
+
+            if (isLastAdmin) {
+                logger.warn('Tentativo di rimuovere l\'ultimo admin della scuola', { 
+                    schoolId, 
+                    userId 
+                });
+                throw createError(
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
+                    'Impossibile rimuovere l\'ultimo admin della scuola'
+                );
+            }
+
+            // 3. Controlla se l'utente è il manager
+            if (school.manager && school.manager.toString() === userId) {
+                throw createError(
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
+                    'Non è possibile rimuovere il manager della scuola con questo metodo. Usa removeManagerFromSchool'
+                );
+            }
+
+            // 4. Rimuovi l'utente dall'array users
+            school.users = school.users.filter(
+                u => u.user.toString() !== userId
             );
-        }
-
-        // 3. Controlla se l'utente è il manager
-        if (school.manager && school.manager.toString() === userId) {
-            throw createError(
-                ErrorTypes.BUSINESS.INVALID_OPERATION,
-                'Non è possibile rimuovere il manager della scuola con questo metodo. Usa removeManagerFromSchool'
+            
+            // 4.5 Rimuovi la scuola dall'array assignedSchoolIds dell'utente
+            // Modificato per usare assignedSchoolIds invece di assignedSchoolId
+            const User = mongoose.model('User');
+            await User.findByIdAndUpdate(
+                userId,
+                { $pull: { assignedSchoolIds: schoolId } },
+                { session }
             );
-        }
+            
+            // 5. Salva le modifiche alla scuola
+            await school.save({ session });
 
-        // 4. Rimuovi l'utente dall'array users
-        school.users = school.users.filter(
-            u => u.user.toString() !== userId
-        );
-        
-        // 5. Salva le modifiche alla scuola
-        await school.save({ session });
-
-        // 6. Aggiorna le classi dove l'utente è mainTeacher
-        const classesUpdate = await Class.updateMany(
-            {
-                schoolId,
-                mainTeacher: userId
-            },
-            {
-                $set: {
-                    mainTeacherIsTemporary: true,
-                    previousMainTeacher: userId,
-                    mainTeacher: school.manager // Assegna temporaneamente il manager
-                }
-            },
-            { session }
-        );
-
-        // 7. Aggiorna gli studenti
-        const studentsUpdate = await Student.updateMany(
-            {
-                schoolId,
-                $or: [
-                    { mainTeacher: userId },
-                    { teachers: userId }
-                ]
-            },
-            {
-                $set: { 
-                    mainTeacher: school.manager // Assegna temporaneamente il manager
+            // 6. Aggiorna le classi dove l'utente è mainTeacher
+            const classesUpdate = await Class.updateMany(
+                {
+                    schoolId,
+                    mainTeacher: userId
                 },
-                $pull: { teachers: userId }
-            },
-            { session }
-        );
+                {
+                    $set: {
+                        mainTeacherIsTemporary: true,
+                        previousMainTeacher: userId,
+                        mainTeacher: school.manager // Assegna temporaneamente il manager
+                    }
+                },
+                { session }
+            );
 
-        await session.commitTransaction();
-        
-        logger.info('Utente rimosso con successo dalla scuola', {
-            schoolId,
-            userId,
-            classesUpdated: classesUpdate.modifiedCount,
-            studentsUpdated: studentsUpdate.modifiedCount
-        });
+            // 7. Aggiorna gli studenti
+            const studentsUpdate = await Student.updateMany(
+                {
+                    schoolId,
+                    $or: [
+                        { mainTeacher: userId },
+                        { teachers: userId }
+                    ]
+                },
+                {
+                    $set: { 
+                        mainTeacher: school.manager // Assegna temporaneamente il manager
+                    },
+                    $pull: { teachers: userId }
+                },
+                { session }
+            );
 
-        return {
-            school,
-            classesUpdated: classesUpdate.modifiedCount,
-            studentsUpdated: studentsUpdate.modifiedCount
-        };
+            await session.commitTransaction();
+            
+            logger.info('Utente rimosso con successo dalla scuola', {
+                schoolId,
+                userId,
+                classesUpdated: classesUpdate.modifiedCount,
+                studentsUpdated: studentsUpdate.modifiedCount
+            });
 
-    } catch (error) {
-        await session.abortTransaction();
-        logger.error('Errore nella rimozione dell\'utente dalla scuola:', {
-            error: error.message,
-            schoolId,
-            userId
-        });
-        throw error;
-    } finally {
-        session.endSession();
+            return {
+                school,
+                classesUpdated: classesUpdate.modifiedCount,
+                studentsUpdated: studentsUpdate.modifiedCount
+            };
+
+        } catch (error) {
+            await session.abortTransaction();
+            logger.error('Errore nella rimozione dell\'utente dalla scuola:', {
+                error: error.message,
+                schoolId,
+                userId
+            });
+            throw error;
+        } finally {
+            session.endSession();
+        }
     }
-}
 
     /**
      * Trova tutte le scuole attive in una regione
@@ -795,6 +814,12 @@ async removeUser(schoolId, userId) {
             }
     
             const oldManagerId = school.manager;
+            if (!oldManagerId) {
+                throw createError(
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
+                    'La scuola non ha un manager da rimuovere'
+                );
+            }
     
             // 2. Aggiorna le classi dove l'ex manager è mainTeacher
             await Class.updateMany(
@@ -825,7 +850,16 @@ async removeUser(schoolId, userId) {
                 { session }
             );
     
-            // 4. Rimuovi il manager dalla scuola e dall'array users
+            // 4. Rimuovi la scuola dall'array assignedSchoolIds dell'utente
+            // Modificato per usare assignedSchoolIds invece di assignedSchoolId
+            const User = mongoose.model('User');
+            await User.findByIdAndUpdate(
+                oldManagerId,
+                { $pull: { assignedSchoolIds: schoolId } },
+                { session }
+            );
+    
+            // 5. Rimuovi il manager dalla scuola e dall'array users
             const updatedSchool = await this.model.findByIdAndUpdate(
                 schoolId,
                 {
@@ -840,7 +874,7 @@ async removeUser(schoolId, userId) {
     
             await session.commitTransaction();
             
-            logger.info('Manager rimosso con successo', {
+            logger.info('Manager rimosso con successo e assignedSchoolIds aggiornato', {
                 schoolId,
                 oldManagerId,
                 wasAlsoUser: school.users.some(u => u.user.toString() === oldManagerId.toString())
@@ -867,6 +901,7 @@ async removeUser(schoolId, userId) {
         }
     }
 
+
     async addManagerToSchool(schoolId, userId) {
         const session = await mongoose.startSession();
         session.startTransaction();
@@ -889,15 +924,42 @@ async removeUser(schoolId, userId) {
                 );
             }
     
-            // 3. Aggiorna solo il campo manager
+            // 3. Aggiorna il campo manager della scuola
             const updatedSchool = await this.model.findByIdAndUpdate(
                 schoolId,
                 { $set: { manager: userId } },
                 { new: true, session }
             );
     
+            // 4. Aggiorna l'array assignedSchoolIds dell'utente (aggiunge alla lista)
+            // Modificato per usare assignedSchoolIds con $addToSet per evitare duplicati
+            const User = mongoose.model('User');
+            await User.findByIdAndUpdate(
+                userId,
+                { $addToSet: { assignedSchoolIds: schoolId } },
+                { session }
+            );
+    
+            // 5. Aggiungi l'utente anche all'array users se non è già presente
+            const isUserAlreadyInSchool = school.users.some(u => 
+                u.user && u.user.toString() === userId.toString()
+            );
+    
+            if (!isUserAlreadyInSchool) {
+                await this.model.updateOne(
+                    { _id: schoolId },
+                    { $push: { users: { user: userId, role: 'admin' } } },
+                    { session }
+                );
+            }
+    
             await session.commitTransaction();
             
+            logger.info('Manager aggiunto con successo con assignedSchoolIds aggiornato', {
+                schoolId,
+                newManagerId: userId
+            });
+    
             return {
                 school: updatedSchool,
                 newManagerId: userId
@@ -905,6 +967,11 @@ async removeUser(schoolId, userId) {
     
         } catch (error) {
             await session.abortTransaction();
+            logger.error('Errore nell\'aggiunta del manager:', {
+                error: error.message,
+                schoolId,
+                userId
+            });
             throw createError(
                 ErrorTypes.DATABASE.QUERY_FAILED,
                 'Errore nell\'aggiunta del manager',
@@ -914,7 +981,92 @@ async removeUser(schoolId, userId) {
             session.endSession();
         }
     }
-      
+    
+
+
+/**
+ * Sincronizza il campo assignedSchoolIds per tutti gli utenti associati a scuole
+ * Da eseguire una tantum per aggiornare gli utenti esistenti 
+ * e convertire assignedSchoolId in un array assignedSchoolIds
+ */
+async syncAssignedSchoolIds() {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        logger.info('Inizio sincronizzazione assignedSchoolIds per utenti esistenti');
+        
+        // 1. Recupera tutte le scuole
+        const schools = await this.model.find({}).session(session);
+        
+        let totalUpdated = 0;
+        const User = mongoose.model('User');
+        const userUpdates = {};
+
+        // 2. Per ogni scuola, raccogli gli utenti associati
+        for (const school of schools) {
+            // 2.1 Aggiungi il manager
+            if (school.manager) {
+                const managerId = school.manager.toString();
+                if (!userUpdates[managerId]) {
+                    userUpdates[managerId] = [];
+                }
+                userUpdates[managerId].push(school._id);
+                logger.debug(`Manager ${managerId} da aggiornare con assignedSchoolIds: ${school._id}`);
+            }
+
+            // 2.2 Aggiungi gli utenti nell'array users
+            if (school.users && school.users.length > 0) {
+                for (const userEntry of school.users) {
+                    if (userEntry.user) {
+                        const userId = userEntry.user.toString();
+                        if (!userUpdates[userId]) {
+                            userUpdates[userId] = [];
+                        }
+                        userUpdates[userId].push(school._id);
+                        logger.debug(`Utente ${userId} da aggiornare con assignedSchoolIds: ${school._id}`);
+                    }
+                }
+            }
+        }
+
+        // 3. Aggiorna tutti gli utenti in una batch
+        for (const [userId, schoolIds] of Object.entries(userUpdates)) {
+            // Ottieni anche l'assignedSchoolId esistente
+            const user = await User.findById(userId).select('assignedSchoolId').lean();
+            if (user && user.assignedSchoolId && !schoolIds.includes(user.assignedSchoolId.toString())) {
+                schoolIds.push(user.assignedSchoolId);
+            }
+            
+            // Aggiorna l'utente con il nuovo array assignedSchoolIds
+            await User.findByIdAndUpdate(
+                userId,
+                { 
+                    $set: { assignedSchoolIds: schoolIds },
+                    $unset: { assignedSchoolId: "" } // Rimuovi il vecchio campo
+                },
+                { session }
+            );
+            totalUpdated++;
+        }
+
+        await session.commitTransaction();
+        
+        logger.info(`Sincronizzazione completata: ${totalUpdated} utenti aggiornati`);
+        return { totalUpdated, userUpdates };
+
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Errore nella sincronizzazione assignedSchoolIds:', {
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
+    } finally {
+        session.endSession();
+    }
+}
+
 }
 
 module.exports = SchoolRepository;

@@ -175,6 +175,115 @@ class SchoolController extends BaseController {
     }
 
     /**
+     * Crea un nuovo utente e lo associa direttamente alla scuola
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     */
+    async createAndAssociateUser(req, res) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            const { id: schoolId } = req.params;
+            const userData = req.body;
+            
+            logger.debug('Creating and associating new user to school', { 
+                schoolId, 
+                userData: { ...userData, password: '[REDACTED]' } 
+            });
+
+            // 1. Verifica che la scuola esista
+            const school = await this.repository.findById(schoolId);
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+
+            // 2. Verifica autorizzazioni: solo admin, developer o manager della scuola
+            if (req.user.role !== 'admin' && req.user.role !== 'developer' && 
+                (!school.manager || school.manager.toString() !== req.user._id.toString())) {
+                throw createError(
+                    ErrorTypes.AUTHORIZATION.FORBIDDEN,
+                    'Non autorizzato a creare utenti per questa scuola'
+                );
+            }
+
+            // 3. Crea l'utente tramite userService
+            // Importa il userService se non è già disponibile nel controller
+            const userService = req.app.get('userService'); // Assicurati che userService sia disponibile in app
+            
+            if (!userService) {
+                throw createError(
+                    ErrorTypes.SYSTEM.OPERATION_FAILED,
+                    'Servizio utenti non disponibile'
+                );
+            }
+
+            // 4. Crea l'utente
+            const user = await userService.createUser(userData, { session });
+            
+            if (!user) {
+                throw createError(
+                    ErrorTypes.SYSTEM.OPERATION_FAILED,
+                    'Errore nella creazione dell\'utente'
+                );
+            }
+
+            // 5. Associa l'utente alla scuola
+            const role = userData.schoolRole || 'teacher'; // Usa schoolRole se specificato, altrimenti 'teacher'
+            const updatedSchool = await this.repository.addUser(schoolId, user._id, role, { session });
+
+            // 6. Se l'utente è un teacher, assegna alla scuola tramite assignedSchoolIds
+            if (['teacher', 'tutor'].includes(user.role)) {
+                // Aggiorna direttamente l'utente per includere la scuola nei suoi assignedSchoolIds
+                const User = mongoose.model('User');
+                await User.findByIdAndUpdate(
+                    user._id,
+                    { $addToSet: { assignedSchoolIds: school._id } },
+                    { session }
+                );
+            }
+
+            await session.commitTransaction();
+            
+            logger.info('User created and associated to school successfully', {
+                userId: user._id,
+                schoolId,
+                role
+            });
+
+            return this.sendResponse(res, {
+                user,
+                school: updatedSchool,
+                message: 'Utente creato e associato alla scuola con successo'
+            }, 201);
+
+        } catch (error) {
+            await session.abortTransaction();
+            
+            logger.error('Error creating and associating user to school', {
+                error: error.message,
+                stack: error.stack,
+                schoolId: req.params.id
+            });
+            
+            // Gestione errori specifici
+            if (error.code === 11000) {
+                return this.sendError(res, createError(
+                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
+                    'Email già registrata'
+                ));
+            }
+            
+            return this.sendError(res, error);
+        } finally {
+            session.endSession();
+        }
+    }
+
+    /**
      * Trova scuole per regione
      */
     async getByRegion(req, res, next) {

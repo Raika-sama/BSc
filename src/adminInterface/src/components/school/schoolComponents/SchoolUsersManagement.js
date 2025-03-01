@@ -32,6 +32,8 @@ import { useNotification } from '../../../context/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import UserSelectionModal from './UserSelectionModal';
 import { axiosInstance } from '../../../services/axiosConfig';
+import CreateUserModal from './CreateUserModal';
+
 
 const OPERATION_TYPES = {
     ADD_USER: 'ADD_USER',
@@ -75,6 +77,7 @@ const SchoolUsersManagement = ({
         userId: ''
     });
     const [userSelectionModalOpen, setUserSelectionModalOpen] = useState(false);
+    const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
 
     // Funzione per caricare i manager disponibili
     const fetchAvailableManagers = async () => {
@@ -123,8 +126,8 @@ const SchoolUsersManagement = ({
             console.log('Iniziando caricamento manager...');
             await fetchAvailableManagers();
         } else if (type === OPERATION_TYPES.CREATE_USER) {
-            // Naviga alla creazione utente con parametro per tornare qui dopo
-            navigate(`/admin/users/create?schoolId=${schoolId}&returnUrl=/admin/schools/${schoolId}`);
+            // Apriamo il modale per la creazione dell'utente
+            setCreateUserModalOpen(true);
         }
     };
 
@@ -492,6 +495,12 @@ const SchoolUsersManagement = ({
                 onClose={() => setUserSelectionModalOpen(false)}
                 onSelectUsers={handleUserSelection}
                 selectedSchoolId={schoolId}
+            />
+            {/* Modale per la creazione di utenti già associati alla scuola*/}
+            <CreateUserModal
+                open={createUserModalOpen}
+                onClose={() => setCreateUserModalOpen(false)}
+                schoolId={schoolId}
             />
         </>
     );

@@ -125,7 +125,7 @@ const schoolSchema = new mongoose.Schema({
     manager: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: false
     },
     users: [{
         user: {
@@ -148,14 +148,13 @@ const schoolSchema = new mongoose.Schema({
 
 // Validatori e middleware
 schoolSchema.pre('save', function(next) {
-    // Verifica presenza manager
-    if (!this.manager) {
-        next(new Error('La scuola deve avere un manager'));
-        return;
+    // Aggiungi una verifica per una flag skipManagerValidation
+    if (this._skipManagerValidation === true) {
+      return next();
     }
     
-      if (!this.users) {
-        this.users = [];
+    if (!this.manager) {
+      return next(new Error('La scuola deve avere un manager'));
     }
     next();
 

@@ -91,12 +91,18 @@ export const SchoolProvider = ({ children }) => {
             console.log('School data received:', response.data);
             
             if (response.data.status === 'success') {
-                setSelectedSchool(response.data.data.school);
+                const school = response.data.data.school;
+                // Aggiorna lo stato interno
+                setSelectedSchool(school);
+                // Restituisci i dati
+                return school;
             }
+            return null;
         } catch (err) {
             console.error('Error fetching school:', err);
             setError(err.message || 'Errore nel caricamento della scuola');
             showNotification('Errore nel caricamento della scuola', 'error');
+            return null;
         } finally {
             setLoading(false);
         }
@@ -349,6 +355,55 @@ export const SchoolProvider = ({ children }) => {
             console.error('Error removing user from school:', error);
             const errorMessage = error.response?.data?.error?.message || 
                               'Errore nella rimozione dell\'utente dalla scuola';
+            setError(errorMessage);
+            showNotification(errorMessage, 'error');
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    
+    /**
+     * Crea un nuovo utente e lo associa immediatamente alla scuola
+     * @param {string} schoolId - ID della scuola
+     * @param {Object} userData - Dati del nuovo utente
+     * @returns {Promise<Object>} - Utente creato e scuola aggiornata
+     */
+    const createAndAssociateUser = async (schoolId, userData) => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            console.log('Creating new user and associating to school:', { 
+                schoolId, 
+                userData: {...userData, password: '[REDACTED]'} 
+            });
+
+            // Validazione
+            const validationErrors = validateUserData(userData);
+            if (validationErrors) {
+                throw { response: { data: { error: { errors: validationErrors } } } };
+            }
+
+            // Chiama la nuova API endpoint
+            const response = await axiosInstance.post(`/schools/${schoolId}/create-user`, userData);
+            
+            if (response.data.status === 'success') {
+                // Aggiorna la scuola selezionata se necessario
+                if (selectedSchool?._id === schoolId) {
+                    await getSchoolById(schoolId); // Ricarica i dati completi della scuola
+                }
+                
+                showNotification('Utente creato e associato alla scuola con successo', 'success');
+                return response.data.data;
+            } else {
+                throw new Error('Formato risposta non valido');
+            }
+        } catch (error) {
+            console.error('Error creating and associating user:', error);
+            const errorMessage = error.response?.data?.error?.message || 
+                            'Errore nella creazione dell\'utente';
             setError(errorMessage);
             showNotification(errorMessage, 'error');
             throw error;
@@ -700,6 +755,7 @@ const getSectionStudents = async (schoolId, sectionName) => {
             deleteSchool,
             addUserToSchool,
             removeUserFromSchool,
+            createAndAssociateUser,
             addMultipleUsersToSchool,
             removeManagerFromSchool,
             fetchAvailableManagers,

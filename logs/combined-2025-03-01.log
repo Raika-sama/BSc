@@ -1,0 +1,159 @@
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-03-01T07:43:11.485Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-03-01T07:43:11.562Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-01T07:43:12.559Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-01T07:43:12.561Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-01T07:43:12.562Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-01T07:43:12.913Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-01T07:43:12.919Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-01T07:43:12.919Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-03-01T07:43:31.359Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-01T07:43:31.360Z"}
+{"duration":"15ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1740815011351_wkzmv2ldl","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-03-01T07:43:31.378Z","url":"/api/v1/auth/verify","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-01T07:43:31.572Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-01T07:43:31.574Z"}
+{"duration":"19ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740815011558_qkuf61edu","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-03-01T07:43:31.577Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-03-01T07:43:39.479Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-03-01T08:12:00.006Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-03-01T08:12:00.073Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-01T08:12:00.999Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-01T08:12:01.001Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-01T08:12:01.002Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-01T08:12:01.370Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-01T08:12:01.378Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-01T08:12:01.378Z"}
+{"level":"info","message":"All sessions removed for user","timestamp":"2025-03-01T08:12:55.891Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User status changed","newStatus":"inactive","timestamp":"2025-03-01T08:12:55.935Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User status changed","status":"inactive","timestamp":"2025-03-01T08:12:55.936Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User status changed","newStatus":"active","timestamp":"2025-03-01T08:13:35.333Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User status changed","status":"active","timestamp":"2025-03-01T08:13:35.333Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"hasClasses":false,"hasStudents":false,"level":"info","message":"Found user to delete","role":"manager","timestamp":"2025-03-01T08:15:18.388Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User deleted successfully","timestamp":"2025-03-01T08:15:18.489Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User deleted","success":true,"timestamp":"2025-03-01T08:15:18.491Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-03-01T08:21:10.269Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-03-01T08:21:10.340Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-01T08:21:11.153Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-01T08:21:11.157Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-01T08:21:11.160Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-01T08:21:11.477Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-01T08:21:11.482Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-01T08:21:11.483Z"}
+{"level":"info","message":"User status changed","newStatus":"active","timestamp":"2025-03-01T08:21:23.258Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User status changed","status":"active","timestamp":"2025-03-01T08:21:23.259Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User updated successfully","timestamp":"2025-03-01T08:21:30.336Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User updated successfully","testAccessLevel":2,"timestamp":"2025-03-01T08:21:30.336Z","updatedFields":["firstName","lastName","email","role"],"userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User updated","timestamp":"2025-03-01T08:21:30.337Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"All sessions removed for user","timestamp":"2025-03-01T08:21:34.081Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User status changed","newStatus":"inactive","timestamp":"2025-03-01T08:21:34.125Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User status changed","status":"inactive","timestamp":"2025-03-01T08:21:34.126Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-03-01T08:23:23.083Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-03-01T08:23:23.129Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-01T08:23:23.795Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-01T08:23:23.797Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-01T08:23:23.798Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-01T08:23:24.077Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-01T08:23:24.083Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-01T08:23:24.084Z"}
+{"level":"info","message":"User status changed","newStatus":"active","timestamp":"2025-03-01T08:23:28.811Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User status changed","status":"active","timestamp":"2025-03-01T08:23:28.814Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"All sessions removed for user","timestamp":"2025-03-01T08:23:32.268Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User status changed","newStatus":"inactive","timestamp":"2025-03-01T08:23:32.310Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User status changed","status":"inactive","timestamp":"2025-03-01T08:23:32.312Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-03-01T08:27:28.907Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-03-01T08:27:28.967Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-01T08:27:29.702Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-01T08:27:29.703Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-01T08:27:29.705Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-01T08:27:29.985Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-01T08:27:29.992Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-01T08:27:29.992Z"}
+{"level":"info","message":"User status changed","newStatus":"active","timestamp":"2025-03-01T08:27:41.021Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User status changed","status":"active","timestamp":"2025-03-01T08:27:41.023Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"Manager rimosso con successo e assignedSchoolIds aggiornato","oldManagerId":"67c0c5d1285a82c16495c6dc","schoolId":"679fdad474255ebc8afab683","timestamp":"2025-03-01T08:27:52.821Z","wasAlsoUser":true}
+{"level":"info","message":"Manager rimosso con successo","oldManagerId":"67c0c5d1285a82c16495c6dc","schoolId":"679fdad474255ebc8afab683","timestamp":"2025-03-01T08:27:52.822Z","updatedSchool":"679fdad474255ebc8afab683"}
+{"level":"info","message":"Manager aggiunto con successo con assignedSchoolIds aggiornato","newManagerId":"67c0c5d1285a82c16495c6dc","schoolId":"679fdad474255ebc8afab683","timestamp":"2025-03-01T08:28:07.835Z"}
+{"level":"info","message":"Manager aggiunto con successo","newManagerId":"67c0c5d1285a82c16495c6dc","schoolId":"679fdad474255ebc8afab683","timestamp":"2025-03-01T08:28:07.836Z","updatedSchool":"679fdad474255ebc8afab683"}
+{"hasClasses":false,"hasStudents":false,"level":"info","message":"Found user to delete","role":"manager","timestamp":"2025-03-01T08:28:37.084Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{"_message":"School validation failed","errors":{"manager":{"kind":"required","message":"Path `manager` is required.","name":"ValidatorError","path":"manager","properties":{"fullPath":"manager","message":"Path `manager` is required.","path":"manager","type":"required","value":null},"value":null}},"message":"School validation failed: manager: Path `manager` is required.","name":"ValidationError"},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:28:37.316Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{"_message":"School validation failed","errors":{"manager":{"kind":"required","message":"Path `manager` is required.","name":"ValidatorError","path":"manager","properties":{"fullPath":"manager","message":"Path `manager` is required.","path":"manager","type":"required","value":null},"value":null}},"message":"School validation failed: manager: Path `manager` is required.","name":"ValidationError"},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:28:37.318Z"}
+{"_message":"School validation failed","errors":{"manager":{"kind":"required","message":"Path `manager` is required.","name":"ValidatorError","path":"manager","properties":{"fullPath":"manager","message":"Path `manager` is required.","path":"manager","type":"required","value":null},"value":null}},"level":"error","message":"user error:","timestamp":"2025-03-01T08:28:37.319Z"}
+{"duration":"435ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"DELETE","requestId":"req_1740817716886_8jtd0kok4","responseSize":"134 Bytes","statusCode":500,"timestamp":"2025-03-01T08:28:37.321Z","url":"/api/v1/users/67c0c5d1285a82c16495c6dc","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-03-01T08:30:41.684Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-03-01T08:30:41.734Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-01T08:30:42.456Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-01T08:30:42.458Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-01T08:30:42.459Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-01T08:30:42.734Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-01T08:30:42.738Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-01T08:30:42.738Z"}
+{"hasClasses":false,"hasStudents":false,"level":"info","message":"Found user to delete","role":"manager","timestamp":"2025-03-01T08:30:47.521Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:30:47.657Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:30:47.659Z"}
+{"level":"error","message":"user error:","timestamp":"2025-03-01T08:30:47.660Z"}
+{"duration":"396ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"DELETE","requestId":"req_1740817847269_qmbd1orvk","responseSize":"103 Bytes","statusCode":500,"timestamp":"2025-03-01T08:30:47.665Z","url":"/api/v1/users/67c0c5d1285a82c16495c6dc","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"hasClasses":false,"hasStudents":false,"level":"info","message":"Found user to delete","role":"manager","timestamp":"2025-03-01T08:31:53.002Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:31:53.079Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:31:53.080Z"}
+{"level":"error","message":"user error:","timestamp":"2025-03-01T08:31:53.082Z"}
+{"duration":"302ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"DELETE","requestId":"req_1740817912782_ux7r8yeo8","responseSize":"103 Bytes","statusCode":500,"timestamp":"2025-03-01T08:31:53.085Z","url":"/api/v1/users/67c0c5d1285a82c16495c6dc","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-03-01T08:36:39.297Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-03-01T08:36:39.352Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-01T08:36:40.115Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-01T08:36:40.116Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-01T08:36:40.118Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-01T08:36:40.413Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-01T08:36:40.417Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-01T08:36:40.418Z"}
+{"hasClasses":false,"hasStudents":false,"level":"info","message":"Found user to delete","role":"manager","timestamp":"2025-03-01T08:36:44.895Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:36:45.011Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:36:45.013Z"}
+{"level":"error","message":"user error:","timestamp":"2025-03-01T08:36:45.015Z"}
+{"duration":"351ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"DELETE","requestId":"req_1740818204672_pucxk7laq","responseSize":"103 Bytes","statusCode":500,"timestamp":"2025-03-01T08:36:45.023Z","url":"/api/v1/users/67c0c5d1285a82c16495c6dc","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"hasClasses":false,"hasStudents":false,"level":"info","message":"Found user to delete","role":"manager","timestamp":"2025-03-01T08:36:55.745Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:36:55.807Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:36:55.809Z"}
+{"level":"error","message":"user error:","timestamp":"2025-03-01T08:36:55.811Z"}
+{"duration":"266ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"DELETE","requestId":"req_1740818215545_6dsaxhj3o","responseSize":"103 Bytes","statusCode":500,"timestamp":"2025-03-01T08:36:55.812Z","url":"/api/v1/users/67c0c5d1285a82c16495c6dc","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-03-01T08:40:38.359Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-03-01T08:40:38.404Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-01T08:40:39.109Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-01T08:40:39.110Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-01T08:40:39.112Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-01T08:40:39.402Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-01T08:40:39.406Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-01T08:40:39.406Z"}
+{"hasClasses":false,"hasStudents":false,"level":"info","message":"Found user to delete","role":"manager","timestamp":"2025-03-01T08:40:48.874Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:40:49.151Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:40:49.152Z"}
+{"level":"error","message":"user error:","timestamp":"2025-03-01T08:40:49.153Z"}
+{"duration":"499ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"DELETE","requestId":"req_1740818448657_2f1orh3id","responseSize":"93 Bytes","statusCode":500,"timestamp":"2025-03-01T08:40:49.157Z","url":"/api/v1/users/67c0c5d1285a82c16495c6dc","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-03-01T08:43:07.934Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-03-01T08:43:07.978Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-01T08:43:08.731Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-01T08:43:08.733Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-01T08:43:08.734Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-01T08:43:09.007Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-01T08:43:09.012Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-01T08:43:09.012Z"}
+{"hasClasses":false,"hasStudents":false,"level":"info","message":"Found user to delete","role":"manager","timestamp":"2025-03-01T08:43:27.112Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:43:27.424Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:43:27.425Z"}
+{"level":"error","message":"user error:","timestamp":"2025-03-01T08:43:27.426Z"}
+{"duration":"554ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"DELETE","requestId":"req_1740818606874_l0gyfoujz","responseSize":"101 Bytes","statusCode":500,"timestamp":"2025-03-01T08:43:27.428Z","url":"/api/v1/users/67c0c5d1285a82c16495c6dc","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-03-01T08:44:37.465Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-03-01T08:44:37.523Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-01T08:44:38.378Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-01T08:44:38.379Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-01T08:44:38.380Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-01T08:44:38.680Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-01T08:44:38.684Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-01T08:44:38.684Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-03-01T08:44:42.858Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-01T08:44:42.860Z"}
+{"duration":"15ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1740818682853_41x0zlpqo","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-03-01T08:44:42.868Z","url":"/api/v1/auth/verify","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-01T08:44:42.912Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-01T08:44:42.914Z"}
+{"duration":"9ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1740818682907_p3apc1ywi","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-03-01T08:44:42.917Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-03-01T08:44:45.057Z","userId":"677bfe44f6789c907c9f3766"}
+{"hasClasses":false,"hasStudents":false,"level":"info","message":"Found user to delete","role":"manager","timestamp":"2025-03-01T08:44:49.118Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User deleted successfully","timestamp":"2025-03-01T08:44:49.417Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"level":"info","message":"User deleted","success":true,"timestamp":"2025-03-01T08:44:49.418Z","userId":"67c0c5d1285a82c16495c6dc"}

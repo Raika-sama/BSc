@@ -3,34 +3,31 @@ import React, { useState, useEffect } from 'react';
 import {
     Box,
     Typography,
-    Paper,
     Grid,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Chip,
-    Button,
     Alert,
     CircularProgress,
-    ListItemText,
-    Checkbox,
     Divider,
     Card,
     CardHeader,
-    CardContent
+    CardContent,
+    List,
+    ListItem,
+    ListItemText,
+    Chip,
+    Paper
 } from '@mui/material';
 import {
     School as SchoolIcon,
     Class as ClassIcon,
-    Person as StudentIcon
+    Person as StudentIcon,
+    Info as InfoIcon
 } from '@mui/icons-material';
-import { useUser } from '../../../context/UserContext';
 import { useSchool } from '../../../context/SchoolContext';
 import { useClass } from '../../../context/ClassContext';
 import { useStudent } from '../../../context/StudentContext';
+import { axiosInstance } from '../../../services/axiosConfig';
 
-// Definisci quali risorse sono necessarie per ogni ruolo
+// Definisci quali risorse sono rilevanti per ogni ruolo
 const ROLE_RESOURCE_REQUIREMENTS = {
     admin: {
         needsSchool: false,
@@ -44,7 +41,7 @@ const ROLE_RESOURCE_REQUIREMENTS = {
     },
     manager: {
         needsSchool: true,
-        needsClasses: false,
+        needsClasses: true,
         needsStudents: false
     },
     pcto: {
@@ -79,22 +76,17 @@ const ROLE_RESOURCE_REQUIREMENTS = {
     }
 };
 
-const UserResourcesAssignment = ({ userData, onUpdate }) => {
-    const { updateUser } = useUser();
-    const { schools, getAllSchools } = useSchool();
-    const { getClasses } = useClass();
-    const { getStudents } = useStudent();
-
-    // Stato per le risorse selezionate
-    const [selectedSchool, setSelectedSchool] = useState(userData.assignedSchoolId || '');
-    const [availableClasses, setAvailableClasses] = useState([]);
-    const [selectedClasses, setSelectedClasses] = useState(userData.assignedClassIds || []);
-    const [availableStudents, setAvailableStudents] = useState([]);
-    const [selectedStudents, setSelectedStudents] = useState(userData.assignedStudentIds || []);
-
-    // Stato per i controlli UI
+const UserResourcesAssignment = ({ userData }) => {
+    // Stati per memorizzare i dati delle risorse
+    const [schoolsData, setSchoolsData] = useState([]);
+    const [classesData, setClassesData] = useState([]);
+    const [studentsData, setStudentsData] = useState([]);
+    // Usa gli hook di contesto per accedere ai dati
+    const { getSchoolById } = useSchool();
+    const { getClassById } = useClass();  // Usa il nome corretto della funzione
+    const { getStudentById } = useStudent();
+    // Stati per gestire il caricamento e gli errori
     const [loading, setLoading] = useState(false);
-    const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
 
     // Ottieni i requisiti in base al ruolo
@@ -104,31 +96,90 @@ const UserResourcesAssignment = ({ userData, onUpdate }) => {
         needsStudents: false
     };
 
-    // Carica le scuole all'avvio
+    // Carica i dati all'avvio
     useEffect(() => {
-        const loadInitialData = async () => {
+        const loadResourcesData = async () => {
             try {
                 setLoading(true);
+                setError(null);
+                console.log("Caricamento risorse per l'utente:", userData);
                 
-                // Carica tutte le scuole
-                if (roleRequirements.needsSchool) {
-                    await getAllSchools();
+                // Verifica se l'utente ha risorse assegnate
+                const hasSchoolIds = Array.isArray(userData.assignedSchoolIds) && userData.assignedSchoolIds.length > 0;
+                const hasClassIds = Array.isArray(userData.assignedClassIds) && userData.assignedClassIds.length > 0;
+                const hasStudentIds = Array.isArray(userData.assignedStudentIds) && userData.assignedStudentIds.length > 0;
+                
+                // Carica dati scuole se assegnate
+                if (roleRequirements.needsSchool && hasSchoolIds) {
+                    const schools = [];
+                    for (const schoolId of userData.assignedSchoolIds) {
+                        try {
+                            // Chiamata API diretta per recuperare la scuola
+                            const response = await axiosInstance.get(`/schools/${schoolId}`);
+                            if (response.data.status === 'success' && response.data.data.school) {
+                                const schoolData = response.data.data.school;
+                                
+                                // Determina il ruolo dell'utente nella scuola
+                                let userRole = "Utente";
+                                let isManager = false;
+                                
+                                // Controlla se l'utente è il manager della scuola
+                                if (schoolData.manager && 
+                                    (schoolData.manager._id === userData._id || 
+                                     schoolData.manager === userData._id)) {
+                                    userRole = "Manager";
+                                    isManager = true;
+                                } 
+                                // Altrimenti, cerca il ruolo negli utenti della scuola
+                                else if (schoolData.users && Array.isArray(schoolData.users)) {
+                                    const userEntry = schoolData.users.find(u => 
+                                        (u.user._id === userData._id || u.user === userData._id)
+                                    );
+                                    if (userEntry && userEntry.role) {
+                                        userRole = userEntry.role.charAt(0).toUpperCase() + userEntry.role.slice(1); // Capitalizza il ruolo
+                                    }
+                                }
+                                
+                                // Aggiungi l'informazione del ruolo alla scuola
+                                schools.push({
+                                    ...schoolData,
+                                    userRole: userRole,
+                                    isManager: isManager
+                                });
+                            }
+                        } catch (err) {
+                            console.error(`Error loading school ${schoolId}:`, err);
+                        }
+                    }
+                    setSchoolsData(schools);
                 }
-
-                // Se c'è una scuola assegnata e sono necessarie classi o studenti
-                if (userData.assignedSchoolId && 
-                    (roleRequirements.needsClasses || roleRequirements.needsStudents)) {
-                    // Carica classi per la scuola
-                    if (roleRequirements.needsClasses) {
-                        const classesData = await getClasses({ schoolId: userData.assignedSchoolId });
-                        setAvailableClasses(classesData || []);
+                
+                // Carica dati classi se assegnate
+                if (roleRequirements.needsClasses && hasClassIds) {
+                    const classes = [];
+                    for (const classId of userData.assignedClassIds) {
+                        try {
+                            const classData = await getClassById(classId);
+                            if (classData) classes.push(classData);
+                        } catch (err) {
+                            console.error(`Error loading class ${classId}:`, err);
+                        }
                     }
-
-                    // Carica studenti per la scuola
-                    if (roleRequirements.needsStudents) {
-                        const studentsData = await getStudents({ schoolId: userData.assignedSchoolId });
-                        setAvailableStudents(studentsData || []);
+                    setClassesData(classes);
+                }
+                
+                // Carica dati studenti se assegnati
+                if (roleRequirements.needsStudents && hasStudentIds) {
+                    const students = [];
+                    for (const studentId of userData.assignedStudentIds) {
+                        try {
+                            const studentData = await getStudentById(studentId);
+                            if (studentData) students.push(studentData);
+                        } catch (err) {
+                            console.error(`Error loading student ${studentId}:`, err);
+                        }
                     }
+                    setStudentsData(students);
                 }
             } catch (error) {
                 console.error('Error loading resources:', error);
@@ -138,112 +189,8 @@ const UserResourcesAssignment = ({ userData, onUpdate }) => {
             }
         };
 
-        loadInitialData();
-    }, [userData.role, userData.assignedSchoolId]);
-
-    // Gestisci cambio scuola
-    const handleSchoolChange = async (event) => {
-        const schoolId = event.target.value;
-        setSelectedSchool(schoolId);
-
-        try {
-            setLoading(true);
-            
-            // Reset classi e studenti selezionati
-            setSelectedClasses([]);
-            setSelectedStudents([]);
-            
-            if (schoolId) {
-                // Carica classi per la nuova scuola
-                if (roleRequirements.needsClasses) {
-                    const classesData = await getClasses({ schoolId });
-                    setAvailableClasses(classesData || []);
-                }
-
-                // Carica studenti per la nuova scuola
-                if (roleRequirements.needsStudents) {
-                    const studentsData = await getStudents({ schoolId });
-                    setAvailableStudents(studentsData || []);
-                }
-            } else {
-                // Reset available resources if no school selected
-                setAvailableClasses([]);
-                setAvailableStudents([]);
-            }
-        } catch (error) {
-            console.error('Error loading school resources:', error);
-            setError('Errore nel caricamento delle risorse della scuola');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Gestisci cambio classi
-    const handleClassesChange = (event) => {
-        setSelectedClasses(event.target.value);
-    };
-
-    // Gestisci cambio studenti
-    const handleStudentsChange = (event) => {
-        setSelectedStudents(event.target.value);
-    };
-
-    // Salva le assegnazioni
-
-    const handleSave = async () => {
-        try {
-            setSaving(true);
-            setError(null);
-    
-            // Validazione
-            if (roleRequirements.needsSchool && !selectedSchool) {
-                setError('È necessario selezionare una scuola');
-                return;
-            }
-    
-            if (roleRequirements.needsClasses && selectedClasses.length === 0) {
-                setError('È necessario selezionare almeno una classe');
-                return;
-            }
-    
-            if (roleRequirements.needsStudents && selectedStudents.length === 0) {
-                setError('È necessario selezionare almeno uno studente');
-                return;
-            }
-    
-            // Prepara i dati da aggiornare
-            const updateData = {
-                assignedSchoolId: selectedSchool || null,
-                assignedClassIds: selectedClasses || [],
-                assignedStudentIds: selectedStudents || []
-            };
-            
-            console.log('Salvataggio risorse - UserResourcesAssignment - updateData:', updateData, 'userId:', userData._id);
-    
-            // Verifica che l'ID utente sia valido
-            if (!userData._id) {
-                setError('ID utente mancante');
-                console.error('ID utente mancante');
-                return;
-            }
-    
-            // Aggiorna l'utente
-            await updateUser(userData._id, updateData);
-            
-            // Notifica il componente padre
-            if (typeof onUpdate === 'function') {
-                onUpdate();
-            } else {
-                console.warn('onUpdate non è una funzione o non è definita');
-            }
-            
-        } catch (error) {
-            console.error('Errore completo durante il salvataggio delle risorse:', error);
-            setError('Errore durante il salvataggio delle assegnazioni: ' + (error.message || 'Errore sconosciuto'));
-        } finally {
-            setSaving(false);
-        }
-    };
+        loadResourcesData();
+    }, [userData, roleRequirements, getClassById, getStudentById]);
 
     // Mostra messaggio se il ruolo non richiede risorse
     if (!roleRequirements.needsSchool && 
@@ -258,10 +205,41 @@ const UserResourcesAssignment = ({ userData, onUpdate }) => {
         );
     }
 
+    if (loading) {
+        return (
+            <Box display="flex" justifyContent="center" my={3}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    // Se non ci sono risorse assegnate
+    const hasNoResources = 
+        (schoolsData.length === 0 && roleRequirements.needsSchool) &&
+        (classesData.length === 0 && roleRequirements.needsClasses) &&
+        (studentsData.length === 0 && roleRequirements.needsStudents);
+
+    if (hasNoResources && !loading) {
+        return (
+            <Box>
+                <Paper sx={{ p: 3, mb: 3, display: 'flex', alignItems: 'center' }}>
+                    <InfoIcon color="info" sx={{ mr: 2 }} />
+                    <Typography>
+                        Nessuna risorsa assegnata a questo utente. Le risorse verranno assegnate in base al ruolo dell'utente.
+                        <br/>
+                        <Typography variant="caption" color="text.secondary">
+                            Debug: assignedSchoolIds = {JSON.stringify(userData.assignedSchoolIds)}
+                        </Typography>
+                    </Typography>
+                </Paper>
+            </Box>
+        );
+    }
+
     return (
         <Box>
             <Typography variant="h6" sx={{ mb: 3 }}>
-                Assegnazione Risorse
+                Risorse Assegnate
             </Typography>
 
             {error && (
@@ -271,40 +249,44 @@ const UserResourcesAssignment = ({ userData, onUpdate }) => {
             )}
 
             <Grid container spacing={3}>
-                {/* Selezione Scuola */}
-                {roleRequirements.needsSchool && (
+                {/* Visualizzazione Scuole con ruolo dell'utente */}
+                {roleRequirements.needsSchool && schoolsData.length > 0 && (
                     <Grid item xs={12}>
                         <Card>
                             <CardHeader 
                                 avatar={<SchoolIcon color="primary" />}
-                                title="Scuola Assegnata"
+                                title="Scuole Assegnate"
                             />
                             <Divider />
                             <CardContent>
-                                <FormControl fullWidth disabled={loading || saving}>
-                                    <InputLabel>Seleziona Scuola</InputLabel>
-                                    <Select
-                                        value={selectedSchool}
-                                        onChange={handleSchoolChange}
-                                        label="Seleziona Scuola"
+                                {schoolsData.map(school => (
+                                    <Box 
+                                        key={school._id} 
+                                        sx={{ 
+                                            display: 'flex', 
+                                            justifyContent: 'space-between', 
+                                            alignItems: 'center',
+                                            mb: 1
+                                        }}
                                     >
-                                        <MenuItem value="">
-                                            <em>Nessuna</em>
-                                        </MenuItem>
-                                        {schools.map((school) => (
-                                            <MenuItem value={school._id} key={school._id}>
-                                                {school.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
+                                        <Typography variant="body1">
+                                            {school.name} - {school.address}, {school.province}
+                                        </Typography>
+                                        <Chip 
+                                            label={school.userRole}
+                                            color={school.isManager ? "primary" : "default"}
+                                            size="small"
+                                            sx={{ ml: 2 }}
+                                        />
+                                    </Box>
+                                ))}
                             </CardContent>
                         </Card>
                     </Grid>
                 )}
 
-                {/* Selezione Classi */}
-                {roleRequirements.needsClasses && (
+                {/* Visualizzazione Classi */}
+                {roleRequirements.needsClasses && classesData.length > 0 && (
                     <Grid item xs={12} md={6}>
                         <Card>
                             <CardHeader 
@@ -313,52 +295,31 @@ const UserResourcesAssignment = ({ userData, onUpdate }) => {
                             />
                             <Divider />
                             <CardContent>
-                                <FormControl 
-                                    fullWidth 
-                                    disabled={!selectedSchool || loading || saving}
-                                >
-                                    <InputLabel>Seleziona Classi</InputLabel>
-                                    <Select
-                                        multiple
-                                        value={selectedClasses}
-                                        onChange={handleClassesChange}
-                                        label="Seleziona Classi"
-                                        renderValue={(selected) => (
-                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                {selected.map((value) => {
-                                                    const classItem = availableClasses.find(c => c._id === value);
-                                                    return (
-                                                        <Chip 
-                                                            key={value} 
-                                                            label={classItem ? `${classItem.year}${classItem.section}` : value} 
-                                                            size="small" 
-                                                        />
-                                                    );
-                                                })}
-                                            </Box>
-                                        )}
-                                    >
-                                        {availableClasses.map((classItem) => (
-                                            <MenuItem value={classItem._id} key={classItem._id}>
-                                                <Checkbox checked={selectedClasses.indexOf(classItem._id) > -1} />
-                                                <ListItemText primary={`${classItem.year}${classItem.section} - ${classItem.name || 'Classe senza nome'}`} />
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-
-                                {!selectedSchool && (
-                                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                                        Seleziona prima una scuola
-                                    </Typography>
-                                )}
+                                <List dense>
+                                    {classesData.map((classItem) => (
+                                        <ListItem key={classItem._id}>
+                                            <ListItemText 
+                                                primary={`${classItem.year}${classItem.section}`}
+                                                secondary={
+                                                    classItem.academicYear && 
+                                                    `Anno accademico: ${classItem.academicYear}`
+                                                }
+                                            />
+                                            <Chip 
+                                                label={classItem.status || 'active'} 
+                                                color={classItem.status === 'active' ? 'success' : 'default'} 
+                                                size="small"
+                                            />
+                                        </ListItem>
+                                    ))}
+                                </List>
                             </CardContent>
                         </Card>
                     </Grid>
                 )}
 
-                {/* Selezione Studenti */}
-                {roleRequirements.needsStudents && (
+                {/* Visualizzazione Studenti */}
+                {roleRequirements.needsStudents && studentsData.length > 0 && (
                     <Grid item xs={12} md={6}>
                         <Card>
                             <CardHeader 
@@ -367,68 +328,26 @@ const UserResourcesAssignment = ({ userData, onUpdate }) => {
                             />
                             <Divider />
                             <CardContent>
-                                <FormControl 
-                                    fullWidth 
-                                    disabled={!selectedSchool || loading || saving}
-                                >
-                                    <InputLabel>Seleziona Studenti</InputLabel>
-                                    <Select
-                                        multiple
-                                        value={selectedStudents}
-                                        onChange={handleStudentsChange}
-                                        label="Seleziona Studenti"
-                                        renderValue={(selected) => (
-                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                {selected.map((value) => {
-                                                    const student = availableStudents.find(s => s._id === value);
-                                                    return (
-                                                        <Chip 
-                                                            key={value} 
-                                                            label={student ? `${student.firstName} ${student.lastName}` : value} 
-                                                            size="small" 
-                                                        />
-                                                    );
-                                                })}
-                                            </Box>
-                                        )}
-                                    >
-                                        {availableStudents.map((student) => (
-                                            <MenuItem value={student._id} key={student._id}>
-                                                <Checkbox checked={selectedStudents.indexOf(student._id) > -1} />
-                                                <ListItemText primary={`${student.firstName} ${student.lastName}`} />
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-
-                                {!selectedSchool && (
-                                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                                        Seleziona prima una scuola
-                                    </Typography>
-                                )}
+                                <List dense>
+                                    {studentsData.map((student) => (
+                                        <ListItem key={student._id}>
+                                            <ListItemText 
+                                                primary={`${student.firstName} ${student.lastName}`}
+                                                secondary={student.email}
+                                            />
+                                            <Chip 
+                                                label={student.status || 'active'} 
+                                                color={student.status === 'active' ? 'success' : 'default'} 
+                                                size="small"
+                                            />
+                                        </ListItem>
+                                    ))}
+                                </List>
                             </CardContent>
                         </Card>
                     </Grid>
                 )}
             </Grid>
-
-            {loading && (
-                <Box display="flex" justifyContent="center" my={3}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            <Box mt={3} display="flex" justifyContent="flex-end">
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleSave}
-                    disabled={loading || saving}
-                    startIcon={saving && <CircularProgress size={24} />}
-                >
-                    Salva Assegnazioni
-                </Button>
-            </Box>
         </Box>
     );
 };

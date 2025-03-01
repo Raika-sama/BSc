@@ -243,96 +243,118 @@ export const StudentProvider = ({ children }) => {
     const [state, dispatch] = useReducer(studentReducer, initialState);
     const { showNotification } = useNotification();
 
- // In StudentContext.js, nella funzione fetchStudents:
- const fetchStudents = async (filters = {}) => {
-    try {
-        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
-        
-        // Costruisci i query params
-        const queryParams = new URLSearchParams();
-        
-        // Aggiungi i parametri base
-        queryParams.append('page', filters.page || 1);
-        queryParams.append('limit', filters.limit || 50);
+    // In StudentContext.js, nella funzione fetchStudents:
+    const fetchStudents = async (filters = {}) => {
+        try {
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+            
+            // Costruisci i query params
+            const queryParams = new URLSearchParams();
+            
+            // Aggiungi i parametri base
+            queryParams.append('page', filters.page || 1);
+            queryParams.append('limit', filters.limit || 50);
 
-        // Aggiungi i filtri se presenti
-        if (filters.search) queryParams.append('search', filters.search);
-        if (filters.schoolId) queryParams.append('schoolId', filters.schoolId);
-        if (filters.classFilter) { // Nota: cambiato da year/section a classFilter
-            queryParams.append('classFilter', filters.classFilter);
-        }
-        if (filters.status) queryParams.append('status', filters.status);
-        if (filters.specialNeeds !== undefined) {
-            queryParams.append('specialNeeds', filters.specialNeeds);
-        }
+            // Aggiungi i filtri se presenti
+            if (filters.search) queryParams.append('search', filters.search);
+            if (filters.schoolId) queryParams.append('schoolId', filters.schoolId);
+            if (filters.classFilter) { // Nota: cambiato da year/section a classFilter
+                queryParams.append('classFilter', filters.classFilter);
+            }
+            if (filters.status) queryParams.append('status', filters.status);
+            if (filters.specialNeeds !== undefined) {
+                queryParams.append('specialNeeds', filters.specialNeeds);
+            }
 
-        console.log('Fetching students with params:', queryParams.toString());
+            console.log('Fetching students with params:', queryParams.toString());
 
-        const response = await axiosInstance.get(`/students?${queryParams}`);
-        
-        console.log('Server response:', response.data);
+            const response = await axiosInstance.get(`/students?${queryParams}`);
+            
+            console.log('Server response:', response.data);
 
-        if (response.data.status === 'success') {
-            const normalizedStudents = response.data.data.students.map(student => ({
-                ...student,
-                _id: student._id || student.id,
-                id: student._id || student.id,
-                schoolName: student.schoolId?.name || 'N/D',
-                className: student.classId ? 
-                    `${student.classId.year}${student.classId.section}` : 
-                    'N/D',
-                testCount: student.testCount || 0
-            }));
+            if (response.data.status === 'success') {
+                const normalizedStudents = response.data.data.students.map(student => ({
+                    ...student,
+                    _id: student._id || student.id,
+                    id: student._id || student.id,
+                    schoolName: student.schoolId?.name || 'N/D',
+                    className: student.classId ? 
+                        `${student.classId.year}${student.classId.section}` : 
+                        'N/D',
+                    testCount: student.testCount || 0
+                }));
 
-            console.log('Normalized students:', normalizedStudents);
+                console.log('Normalized students:', normalizedStudents);
 
-            dispatch({
-                type: STUDENT_ACTIONS.SET_STUDENTS,
-                payload: {
-                    students: normalizedStudents,
-                    total: response.data.data.count
-                }
+                dispatch({
+                    type: STUDENT_ACTIONS.SET_STUDENTS,
+                    payload: {
+                        students: normalizedStudents,
+                        total: response.data.data.count
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error in fetchStudents:', error);
+            console.error('Error details:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
             });
-        }
-    } catch (error) {
-        console.error('Error in fetchStudents:', error);
-        console.error('Error details:', {
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status
-        });
 
-        const errorMessage = error.response?.data?.error?.message || 
-                        'Errore nel caricamento degli studenti';
-        
-        dispatch({
-            type: STUDENT_ACTIONS.SET_ERROR,
-            payload: errorMessage
-        });
-        showNotification(errorMessage, 'error');
-    } finally {
-        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: false });
-    }
-};
+            const errorMessage = error.response?.data?.error?.message || 
+                            'Errore nel caricamento degli studenti';
+            
+            dispatch({
+                type: STUDENT_ACTIONS.SET_ERROR,
+                payload: errorMessage
+            });
+            showNotification(errorMessage, 'error');
+        } finally {
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: false });
+        }
+    };
 
     // Recupera un singolo studente per ID
     const getStudentById = async (studentId) => {
         try {
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+            console.log('StudentContext: Fetching student with ID:', studentId);
+            
             const response = await axiosInstance.get(`/students/${studentId}?includeTestCount=true`);
             
             if (response.data.status === 'success') {
                 const student = response.data.data.student;
                 const normalizedStudent = normalizeStudent(student);
                 
+                // Aggiorna lo stato interno
                 dispatch({
                     type: STUDENT_ACTIONS.SET_SELECTED_STUDENT,
                     payload: normalizedStudent
                 });
+                
+                // Importante: ritorna i dati normalizzati
                 return normalizedStudent;
             }
+            
+            throw new Error('Errore nel recupero dello studente');
         } catch (error) {
             console.error('Error getting student:', error);
-            throw error;
+            
+            // Aggiungi gestione errori
+            const errorMessage = error.response?.data?.error?.message || 
+                               error.message || 
+                               'Errore nel recupero dello studente';
+            
+            // Aggiorna lo stato dell'errore
+            dispatch({
+                type: STUDENT_ACTIONS.SET_ERROR,
+                payload: errorMessage
+            });
+            
+            return null; // Ritorna null in caso di errore
+        } finally {
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: false });
         }
     };
 

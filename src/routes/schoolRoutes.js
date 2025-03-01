@@ -238,6 +238,15 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
         asyncHandler(schoolController.removeManagerFromSchool.bind(schoolController))
     );
 
+    /**
+     * @route POST /api/schools/:id/create-user
+     * @desc Crea un nuovo utente e lo associa direttamente alla scuola
+     * @access Private - Admin, developer o manager della scuola
+     */
+    router.post('/:id/create-user', 
+        asyncHandler(schoolController.createAndAssociateUser.bind(schoolController))
+    );
+
     // Gestione errori specifica per le scuole
     router.use((err, req, res, next) => {
         logger.error('School Route Error:', {

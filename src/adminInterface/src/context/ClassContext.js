@@ -359,6 +359,40 @@ export const ClassProvider = ({ children }) => {
         } finally {
             dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: false });
         }
+    }, []); //potrebbe diventare OBSOLETA e sostituita dalla seguente:
+
+    const getClassById = useCallback(async (classId) => {
+        try {
+            console.log('🎯 ClassContext: Getting details for classId:', classId);
+            dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
+            
+            const response = await axiosInstance.get(`/classes/${classId}`);
+            
+            if (response.data.status === 'success') {
+                // Assicurarsi di estrarre correttamente i dati dalla risposta
+                const classData = response.data.class || response.data.data?.class;
+                if (!classData) {
+                    throw new Error('Dati della classe non trovati nella risposta');
+                }
+                
+                dispatch({
+                    type: CLASS_ACTIONS.UPDATE_CLASS,
+                    payload: classData
+                });
+                return classData; // Importante: ritorna i dati
+            } else {
+                throw new Error(response.data.message || 'Errore nel recupero dei dettagli della classe');
+            }
+        } catch (error) {
+            console.error('❌ ClassContext: Error in getClassById:', error);
+            dispatch({ 
+                type: CLASS_ACTIONS.SET_ERROR, 
+                payload: error.response?.data?.message || error.message 
+            });
+            return null; // Ritorna null in caso di errore
+        } finally {
+            dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: false });
+        }
     }, []);
 
     const removeStudentsFromClass = async (classId, studentIds) => {
@@ -420,7 +454,8 @@ export const ClassProvider = ({ children }) => {
             createInitialClasses,
             updateClass,
             deleteClass,
-            getClassDetails,
+            getClassDetails, //potremmo eliminarla
+            getClassById,    // Aggiungi la nuova funzione
             removeStudentsFromClass,
             removeMainTeacher,
             dispatch

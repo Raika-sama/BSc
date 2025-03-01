@@ -1,0 +1,29 @@
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-03-01T07:43:31.359Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-01T07:43:31.360Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-01T07:43:31.572Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-01T07:43:31.574Z"}
+{"error":{"_message":"School validation failed","errors":{"manager":{"kind":"required","message":"Path `manager` is required.","name":"ValidatorError","path":"manager","properties":{"fullPath":"manager","message":"Path `manager` is required.","path":"manager","type":"required","value":null},"value":null}},"message":"School validation failed: manager: Path `manager` is required.","name":"ValidationError"},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:28:37.316Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{"_message":"School validation failed","errors":{"manager":{"kind":"required","message":"Path `manager` is required.","name":"ValidatorError","path":"manager","properties":{"fullPath":"manager","message":"Path `manager` is required.","path":"manager","type":"required","value":null},"value":null}},"message":"School validation failed: manager: Path `manager` is required.","name":"ValidationError"},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:28:37.318Z"}
+{"_message":"School validation failed","errors":{"manager":{"kind":"required","message":"Path `manager` is required.","name":"ValidatorError","path":"manager","properties":{"fullPath":"manager","message":"Path `manager` is required.","path":"manager","type":"required","value":null},"value":null}},"level":"error","message":"user error:","timestamp":"2025-03-01T08:28:37.319Z"}
+{"error":{},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:30:47.657Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:30:47.659Z"}
+{"level":"error","message":"user error:","timestamp":"2025-03-01T08:30:47.660Z"}
+{"error":{},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:31:53.079Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:31:53.080Z"}
+{"level":"error","message":"user error:","timestamp":"2025-03-01T08:31:53.082Z"}
+{"error":{},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:36:45.011Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:36:45.013Z"}
+{"level":"error","message":"user error:","timestamp":"2025-03-01T08:36:45.015Z"}
+{"error":{},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:36:55.807Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:36:55.809Z"}
+{"level":"error","message":"user error:","timestamp":"2025-03-01T08:36:55.811Z"}
+{"error":{},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:40:49.151Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:40:49.152Z"}
+{"level":"error","message":"user error:","timestamp":"2025-03-01T08:40:49.153Z"}
+{"error":{},"level":"error","message":"Error deleting user","timestamp":"2025-03-01T08:43:27.424Z","userId":"67c0c5d1285a82c16495c6dc"}
+{"error":{},"level":"error","message":"User deletion failed","timestamp":"2025-03-01T08:43:27.425Z"}
+{"level":"error","message":"user error:","timestamp":"2025-03-01T08:43:27.426Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-03-01T08:44:42.858Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-01T08:44:42.860Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-01T08:44:42.912Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-01T08:44:42.914Z"}

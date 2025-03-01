@@ -101,11 +101,11 @@ const userSchema = new mongoose.Schema({
     permissions: [permissionSchema],
     
     // Campi per gestire gli ambiti di visibilità
-    assignedSchoolId: {
+    assignedSchoolIds: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'School',
-        description: 'Scuola assegnata per ruoli con visibilità limitata'
-    },
+        description: 'Scuole assegnate per ruoli con visibilità limitata'
+    }],
     
     assignedClassIds: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -135,13 +135,13 @@ const userSchema = new mongoose.Schema({
         description: 'Utente può accedere al frontend amministrativo'
     },
     
-    // Mantenere i campi esistenti
+/*    // Mantenere i campi esistenti
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'School',
         required: false,
         description: 'Scuola a cui l\'utente appartiene (per retrocompatibilità)'
-    },
+    },*/
     
     status: {
         type: String,
@@ -201,7 +201,7 @@ const userSchema = new mongoose.Schema({
 // Indexes
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
-userSchema.index({ schoolId: 1 });
+// userSchema.index({ schoolId: 1 });
 userSchema.index({ status: 1 });
 userSchema.index({ 'sessionTokens.token': 1 });
 userSchema.index({ 'sessionTokens.expiresAt': 1 });
