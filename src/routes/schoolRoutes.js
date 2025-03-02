@@ -86,7 +86,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
         asyncHandler(schoolController.getByType.bind(schoolController))
     );
 
-    // 2. Rotte di configurazione (solo admin)
+    // 2. Rotte di configurazione per anni accademici
     /**
      * @route GET /api/schools/:id/academic-years
      * @desc Ottiene gli anni accademici di una scuola
@@ -99,11 +99,37 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
     /**
      * @route POST /api/schools/:id/academic-years
      * @desc Aggiunge un nuovo anno accademico a una scuola
-     * @access Private - Solo admin
+     * @access Private - Admin e manager della scuola
      */
     router.post('/:id/academic-years', 
-        restrictTo('admin'),
         asyncHandler(schoolController.setupAcademicYear.bind(schoolController))
+    );
+
+    /**
+     * @route POST /api/schools/:id/academic-years/:yearId/activate
+     * @desc Attiva un anno accademico specifico
+     * @access Private - Admin e manager della scuola
+     */
+    router.post('/:id/academic-years/:yearId/activate',
+        asyncHandler(schoolController.activateAcademicYear.bind(schoolController))
+    );
+
+    /**
+     * @route POST /api/schools/:id/academic-years/:yearId/archive
+     * @desc Archivia un anno accademico specifico
+     * @access Private - Admin e manager della scuola
+     */
+    router.post('/:id/academic-years/:yearId/archive',
+        asyncHandler(schoolController.archiveAcademicYear.bind(schoolController))
+    );
+
+    /**
+     * @route GET /api/schools/:id/classes
+     * @desc Ottiene le classi per un determinato anno accademico
+     * @access Private - Tutti gli utenti autenticati
+     */
+    router.get('/:id/classes',
+        asyncHandler(schoolController.getClassesByAcademicYear.bind(schoolController))
     );
 
     /**
@@ -156,6 +182,17 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
     sectionsRouter.post('/:sectionName/reactivate',
         restrictTo('admin'),
         asyncHandler(schoolController.reactivateSection.bind(schoolController))
+    );
+
+    
+    /**
+     * @route POST /api/schools/:id/sections
+     * @desc Crea una nuova sezione
+     * @access Private - Admin
+     */
+    router.post('/:id/sections', 
+        restrictTo('admin'),
+        asyncHandler(schoolController.createSection.bind(schoolController))
     );
 
     // 4. Rotte CRUD base
@@ -311,9 +348,12 @@ module.exports = createSchoolRouter;
  * GET    /schools/region/:region         - Ottiene scuole per regione
  * GET    /schools/type/:type             - Ottiene scuole per tipo
  * GET    /schools/:id/academic-years     - Ottiene anni accademici di una scuola
+ * POST   /schools/:id/academic-years     - Crea nuovo anno accademico
+ * POST   /schools/:id/academic-years/:yearId/activate - Attiva un anno accademico
+ * POST   /schools/:id/academic-years/:yearId/archive - Archivia un anno accademico
+ * GET    /schools/:id/classes            - Ottiene classi per anno accademico
  * 
  * Route Admin:
- * POST   /schools/:id/academic-years     - Setup anno accademico
  * POST   /schools/:id/setup              - Setup iniziale configurazione
  * POST   /schools/:id/sections/:name/deactivate - Disattiva sezione
  * POST   /schools/:id/sections/:name/reactivate - Riattiva sezione

@@ -770,6 +770,138 @@ const getSectionStudents = async (schoolId, sectionName) => {
         }
     };
 
+    
+const setupAcademicYear = async (schoolId, yearData) => {
+    try {
+        setLoading(true);
+        setError(null);
+        
+        // Validazione del formato dell'anno accademico
+        if (!yearData.year || !yearData.year.match(/^\d{4}\/\d{4}$/)) {
+            throw {
+                response: {
+                    data: {
+                        error: {
+                            message: 'Formato anno non valido. Deve essere YYYY/YYYY'
+                        }
+                    }
+                }
+            };
+        }
+        
+        console.log('Creating academic year:', { schoolId, yearData });
+        
+        const response = await axiosInstance.post(`/schools/${schoolId}/academic-years`, yearData);
+        
+        if (response.data.status === 'success') {
+            showNotification('Anno accademico creato con successo', 'success');
+            
+            // Aggiorna lo stato della scuola selezionata
+            if (selectedSchool && selectedSchool._id === schoolId) {
+                await getSchoolById(schoolId);
+            }
+            
+            return response.data.data.school;
+        }
+    } catch (error) {
+        console.error('Error creating academic year:', error);
+        const errorMessage = error.response?.data?.error?.message || 
+                           'Errore nella creazione dell\'anno accademico';
+        setError(errorMessage);
+        showNotification(errorMessage, 'error');
+        throw error;
+    } finally {
+        setLoading(false);
+    }
+};
+
+const activateAcademicYear = async (schoolId, yearId) => {
+    try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('Activating academic year:', { schoolId, yearId });
+        
+        const response = await axiosInstance.post(`/schools/${schoolId}/academic-years/${yearId}/activate`);
+        
+        if (response.data.status === 'success') {
+            showNotification('Anno accademico attivato con successo', 'success');
+            
+            // Aggiorna lo stato della scuola selezionata
+            if (selectedSchool && selectedSchool._id === schoolId) {
+                await getSchoolById(schoolId);
+            }
+            
+            return response.data.data.school;
+        }
+    } catch (error) {
+        console.error('Error activating academic year:', error);
+        const errorMessage = error.response?.data?.error?.message || 
+                           'Errore nell\'attivazione dell\'anno accademico';
+        setError(errorMessage);
+        showNotification(errorMessage, 'error');
+        throw error;
+    } finally {
+        setLoading(false);
+    }
+};
+
+const archiveAcademicYear = async (schoolId, yearId) => {
+    try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('Archiving academic year:', { schoolId, yearId });
+        
+        const response = await axiosInstance.post(`/schools/${schoolId}/academic-years/${yearId}/archive`);
+        
+        if (response.data.status === 'success') {
+            showNotification('Anno accademico archiviato con successo', 'success');
+            
+            // Aggiorna lo stato della scuola selezionata
+            if (selectedSchool && selectedSchool._id === schoolId) {
+                await getSchoolById(schoolId);
+            }
+            
+            return response.data.data.school;
+        }
+    } catch (error) {
+        console.error('Error archiving academic year:', error);
+        const errorMessage = error.response?.data?.error?.message || 
+                           'Errore nell\'archiviazione dell\'anno accademico';
+        setError(errorMessage);
+        showNotification(errorMessage, 'error');
+        throw error;
+    } finally {
+        setLoading(false);
+    }
+};
+
+const getClassesByAcademicYear = async (schoolId, academicYear) => {
+    try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('Getting classes for academic year:', { schoolId, academicYear });
+        
+        const response = await axiosInstance.get(`/schools/${schoolId}/classes?academicYear=${academicYear}`);
+        
+        if (response.data.status === 'success') {
+            return response.data.data.classes;
+        }
+        return [];
+    } catch (error) {
+        console.error('Error getting classes by academic year:', error);
+        const errorMessage = error.response?.data?.error?.message || 
+                           'Errore nel recupero delle classi per anno accademico';
+        setError(errorMessage);
+        showNotification(errorMessage, 'error');
+        return [];
+    } finally {
+        setLoading(false);
+    }
+};
+
     return (
         <SchoolContext.Provider value={{
             schools,
@@ -797,7 +929,11 @@ const getSectionStudents = async (schoolId, sectionName) => {
             getSectionStudents,
             deactivateSection,
             reactivateSection,
-            changeSchoolType
+            changeSchoolType,
+            setupAcademicYear,
+            activateAcademicYear,
+            archiveAcademicYear,
+            getClassesByAcademicYear
         }}>
             {children}
         </SchoolContext.Provider>

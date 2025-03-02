@@ -31,8 +31,12 @@ const DocumentationViewer = () => {
         docPath = '/docs/USER_MANAGEMENT_DOC.md';
       } else if (docType === 'School-Year&Section') { // Aggiungi questa condizione
         docPath = '/docs/ACCAD_YEAR_DOC.md';
-      } else if (docType === 'Section-guide') { // Aggiungi questa condizione
+      } else if (docType === 'Section-system1') { // Aggiungi questa condizione
         docPath = '/docs/SECTION_DOC.md';
+      } else if (docType === 'Section-system2') { // Aggiungi questa condizione
+        docPath = '/docs/ACCADEMIC_YEARS_DOC.md';
+      } else if (docType === 'Section-guide') { // Aggiungi questa condizione
+        docPath = '/docs/ACCADEMICYEAR_GUIDE.md';
       } else {
         throw new Error('Tipo di documentazione non supportato');
       }
@@ -162,7 +166,9 @@ const DocumentationViewer = () => {
       <MenuItem value="user">Gestione Utenti</MenuItem>
       <MenuItem value="user-management">Guida Gestione Utenze</MenuItem>
       <MenuItem value="School-Year&Section">Scuole: Anno accademico e sezioni</MenuItem>
-      <MenuItem value="Section-guide">Guida al funzionamento delle sezioni</MenuItem>
+      <MenuItem value="Section-guide">Guida al funzionamento del setup AccademicYear</MenuItem>
+      <MenuItem value="Section-system1">Guida al funzionamento delle sezioni</MenuItem>
+      <MenuItem value="Section-system2">Guida al funzionamento del AccademicYear</MenuItem>
 
     </Select>
   );
