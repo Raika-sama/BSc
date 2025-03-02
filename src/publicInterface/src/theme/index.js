@@ -1,17 +1,20 @@
 import { extendTheme } from '@chakra-ui/react';
+import themeManager from './themeManager';
 
-const colors = {
-  brand: {
-    50: '#e6f7ff',
-    100: '#b3e0ff',
-    500: '#0088cc',
-    700: '#005580',
-    900: '#003349',
-  },
-};
+// Ottiene il tema attuale dal themeManager
+const currentTheme = themeManager.getCurrentTheme();
 
+// Crea un tema Chakra UI esteso con le proprietà del tema corrente
 const theme = extendTheme({
-  colors,
+  colors: currentTheme.colors,
+  styles: {
+    global: {
+      // Applica le transizioni globali
+      '*': {
+        transition: `all ${currentTheme.transition.duration} ${currentTheme.transition.easing}`,
+      },
+    },
+  },
   fonts: {
     heading: '"Segoe UI", sans-serif',
     body: '"Segoe UI", sans-serif',
