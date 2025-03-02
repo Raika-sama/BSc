@@ -2,6 +2,8 @@
 const BaseController = require('./baseController');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
+const jwt = require('jsonwebtoken');
+const config = require('../config/config');
 
 class StudentAuthController extends BaseController {
     constructor(studentAuthService, studentService) {
@@ -201,15 +203,29 @@ class StudentAuthController extends BaseController {
     logout = async (req, res) => {
         try {
             // Rimuovi il cookie del token
-            res.clearCookie('student-token');
+            res.clearCookie('student-token', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/'
+            });
 
-            // Invalida la sessione se necessario
-            if (req.student) {
-                await this.studentAuthService.invalidateSession(req.student.id);
+            // Invalida la sessione se c'è un utente autenticato
+            const token = req.cookies['student-token'];
+            if (token) {
+                try {
+                    const decoded = jwt.verify(token, config.jwt.secret);
+                    if (decoded.id) {
+                        await this.studentAuthService.invalidateSession(decoded.id);
+                    }
+                } catch (err) {
+                    // Ignora errori di token invalido
+                    logger.debug('Token invalido durante il logout:', err.message);
+                }
             }
 
             logger.info('Student logged out', {
-                studentId: req.student?.id
+                studentId: req.student?.id || 'unknown'
             });
 
             return this.sendResponse(res, {
@@ -218,7 +234,11 @@ class StudentAuthController extends BaseController {
             });
         } catch (error) {
             logger.error('Logout error', { error });
-            return this.sendError(res, error);
+            // In caso di errore, comunque conferma il logout
+            return this.sendResponse(res, {
+                status: 'success',
+                message: 'Logout effettuato con successo'
+            });
         }
     };
 

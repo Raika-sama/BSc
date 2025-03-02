@@ -42,6 +42,10 @@ const createStudentAuthRouter = ({
         asyncHandler(studentAuthController.login.bind(studentAuthController))
     );
 
+    router.post('/logout',
+        asyncHandler(studentAuthController.logout.bind(studentAuthController))
+    );
+
     // Route protette per studenti
     router.use('/student', protectStudent);
     
@@ -121,6 +125,7 @@ module.exports = createStudentAuthRouter;
  * 
  * Route Pubbliche (Studenti):
  * POST   /student-auth/login                    - Login studente
+ * POST   /student-auth/logout                   - Logout studente
  * 
  * Route Protette (Studenti):
  * POST   /student-auth/student/first-access/:id - Primo accesso e cambio password
