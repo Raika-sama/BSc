@@ -18,10 +18,15 @@ class StudentAuthController extends BaseController {
             const { studentId } = req.params;
             const result = await this.studentAuthService.generateCredentials(studentId);
             
+            // Modifica il formato della risposta per allinearlo alle aspettative del frontend
             return res.status(200).json({
-                success: true,
-                username: result.username,
-                temporaryPassword: result.temporaryPassword
+                status: 'success',
+                data: {
+                    credentials: {
+                        username: result.username,
+                        temporaryPassword: result.temporaryPassword
+                    }
+                }
             });
         } catch (error) {
             logger.error('Error generating credentials:', error);
