@@ -376,36 +376,203 @@ class SchoolRepository extends BaseRepository {
         }
     }
 
-    async setupAcademicYear(schoolId, yearData) {
-         // Valida il formato dell'anno accademico
-         const yearFormat = /^\d{4}\/\d{4}$/;
-         if (!yearFormat.test(yearData.year)) {
-             throw new Error(ErrorTypes.VALIDATION.INVALID_INPUT.message);
-         }
+    async setupAcademicYear(schoolId, yearData, createClasses = true) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        
         try {
-          return await this.model.findByIdAndUpdate(
-            schoolId,
-            {
-              $push: {
-                academicYears: {
-                  year: yearData.year,
-                  status: yearData.status || 'planned',
-                  startDate: yearData.startDate,
-                  endDate: yearData.endDate,
-                  createdBy: yearData.createdBy
+            logger.debug('Setting up academic year with class creation:', {
+                schoolId,
+                yearData,
+                createClasses,
+                selectedSections: yearData.selectedSections || 'all'
+            });
+            
+            // Valida il formato dell'anno accademico
+            const yearFormat = /^\d{4}\/\d{4}$/;
+            if (!yearFormat.test(yearData.year)) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_INPUT,
+                    'Anno accademico deve essere nel formato YYYY/YYYY'
+                );
+            }
+            
+            // 1. Aggiungi il nuovo anno accademico alla scuola
+            const school = await this.model.findById(schoolId).session(session);
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+            
+            // Verifica che l'anno non esista già
+            const existingYear = school.academicYears.find(y => y.year === yearData.year);
+            if (existingYear) {
+                throw createError(
+                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
+                    'Anno accademico già presente'
+                );
+            }
+            
+            // Aggiungi il nuovo anno accademico
+            school.academicYears.push({
+                year: yearData.year,
+                status: yearData.status || 'planned',
+                startDate: yearData.startDate,
+                endDate: yearData.endDate,
+                createdBy: yearData.createdBy,
+                createdAt: new Date()
+            });
+            
+            // Se l'anno viene creato come attivo, disattiva l'anno corrente
+            if (yearData.status === 'active') {
+                const currentActiveYear = school.academicYears.find(y => y.status === 'active' && y.year !== yearData.year);
+                if (currentActiveYear) {
+                    currentActiveYear.status = 'archived';
+                    logger.debug('Archived previous active year:', {
+                        year: currentActiveYear.year
+                    });
                 }
-              }
-            },
-            { new: true }
-          );
+            }
+            
+            await school.save({ session });
+            
+            
+            // 2. Se richiesto, crea le classi per il nuovo anno accademico
+            if (createClasses) {
+                // Determina quali sezioni usare basandosi sulla selezione
+                let sectionsToUse = [];
+                
+                if (yearData.selectedSections && Array.isArray(yearData.selectedSections)) {
+                    // Usa le sezioni selezionate dall'utente (possono includere sia attive che inattive)
+                    sectionsToUse = school.sections.filter(
+                        section => yearData.selectedSections.includes(section._id.toString())
+                    );
+                    
+                    logger.debug('Using user-selected sections:', {
+                        count: sectionsToUse.length,
+                        sectionNames: sectionsToUse.map(s => s.name),
+                        activeCount: sectionsToUse.filter(s => s.isActive).length,
+                        inactiveCount: sectionsToUse.filter(s => !s.isActive).length
+                    });
+                } else {
+                    // Usa tutte le sezioni attive
+                    sectionsToUse = school.sections.filter(s => s.isActive);
+                    
+                    logger.debug('Using all active sections:', {
+                        count: sectionsToUse.length,
+                        sectionNames: sectionsToUse.map(s => s.name)
+                    });
+                }
+                
+                if (sectionsToUse.length > 0) {
+                    const Class = mongoose.model('Class');
+                    const newClasses = [];
+                    
+                    // Per ogni sezione selezionata
+                    for (const section of sectionsToUse) {
+                        // Verifica se la sezione ha già una configurazione per questo anno
+                        const existingSectionYearConfig = section.academicYears.find(
+                            ay => ay.year === yearData.year
+                        );
+                        
+                        if (existingSectionYearConfig) {
+                            // Se esiste già, salta questa sezione
+                            logger.debug('Skipping section with existing config:', {
+                                sectionName: section.name,
+                                year: yearData.year
+                            });
+                            continue;
+                        }
+                        
+                        // Aggiunge configurazione per l'anno accademico alla sezione
+                        section.academicYears.push({
+                            year: yearData.year,
+                            status: 'active',
+                            maxStudents: section.maxStudents || school.defaultMaxStudentsPerClass,
+                            activatedAt: new Date()
+                        });
+                        
+                        // Determina il numero massimo di studenti per questa sezione-anno
+                        const maxStudents = section.maxStudents || school.defaultMaxStudentsPerClass || 25;
+                        
+                        // Crea classi da 1 a 5 (superiori) o da 1 a 3 (medie)
+                        const maxYear = school.schoolType === 'middle_school' ? 3 : 5;
+                        
+                        for (let year = 1; year <= maxYear; year++) {
+                            // Verifica prima se la classe esiste già
+                            const existingClass = await Class.findOne({
+                                schoolId,
+                                year,
+                                section: section.name,
+                                academicYear: yearData.year
+                            }).session(session);
+                            
+                            if (!existingClass) {
+                                // Crea la classe per il nuovo anno accademico
+                                const newClass = new Class({
+                                    schoolId,
+                                    year,
+                                    section: section.name,
+                                    academicYear: yearData.year,
+                                    status: 'planned',
+                                    capacity: maxStudents,
+                                    mainTeacher: school.manager || null,
+                                    teachers: [],
+                                    students: [],
+                                    isActive: true,
+                                    createdAt: new Date(),
+                                    updatedAt: new Date()
+                                });
+                                
+                                await newClass.save({ session });
+                                newClasses.push(newClass);
+                                
+                                logger.debug('Created new class:', {
+                                    year,
+                                    section: section.name,
+                                    academicYear: yearData.year
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Salva le modifiche alle sezioni
+                    await school.save({ session });
+                    
+                    logger.info('Created classes for new academic year:', {
+                        count: newClasses.length,
+                        academicYear: yearData.year,
+                        sectionsUsed: sectionsToUse.map(s => s.name)
+                    });
+                } else {
+                    logger.warn('No sections selected for creating classes', {
+                        schoolId,
+                        academicYear: yearData.year
+                    });
+                }
+            }
+            
+            await session.commitTransaction();
+            
+            // Ricarica la scuola con i dati aggiornati
+            const updatedSchool = await this.model.findById(schoolId);
+            return updatedSchool;
+            
         } catch (error) {
-          logger.error('Error in setupAcademicYear:', error);
-          throw createError(
-            ErrorTypes.DATABASE.QUERY_FAILED,
-            'Errore nella configurazione anno accademico'
-          );
+            await session.abortTransaction();
+            logger.error('Error in setupAcademicYear:', {
+                error: error.message,
+                stack: error.stack,
+                schoolId,
+                yearData
+            });
+            throw error;
+        } finally {
+            session.endSession();
         }
-      }
+    }
       
       async configureSections(schoolId, sectionsData) {
         // Valida il formato delle sezioni
@@ -1044,8 +1211,6 @@ async deactivateSection(schoolId, sectionName) {
         }
     }
     
-
-
 /**
  * Sincronizza il campo assignedSchoolIds per tutti gli utenti associati a scuole
  * Da eseguire una tantum per aggiornare gli utenti esistenti 
@@ -1438,6 +1603,210 @@ async changeSchoolType(schoolId, { schoolType, institutionType }) {
             ClassModel.schema.path('year').validators.push(originalValidator);
             logger.debug('Validatore del modello Class ripristinato');
         }
+    }
+}
+
+// Aggiungi questi metodi alla classe SchoolRepository in SchoolRepository.js
+
+async activateAcademicYear(schoolId, yearId) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        logger.debug('Inizio attivazione anno accademico', { 
+            schoolId, 
+            yearId 
+        });
+
+        // 1. Verifica che la scuola esista
+        const school = await this.model.findById(schoolId).session(session);
+        if (!school) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            );
+        }
+
+        // 2. Trova l'anno da attivare
+        const yearToActivate = school.academicYears.id(yearId);
+        if (!yearToActivate) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Anno accademico non trovato'
+            );
+        }
+
+        // 3. Verifica che l'anno non sia già attivo
+        if (yearToActivate.status === 'active') {
+            logger.warn('Tentativo di attivare un anno già attivo', { 
+                schoolId, 
+                yearId 
+            });
+            return school;
+        }
+
+        // 4. Disattiva l'anno corrente se presente
+        const currentActiveYear = school.academicYears.find(year => year.status === 'active');
+        if (currentActiveYear) {
+            currentActiveYear.status = 'archived';
+            logger.debug('Anno precedente archiviato', { 
+                yearId: currentActiveYear._id 
+            });
+        }
+
+        // 5. Attiva il nuovo anno
+        yearToActivate.status = 'active';
+        await school.save({ session });
+
+        await session.commitTransaction();
+        
+        logger.info('Anno accademico attivato con successo', {
+            schoolId,
+            yearId
+        });
+
+        return school;
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Errore nell\'attivazione dell\'anno accademico', {
+            error: error.message,
+            schoolId,
+            yearId
+        });
+        throw error;
+    } finally {
+        session.endSession();
+    }
+}
+
+async archiveAcademicYear(schoolId, yearId) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        logger.debug('Inizio archiviazione anno accademico', { 
+            schoolId, 
+            yearId 
+        });
+
+        // 1. Verifica che la scuola esista
+        const school = await this.model.findById(schoolId).session(session);
+        if (!school) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            );
+        }
+
+        // 2. Trova l'anno da archiviare
+        const yearToArchive = school.academicYears.id(yearId);
+        if (!yearToArchive) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Anno accademico non trovato'
+            );
+        }
+
+        // 3. Verifica che l'anno non sia già archiviato
+        if (yearToArchive.status === 'archived') {
+            logger.warn('Tentativo di archiviare un anno già archiviato', { 
+                schoolId, 
+                yearId 
+            });
+            return school;
+        }
+
+        // 4. Verifica se è l'anno attivo
+        if (yearToArchive.status === 'active') {
+            // Se è l'unico anno, non permettere l'archiviazione
+            const totalYears = school.academicYears.length;
+            const activeYears = school.academicYears.filter(y => y.status === 'active').length;
+            
+            if (activeYears === 1 && totalYears === 1) {
+                throw createError(
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
+                    'Impossibile archiviare l\'unico anno accademico disponibile'
+                );
+            }
+            
+            // Se ci sono anni pianificati, attiva il più recente
+            const plannedYears = school.academicYears.filter(y => y.status === 'planned');
+            if (plannedYears.length > 0) {
+                // Trova l'anno pianificato più recente
+                const mostRecentYear = plannedYears.sort((a, b) => {
+                    const yearA = parseInt(a.year.split('/')[0]);
+                    const yearB = parseInt(b.year.split('/')[0]);
+                    return yearB - yearA;
+                })[0];
+                
+                mostRecentYear.status = 'active';
+                logger.debug('Attivato automaticamente anno pianificato', { 
+                    yearId: mostRecentYear._id 
+                });
+            }
+        }
+
+        // 5. Archivia l'anno
+        yearToArchive.status = 'archived';
+        await school.save({ session });
+
+        await session.commitTransaction();
+        
+        logger.info('Anno accademico archiviato con successo', {
+            schoolId,
+            yearId
+        });
+
+        return school;
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Errore nell\'archiviazione dell\'anno accademico', {
+            error: error.message,
+            schoolId,
+            yearId
+        });
+        throw error;
+    } finally {
+        session.endSession();
+    }
+}
+
+async getClassesByAcademicYear(schoolId, academicYear) {
+    try {
+        logger.debug('Recupero classi per anno accademico', { 
+            schoolId, 
+            academicYear 
+        });
+
+        // Verifica che la scuola esista
+        const school = await this.model.findById(schoolId);
+        if (!school) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            );
+        }
+
+        // Trova le classi dell'anno accademico specificato
+        const Class = mongoose.model('Class');
+        const classes = await Class.find({
+            schoolId,
+            academicYear
+        }).lean();
+
+        logger.debug('Classi trovate', {
+            count: classes.length,
+            academicYear
+        });
+
+        return classes;
+    } catch (error) {
+        logger.error('Errore nel recupero delle classi per anno accademico', {
+            error: error.message,
+            schoolId,
+            academicYear
+        });
+        throw error;
     }
 }
 

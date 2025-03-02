@@ -15,7 +15,7 @@ import { useNotification } from '../../context/NotificationContext';
 // Importiamo i componenti
 import OverviewTab from './details/OverviewTab';
 import AdminDetailsTab from './details/AdminDetailsTab';
-import AcademicYearsTab from './details/AcademicYearsTab';
+const AcademicYearsTab = React.lazy(() => import('./details/AcademicYearsTab'));
 import SectionManagement from './schoolComponents/SectionManagement';
 import SchoolUsersManagement from './schoolComponents/SchoolUsersManagement';
 

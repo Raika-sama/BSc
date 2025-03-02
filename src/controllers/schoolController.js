@@ -34,6 +34,12 @@ class SchoolController extends BaseController {
         this.addManagerToSchool = this.addManagerToSchool.bind(this);
         this.removeUserFromSchool = this.removeUserFromSchool.bind(this);
         this.changeSchoolType = this.changeSchoolType.bind(this);
+        this.setupAcademicYear = this.setupAcademicYear.bind(this);
+        this.getAcademicYears = this.getAcademicYears.bind(this);
+        this.activateAcademicYear = this.activateAcademicYear.bind(this);
+        this.archiveAcademicYear = this.archiveAcademicYear.bind(this);
+        this.getClassesByAcademicYear = this.getClassesByAcademicYear.bind(this);
+        this.createSection = this.createSection.bind(this);
     }
 
     // Aggiungi questi metodi di utility
@@ -460,17 +466,66 @@ class SchoolController extends BaseController {
     async setupAcademicYear(req, res) {
         try {
             const schoolId = req.params.id;
-            const yearData = {
-                year: req.body.year,
-                startDate: req.body.startDate,
-                endDate: req.body.endDate,
-                status: req.body.status || 'planned',
-                createdBy: req.user.id
-            };
+            const { createClasses = true, ...yearData } = req.body;
             
-            const school = await this.repository.setupAcademicYear(schoolId, yearData);
-            this.sendResponse(res, { school });
+            yearData.createdBy = req.user.id;
+            
+            logger.debug('Richiesta creazione anno accademico', {
+                schoolId,
+                yearData: { ...yearData, createdBy: req.user.id },
+                createClasses
+            });
+    
+            // Validazione del formato dell'anno
+            const yearFormat = /^\d{4}\/\d{4}$/;
+            if (!yearData.year || !yearFormat.test(yearData.year)) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Formato anno non valido. Deve essere YYYY/YYYY'
+                ));
+            }
+    
+            // Validazione date se presenti
+            if (yearData.startDate && yearData.endDate) {
+                const startDate = new Date(yearData.startDate);
+                const endDate = new Date(yearData.endDate);
+                
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                    return this.sendError(res, createError(
+                        ErrorTypes.VALIDATION.BAD_REQUEST,
+                        'Date non valide'
+                    ));
+                }
+                
+                if (startDate >= endDate) {
+                    return this.sendError(res, createError(
+                        ErrorTypes.VALIDATION.BAD_REQUEST,
+                        'La data di inizio deve essere precedente alla data di fine'
+                    ));
+                }
+            }
+            
+            // Chiama il repository con il parametro per creare le classi
+            const school = await this.repository.setupAcademicYear(schoolId, yearData, createClasses);
+            
+            logger.info('Anno accademico creato con successo', {
+                schoolId,
+                year: yearData.year,
+                classesCreated: createClasses
+            });
+            
+            this.sendResponse(res, { 
+                school,
+                message: createClasses 
+                    ? 'Anno accademico creato con successo e classi generate' 
+                    : 'Anno accademico creato con successo'
+            });
         } catch (error) {
+            logger.error('Errore nella creazione dell\'anno accademico', {
+                error: error.message,
+                stack: error.stack,
+                schoolId: req.params.id
+            });
             this.sendError(res, error);
         }
     }
@@ -1050,6 +1105,352 @@ class SchoolController extends BaseController {
         }
     }
 
+    
+/**
+ * Crea un nuovo anno accademico per una scuola
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+async setupAcademicYear(req, res) {
+    try {
+        const schoolId = req.params.id;
+        const yearData = {
+            year: req.body.year,
+            startDate: req.body.startDate,
+            endDate: req.body.endDate,
+            status: req.body.status || 'planned',
+            createdBy: req.user.id
+        };
+        
+        logger.debug('Richiesta creazione anno accademico', {
+            schoolId,
+            yearData: { ...yearData, createdBy: req.user.id }
+        });
+
+        // Validazione del formato dell'anno
+        const yearFormat = /^\d{4}\/\d{4}$/;
+        if (!yearFormat.test(yearData.year)) {
+            return this.sendError(res, createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'Formato anno non valido. Deve essere YYYY/YYYY'
+            ));
+        }
+
+        // Validazione date se presenti
+        if (yearData.startDate && yearData.endDate) {
+            const startDate = new Date(yearData.startDate);
+            const endDate = new Date(yearData.endDate);
+            
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Date non valide'
+                ));
+            }
+            
+            if (startDate >= endDate) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'La data di inizio deve essere precedente alla data di fine'
+                ));
+            }
+        }
+        
+        const school = await this.repository.setupAcademicYear(schoolId, yearData);
+        
+        logger.info('Anno accademico creato con successo', {
+            schoolId,
+            year: yearData.year
+        });
+        
+        this.sendResponse(res, { 
+            school,
+            message: 'Anno accademico creato con successo'
+        });
+    } catch (error) {
+        logger.error('Errore nella creazione dell\'anno accademico', {
+            error: error.message,
+            stack: error.stack,
+            schoolId: req.params.id
+        });
+        this.sendError(res, error);
+    }
+}
+
+/**
+ * Attiva un anno accademico specifico
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+async activateAcademicYear(req, res) {
+    try {
+        const { id: schoolId, yearId } = req.params;
+        
+        logger.debug('Richiesta attivazione anno accademico', {
+            schoolId,
+            yearId,
+            userId: req.user.id
+        });
+
+        // Verifica autorizzazioni (solo admin e manager della scuola)
+        const school = await this.repository.findById(schoolId);
+        if (!school) {
+            return this.sendError(res, createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            ));
+        }
+
+        if (req.user.role !== 'admin' && 
+            (!school.manager || school.manager.toString() !== req.user._id.toString())) {
+            return this.sendError(res, createError(
+                ErrorTypes.AUTHORIZATION.FORBIDDEN,
+                'Non autorizzato ad attivare anni accademici per questa scuola'
+            ));
+        }
+
+        const updatedSchool = await this.repository.activateAcademicYear(schoolId, yearId);
+        
+        logger.info('Anno accademico attivato con successo', {
+            schoolId,
+            yearId,
+            userId: req.user.id
+        });
+        
+        this.sendResponse(res, { 
+            school: updatedSchool,
+            message: 'Anno accademico attivato con successo'
+        });
+    } catch (error) {
+        logger.error('Errore nell\'attivazione dell\'anno accademico', {
+            error: error.message,
+            stack: error.stack,
+            schoolId: req.params.id,
+            yearId: req.params.yearId
+        });
+        this.sendError(res, error);
+    }
+}
+
+/**
+ * Archivia un anno accademico specifico
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+async archiveAcademicYear(req, res) {
+    try {
+        const { id: schoolId, yearId } = req.params;
+        
+        logger.debug('Richiesta archiviazione anno accademico', {
+            schoolId,
+            yearId,
+            userId: req.user.id
+        });
+
+        // Verifica autorizzazioni (solo admin e manager della scuola)
+        const school = await this.repository.findById(schoolId);
+        if (!school) {
+            return this.sendError(res, createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            ));
+        }
+
+        if (req.user.role !== 'admin' && 
+            (!school.manager || school.manager.toString() !== req.user._id.toString())) {
+            return this.sendError(res, createError(
+                ErrorTypes.AUTHORIZATION.FORBIDDEN,
+                'Non autorizzato ad archiviare anni accademici per questa scuola'
+            ));
+        }
+
+        const updatedSchool = await this.repository.archiveAcademicYear(schoolId, yearId);
+        
+        logger.info('Anno accademico archiviato con successo', {
+            schoolId,
+            yearId,
+            userId: req.user.id
+        });
+        
+        this.sendResponse(res, { 
+            school: updatedSchool,
+            message: 'Anno accademico archiviato con successo'
+        });
+    } catch (error) {
+        logger.error('Errore nell\'archiviazione dell\'anno accademico', {
+            error: error.message,
+            stack: error.stack,
+            schoolId: req.params.id,
+            yearId: req.params.yearId
+        });
+        this.sendError(res, error);
+    }
+}
+
+/**
+ * Recupera le classi per un determinato anno accademico
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+async getClassesByAcademicYear(req, res) {
+    try {
+        const { id: schoolId } = req.params;
+        const { academicYear } = req.query;
+        
+        if (!academicYear) {
+            return this.sendError(res, createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'Anno accademico richiesto'
+            ));
+        }
+        
+        logger.debug('Richiesta classi per anno accademico', {
+            schoolId,
+            academicYear,
+            userId: req.user.id
+        });
+
+        const classes = await this.repository.getClassesByAcademicYear(schoolId, academicYear);
+        
+        // Aggiungi virtuals e altre proprietà utili
+        const classesWithExtras = classes.map(cls => {
+            // Calcola il numero di studenti attivi
+            const activeStudentsCount = cls.students 
+                ? cls.students.filter(s => s.status === 'active').length 
+                : 0;
+            
+            return {
+                ...cls,
+                activeStudentsCount
+            };
+        });
+        
+        logger.debug('Classi recuperate con successo', {
+            schoolId,
+            academicYear,
+            count: classesWithExtras.length
+        });
+        
+        this.sendResponse(res, { 
+            classes: classesWithExtras
+        });
+    } catch (error) {
+        logger.error('Errore nel recupero delle classi per anno accademico', {
+            error: error.message,
+            stack: error.stack,
+            schoolId: req.params.id,
+            academicYear: req.query.academicYear
+        });
+        this.sendError(res, error);
+    }
+}
+
+/**
+ * Crea una nuova sezione per una scuola
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+async createSection(req, res) {
+    try {
+        const schoolId = req.params.id;
+        const { name, maxStudents, isActive = true } = req.body;
+        
+        logger.debug('Richiesta creazione nuova sezione', {
+            schoolId,
+            name,
+            maxStudents,
+            isActive,
+            userId: req.user.id
+        });
+
+        // Validazione
+        if (!name || !/^[A-Z]$/.test(name)) {
+            return this.sendError(res, createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'Il nome della sezione deve essere una singola lettera maiuscola (A-Z)'
+            ));
+        }
+        
+        // Trova la scuola
+        const school = await this.repository.findById(schoolId);
+        if (!school) {
+            return this.sendError(res, createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            ));
+        }
+        
+        // Verifica se la sezione esiste già
+        const sectionExists = school.sections.some(
+            s => s.name.toUpperCase() === name.toUpperCase()
+        );
+        
+        if (sectionExists) {
+            return this.sendError(res, createError(
+                ErrorTypes.RESOURCE.ALREADY_EXISTS,
+                'Esiste già una sezione con questo nome'
+            ));
+        }
+        
+        // Validazione del numero massimo di studenti
+        const minStudents = 15;
+        const maxStudentsLimit = school.schoolType === 'middle_school' ? 30 : 35;
+        
+        const normalizedMaxStudents = Math.min(
+            Math.max(parseInt(maxStudents) || school.defaultMaxStudentsPerClass, minStudents),
+            maxStudentsLimit
+        );
+        
+        // Crea la nuova sezione
+        school.sections.push({
+            name: name.toUpperCase(),
+            isActive,
+            maxStudents: normalizedMaxStudents,
+            academicYears: [],
+            createdAt: new Date()
+        });
+        
+        // Se c'è un anno attivo, aggiungi la configurazione per quell'anno
+        const activeYear = school.academicYears.find(y => y.status === 'active');
+        if (activeYear) {
+            const newSection = school.sections[school.sections.length - 1];
+            newSection.academicYears.push({
+                year: activeYear.year,
+                status: 'active',
+                maxStudents: normalizedMaxStudents,
+                activatedAt: new Date()
+            });
+            
+            logger.debug('Added academic year configuration to new section', {
+                sectionName: name,
+                academicYear: activeYear.year
+            });
+        }
+        
+        await school.save();
+        
+        // Ottieni l'ultima sezione aggiunta (quella appena creata)
+        const newSection = school.sections[school.sections.length - 1];
+        
+        logger.info('Sezione creata con successo', {
+            schoolId,
+            sectionName: newSection.name,
+            maxStudents: newSection.maxStudents
+        });
+        
+        this.sendResponse(res, {
+            section: newSection,
+            message: 'Sezione creata con successo'
+        });
+    } catch (error) {
+        logger.error('Errore nella creazione della sezione', {
+            error: error.message,
+            stack: error.stack,
+            schoolId: req.params.id
+        });
+        this.sendError(res, error);
+    }
+}
     
 }
 
