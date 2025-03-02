@@ -25,7 +25,7 @@ class StudentAuthController extends BaseController {
             });
         } catch (error) {
             logger.error('Error generating credentials:', error);
-            return this.handleError(res, error);
+            return this.sendError(res, error);
         }
     };
 
@@ -61,7 +61,7 @@ class StudentAuthController extends BaseController {
             });
         } catch (error) {
             logger.error('Error in batch credentials generation', { error });
-            return this.handleError(res, error);
+            return this.sendError(res, error);
         }
     };
 
@@ -91,7 +91,7 @@ class StudentAuthController extends BaseController {
             });
         } catch (error) {
             logger.error('Error generating class credentials', { error });
-            return this.handleError(res, error);
+            return this.sendError(res, error);
         }
     };
 
@@ -151,7 +151,7 @@ class StudentAuthController extends BaseController {
             });
         } catch (error) {
             logger.error('Student login error', { error });
-            return this.handleError(res, error);
+            return this.sendError(res, error);
         }
     };
 
@@ -186,7 +186,7 @@ class StudentAuthController extends BaseController {
             });
         } catch (error) {
             logger.error('First access error', { error });
-            return this.handleError(res, error);
+            return this.sendError(res, error);
         }
     };
 
@@ -213,7 +213,7 @@ class StudentAuthController extends BaseController {
             });
         } catch (error) {
             logger.error('Logout error', { error });
-            return this.handleError(res, error);
+            return this.sendError(res, error);
         }
     };
 
@@ -262,7 +262,7 @@ class StudentAuthController extends BaseController {
                 error, 
                 studentId: req.params.studentId 
             });
-            return this.handleError(res, error);
+            return this.sendError(res, error);
         }
     };
 }

@@ -525,83 +525,145 @@ class SchoolRepository extends BaseRepository {
 
 //il metodo deactivateSection() disattiva una sezione di una scuola
 //usa metodi di classRep e studentRep
-    async deactivateSection(schoolId, sectionName) {
-        const session = await mongoose.startSession();
-        session.startTransaction();
-    
-        try {
-            logger.debug('Repository: Inizio deactivateSection', {
-                schoolId,
-                sectionName,
-                hasClassRepository: !!this.classRepository, // Verifica se classRepository è definito
-                hasStudentRepository: !!this.studentRepository
-            });    
-            // 1. Aggiorna la sezione nella scuola
-            const school = await this.model.findOneAndUpdate(
-                { 
-                    _id: schoolId,
-                    'sections.name': sectionName 
-                },
-                {
-                    $set: {
-                        'sections.$.isActive': false,
-                        'sections.$.deactivatedAt': new Date(),
-                        'sections.$.students': [] // Svuota l'array degli studenti nella sezione
-                    }
-                },
-                { 
-                    new: true,
-                    session 
+async deactivateSection(schoolId, sectionName) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        logger.debug('Repository: Inizio deactivateSection', {
+            schoolId,
+            sectionName,
+            hasClassRepository: !!this.classRepository,
+            hasStudentRepository: !!this.studentRepository
+        });
+
+        // 1. Aggiorna la sezione nella scuola (codice esistente)
+        const school = await this.model.findOneAndUpdate(
+            { 
+                _id: schoolId,
+                'sections.name': sectionName 
+            },
+            {
+                $set: {
+                    'sections.$.isActive': false,
+                    'sections.$.deactivatedAt': new Date(),
+                    'sections.$.students': [] // Svuota l'array degli studenti nella sezione
                 }
-            );
-    
-            if (!school) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Scuola o sezione non trovata'
-                );
+            },
+            { 
+                new: true,
+                session 
             }
+        );
 
-            logger.debug('Prima di chiamare deactivateClassesBySection', {
-                schoolId,
-                sectionName,
-                hasClassRepository: !!this.classRepository,
-                session: !!session
-            });
-
-            // 2. Disattiva le classi usando il metodo dedicato nel classRepository
-            await this.classRepository.deactivateClassesBySection(schoolId, sectionName, session);
-    
-            // 3. Aggiorna gli studenti usando il metodo dedicato nel studentRepository
-            const studentUpdateResult = await this.studentRepository.updateStudentsForDeactivatedSection(
-                schoolId, 
-                sectionName
+        if (!school) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola o sezione non trovata'
             );
-    
-            await session.commitTransaction();
-            
-            logger.debug('Section deactivation completed successfully:', {
-                schoolId,
-                sectionName,
-                studentsUpdated: studentUpdateResult.modifiedCount
-            });
-    
-            return {
-                school,
-                studentsUpdated: studentUpdateResult.modifiedCount
-            };
-        } catch (error) {
-            await session.abortTransaction();
-            logger.error('Error in deactivateSection:', {
-                error: error.message,
-                schoolId,
-                sectionName
-            });
-            throw error;
-        } finally {
-            session.endSession();
         }
+
+        // 2. Ottieni tutte le classi attive della sezione prima di disattivarle
+        const activeClasses = await mongoose.model('Class').find({
+            schoolId,
+            section: sectionName,
+            isActive: true
+        })
+        .select('_id mainTeacher teachers')
+        .lean()
+        .session(session);
+
+        // Raccogli tutti gli ID unici di teacher e mainTeacher
+        const teacherIds = new Set();
+        const classIds = [];
+        
+        activeClasses.forEach(cls => {
+            classIds.push(cls._id);
+            if (cls.mainTeacher) teacherIds.add(cls.mainTeacher.toString());
+            if (cls.teachers && cls.teachers.length) {
+                cls.teachers.forEach(t => teacherIds.add(t.toString()));
+            }
+        });
+
+        // 3. Ottieni tutti gli studenti attivi delle classi prima di disattivarli
+        const activeStudents = await mongoose.model('Student').find({
+            schoolId,
+            classId: { $in: classIds },
+            isActive: true
+        })
+        .select('_id mainTeacher teachers')
+        .lean()
+        .session(session);
+
+        // Aggiungi altri teacherIds dagli studenti
+        const studentIds = [];
+        
+        activeStudents.forEach(student => {
+            studentIds.push(student._id);
+            if (student.mainTeacher) teacherIds.add(student.mainTeacher.toString());
+            if (student.teachers && student.teachers.length) {
+                student.teachers.forEach(t => teacherIds.add(t.toString()));
+            }
+        });
+        
+        // 4. Disattiva le classi (codice esistente)
+        await this.classRepository.deactivateClassesBySection(schoolId, sectionName, session);
+
+        // 5. Aggiorna gli studenti (codice esistente)
+        const studentUpdateResult = await this.studentRepository.updateStudentsForDeactivatedSection(
+            schoolId, 
+            sectionName
+        );
+
+        // 6. NUOVO: Aggiorna gli utenti rimuovendo i riferimenti alle classi disattivate
+        if (teacherIds.size > 0) {
+            const User = mongoose.model('User');
+            
+            // Rimuovi classi disattivate da assignedClassIds
+            await User.updateMany(
+                { _id: { $in: Array.from(teacherIds) } },
+                { $pull: { assignedClassIds: { $in: classIds } } },
+                { session }
+            );
+            
+            // Rimuovi studenti disassociati da assignedStudentIds
+            await User.updateMany(
+                { _id: { $in: Array.from(teacherIds) } },
+                { $pull: { assignedStudentIds: { $in: studentIds } } },
+                { session }
+            );
+            
+            logger.debug('Aggiornati riferimenti utente:', {
+                teacherCount: teacherIds.size,
+                classCount: classIds.length,
+                studentCount: studentIds.length
+            });
+        }
+
+        await session.commitTransaction();
+        
+        logger.debug('Section deactivation completed successfully:', {
+            schoolId,
+            sectionName,
+            studentsUpdated: studentUpdateResult.modifiedCount
+        });
+
+        return {
+            school,
+            studentsUpdated: studentUpdateResult.modifiedCount
+        };
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Error in deactivateSection:', {
+            error: error.message,
+            schoolId,
+            sectionName
+        });
+        throw error;
+    } finally {
+        session.endSession();
     }
+}
 
     async reactivateSection(schoolId, sectionName) {
         const session = await mongoose.startSession();

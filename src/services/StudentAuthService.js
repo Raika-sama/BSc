@@ -21,58 +21,75 @@ class StudentAuthService {
         this.TEMP_PASSWORD_EXPIRES = 24 * 60 * 60 * 1000; // 24 ore
     }
 
-    /**
-     * Genera credenziali per uno studente
-     * @param {string} studentId - ID dello studente
-     * @returns {Object} Credenziali generate
-     */
-    async generateCredentials(studentId) {
-        try {
-            logger.debug('Generating credentials for student:', { studentId });
-    
-            const student = await this.studentRepository.findById(studentId);
-            if (!student) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Studente non trovato'
-                );
-            }
-    
-            // Genera una password temporanea
-            const tempPassword = Math.random().toString(36).slice(-8);
-            
-            // Usa updatePassword invece di create
-            const authRecord = await this.studentAuthRepository.updatePassword(
+/**
+ * Genera credenziali per uno studente
+ * @param {string} studentId - ID dello studente
+ * @returns {Object} Credenziali generate
+ */
+async generateCredentials(studentId) {
+    try {
+        logger.debug('Generating credentials for student:', { studentId });
+
+        const student = await this.studentRepository.findById(studentId);
+        if (!student) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Studente non trovato'
+            );
+        }
+
+        // Genera una password temporanea
+        const tempPassword = Math.random().toString(36).slice(-8);
+        
+        // Verifica se esiste già un record di autenticazione
+        let authRecord = await this.studentAuthRepository.findByStudentId(studentId);
+        
+        if (authRecord) {
+            // Se esiste, aggiorna la password
+            logger.debug('Updating existing auth record', { studentId });
+            authRecord = await this.studentAuthRepository.updatePassword(
                 studentId,
                 tempPassword
             );
-    
-            // Aggiorna lo stato dello studente
-            await this.studentRepository.update(studentId, {
-                hasCredentials: true,
-                credentialsSentAt: new Date()
-            });
-    
-            logger.info('Credentials generated successfully', { 
+        } else {
+            // Se non esiste, crea un nuovo record
+            logger.debug('Creating new auth record', { studentId });
+            authRecord = await this.studentAuthRepository.create({
                 studentId,
-                hasAuth: !!authRecord
-            });
-    
-            return {
                 username: student.email,
-                temporaryPassword: tempPassword
-            };
-        } catch (error) {
-            // Logghiamo solo le informazioni necessarie dell'errore
-            logger.error('Error generating credentials:', {
-                message: error.message,
-                studentId,
-                code: error.code,
-                type: error.constructor.name
+                password: tempPassword,
+                isFirstAccess: true,
+                isActive: true,
+                temporaryPasswordExpires: new Date(Date.now() + this.TEMP_PASSWORD_EXPIRES)
             });
-            throw error;
         }
+
+        // Aggiorna lo stato dello studente
+        await this.studentRepository.update(studentId, {
+            hasCredentials: true,
+            credentialsSentAt: new Date()
+        });
+
+        logger.info('Credentials generated successfully', { 
+            studentId,
+            hasAuth: !!authRecord
+        });
+
+        return {
+            username: student.email,
+            temporaryPassword: tempPassword
+        };
+    } catch (error) {
+        // Logghiamo solo le informazioni necessarie dell'errore
+        logger.error('Error generating credentials:', {
+            message: error.message,
+            studentId,
+            code: error.code,
+            type: error.constructor.name
+        });
+        throw error;
     }
+}
 
 
     async resetPassword(studentId) {
