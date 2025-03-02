@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Center, Spinner, Text, VStack } from '@chakra-ui/react';
 
@@ -8,6 +8,7 @@ import { Center, Spinner, Text, VStack } from '@chakra-ui/react';
  */
 const PrivateRoute = () => {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
 
   // Mostra spinner durante il caricamento dello stato di autenticazione
   if (loading) {
@@ -23,7 +24,8 @@ const PrivateRoute = () => {
 
   // Reindirizza al login se l'utente non è autenticato
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    // Usa state per ricordare la pagina originale richiesta
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Renderizza il contenuto se l'utente è autenticato

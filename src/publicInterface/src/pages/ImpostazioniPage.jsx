@@ -12,11 +12,23 @@ const ImpostazioniPage = ({ setMenuPosition }) => {
 
   // Aggiorna l'app quando cambia la posizione del menu
   useEffect(() => {
-    localStorage.setItem('menuPosition', menuPos);
-    setMenuPosition(menuPos);
+    if (setMenuPosition && typeof setMenuPosition === 'function') {
+      setMenuPosition(menuPos);
+    }
   }, [menuPos, setMenuPosition]);
 
+  const handleMenuPositionChange = (newPosition) => {
+    setMenuPos(newPosition);
+    // Salviamo anche in localStorage qui per sicurezza
+    localStorage.setItem('menuPosition', newPosition);
+  };
+
   const handleSaveSettings = () => {
+    // Applica tutte le impostazioni
+    if (setMenuPosition && typeof setMenuPosition === 'function') {
+      setMenuPosition(menuPos);
+    }
+    
     toast({
       title: "Impostazioni salvate",
       description: "Le tue preferenze sono state aggiornate con successo.",
@@ -50,7 +62,7 @@ const ImpostazioniPage = ({ setMenuPosition }) => {
             <Text fontSize="sm" color="gray.500" mb={2}>
               Cambia la posizione del menu principale
             </Text>
-            <RadioGroup id="menu-position" value={menuPos} onChange={setMenuPos}>
+            <RadioGroup id="menu-position" value={menuPos} onChange={handleMenuPositionChange}>
               <Stack direction="row" spacing={5}>
                 <Radio value="top">In alto</Radio>
                 <Radio value="bottom">In basso</Radio>

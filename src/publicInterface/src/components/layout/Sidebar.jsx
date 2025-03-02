@@ -3,13 +3,40 @@ import {
   DrawerCloseButton, VStack, Text, Divider, Icon, Flex,
   useColorModeValue, Link as ChakraLink
 } from '@chakra-ui/react';
-import { Link as RouterLink } from 'react-router-dom';
-import { MdDashboard, MdAnalytics, MdPerson, MdSettings, MdHelp, MdHome } from 'react-icons/md';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { MdDashboard, MdAnalytics, MdPerson, MdSettings, MdHelp, MdHome, MdLogout } from 'react-icons/md';
+import { useAuth } from '../../hooks/useAuth';
 
-const NavItem = ({ icon, children, to }) => {
+const NavItem = ({ icon, children, to, onClick }) => {
   const activeBg = useColorModeValue('brand.50', 'rgba(0,136,204,0.2)');
   const hoverBg = useColorModeValue('gray.100', 'gray.700');
+  const textColor = useColorModeValue('red.600', 'red.300');
 
+  // Se c'è un onClick, renderizza un button invece di un link
+  if (onClick) {
+    return (
+      <Flex
+        align="center"
+        p="3"
+        borderRadius="md"
+        role="group"
+        cursor="pointer"
+        onClick={onClick}
+        _hover={{ bg: hoverBg }}
+        fontWeight="medium"
+      >
+        <Icon
+          mr="3"
+          fontSize="18"
+          as={icon}
+          color={icon === MdLogout ? textColor : "brand.500"}
+        />
+        <Text color={icon === MdLogout ? textColor : undefined}>{children}</Text>
+      </Flex>
+    );
+  }
+
+  // Altrimenti renderizza un link
   return (
     <ChakraLink
       as={RouterLink}
@@ -41,6 +68,20 @@ const NavItem = ({ icon, children, to }) => {
 const Sidebar = ({ isOpen, onClose }) => {
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      // Prima naviga al login
+      navigate('/login', { replace: true });
+      
+      // Poi esegui il logout
+      await logout();
+    } catch (error) {
+      console.error('Errore durante il logout:', error);
+    }
+  };
 
   // Contenuto della sidebar
   const SidebarContent = () => (
@@ -49,9 +90,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       <NavItem icon={MdDashboard} to="/dashboard">Dashboard</NavItem>
       <NavItem icon={MdAnalytics} to="/analisi">Analisi</NavItem>
       <NavItem icon={MdPerson} to="/profilo">Profilo</NavItem>
+      <NavItem icon={MdSettings} to="/settings">SETTINGS</NavItem>
       <Divider my={2} />
       <NavItem icon={MdSettings} to="/impostazioni">Impostazioni</NavItem>
       <NavItem icon={MdHelp} to="/supporto">Supporto</NavItem>
+      <Divider my={2} />
+      <NavItem icon={MdLogout} onClick={handleLogout}>Logout</NavItem>
     </VStack>
   );
 
@@ -79,7 +123,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         position="sticky"
         top="0"
         h="calc(100vh - 0px)"
-        pt="70px" // Spazio per l'header
+        pt="70px"
         pb={4}
         overflowY="auto"
       >

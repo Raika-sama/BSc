@@ -68,3 +68,6 @@
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-02T15:35:36.079Z"}
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-02T15:35:36.086Z"}
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-02T15:35:36.087Z"}
+{"error":{},"level":"error","message":"Login error","timestamp":"2025-03-02T18:26:36.592Z"}
+{"error":{},"level":"error","message":"Student login error","timestamp":"2025-03-02T18:26:36.593Z"}
+{"level":"error","message":"undefined error:","timestamp":"2025-03-02T18:26:36.594Z"}

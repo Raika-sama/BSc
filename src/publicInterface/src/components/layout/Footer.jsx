@@ -1,13 +1,27 @@
 import {
-  Box, Container, Stack, Text, Link, ButtonGroup, IconButton,
-  useColorModeValue, Divider, HStack, Button, Flex
+  Box, Container, Stack, Text, Link, ButtonGroup, IconButton, Button,
+  useColorModeValue, Divider, HStack, Flex, Icon
 } from '@chakra-ui/react';
 import { FaGithub, FaLinkedin, FaTwitter } from 'react-icons/fa';
-import { Link as RouterLink } from 'react-router-dom';
+import { MdLogout } from 'react-icons/md';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 const Footer = ({ showMenu = false }) => {
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const textColor = useColorModeValue('red.600', 'red.300');
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      navigate('/login', { replace: true });
+      await logout();
+    } catch (error) {
+      console.error('Errore durante il logout:', error);
+    }
+  };
 
   return (
     <Box
@@ -22,13 +36,24 @@ const Footer = ({ showMenu = false }) => {
     >
       <Container maxW="container.xl">
         {showMenu && (
-          <Flex justify="center" mb={4}>
-            <HStack spacing={4} display={{ base: 'none', md: 'flex' }}>
-              <Button as={RouterLink} to="/" variant="ghost" size="sm">Home</Button>
-              <Button as={RouterLink} to="/dashboard" variant="ghost" size="sm">Dashboard</Button>
-              <Button as={RouterLink} to="/analisi" variant="ghost" size="sm">Analisi</Button>
-              <Button as={RouterLink} to="/supporto" variant="ghost" size="sm">Supporto</Button>
-            </HStack>
+          <>
+            <Flex justify="center" mb={4}>
+              <HStack spacing={4} display={{ base: 'none', md: 'flex' }}>
+                <Button as={RouterLink} to="/" variant="ghost" size="sm">Home</Button>
+                <Button as={RouterLink} to="/dashboard" variant="ghost" size="sm">Dashboard</Button>
+                <Button as={RouterLink} to="/analisi" variant="ghost" size="sm">Analisi</Button>
+                <Button as={RouterLink} to="/supporto" variant="ghost" size="sm">Supporto</Button>
+                <Button 
+                  onClick={handleLogout} 
+                  variant="ghost" 
+                  size="sm"
+                  color={textColor}
+                  leftIcon={<Icon as={MdLogout} />}
+                >
+                  Logout
+                </Button>
+              </HStack>
+            </Flex>
             
             {/* Versione mobile del menu inferiore */}
             <HStack spacing={2} display={{ base: 'flex', md: 'none' }} width="100%" overflow="auto">
@@ -36,11 +61,21 @@ const Footer = ({ showMenu = false }) => {
               <Button as={RouterLink} to="/dashboard" variant="ghost" size="sm" flexShrink={0}>Dashboard</Button>
               <Button as={RouterLink} to="/analisi" variant="ghost" size="sm" flexShrink={0}>Analisi</Button>
               <Button as={RouterLink} to="/supporto" variant="ghost" size="sm" flexShrink={0}>Supporto</Button>
+              <Button 
+                onClick={handleLogout} 
+                variant="ghost" 
+                size="sm"
+                flexShrink={0}
+                color={textColor}
+                leftIcon={<Icon as={MdLogout} />}
+              >
+                Logout
+              </Button>
             </HStack>
-          </Flex>
+            
+            <Divider mb={4} />
+          </>
         )}
-        
-        {showMenu && <Divider mb={4} />}
         
         <Stack
           direction={{ base: 'column', md: 'row' }}

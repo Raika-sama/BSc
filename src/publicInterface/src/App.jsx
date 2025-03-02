@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Layout from './components/layout/Layout';
 import HomePage from './pages/HomePage';
 import ImpostazioniPage from './pages/ImpostazioniPage';
@@ -8,25 +8,37 @@ import { AuthProvider } from './hooks/useAuth';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
-  const [menuPosition, setMenuPosition] = useState('top'); // 'top' o 'bottom'
+  const [menuPosition, setMenuPosition] = useState(
+    localStorage.getItem('menuPosition') || 'top'
+  );
+  
+  const updateMenuPosition = useCallback((position) => {
+    setMenuPosition(position);
+    localStorage.setItem('menuPosition', position);
+  }, []);
   
   return (
     <AuthProvider>
       <Routes>
-        {/* Rotta pubblica per il login */}
+        {/* Public route */}
         <Route path="/login" element={<LoginPage />} />
         
-        {/* Rotte protette che richiedono autenticazione */}
+        {/* Protected routes */}
         <Route element={<PrivateRoute />}>
           <Route element={<Layout menuPosition={menuPosition} />}>
-            <Route path="/" element={<HomePage setMenuPosition={setMenuPosition} />} />
-            <Route path="/impostazioni" element={<ImpostazioniPage setMenuPosition={setMenuPosition} />} />
-            {/* Altre rotte protette qui */}
+            <Route path="/" element={<HomePage setMenuPosition={updateMenuPosition} />} />
+            <Route path="/settings" element={<ImpostazioniPage setMenuPosition={updateMenuPosition} />} />
+            <Route path="/impostazioni" element={<ImpostazioniPage setMenuPosition={updateMenuPosition} />} />
+            <Route path="/dashboard" element={<div>Dashboard Page</div>} />
+            <Route path="/analisi" element={<div>Analisi Page</div>} />
+            <Route path="/test-assegnati" element={<div>Test Assegnati Page</div>} />
+            <Route path="/profilo" element={<div>Profilo Page</div>} />
+            <Route path="/supporto" element={<div>Supporto Page</div>} />
           </Route>
         </Route>
         
-        {/* Reindirizza qualsiasi altra rotta a login o home page */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
   );

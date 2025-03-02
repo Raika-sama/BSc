@@ -24,13 +24,20 @@ import { useAuth } from '../../hooks/useAuth';
 const Navigation = () => {
   const { student, logout } = useAuth();
   const navigate = useNavigate();
-  
   const bg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
-  
+  const textColor = useColorModeValue('red.600', 'red.300');
+
   const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+    try {
+      // Prima naviga al login
+      navigate('/login', { replace: true });
+      
+      // Poi esegui il logout
+      await logout();
+    } catch (error) {
+      console.error('Errore durante il logout:', error);
+    }
   };
   
   return (
@@ -79,8 +86,12 @@ const Navigation = () => {
                 <MenuItem as={Link} to="/test-assegnati" icon={<ExternalLinkIcon />}>
                   Test Assegnati
                 </MenuItem>
-                <MenuItem onClick={handleLogout} icon={<Icon as={FiLogOut} />}>
-                  Esci
+                <MenuItem 
+                  onClick={handleLogout} 
+                  icon={<Icon as={FiLogOut} color={textColor} />}
+                  color={textColor}
+                >
+                  Logout
                 </MenuItem>
               </MenuList>
             </Menu>

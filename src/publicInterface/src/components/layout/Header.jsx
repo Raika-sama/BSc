@@ -1,15 +1,29 @@
 import { 
   Box, Flex, IconButton, useColorModeValue, useColorMode,
   Heading, HStack, Menu, MenuButton, MenuList, MenuItem,
-  Button, Avatar, Container, Spacer
+  Button, Avatar, Container, Spacer, Icon
 } from '@chakra-ui/react';
-import { HamburgerIcon, SunIcon, MoonIcon } from '@chakra-ui/icons';
-import { Link } from 'react-router-dom';
+import { HamburgerIcon, SunIcon, MoonIcon, SettingsIcon } from '@chakra-ui/icons';
+import { Link, useNavigate } from 'react-router-dom';
+import { FiLogOut } from 'react-icons/fi';
+import { useAuth } from '../../hooks/useAuth';
 
 const Header = ({ onSidebarToggle, showMenu }) => {
   const { colorMode, toggleColorMode } = useColorMode();
+  const { logout, student } = useAuth();
+  const navigate = useNavigate();
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const textColor = useColorModeValue('red.600', 'red.300');
+
+  const handleLogout = async () => {
+    try {
+      navigate('/login', { replace: true });
+      await logout();
+    } catch (error) {
+      console.error('Errore durante il logout:', error);
+    }
+  };
 
   return (
     <Box 
@@ -61,25 +75,25 @@ const Header = ({ onSidebarToggle, showMenu }) => {
             
             <Menu>
               <MenuButton as={Button} variant="ghost" rounded="full">
-                <Avatar size="sm" name="Utente" />
+                <Avatar 
+                  size="sm" 
+                  name={student?.firstName && student?.lastName ? `${student.firstName} ${student.lastName}` : 'Studente'}
+                />
               </MenuButton>
               <MenuList>
                 <MenuItem as={Link} to="/profilo">Profilo</MenuItem>
-                <MenuItem as={Link} to="/impostazioni">Impostazioni</MenuItem>
-                <MenuItem as={Link} to="/logout">Logout</MenuItem>
+                <MenuItem as={Link} to="/impostazioni" icon={<SettingsIcon />}>Impostazioni</MenuItem>
+                <MenuItem 
+                  onClick={handleLogout}
+                  icon={<Icon as={FiLogOut} color={textColor} />}
+                  color={textColor}
+                >
+                  Logout
+                </MenuItem>
               </MenuList>
             </Menu>
           </HStack>
         </Flex>
-        
-        {showMenu && (
-          <Flex display={{ base: 'flex', md: 'none' }} pb={2}>
-            <Button as={Link} to="/" size="sm" variant="ghost" flex="1">Home</Button>
-            <Button as={Link} to="/dashboard" size="sm" variant="ghost" flex="1">Dashboard</Button>
-            <Button as={Link} to="/analisi" size="sm" variant="ghost" flex="1">Analisi</Button>
-            <Button as={Link} to="/supporto" size="sm" variant="ghost" flex="1">Supporto</Button>
-          </Flex>
-        )}
       </Container>
     </Box>
   );
