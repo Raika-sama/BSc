@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { Grid, Card, CardContent, Typography, Box, alpha, useTheme } from '@mui/material';
 import { motion } from 'framer-motion';
 
-const StatsCardsLayout = ({ cards, loading, spacing = 2, maxColumns = 5 }) => {
+const StatsCardsLayout = ({ cards, loading, spacing = 3, maxColumns = 5 }) => {
     const theme = useTheme();
     const columnWidth = 12 / Math.min(cards.length, maxColumns);
     

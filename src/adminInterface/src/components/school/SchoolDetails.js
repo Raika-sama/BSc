@@ -170,13 +170,7 @@ const SchoolDetails = () => {
                     <Typography variant="h4" component="h1" sx={{ flex: 1 }}>
                         {selectedSchool.name}
                     </Typography>
-                    <Button
-                        variant="contained"
-                        startIcon={<EditIcon />}
-                        onClick={handleEdit}
-                    >
-                        Modifica
-                    </Button>
+                    
                 </Box>
 
                 {/* Tabs */}

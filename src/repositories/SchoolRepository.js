@@ -1067,6 +1067,318 @@ async syncAssignedSchoolIds() {
     }
 }
 
+// al cambio tipo instituto disattiva o riattiva le classi e cerca i riferimenti in user e studenti e li modifica
+async changeSchoolType(schoolId, { schoolType, institutionType }) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    // Get a reference to the Class model schema
+    const ClassModel = mongoose.model('Class');
+    const originalValidator = ClassModel.schema.path('year').validators.find(
+        v => v.message?.toString().includes('anno valido')
+    );
+
+    try {
+        // Save original validator function to restore later
+        let savedValidator = null;
+        if (originalValidator) {
+            savedValidator = { ...originalValidator };
+            // Temporarily remove the validator
+            ClassModel.schema.path('year').validators = ClassModel.schema.path('year').validators.filter(
+                v => !v.message?.toString().includes('anno valido')
+            );
+            logger.debug('Validatore del modello Class temporaneamente disabilitato');
+        }
+
+        // 1. Trova la scuola (usa direttamente il modello per ottenere una query)
+        const school = await School.findById(schoolId).session(session);
+        if (!school) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            );
+        }
+
+        // Salviamo il tipo originale per riferimento
+        const originalSchoolType = school.schoolType;
+
+        logger.debug('Cambio tipo scuola:', {
+            schoolId,
+            originalType: school.schoolType,
+            newType: schoolType,
+            originalInstitutionType: school.institutionType,
+            newInstitutionType: institutionType
+        });
+
+        // 2. Verifica la validità dei dati
+        if (schoolType === 'middle_school' && institutionType !== 'none') {
+            throw createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'Le scuole medie devono avere tipo istituto impostato come "nessuno"'
+            );
+        }
+
+        // 3. Gestisci il caso da high_school a middle_school
+        if (school.schoolType === 'high_school' && schoolType === 'middle_school') {
+            // Trova le classi di 4° e 5° anno da disattivare
+            const highYearClasses = await Class.find({
+                schoolId,
+                year: { $gt: 3 },
+                isActive: true
+            }).session(session);
+
+            logger.debug('Classi anni 4-5 da disattivare:', {
+                count: highYearClasses.length,
+                classi: highYearClasses.map(c => ({
+                    id: c._id,
+                    year: c.year,
+                    section: c.section
+                }))
+            });
+
+            // Disattiva le classi trovate
+            if (highYearClasses.length > 0) {
+                await Class.updateMany(
+                    { 
+                        _id: { $in: highYearClasses.map(c => c._id) }
+                    },
+                    { 
+                        $set: { 
+                            isActive: false,
+                            status: 'archived',
+                            deactivatedAt: new Date(),
+                            notes: 'Classe disattivata automaticamente per cambio tipo scuola',
+                            students: [] // Rimuovi i riferimenti agli studenti dalla classe
+                        }
+                    },
+                    { session }
+                );
+
+                // Trova gli studenti nelle classi disattivate
+                const studentsToUpdate = await Student.find({
+                    schoolId,
+                    classId: { $in: highYearClasses.map(c => c._id) },
+                    status: 'active'
+                }).session(session);
+
+                logger.debug('Studenti da aggiornare:', {
+                    count: studentsToUpdate.length
+                });
+
+                // Aggiorna gli studenti uno per uno per gestire correttamente il classChangeHistory
+                for (const student of studentsToUpdate) {
+                    // Salva i dati prima di reimpostare i campi
+                    const fromClass = student.classId;
+                    const fromSection = student.section;
+                    const fromYear = student.currentYear;
+                    
+                    // Aggiorna lo studente
+                    student.classId = null;
+                    student.section = null;
+                    student.currentYear = null;
+                    student.status = 'transferred';
+                    student.needsClassAssignment = true;
+                    student.lastClassChangeDate = new Date();
+                    
+                    // Aggiungi al classChangeHistory
+                    student.classChangeHistory.push({
+                        fromClass,
+                        fromSection,
+                        fromYear,
+                        date: new Date(),
+                        reason: 'Disattivazione automatica per cambio tipo scuola',
+                        academicYear: school.academicYears[0]?.year || 'N/A'
+                    });
+
+                    await student.save({ session });
+                }
+            }
+        }
+        
+        // 4. Aggiorna la scuola - IMPORTANTE: aggiorniamo il tipo PRIMA di creare le nuove classi
+        school.schoolType = schoolType;
+        school.institutionType = institutionType;
+        
+        // 5. Se passa a scuola media, verifica il limite studenti
+        if (schoolType === 'middle_school') {
+            const maxStudentsLimit = 30;
+            
+            // Aggiorna i limiti nelle sezioni se necessario
+            school.sections.forEach(section => {
+                if (section.maxStudents > maxStudentsLimit) {
+                    section.maxStudents = maxStudentsLimit;
+                }
+                
+                section.academicYears.forEach(ay => {
+                    if (ay.maxStudents > maxStudentsLimit) {
+                        ay.maxStudents = maxStudentsLimit;
+                    }
+                });
+            });
+            
+            // Aggiorna il limite predefinito
+            if (school.defaultMaxStudentsPerClass > maxStudentsLimit) {
+                school.defaultMaxStudentsPerClass = maxStudentsLimit;
+            }
+        }
+
+        // Salviamo la scuola prima di creare nuove classi per evitare problemi di validazione
+        await school.save({ session });
+
+        logger.debug('Tipo scuola salvato nel DB:', {
+            schoolId,
+            updatedType: school.schoolType,
+            updatedInstitutionType: school.institutionType
+        });
+
+        // 6. Gestisci il caso da middle_school a high_school DOPO aver aggiornato il tipo scuola
+        if (originalSchoolType === 'middle_school' && schoolType === 'high_school') {
+            logger.info(`Gestione classi 4-5 per cambio da scuola media a superiore`, {
+                schoolId,
+                originalType: originalSchoolType,
+                newType: schoolType
+            });
+            
+            // Ottieni l'anno accademico corrente
+            const currentAcademicYear = school.academicYears.find(ay => ay.status === 'active')?.year ||
+                                      (new Date().getFullYear() + '/' + (new Date().getFullYear() + 1));
+            
+            // Ottieni tutte le sezioni attive
+            const activeSections = school.sections.filter(s => s.isActive).map(s => s.name);
+            
+            if (activeSections.length > 0) {
+                // Per ogni sezione attiva, gestisci classi 4 e 5
+                for (const sectionName of activeSections) {
+                    // Prima cerchiamo classi esistenti disattivate (anni 4 e 5)
+                    const existingDisabledClasses = await Class.find({
+                        schoolId,
+                        section: sectionName,
+                        year: { $gt: 3 }, // Anni 4 e 5
+                        isActive: false,
+                        academicYear: currentAcademicYear
+                    }).session(session);
+                    
+                    logger.debug(`Cercate classi anni 4-5 disattivate per sezione ${sectionName}:`, {
+                        trovate: existingDisabledClasses.length,
+                        classi: existingDisabledClasses.map(c => `${c.year}${c.section}`)
+                    });
+
+                    // Se ci sono classi disattivate, riattivale
+                    if (existingDisabledClasses.length > 0) {
+                        for (const classDoc of existingDisabledClasses) {
+                            classDoc.isActive = true;
+                            classDoc.status = 'planned';
+                            classDoc.deactivatedAt = undefined;
+                            classDoc.updatedAt = new Date();
+                            
+                            await classDoc.save({ session });
+                            
+                            logger.info(`Riattivata classe ${classDoc.year}${classDoc.section} per cambio tipo scuola`, {
+                                classId: classDoc._id,
+                                schoolId,
+                                section: sectionName
+                            });
+                        }
+                    } else {
+                        // Se non ci sono classi disattivate, crea nuove classi
+                        // Trova una classe esistente della sezione per copiare alcune proprietà
+                        const existingClass = await Class.findOne({
+                            schoolId,
+                            section: sectionName,
+                            isActive: true
+                        }).lean().session(session);
+                        
+                        // Determina la capacità e mainTeacher dalle classi esistenti o dai dati della sezione
+                        const section = school.sections.find(s => s.name === sectionName);
+                        const capacity = existingClass?.capacity || section?.maxStudents || school.defaultMaxStudentsPerClass;
+                        const mainTeacher = existingClass?.mainTeacher || school.manager;
+                        
+                        // Crea nuove classi per anni 4 e 5
+                        try {
+                            // Usa il modello Class normalmente, ora che abbiamo disabilitato la validazione
+                            const yearList = [4, 5];
+                            const newClasses = [];
+                            
+                            for (const year of yearList) {
+                                // Verifica prima se la classe già esiste
+                                const existingClass = await Class.findOne({
+                                    schoolId,
+                                    year,
+                                    section: sectionName,
+                                    academicYear: currentAcademicYear
+                                }).session(session);
+                                
+                                if (!existingClass) {
+                                    const newClass = new Class({
+                                        schoolId: new mongoose.Types.ObjectId(schoolId),
+                                        year,
+                                        section: sectionName,
+                                        academicYear: currentAcademicYear,
+                                        status: 'planned',
+                                        capacity,
+                                        mainTeacher: mainTeacher ? new mongoose.Types.ObjectId(mainTeacher) : null,
+                                        teachers: existingClass?.teachers || [],
+                                        isActive: true,
+                                        students: [],
+                                        createdAt: new Date(),
+                                        updatedAt: new Date()
+                                    });
+                                    
+                                    await newClass.save({ session });
+                                    newClasses.push(newClass);
+                                    
+                                    logger.info(`Creata classe ${year}${sectionName}`, {
+                                        classId: newClass._id,
+                                        schoolId,
+                                        year,
+                                        section: sectionName
+                                    });
+                                }
+                            }
+                            
+                            logger.info(`Create ${newClasses.length} nuove classi per sezione ${sectionName}`, {
+                                schoolId,
+                                section: sectionName
+                            });
+                        } catch (error) {
+                            logger.error('Errore nella creazione delle classi:', {
+                                error: error.message,
+                                stack: error.stack,
+                                schoolId,
+                                section: sectionName
+                            });
+                            throw error;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Commit della transazione
+        await session.commitTransaction();
+        
+        return school;
+    } catch (error) {
+        // Rollback in caso di errore
+        await session.abortTransaction();
+        logger.error('Errore nel cambio tipo scuola:', {
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
+    } finally {
+        // Chiudi la sessione in ogni caso
+        session.endSession();
+        
+        // Ripristina i validatori originali
+        if (originalValidator) {
+            // Re-add the original validator
+            ClassModel.schema.path('year').validators.push(originalValidator);
+            logger.debug('Validatore del modello Class ripristinato');
+        }
+    }
+}
+
 }
 
 module.exports = SchoolRepository;

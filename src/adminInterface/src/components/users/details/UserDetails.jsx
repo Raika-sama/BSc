@@ -187,14 +187,7 @@ const UserDetails = () => {
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <Box display="flex" justifyContent="flex-end" height="100%" alignItems="center">
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    onClick={() => navigate(`/admin/users/${id}/edit`)}
-                                    sx={{ mr: 1 }}
-                                >
-                                    Modifica
-                                </Button>
+                               
                                 <Button
                                     variant="outlined"
                                     color="secondary"

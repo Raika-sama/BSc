@@ -63,6 +63,15 @@ const createStudentRouter = ({
         asyncHandler(studentController.getMyStudents.bind(studentController))
     );
 
+    /**
+     * @route GET /api/students/count
+     * @desc Conta studenti nelle classi specificate
+     * @access Private - Richiede autenticazione
+     */
+    router.get('/count', 
+        asyncHandler(studentController.countByClasses.bind(studentController))
+    );
+
     // 4. Route di importazione bulk (solo admin)
     router.get('/template', 
         restrictTo('admin'),

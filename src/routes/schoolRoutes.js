@@ -247,6 +247,11 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
         asyncHandler(schoolController.createAndAssociateUser.bind(schoolController))
     );
 
+    router.post('/:id/change-type',
+        restrictTo('admin'),
+        asyncHandler(schoolController.changeSchoolType.bind(schoolController))
+    );
+
     // Gestione errori specifica per le scuole
     router.use((err, req, res, next) => {
         logger.error('School Route Error:', {

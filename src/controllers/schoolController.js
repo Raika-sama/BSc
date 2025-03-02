@@ -33,6 +33,7 @@ class SchoolController extends BaseController {
         this.removeManagerFromSchool = this.removeManagerFromSchool.bind(this);
         this.addManagerToSchool = this.addManagerToSchool.bind(this);
         this.removeUserFromSchool = this.removeUserFromSchool.bind(this);
+        this.changeSchoolType = this.changeSchoolType.bind(this);
     }
 
     // Aggiungi questi metodi di utility
@@ -998,6 +999,54 @@ class SchoolController extends BaseController {
                 message: 'Errore nel recupero degli studenti della sezione',
                 code: 'INTERNAL_SERVER_ERROR'
             });
+        }
+    }
+
+    async changeSchoolType(req, res) {
+        try {
+            const { id } = req.params;
+            const { schoolType, institutionType } = req.body;
+    
+            logger.debug('Richiesta cambio tipo scuola:', {
+                schoolId: id,
+                schoolType,
+                institutionType,
+                userId: req.user.id
+            });
+    
+            // Verifica autorizzazioni (solo admin)
+            if (req.user.role !== 'admin') {
+                throw createError(
+                    ErrorTypes.AUTHORIZATION.FORBIDDEN,
+                    'Solo gli amministratori possono cambiare il tipo di scuola'
+                );
+            }
+    
+            // Usa il metodo specializzato del repository
+            const school = await this.repository.changeSchoolType(id, {
+                schoolType,
+                institutionType
+            });
+    
+            // Log e risposta
+            logger.info('Tipo scuola cambiato con successo:', {
+                schoolId: id,
+                newType: schoolType,
+                newInstitutionType: institutionType,
+                userId: req.user.id
+            });
+    
+            this.sendResponse(res, {
+                status: 'success',
+                data: { school }
+            });
+        } catch (error) {
+            logger.error('Errore nel cambio tipo scuola:', {
+                error: error.message,
+                stack: error.stack,
+                schoolId: req.params.id
+            });
+            this.sendError(res, error);
         }
     }
 

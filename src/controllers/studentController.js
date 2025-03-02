@@ -23,6 +23,7 @@ class StudentController extends BaseController {
         this.batchAssignToSchool = this.batchAssignToSchool.bind(this);
         this.getUnassignedToSchoolStudents = this.getUnassignedToSchoolStudents.bind(this);
         this.createStudentWithClass = this.createStudentWithClass.bind(this);
+        this.countByClasses = this.countByClasses.bind(this);
     }
 
     /**
@@ -660,6 +661,48 @@ console.log('Attempting to assign students:', {
         ));
     }
 }
+
+
+/**
+ * Conta gli studenti nelle classi specificate
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @param {Function} next - Next middleware function
+ */
+async countByClasses(req, res, next) {
+    try {
+        // Estrai e valida i parametri di input
+        let { classIds } = req.query;
+        
+        // Converti il parametro in array se è una stringa
+        if (typeof classIds === 'string') {
+            classIds = classIds.split(',').filter(id => id.trim());
+        }
+        
+        // Verifica che classIds sia un array valido
+        if (!Array.isArray(classIds) || classIds.length === 0) {
+            return this.sendResponse(res, { count: 0 });
+        }
+        
+        logger.debug('Richiesta conteggio studenti per classi:', { 
+            classIds,
+            user: req.user?.id
+        });
+        
+        // Esegui il conteggio usando il repository
+        const count = await this.repository.countByClasses(classIds);
+        
+        // Invia la risposta
+        this.sendResponse(res, { count });
+    } catch (error) {
+        logger.error('Errore nel conteggio studenti:', {
+            error: error.message,
+            stack: error.stack
+        });
+        next(error);
+    }
+}
+
 }
 
 module.exports = StudentController;

@@ -1135,6 +1135,47 @@ async findWithTestCount(filters = {}) {
        }
     
     }
+
+
+/**
+ * Conta il numero di studenti attivi in classi specifiche
+ * @param {Array<string>} classIds - Array di ID delle classi
+ * @returns {Promise<number>} - Numero di studenti trovati
+ */
+async countByClasses(classIds) {
+    try {
+        logger.debug('Conteggio studenti per classi:', { classIds });
+        
+        // Validazione input
+        if (!Array.isArray(classIds) || classIds.length === 0) {
+            return 0;
+        }
+        
+        // Converte le stringhe in ObjectId se necessario
+        const objectIds = classIds.map(id => 
+            typeof id === 'string' ? new mongoose.Types.ObjectId(id) : id
+        );
+        
+        // Conta gli studenti attivi nelle classi specificate
+        const count = await this.model.countDocuments({
+            classId: { $in: objectIds },
+            status: 'active'
+        });
+        
+        logger.debug('Risultato conteggio studenti:', { count, classIds });
+        return count;
+    } catch (error) {
+        logger.error('Errore nel conteggio studenti per classi:', {
+            error: error.message,
+            classIds
+        });
+        throw createError(
+            ErrorTypes.DATABASE.QUERY_FAILED,
+            'Errore nel conteggio degli studenti',
+            { originalError: error.message }
+        );
+    }
+}
 }
 
 module.exports = StudentRepository;

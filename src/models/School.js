@@ -149,7 +149,7 @@ const schoolSchema = new mongoose.Schema({
 // Validatori e middleware
 schoolSchema.pre('save', function(next) {
     // Aggiungi una verifica per una flag skipManagerValidation
-    if (this._skipManagerValidation === true) {
+    if (this._skipManagerValidation === true || this.isModified('schoolType') || this.isModified('institutionType')) {
       return next();
     }
     

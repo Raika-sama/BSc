@@ -293,15 +293,6 @@ const UserManagement = () => {
                             <Visibility sx={{ fontSize: '1.1rem' }} />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Modifica">
-                        <IconButton
-                            size="small"
-                            onClick={() => navigate(`/admin/users/${params.row._id}/edit`)}
-                            sx={{ color: 'secondary.main' }}
-                        >
-                            <Edit sx={{ fontSize: '1.1rem' }} />
-                        </IconButton>
-                    </Tooltip>
                     <Tooltip title="Elimina">
                         <IconButton
                             size="small"
