@@ -6,6 +6,7 @@ import {
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { MdDashboard, MdAnalytics, MdPerson, MdSettings, MdHelp, MdHome, MdLogout } from 'react-icons/md';
 import { useAuth } from '../../hooks/useAuth';
+import { useImpostazioni } from '../../hooks/ImpostazioniContext';
 
 const NavItem = ({ icon, children, to, onClick }) => {
   const activeBg = useColorModeValue('brand.50', 'rgba(0,136,204,0.2)');
@@ -69,6 +70,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const { logout } = useAuth();
+  const { openImpostazioni } = useImpostazioni();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -90,9 +92,8 @@ const Sidebar = ({ isOpen, onClose }) => {
       <NavItem icon={MdDashboard} to="/dashboard">Dashboard</NavItem>
       <NavItem icon={MdAnalytics} to="/analisi">Analisi</NavItem>
       <NavItem icon={MdPerson} to="/profilo">Profilo</NavItem>
-      <NavItem icon={MdSettings} to="/settings">SETTINGS</NavItem>
       <Divider my={2} />
-      <NavItem icon={MdSettings} to="/impostazioni">Impostazioni</NavItem>
+      <NavItem icon={MdSettings} onClick={openImpostazioni}>Impostazioni</NavItem>
       <NavItem icon={MdHelp} to="/supporto">Supporto</NavItem>
       <Divider my={2} />
       <NavItem icon={MdLogout} onClick={handleLogout}>Logout</NavItem>

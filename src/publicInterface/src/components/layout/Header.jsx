@@ -7,10 +7,12 @@ import { HamburgerIcon, SunIcon, MoonIcon, SettingsIcon } from '@chakra-ui/icons
 import { Link, useNavigate } from 'react-router-dom';
 import { FiLogOut } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
+import { useImpostazioni } from '../../hooks/ImpostazioniContext';
 
 const Header = ({ onSidebarToggle, showMenu }) => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { logout, student } = useAuth();
+  const { openImpostazioni } = useImpostazioni();
   const navigate = useNavigate();
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
@@ -82,7 +84,12 @@ const Header = ({ onSidebarToggle, showMenu }) => {
               </MenuButton>
               <MenuList>
                 <MenuItem as={Link} to="/profilo">Profilo</MenuItem>
-                <MenuItem as={Link} to="/impostazioni" icon={<SettingsIcon />}>Impostazioni</MenuItem>
+                <MenuItem 
+                  icon={<SettingsIcon />} 
+                  onClick={openImpostazioni}
+                >
+                  Impostazioni
+                </MenuItem>
                 <MenuItem 
                   onClick={handleLogout}
                   icon={<Icon as={FiLogOut} color={textColor} />}

@@ -1,10 +1,11 @@
 import { Box, Flex, useDisclosure, useColorModeValue } from '@chakra-ui/react';
 import { useEffect } from 'react';
+import { Outlet } from 'react-router-dom';  // Importa Outlet
 import Header from './Header';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
 
-const Layout = ({ children, menuPosition = 'top' }) => {
+const Layout = ({ menuPosition = 'top' }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const bgColor = useColorModeValue('gray.50', 'gray.900');
   
@@ -33,7 +34,7 @@ const Layout = ({ children, menuPosition = 'top' }) => {
         <Sidebar isOpen={isOpen} onClose={onClose} />
         
         <Box flex="1" p={4} maxW="100%">
-          {children}
+          <Outlet />  {/* Usa Outlet invece di children */}
         </Box>
       </Flex>
       
