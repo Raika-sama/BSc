@@ -68,20 +68,3 @@
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-02T15:35:36.079Z"}
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-02T15:35:36.086Z"}
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-02T15:35:36.087Z"}
-{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-03-02T15:56:52.180Z"}
-{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-02T15:56:52.182Z"}
-{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-02T15:56:52.197Z"}
-{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-02T15:56:52.199Z"}
-{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-03-02T17:39:34.490Z"}
-{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-02T17:39:34.491Z"}
-{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-02T17:39:34.502Z"}
-{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-02T17:39:34.503Z"}
-{"error":{"code":"RES_001","message":"Record di autenticazione non trovato","metadata":{},"status":404},"level":"error","message":"Error updating password in repository:","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-02T17:40:15.143Z"}
-{"code":"RES_001","level":"error","message":"Record di autenticazione non trovato","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-02T17:40:15.145Z","type":"Object"}
-{"code":"RES_001","level":"error","message":"Record di autenticazione non trovato","metadata":{},"status":404,"timestamp":"2025-03-02T17:40:15.147Z"}
-{"error":"this.handleError is not a function","level":"error","message":"StudentAuth Route Error:","method":"POST","path":"/admin/generate/67c4908d647e9de1d9422ed8","timestamp":"2025-03-02T17:40:15.149Z"}
-{"error":"this.handleError is not a function","level":"error","message":"StudentAuth error:","method":"POST","path":"/admin/generate/67c4908d647e9de1d9422ed8","stack":"TypeError: this.handleError is not a function\n    at StudentAuthController.generateCredentials (C:\\Users\\hanga\\Desktop\\BrainScanner\\src\\controllers\\StudentAuthController.js:28:25)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-03-02T17:40:15.152Z"}
-{"error":{},"level":"error","message":"Login error","timestamp":"2025-03-02T18:10:28.555Z"}
-{"error":{},"level":"error","message":"Student login error","timestamp":"2025-03-02T18:10:28.556Z"}
-{"error":"this.handleError is not a function","level":"error","message":"StudentAuth Route Error:","method":"POST","path":"/login","timestamp":"2025-03-02T18:10:28.557Z"}
-{"error":"this.handleError is not a function","level":"error","message":"StudentAuth error:","method":"POST","path":"/login","stack":"TypeError: this.handleError is not a function\n    at StudentAuthController.login (C:\\Users\\hanga\\Desktop\\BrainScanner\\src\\controllers\\StudentAuthController.js:154:25)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-03-02T18:10:28.558Z"}
