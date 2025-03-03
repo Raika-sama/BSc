@@ -26,6 +26,7 @@
     "react-router-dom": "^6.0.0",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.6.1",
+    "react-window": "^1.8.11",
     "remark-gfm": "^4.0.1"
   },
   "browserslist": [

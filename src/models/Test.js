@@ -186,7 +186,6 @@ testSchema.pre(/^find/, function(next) {
             operationType: this.op,
             queryConditions: this.getQuery(),
             populateOptions: this.options?.populate,
-            hasPopulateQuestions: this.options?.populateQuestions
         });
 
         // Se l'opzione populateQuestions è impostata esplicitamente a false, non facciamo populate
@@ -195,73 +194,28 @@ testSchema.pre(/^find/, function(next) {
             return next();
         }
 
-        // Verifica che i modelli necessari siano registrati
-        const registeredModels = mongoose.modelNames();
-        logger.debug('Current registered models:', {
-            models: registeredModels,
-            hasCSIQuestion: registeredModels.includes('CSIQuestion'),
-            hasFutureTestQuestion: registeredModels.includes('FutureTestQuestion')
-        });
-
-        // Ottieni il tipo di test dalla query se disponibile
-        const testType = this.getQuery().tipo;
-        
-        // Log del tipo di test e modello corrispondente
-        logger.debug('Test type detection:', {
-            testType,
-            expectedModel: testType ? TEST_QUESTION_MODELS[testType] : 'unknown'
-        });
-
-        // Determina il modello da usare in base al tipo di test
-        let modelToUse = null;
-        if (testType && TEST_QUESTION_MODELS[testType]) {
-            // Se il tipo è specificato e abbiamo un modello corrispondente, verifica che sia registrato
-            const expectedModel = TEST_QUESTION_MODELS[testType];
-            if (registeredModels.includes(expectedModel)) {
-                modelToUse = expectedModel;
-            }
-        }
-
-        // Se non abbiamo trovato un modello specifico, usa CSIQuestion come fallback se disponibile
-        if (!modelToUse && registeredModels.includes('CSIQuestion')) {
-            modelToUse = 'CSIQuestion';
-            logger.debug('Using CSIQuestion as fallback model');
-        }
-
-        // Se non abbiamo nessun modello disponibile, salta il populate
-        if (!modelToUse) {
-            logger.warn('No suitable question model found, skipping populate', {
-                testType,
-                availableModels: registeredModels
-            });
+        // Se sono richieste esplicitamente le domande tramite opzioni di population specifiche,
+        // utilizziamo quelle, altrimenti non facciamo populate automatico
+        if (this.options && this.options.populate && 
+            (this.options.populate.path === 'domande.questionRef' || 
+            (Array.isArray(this.options.populate) && 
+            this.options.populate.some(p => p.path === 'domande.questionRef')))) {
+            
+            logger.debug('Using explicit populate options for questions');
+            // Mantieni le opzioni di populate esistenti
             return next();
         }
-
-        // Configura il populate
-        const populateOptions = {
-            path: 'domande.questionRef',
-            model: modelToUse,
-            options: { lean: true },
-            match: { active: true }
-        };
-
-        this.populate(populateOptions);
         
-        logger.debug('Populate configuration applied:', {
-            options: populateOptions,
-            modelUsed: modelToUse,
-            query: this.getQuery()
-        });
-
+        // Altrimenti, non facciamo alcun populate automatico delle domande
+        logger.debug('Using questions directly from test model, skipping question populate');
         next();
     } catch (error) {
         logger.error('Error in Test populate middleware:', {
             error: error.message,
             stack: error.stack,
             query: this.getQuery(),
-            modelNames: mongoose.modelNames()
         });
-        // Non blocchiamo la query anche in caso di errore nel populate
+        // Non blocchiamo la query anche in caso di errore
         next();
     }
 });

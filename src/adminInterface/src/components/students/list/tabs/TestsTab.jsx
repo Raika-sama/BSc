@@ -1,5 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Paper, Tabs, Tab, Divider, CircularProgress, Alert, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material';
+import React, { useState } from 'react';
+import { 
+  Box, 
+  Paper, 
+  Tabs, 
+  Tab, 
+  CircularProgress, 
+  Alert, 
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogContentText, 
+  DialogActions, 
+  Button, 
+  Fade,
+  Typography,
+  Zoom
+} from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CompletedTestsList from '../../studentTests/components/CompletedTestsList';
@@ -9,109 +25,45 @@ import AssignedTestsList from '../../studentTests/components/AssignedTestsList';
 import AssignTestDialog from '../../studentTests/components/AssignTestDialog';
 import AssignedTestDetails from '../../studentTests/components/AssignedTestDetails';
 import { useNotification } from '../../../../context/NotificationContext';
-import { axiosInstance } from '../../../../services/axiosConfig';
+import { useAssignedTests } from '../../studentTests/hooks/useAssignedTests';
 
+/**
+ * Componente per la gestione dei test di uno studente
+ * @param {Object} props - Props del componente
+ * @param {Object} props.student - Dati dello studente
+ */
 const TestsTab = ({ student }) => {
-    // Stati per gestire i test, le selezioni e il loading
+    // Stati per gestire la navigazione tra tab
     const [tabValue, setTabValue] = useState(0);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [assignedTests, setAssignedTests] = useState([]);
-    const [selectedAssignedTest, setSelectedAssignedTest] = useState(null);
     const [assignDialogOpen, setAssignDialogOpen] = useState(false);
     const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
     const [testToRevoke, setTestToRevoke] = useState(null);
     
     const { showNotification } = useNotification();
     
+    // Utilizziamo il custom hook per gestire i test assegnati
+    const {
+        loading: assignedLoading,
+        error: assignedError,
+        assignedTests,
+        selectedTest: selectedAssignedTest,
+        handleTestSelect: handleAssignedTestSelect,
+        revokeTest,
+        refreshTests: refreshAssignedTests
+    } = useAssignedTests(student?._id);
+    
     // Hook personalizzato per i test completati
     const {
+        loading: completedLoading,
+        error: completedError,
         completedTests,
-        selectedTest,
+        selectedTest: selectedCompletedTest,
         handleTestSelect: handleCompletedTestSelect,
     } = useStudentTest(student?._id);
-    
-    // Carica i test assegnati all'apertura o quando cambia lo studente
-    useEffect(() => {
-        if (student && student._id) {
-            fetchAssignedTests();
-        }
-    }, [student]);
-    
-    // Carica i test assegnati allo studente
-    const fetchAssignedTests = async () => {
-        if (!student || !student._id) return;
-        
-        setLoading(true);
-        setError(null);
-        
-        try {
-            console.debug('Fetching assigned tests for student:', {
-                studentId: student._id
-            });
-            
-            const response = await axiosInstance.get(`/tests/assigned/student/${student._id}`);
-            console.debug('Server response:', {
-                status: response.status,
-                statusText: response.statusText,
-                hasData: !!response.data,
-                responseData: response.data
-            });
-            
-            // Assicuriamoci che testsArray sia sempre un array
-            let testsArray = [];
-            if (response.data?.data) {
-                testsArray = Array.isArray(response.data.data) ? response.data.data : [response.data.data];
-            }
-            
-            console.debug('Extracted tests array:', {
-                isArray: Array.isArray(testsArray),
-                length: testsArray.length,
-                firstTest: testsArray[0]
-            });
-            
-            // Filtra i test che sono assegnati ma non completati
-            const assignedNotCompleted = testsArray.filter(
-                test => test.status !== 'completed'
-            );
-            
-            console.debug('Filtered non-completed tests:', {
-                total: testsArray.length,
-                nonCompletati: assignedNotCompleted.length,
-                firstTestNonCompletato: assignedNotCompleted[0]
-            });
-            
-            setAssignedTests(assignedNotCompleted);
-            
-            // Seleziona il primo test se esiste e nessuno è già selezionato
-            if (assignedNotCompleted.length > 0 && !selectedAssignedTest) {
-                setSelectedAssignedTest(assignedNotCompleted[0]);
-            }
-        } catch (error) {
-            console.error('Error fetching assigned tests:', {
-                error: error.message,
-                response: error.response?.data,
-                status: error.response?.status
-            });
-            setError('Impossibile caricare i test assegnati.');
-            showNotification(
-                'Errore nel caricamento dei test assegnati: ' + 
-                (error.response?.data?.error?.message || error.message),
-                'error'
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
     
     // Gestisce il cambio di tab
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue);
-    };
-    
-    // Gestisce la selezione di un test assegnato
-    const handleAssignedTestSelect = (test) => {
-        setSelectedAssignedTest(test);
     };
     
     // Gestisce l'apertura del dialogo di assegnazione
@@ -122,7 +74,8 @@ const TestsTab = ({ student }) => {
     // Gestisce l'assegnazione di un nuovo test
     const handleTestAssigned = (newTest) => {
         showNotification('Test assegnato con successo!', 'success');
-        fetchAssignedTests(); // Ricarica i test assegnati
+        refreshAssignedTests(); // Ricarica i test assegnati
+        setTabValue(0); // Torna al tab dei test assegnati
     };
     
     // Gestisce l'apertura del dialogo di revoca
@@ -135,33 +88,34 @@ const TestsTab = ({ student }) => {
     const confirmRevokeTest = async () => {
         if (!testToRevoke) return;
         
-        setLoading(true);
-        try {
-            const response = await axiosInstance.post(`/tests/${testToRevoke}/revoke`);
-            if (response.data && response.data.status === 'success') {
-                showNotification('Test revocato con successo!', 'success');
-                
-                // Aggiorna la lista dei test
-                fetchAssignedTests();
-                
-                // Reimposta il test selezionato se è stato revocato
-                if (selectedAssignedTest && selectedAssignedTest._id === testToRevoke) {
-                    setSelectedAssignedTest(null);
-                }
-            }
-        } catch (error) {
-            console.error('Errore nella revoca del test:', error);
-            showNotification(
-                'Errore nella revoca del test: ' + 
-                (error.response?.data?.message || error.message),
-                'error'
-            );
-        } finally {
-            setLoading(false);
+        const success = await revokeTest(testToRevoke);
+        if (success) {
+            // Chiudi il dialogo di revoca
             setRevokeDialogOpen(false);
             setTestToRevoke(null);
         }
     };
+    
+    // Calcola lo stato totale dei test per il badge
+    const getTestsStats = () => {
+        return {
+            pending: assignedTests.filter(t => t.status === 'pending').length,
+            inProgress: assignedTests.filter(t => t.status === 'in_progress').length,
+            completed: completedTests.length
+        };
+    };
+    
+    const stats = getTestsStats();
+    
+    if (!student) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', p: 3 }}>
+                <Typography variant="h6" color="text.secondary">
+                    Seleziona uno studente per visualizzare i test
+                </Typography>
+            </Box>
+        );
+    }
     
     return (
         <Box 
@@ -178,15 +132,17 @@ const TestsTab = ({ student }) => {
                     value={tabValue} 
                     onChange={handleTabChange}
                     aria-label="test management tabs"
+                    indicatorColor="primary"
+                    textColor="primary"
                 >
                     <Tab 
                         icon={<AssignmentIcon />} 
-                        label="Test Assegnati" 
+                        label={`Test Assegnati${stats.pending + stats.inProgress > 0 ? ` (${stats.pending + stats.inProgress})` : ''}`}
                         iconPosition="start"
                     />
                     <Tab 
                         icon={<CheckCircleIcon />} 
-                        label="Test Completati" 
+                        label={`Test Completati${stats.completed > 0 ? ` (${stats.completed})` : ''}`}
                         iconPosition="start"
                     />
                 </Tabs>
@@ -202,91 +158,126 @@ const TestsTab = ({ student }) => {
             }}>
                 {/* Tab dei test assegnati */}
                 {tabValue === 0 && (
-                    <>
-                        {/* Lista dei test assegnati */}
-                        <Paper 
-                            sx={{ 
-                                width: '250px',
-                                overflow: 'hidden',
-                                display: 'flex',
-                                flexDirection: 'column'
-                            }}
-                        >
-                            <AssignedTestsList 
-                                tests={assignedTests}
-                                selectedTest={selectedAssignedTest}
-                                onTestSelect={handleAssignedTestSelect}
-                                onAssignNewTest={handleOpenAssignDialog}
-                                loading={loading}
-                            />
-                        </Paper>
-                        
-                        {/* Area dettagli test assegnato */}
-                        <Paper 
-                            sx={{ 
-                                flex: 1,
-                                overflow: 'hidden',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                p: 3
-                            }}
-                        >
-                            {loading ? (
-                                <CircularProgress />
-                            ) : error ? (
-                                <Alert severity="error">{error}</Alert>
-                            ) : selectedAssignedTest ? (
+                    <Fade in={tabValue === 0} timeout={300}>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            width: '100%', 
+                            gap: 3,
+                            height: '100%'
+                        }}>
+                            {/* Lista dei test assegnati */}
+                            <Paper 
+                                sx={{ 
+                                    width: '320px',
+                                    overflow: 'hidden',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    borderRadius: 2
+                                }}
+                                elevation={2}
+                            >
+                                <AssignedTestsList 
+                                    tests={assignedTests}
+                                    selectedTest={selectedAssignedTest}
+                                    onTestSelect={handleAssignedTestSelect}
+                                    onAssignNewTest={handleOpenAssignDialog}
+                                    loading={assignedLoading}
+                                />
+                            </Paper>
+                            
+                            {/* Area dettagli test assegnato */}
+                            <Paper 
+                                sx={{ 
+                                    flex: 1,
+                                    overflow: 'hidden',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    borderRadius: 2
+                                }}
+                                elevation={2}
+                            >
                                 <AssignedTestDetails 
                                     test={selectedAssignedTest}
                                     onRevokeTest={handleRevokeTest}
+                                    loading={assignedLoading}
                                 />
-                            ) : (
-                                <Box sx={{ textAlign: 'center', color: 'text.secondary' }}>
-                                    {assignedTests.length === 0 ? (
-                                        <p>Nessun test assegnato. Clicca su "Assegna Nuovo Test" per iniziare.</p>
-                                    ) : (
-                                        <p>Seleziona un test dalla lista per visualizzarne i dettagli.</p>
-                                    )}
-                                </Box>
-                            )}
-                        </Paper>
-                    </>
+                            </Paper>
+                        </Box>
+                    </Fade>
                 )}
                 
                 {/* Tab dei test completati */}
                 {tabValue === 1 && (
-                    <>
-                        {/* Lista dei test completati */}
-                        <Paper 
-                            sx={{ 
-                                width: '250px',
-                                overflow: 'hidden',
-                                display: 'flex',
-                                flexDirection: 'column'
-                            }}
-                        >
-                            <CompletedTestsList 
-                                tests={completedTests}
-                                selectedTest={selectedTest}
-                                onTestSelect={handleCompletedTestSelect}
-                                onCreateTest={handleOpenAssignDialog}
-                            />
-                        </Paper>
-                        
-                        {/* Visualizzazione risultati */}
-                        <Paper 
-                            sx={{ 
-                                flex: 1,
-                                overflow: 'hidden'
-                            }}
-                        >
-                            <TestResultsView 
-                                test={selectedTest}
-                            />
-                        </Paper>
-                    </>
+                    <Fade in={tabValue === 1} timeout={300}>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            width: '100%', 
+                            gap: 3,
+                            height: '100%'
+                        }}>
+                            {/* Lista dei test completati */}
+                            <Paper 
+                                sx={{ 
+                                    width: '320px',
+                                    overflow: 'hidden',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    borderRadius: 2
+                                }}
+                                elevation={2}
+                            >
+                                <CompletedTestsList 
+                                    tests={completedTests}
+                                    selectedTest={selectedCompletedTest}
+                                    onTestSelect={handleCompletedTestSelect}
+                                    onCreateTest={handleOpenAssignDialog}
+                                    loading={completedLoading}
+                                />
+                            </Paper>
+                            
+                            {/* Visualizzazione risultati */}
+                            <Paper 
+                                sx={{ 
+                                    flex: 1,
+                                    overflow: 'hidden',
+                                    borderRadius: 2
+                                }}
+                                elevation={2}
+                            >
+                                {completedLoading ? (
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                        <CircularProgress />
+                                    </Box>
+                                ) : completedError ? (
+                                    <Alert severity="error" sx={{ m: 3 }}>{completedError}</Alert>
+                                ) : selectedCompletedTest ? (
+                                    <TestResultsView 
+                                        test={selectedCompletedTest}
+                                    />
+                                ) : (
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        flexDirection: 'column', 
+                                        justifyContent: 'center', 
+                                        alignItems: 'center', 
+                                        height: '100%', 
+                                        p: 3, 
+                                        textAlign: 'center' 
+                                    }}>
+                                        <Zoom in={true} timeout={500}>
+                                            <CheckCircleIcon sx={{ fontSize: 60, color: 'text.disabled', mb: 2 }} />
+                                        </Zoom>
+                                        <Typography variant="h6" gutterBottom>
+                                            Nessun test selezionato
+                                        </Typography>
+                                        <Typography variant="body2">
+                                            Seleziona un test completato dalla lista per visualizzarne i risultati.
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </Paper>
+                        </Box>
+                    </Fade>
                 )}
             </Box>
             

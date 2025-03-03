@@ -224,3 +224,11 @@
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-03T17:43:35.854Z"}
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-03T17:43:35.866Z"}
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-03T17:43:35.868Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/assigned/student/679c7494bdb941a2c47766c8","timestamp":"2025-03-03T18:43:42.835Z"}
+{"error":"Autenticazione richiesta","level":"error","message":"Test Route Error:","method":"GET","path":"/assigned/student/679c7494bdb941a2c47766c8","timestamp":"2025-03-03T18:43:42.875Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/student/679c7494bdb941a2c47766c8/completed","timestamp":"2025-03-03T18:43:42.936Z"}
+{"error":"Autenticazione richiesta","level":"error","message":"Test Route Error:","method":"GET","path":"/student/679c7494bdb941a2c47766c8/completed","timestamp":"2025-03-03T18:43:42.942Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-03-03T18:43:52.490Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-03T18:43:52.492Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-03T18:43:52.665Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-03T18:43:52.668Z"}
