@@ -37,6 +37,8 @@ const DocumentationViewer = () => {
         docPath = '/docs/ACCADEMIC_YEARS_DOC.md';
       } else if (docType === 'Section-guide') { // Aggiungi questa condizione
         docPath = '/docs/ACCADEMICYEAR_GUIDE.md';
+      } else if (docType === 'TestAssign-guide') { // Aggiungi questa condizione
+        docPath = '/docs/TEST_ASSIGN.md';
       } else {
         throw new Error('Tipo di documentazione non supportato');
       }
@@ -169,6 +171,7 @@ const DocumentationViewer = () => {
       <MenuItem value="Section-guide">Guida al funzionamento del setup AccademicYear</MenuItem>
       <MenuItem value="Section-system1">Guida al funzionamento delle sezioni</MenuItem>
       <MenuItem value="Section-system2">Guida al funzionamento del AccademicYear</MenuItem>
+      <MenuItem value="TestAssign-guide">Guida alla assegnazione dei test</MenuItem>
 
     </Select>
   );

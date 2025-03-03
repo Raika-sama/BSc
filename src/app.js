@@ -13,11 +13,8 @@ const createCSIRoutes = require('./engines/CSI/routes/csi.routes');
 const createTestRouter = require('./routes/testRoutes');
 const createQuestionRoutes = require('./engines/CSI/routes/csi.question.routes');
 
-
 // Importa e registra i modelli CSI
-require('./models'); // Questo importerà e registrerà tutti i modelli
-
-
+let models;
 
 // Funzione per verificare la registrazione dei modelli
 const ensureModelsRegistered = () => {
@@ -63,7 +60,6 @@ const TestController = require('./controllers/testController');
 const StudentBulkImportController = require('./controllers/studentBulkImportController');
 const StudentAuthController = require('./controllers/StudentAuthController');
 
-
 // Import Routes
 const routes = require('./routes');
 
@@ -89,7 +85,6 @@ app.use(cookieParser());
 // Logging
 app.use(requestLogger);
 
-
 // Inizializza Repositories
 const authRepository = new AuthRepository(User);
 const userRepository = new UserRepository(User);
@@ -110,6 +105,9 @@ const studentAuthService = new StudentAuthService(
     studentRepository,
     sessionService
 );
+
+studentRepository.setStudentAuthService(studentAuthService);
+
 // Inizializza il middleware di autenticazione
 const { protect, restrictTo, loginLimiter, protectStudent } = createAuthMiddleware(
     authService, 
@@ -223,6 +221,9 @@ const startServer = async () => {
         // Connetti al database
         await connectDB();
         logger.info('Database connesso con successo');
+
+        // Carica i modelli solo dopo che la connessione è stata stabilita
+        models = require('./models');
 
         // Verifica che i modelli siano registrati
         ensureModelsRegistered();

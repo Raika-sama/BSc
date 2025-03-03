@@ -58,21 +58,25 @@ export const useStudentTest = (studentId) => {
         setError(null);
 
         try {
-            const response = await axiosInstance.get(`/tests/csi/results/student/${studentId}`);
-            if (response.data && response.data.data) {
-                setCompletedTests(response.data.data);
+            const response = await axiosInstance.get(`/tests/student/${studentId}/completed`);
+            if (response.data?.data?.tests && Array.isArray(response.data.data.tests)) {
+                setCompletedTests(response.data.data.tests);
                 // Se c'è un test selezionato, aggiorna i suoi dati
                 if (selectedTest) {
-                    const updatedTest = response.data.data.find(
+                    const updatedTest = response.data.data.tests.find(
                         test => test._id === selectedTest._id
                     );
                     if (updatedTest) {
                         setSelectedTest(updatedTest);
                     }
                 }
+            } else {
+                // Se non ci sono dati o non è un array, inizializza con array vuoto
+                setCompletedTests([]);
+                setSelectedTest(null);
             }
         } catch (error) {
-            const errorMessage = error.response?.data?.message || error.message;
+            const errorMessage = error.response?.data?.error?.message || error.message;
             setError(errorMessage);
             showNotification(
                 'Errore nel caricamento dei test completati: ' + errorMessage,

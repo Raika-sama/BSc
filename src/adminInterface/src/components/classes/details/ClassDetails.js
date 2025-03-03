@@ -173,6 +173,7 @@ const ClassDetails = () => {
                         classData={classData}
                         expandedInfo={expandedInfo}
                         setExpandedInfo={setExpandedInfo}
+                        onAddStudent={handleOpenStudentForm} // Passa il gestore
                         onBack={() => navigate('/admin/classes')}
                         onPopulate={handlePopulate}
                         onTests={handleTests}

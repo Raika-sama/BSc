@@ -1,290 +1,351 @@
-// src/repositories/TestRepository.js
-const crypto = require('crypto'); // Aggiungi questo import
-const BaseRepository = require('./base/BaseRepository');
-const Test = require('../models/Test');
-const { Result, CSIResult } = require('../models'); // Aggiorna l'import
-const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
-const logger = require('../utils/errors/logger/logger');
+// src/repositories/testRepository.js
 
-class TestRepository extends BaseRepository {
+const mongoose = require('mongoose');
+const Test = require('../models/Test');
+const Student = require('../models/Student');
+const { getModels } = require('../models/Result');
+const logger = require('../utils/errors/logger/logger');
+const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
+
+class TestRepository {
     constructor() {
-        super(Test);
-        this.Result = Result;
-        this.CSIResult = CSIResult;
+        this.models = getModels();
+        this.model = Test; // This line fixes the initialization error
     }
 
+    /**
+     * Trova un test per ID
+     * @param {string} id - ID del test
+     * @returns {Promise<Object>} Il test trovato
+     */
+    async findById(id) {
+        try {
+            const test = await Test.findById(id);
+            return test;
+        } catch (error) {
+            logger.error('Error finding test by ID:', {
+                error: error.message,
+                testId: id
+            });
+            throw error;
+        }
+    }
 
+    /**
+     * Trova test con filtri
+     * @param {Object} filters - Filtri di ricerca
+     * @returns {Promise<Array>} Lista dei test trovati
+     */
+    async find(filters = {}) {
+        try {
+            const tests = await Test.find(filters);
+            return tests;
+        } catch (error) {
+            logger.error('Error finding tests:', {
+                error: error.message,
+                filters
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Assegna un test a uno studente
+     * @param {Object} testData - Dati del test da assegnare
+     * @param {string} studentId - ID dello studente
+     * @param {string} assignedBy - ID dell'utente che assegna il test
+     * @returns {Promise<Object>} Il test assegnato
+     */
     async assignTestToStudent(testData, studentId, assignedBy) {
         try {
-            const test = await this.model.create({
-                ...testData,
+            // Verifica esistenza studente
+            const student = await Student.findById(studentId);
+            if (!student) {
+                throw createError(
+                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    'Studente non trovato'
+                );
+            }
+
+            // Verifica tipo di test supportato
+            if (testData.tipo !== 'CSI') {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Tipo di test non supportato'
+                );
+            }
+
+            // Per i test CSI, recupera la configurazione attiva
+            let csiConfigId = null;
+            if (testData.tipo === 'CSI') {
+                const CSIConfig = mongoose.model('CSIConfig');
+                const activeConfig = await CSIConfig.findOne({ active: true });
+                
+                if (!activeConfig) {
+                    throw createError(
+                        ErrorTypes.RESOURCE.NOT_FOUND,
+                        'Nessuna configurazione CSI attiva trovata'
+                    );
+                }
+                
+                csiConfigId = activeConfig._id;
+                
+                logger.debug('Retrieved active CSI config for test:', {
+                    configId: csiConfigId,
+                    configVersion: activeConfig.version
+                });
+            }
+
+            // Creazione test
+            const test = new Test({
+                nome: `Test ${testData.tipo} per ${student.firstName} ${student.lastName}`,
+                tipo: testData.tipo,
+                descrizione: `Test ${testData.tipo} assegnato a ${student.firstName} ${student.lastName}`,
+                configurazione: {
+                    ...testData.configurazione,
+                    questionVersion: '1.0.0' // Usa la versione più recente
+                },
                 studentId,
                 assignedBy,
                 assignedAt: new Date(),
                 status: 'pending',
-                tokenEnabled: false // Usiamo l'accesso tramite account
+                attempts: 0,
+                active: true,
+                csiConfig: csiConfigId // Aggiunto il riferimento alla configurazione CSI
             });
-    
+
+            // Salva il test
+            await test.save();
+
+            // Log dell'operazione
+            logger.info('Test assigned to student:', {
+                testId: test._id,
+                studentId,
+                assignedBy,
+                testType: test.tipo,
+                csiConfigId
+            });
+
             return test;
         } catch (error) {
-            logger.error('Error assigning test:', {
+            logger.error('Error assigning test to student:', {
                 error: error.message,
-                studentId
+                studentId,
+                assignedBy,
+                testType: testData.tipo
             });
             throw error;
         }
     }
-    
+
+    /**
+     * Recupera i test assegnati a uno studente
+     * @param {string} studentId - ID dello studente
+     * @param {string} assignedBy - Filtra per assegnatore (opzionale)
+     * @returns {Promise<Array>} Lista dei test assegnati
+     */
+    async getAssignedTests(studentId, assignedBy = null) {
+        try {
+            const filters = {
+                studentId,
+                active: true
+            };
+
+            // Se è specificato l'assegnatore, filtra solo i suoi test
+            if (assignedBy) {
+                filters.assignedBy = assignedBy;
+            }
+
+            logger.debug('Fetching tests with filters:', {
+                filters,
+                modelName: Test.modelName,
+                collectionName: Test.collection.name
+            });
+
+            // Query semplificata che seleziona solo i campi necessari
+            const tests = await Test.find(filters)
+                .select({
+                    tipo: 1,
+                    status: 1,
+                    'configurazione.questionVersion': 1,
+                    versione: 1,
+                    csiConfig: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    nome: 1,
+                    descrizione: 1
+                })
+                .lean();
+
+            logger.debug('Raw tests found:', {
+                count: tests.length,
+                firstTest: tests[0] ? {
+                    id: tests[0]._id,
+                    tipo: tests[0].tipo,
+                    status: tests[0].status
+                } : 'No tests found',
+                studentId
+            });
+
+            // Log dei test trovati in formato leggibile
+            tests.forEach((test, index) => {
+                logger.debug(`Test ${index + 1}:`, {
+                    id: test._id,
+                    tipo: test.tipo,
+                    status: test.status,
+                    nome: test.nome
+                });
+            });
+
+            return tests;
+        } catch (error) {
+            logger.error('Error getting assigned tests:', {
+                error: error.message,
+                stack: error.stack,
+                studentId,
+                assignedBy
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Revoca un test assegnato
+     * @param {string} testId - ID del test da revocare
+     * @returns {Promise<Object>} Risultato dell'operazione
+     */
+    async revokeTest(testId) {
+        try {
+            // Verifica esistenza del test
+            const test = await Test.findById(testId);
+            if (!test) {
+                throw createError(
+                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    'Test non trovato'
+                );
+            }
+
+            // Controlla se il test è già completato
+            if (test.status === 'completed') {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Impossibile revocare un test già completato'
+                );
+            }
+
+            // Aggiorna il test impostando active a false
+            const result = await Test.updateOne(
+                { _id: testId },
+                { 
+                    active: false,
+                    revokedAt: new Date()
+                }
+            );
+
+            // Log dell'operazione
+            logger.info('Test revoked:', {
+                testId,
+                result: result.modifiedCount > 0 ? 'success' : 'no changes'
+            });
+
+            return {
+                success: result.modifiedCount > 0,
+                modifiedCount: result.modifiedCount
+            };
+        } catch (error) {
+            logger.error('Error revoking test:', {
+                error: error.message,
+                testId
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Recupera i test di uno studente
+     * @param {string} studentId - ID dello studente
+     * @param {string} status - Filtra per stato (opzionale)
+     * @returns {Promise<Array>} Lista dei test dello studente
+     */
     async getStudentTests(studentId, status = null) {
         try {
-            const query = { 
+            const filters = {
                 studentId,
-                tokenEnabled: false
+                active: true
             };
-            
+
+            // Se specificato, filtra per stato
             if (status) {
-                query.status = status;
+                filters.status = status;
             }
-    
-            return await this.model.find(query)
+
+            const tests = await Test.find(filters)
                 .sort({ assignedAt: -1 });
+
+            return tests;
         } catch (error) {
             logger.error('Error getting student tests:', {
                 error: error.message,
-                studentId
-            });
-            throw error;
-        }
-    }
-    
-    async updateTestStatus(testId, status, data = {}) {
-        try {
-            const update = {
-                status,
-                ...data
-            };
-    
-            if (status === 'in_progress') {
-                update.attempts = { $inc: 1 };
-            }
-    
-            return await this.model.findByIdAndUpdate(
-                testId,
-                update,
-                { new: true }
-            );
-        } catch (error) {
-            logger.error('Error updating test status:', {
-                error: error.message,
-                testId
-            });
-            throw error;
-        }
-    }
-    
-    /**
-     * Trova un test tramite token
-     * @param {string} token - Token del test
-     * @returns {Promise<Object>} Test trovato
-     */
-    async findByToken(token) {
-        try {
-            const result = await this.Result.findOne({
-                token,
-                expiresAt: { $gt: new Date() }
-            }).populate({
-                path: 'testRef',
-                populate: {
-                    path: 'domande.questionRef',
-                    model: function(doc) {
-                        return doc.questionModel || 'CSIQuestion';
-                    }
-                }
-            });
-
-            return result;
-        } catch (error) {
-            logger.error('Error finding test by token:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Verifica se un token è valido e utilizzabile
-     * @param {string} token - Token da verificare
-     * @returns {Promise<Object>} Stato validità token
-     */
-    async isTokenValid(token) {
-        try {
-            logger.debug('Checking token validity');
-            
-            const test = await this.findByToken(token);
-            return {
-                isValid: !!test && !test.used,
-                test
-            };
-        } catch (error) {
-            logger.error('Error checking token validity:', {
-                error: error.message
-            });
-            return { isValid: false, test: null };
-        }
-    }
-
-    async verifyToken(token) {
-        try {
-            // Cerca in entrambi i modelli
-            let result = await this.CSIResult.findOne({
-                token,
-                used: false,
-                expiresAt: { $gt: new Date() }
-            });
-
-            if (!result) {
-                result = await this.Result.findOne({
-                    token,
-                    used: false,
-                    expiresAt: { $gt: new Date() }
-                });
-            }
-
-            if (!result) {
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_TOKEN,
-                    'Token non valido o scaduto'
-                );
-            }
-
-            return result;
-        } catch (error) {
-            logger.error('Error verifying token:', {
-                error: error.message,
-                token: token ? token.substring(0, 10) + '...' : 'undefined'
-            });
-            throw error;
-        }
-    }
-    
-    /**
-     * Marca un token come utilizzato
-     * @param {string} token - Token da marcare
-     * @returns {Promise<boolean>} Successo operazione
-     */
-    async markTokenAsUsed(token) {
-        try {
-            // Cerca e aggiorna in entrambi i modelli
-            let result = await this.CSIResult.findOneAndUpdate(
-                { token },
-                { used: true },
-                { new: true }
-            );
-
-            if (!result) {
-                result = await this.Result.findOneAndUpdate(
-                    { token },
-                    { used: true },
-                    { new: true }
-                );
-            }
-
-            return result;
-        } catch (error) {
-            logger.error('Error marking token as used:', {
-                error: error.message,
-                token: token ? token.substring(0, 10) + '...' : 'undefined'
-            });
-            throw error;
-        }
-    }
-
-
-    /**
-     * Salva un nuovo token di test
-     * @param {Object} tokenData - Dati del token
-     * @returns {Promise<Object>} Test creato
-     */
-    async saveTestToken(data) {
-        try {
-            const token = this.generateToken();
-            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 ore
-    
-            const result = await this.Result.create({
-                studentId: data.studentId,
-                tipo: data.testType,
-                token,
-                expiresAt,
-                used: false,
-                config: data.config, // Salviamo la configurazione
-                status: 'initialized'
-            });
-    
-            return {
-                token,
-                expiresAt,
-                _id: result._id
-            };
-        } catch (error) {
-            logger.error('Error saving test token:', {
-                error: error.message,
-                data
-            });
-            throw error;
-        }
-    }
-
-
-    /**
-     * Recupera risultati base di un test
-     * @param {string} testId - ID del test
-     * @returns {Promise<Array>} Array di risultati
-     */
-    async getBaseResults(testId) {
-        try {
-            return await this.Result.find({ 
-                test: testId,
-                completato: true 
-            })
-            .select('studentId dataCompletamento')
-            .populate('studentId', 'firstName lastName');
-        } catch (error) {
-            logger.error('Error getting base results:', {
-                error: error.message,
-                testId
+                studentId,
+                status
             });
             throw error;
         }
     }
 
     /**
-     * Verifica se uno studente può sostenere un test
+     * Verifica la disponibilità di un test per uno studente
      * @param {string} studentId - ID dello studente
      * @param {string} testType - Tipo di test
-     * @returns {Promise<Object>} Stato disponibilità test
+     * @returns {Promise<Object>} Stato di disponibilità
      */
     async checkTestAvailability(studentId, testType) {
         try {
-            // Usa il modello corretto in base al tipo di test
-            const ResultModel = testType === 'CSI' ? this.CSIResult : this.Result;
-            
-            const lastTest = await ResultModel.findOne({
+            // Verifica se ci sono test attivi dello stesso tipo
+            const activeTests = await Test.find({
                 studentId,
                 tipo: testType,
-                completato: true
-            }).sort({ dataCompletamento: -1 });
+                status: { $in: ['pending', 'in_progress'] },
+                active: true
+            });
 
-            if (!lastTest) {
-                return { available: true };
+            if (activeTests.length > 0) {
+                return {
+                    available: false,
+                    reason: 'ACTIVE_TEST_EXISTS',
+                    activeTest: activeTests[0]._id
+                };
             }
 
-            // Calcola quando sarà disponibile il prossimo test
-            const cooldownPeriod = 30 * 24 * 60 * 60 * 1000; // 30 giorni in millisecondi
-            const nextAvailableDate = new Date(lastTest.dataCompletamento.getTime() + cooldownPeriod);
-            const now = new Date();
+            // Verifica il cooldown period
+            const latestCompletedTest = await Test.findOne({
+                studentId,
+                tipo: testType,
+                status: 'completed',
+                active: true
+            }).sort({ 'dataCompletamento': -1 });
+
+            if (latestCompletedTest) {
+                // Recupera la configurazione del cooldown period
+                const cooldownPeriod = latestCompletedTest.configurazione?.cooldownPeriod || 0; // in giorni
+                
+                if (cooldownPeriod > 0) {
+                    const completionDate = new Date(latestCompletedTest.dataCompletamento);
+                    const cooldownEndDate = new Date(completionDate);
+                    cooldownEndDate.setDate(cooldownEndDate.getDate() + cooldownPeriod);
+                    
+                    if (cooldownEndDate > new Date()) {
+                        return {
+                            available: false,
+                            reason: 'COOLDOWN_PERIOD',
+                            nextAvailableDate: cooldownEndDate
+                        };
+                    }
+                }
+            }
 
             return {
-                available: now >= nextAvailableDate,
-                nextAvailableDate: nextAvailableDate,
-                lastTestDate: lastTest.dataCompletamento
+                available: true
             };
         } catch (error) {
             logger.error('Error checking test availability:', {
@@ -296,13 +357,119 @@ class TestRepository extends BaseRepository {
         }
     }
 
+    /**
+     * Aggiorna lo stato di un test
+     * @param {string} testId - ID del test
+     * @param {string} status - Nuovo stato
+     * @param {Object} additionalData - Dati aggiuntivi
+     * @returns {Promise<Object>} Il test aggiornato
+     */
+    async updateTestStatus(testId, status, additionalData = {}) {
+        try {
+            const updateData = {
+                status,
+                ...additionalData
+            };
+
+            const test = await Test.findByIdAndUpdate(
+                testId,
+                updateData,
+                { new: true }
+            );
+
+            if (!test) {
+                throw createError(
+                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    'Test non trovato'
+                );
+            }
+
+            return test;
+        } catch (error) {
+            logger.error('Error updating test status:', {
+                error: error.message,
+                testId,
+                status
+            });
+            throw error;
+        }
+    }
 
     /**
-     * Genera un token univoco
-     * @private
+     * Salva il risultato di un test
+     * @param {string} testId - ID del test
+     * @param {Object} resultData - Dati del risultato
+     * @returns {Promise<Object>} Il risultato salvato
      */
-    generateToken() {
-        return crypto.randomBytes(32).toString('hex');
+    async saveTestResult(testId, resultData) {
+        try {
+            // Recupera il test
+            const test = await Test.findById(testId);
+            if (!test) {
+                throw createError(
+                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    'Test non trovato'
+                );
+            }
+
+            // Aggiorna lo stato del test
+            test.status = 'completed';
+            test.dataCompletamento = resultData.completedAt;
+            test.risposte = resultData.answers;
+
+            // Salva il test aggiornato
+            await test.save();
+
+            // TODO: Implementare il calcolo del risultato in base al tipo di test
+            // Per ora, restituiamo solo il test aggiornato
+            return test;
+        } catch (error) {
+            logger.error('Error saving test result:', {
+                error: error.message,
+                testId
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Ottiene i risultati base di un test
+     * @param {string} testId - ID del test
+     * @returns {Promise<Object>} Statistiche del test
+     */
+    async getBaseResults(testId) {
+        try {
+            const test = await Test.findById(testId);
+            if (!test) {
+                throw createError(
+                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    'Test non trovato'
+                );
+            }
+
+            // Verifica se il test è completato
+            if (test.status !== 'completed') {
+                return {
+                    completed: false,
+                    message: 'Il test non è ancora stato completato'
+                };
+            }
+
+            // TODO: Implementare calcolo statistiche in base al tipo di test
+            // Per ora, restituiamo solo info base
+            return {
+                completed: true,
+                completedAt: test.dataCompletamento,
+                answersCount: test.risposte?.length || 0,
+                testType: test.tipo
+            };
+        } catch (error) {
+            logger.error('Error getting test results:', {
+                error: error.message,
+                testId
+            });
+            throw error;
+        }
     }
 }
 

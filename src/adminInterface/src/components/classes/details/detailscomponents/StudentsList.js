@@ -171,14 +171,7 @@ const StudentsList = ({
                     Rimuovi {selectedStudents.length} studenti
                 </Button>
             )}
-            <Button
-                variant="contained"
-                startIcon={<GroupAddIcon />}
-                onClick={onAddStudent}
-                size="small"
-            >
-                Aggiungi Studente
-            </Button>
+
         </Box>
     ), [selectedStudents.length, onAddStudent]);
 

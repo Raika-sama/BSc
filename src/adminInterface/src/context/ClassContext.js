@@ -225,12 +225,13 @@ export const ClassProvider = ({ children }) => {
                     const schoolId = classData.schoolId?._id || 
                                     classData.schoolId || 
                                     null;
-                
+                /*
                     console.log('Debug formatClass:', {
                         originalSchoolData: classData.schoolId,
                         extractedName: schoolName,
                         extractedId: schoolId
                     });
+                */
                 
                     return {
                         classId: classData._id,
@@ -445,6 +446,59 @@ export const ClassProvider = ({ children }) => {
     };
 
 
+const addTeacher = async (classId, teacherId) => {
+    try {
+        dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
+        
+        const response = await axiosInstance.post(`/classes/${classId}/add-teacher`, {
+            teacherId
+        });
+        
+        if (response.data.status === 'success') {
+            dispatch({
+                type: CLASS_ACTIONS.UPDATE_CLASS,
+                payload: response.data.data.class
+            });
+            
+            return response.data.data.class;
+        }
+    } catch (error) {
+        dispatch({ 
+            type: CLASS_ACTIONS.SET_ERROR, 
+            payload: error.response?.data?.message || error.message 
+        });
+        throw error;
+    } finally {
+        dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: false });
+    }
+};
+
+const removeTeacher = async (classId, teacherId) => {
+    try {
+        dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: true });
+        
+        const response = await axiosInstance.delete(`/classes/${classId}/teachers/${teacherId}`);
+        
+        if (response.data.status === 'success') {
+            dispatch({
+                type: CLASS_ACTIONS.UPDATE_CLASS,
+                payload: response.data.data.class
+            });
+            
+            return response.data.data.class;
+        }
+    } catch (error) {
+        dispatch({ 
+            type: CLASS_ACTIONS.SET_ERROR, 
+            payload: error.response?.data?.message || error.message 
+        });
+        throw error;
+    } finally {
+        dispatch({ type: CLASS_ACTIONS.SET_LOADING, payload: false });
+    }
+};
+
+
     return (
         <ClassContext.Provider value={{
             ...state,
@@ -458,6 +512,8 @@ export const ClassProvider = ({ children }) => {
             getClassById,    // Aggiungi la nuova funzione
             removeStudentsFromClass,
             removeMainTeacher,
+            addTeacher,
+            removeTeacher,
             dispatch
         }}>
             {children}

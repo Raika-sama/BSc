@@ -3,11 +3,13 @@ const mongoose = require('mongoose');
 // 2. Schema Base dei Risultati
 const baseResultSchema = new mongoose.Schema({
     studentId: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Student',
         required: true
     },
     testRef: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Test',
         required: true
     },
     token: {
@@ -16,11 +18,11 @@ const baseResultSchema = new mongoose.Schema({
         sparse: true,
         index: true
     },
-        accessMethod: {
-          type: String,
-          enum: ['account', 'token'],
-          required: true
-        },
+    accessMethod: {
+        type: String,
+        enum: ['account', 'token'],
+        required: true
+    },
     expiresAt: {
         type: Date
     },
@@ -62,11 +64,13 @@ baseResultSchema.index({ token: 1 }, { sparse: true });
 // 6. Schema specifico per CSI
 const csiResultSchema = new mongoose.Schema({
     testRef: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Test',
         required: [true, 'Il riferimento al test è obbligatorio']
     },
     config: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CSIConfig',
         required: [true, 'Il riferimento alla configurazione è obbligatorio']
     },
     risposte: [{
@@ -143,32 +147,77 @@ const csiResultSchema = new mongoose.Schema({
     toObject: { virtuals: false }
 });
 
-// Funzione per ottenere o creare il modello Result
+// Funzione migliorata per ottenere o creare il modello Result
 function getOrCreateResultModel() {
-    if (mongoose.models.Result) {
-        return mongoose.models.Result;
+    try {
+        // Se il modello esiste già, lo restituiamo
+        if (mongoose.models.Result) {
+            return mongoose.models.Result;
+        }
+        
+        // Altrimenti creiamo un nuovo modello con opzioni per il discriminatore
+        const ResultModel = mongoose.model('Result', baseResultSchema);
+        
+        // Forza la creazione del discriminatore subito
+        ResultModel.discriminator('CSI', csiResultSchema);
+        
+        return ResultModel;
+    } catch (error) {
+        console.error('Errore nella creazione del modello Result:', error);
+        throw error;
     }
-    return mongoose.model('Result', baseResultSchema);
 }
 
-// Funzione per ottenere o creare il discriminatore CSI
+// Funzione migliorata per ottenere o creare il discriminatore CSI
 function getOrCreateCSIModel(ResultModel) {
-    if (ResultModel.discriminators && ResultModel.discriminators.CSI) {
-        return ResultModel.discriminators.CSI;
+    try {
+        // Se il discriminatore esiste già, lo restituiamo
+        if (ResultModel.discriminators?.CSI) {
+            return ResultModel.discriminators.CSI;
+        }
+        
+        // Altrimenti creiamo un nuovo discriminatore
+        const CSIModel = ResultModel.discriminator('CSI', csiResultSchema);
+        
+        // Verifica che il discriminatore sia stato creato correttamente
+        if (!ResultModel.discriminators?.CSI) {
+            throw new Error('Failed to create CSI discriminator');
+        }
+        
+        return CSIModel;
+    } catch (error) {
+        console.error('Errore nella creazione del discriminatore CSI:', error);
+        throw error;
     }
-    return ResultModel.discriminator('CSI', csiResultSchema);
 }
 
-// Esportazione degli schemi e dei modelli
+// Funzione per verificare che i modelli siano stati registrati correttamente
+function verifyModels(ResultModel, CSIModel) {
+    if (!ResultModel || !CSIModel) {
+        throw new Error('Models not properly initialized');
+    }
+    
+    if (!ResultModel.discriminators?.CSI) {
+        throw new Error('CSI discriminator not properly registered');
+    }
+    
+    return true;
+}
+
+// Esportazione degli schemi e dei modelli con verifica
 module.exports = {
     baseResultSchema,
     csiResultSchema,
     getModels: () => {
         const ResultModel = getOrCreateResultModel();
-        const CSIResultModel = getOrCreateCSIModel(ResultModel);
+        const CSIModel = getOrCreateCSIModel(ResultModel);
+        
+        // Verifica che i modelli siano stati creati correttamente
+        verifyModels(ResultModel, CSIModel);
+        
         return {
             Result: ResultModel,
-            CSIResult: CSIResultModel
+            CSIResult: CSIModel
         };
     }
 };

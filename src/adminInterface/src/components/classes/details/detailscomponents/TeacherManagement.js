@@ -8,25 +8,49 @@ import {
     Button,
     Grid,
     IconButton,
-    Alert
+    Alert,
+    CircularProgress
 } from '@mui/material';
 import {
     Delete as DeleteIcon
 } from '@mui/icons-material';
 import { useClass } from '../../../../context/ClassContext';
+import { useNotification } from '../../../../context/NotificationContext';
 import TeacherForm from '../forms/TeacherForm';
+import TeacherCard from './TeacherCard';
 
 const TeacherManagement = ({ classData, onUpdate }) => {
     const [isTeacherFormOpen, setIsTeacherFormOpen] = useState(false);
     const [isMainTeacherForm, setIsMainTeacherForm] = useState(true);
-    const { removeMainTeacher } = useClass();
+    const { removeMainTeacher, removeTeacher } = useClass();
+    const { showNotification } = useNotification();
+    const [loading, setLoading] = useState(false);
 
     const handleRemoveMainTeacher = async () => {
         try {
+            setLoading(true);
             await removeMainTeacher(classData._id);
+            showNotification('Docente principale rimosso con successo', 'success');
             onUpdate();
         } catch (error) {
             console.error('Errore nella rimozione del docente principale:', error);
+            showNotification('Errore nella rimozione del docente principale', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRemoveTeacher = async (teacherId) => {
+        try {
+            setLoading(true);
+            await removeTeacher(classData._id, teacherId);
+            showNotification('Docente rimosso con successo', 'success');
+            onUpdate();
+        } catch (error) {
+            console.error('Errore nella rimozione del docente:', error);
+            showNotification('Errore nella rimozione del docente', 'error');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -57,6 +81,8 @@ const TeacherManagement = ({ classData, onUpdate }) => {
                             variant="outlined"
                             color="error"
                             onClick={handleRemoveMainTeacher}
+                            disabled={loading}
+                            startIcon={loading ? <CircularProgress size={20} /> : undefined}
                         >
                             Rimuovi Docente
                         </Button>
@@ -67,6 +93,7 @@ const TeacherManagement = ({ classData, onUpdate }) => {
                                 setIsMainTeacherForm(true);
                                 setIsTeacherFormOpen(true);
                             }}
+                            disabled={loading}
                         >
                             Aggiungi Docente Principale
                         </Button>
@@ -74,18 +101,11 @@ const TeacherManagement = ({ classData, onUpdate }) => {
                 </Box>
 
                 {classData.mainTeacher ? (
-                    <Box sx={{ 
-                        p: 2, 
-                        bgcolor: 'background.default',
-                        borderRadius: 1
-                    }}>
-                        <Typography variant="subtitle1">
-                            {classData.mainTeacher.firstName} {classData.mainTeacher.lastName}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            Email: {classData.mainTeacher.email}
-                        </Typography>
-                    </Box>
+                    <TeacherCard 
+                        teacher={classData.mainTeacher}
+                        isMain={true}
+                        onRemove={handleRemoveMainTeacher}
+                    />
                 ) : (
                     <Alert severity="info">
                         Nessun docente principale assegnato
@@ -118,6 +138,7 @@ const TeacherManagement = ({ classData, onUpdate }) => {
                             setIsMainTeacherForm(false);
                             setIsTeacherFormOpen(true);
                         }}
+                        disabled={loading}
                     >
                         Aggiungi Docente
                     </Button>
@@ -127,30 +148,11 @@ const TeacherManagement = ({ classData, onUpdate }) => {
                     <Grid container spacing={2}>
                         {classData.teachers.map((teacher) => (
                             <Grid item xs={12} md={6} key={teacher._id}>
-                                <Box sx={{ 
-                                    p: 2, 
-                                    bgcolor: 'background.default',
-                                    borderRadius: 1,
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}>
-                                    <Box>
-                                        <Typography variant="subtitle1">
-                                            {teacher.firstName} {teacher.lastName}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Email: {teacher.email}
-                                        </Typography>
-                                    </Box>
-                                    <IconButton 
-                                        color="error"
-                                        // TODO: Implementare la rimozione del co-docente
-                                        onClick={() => console.log('Rimuovi co-docente')}
-                                    >
-                                        <DeleteIcon />
-                                    </IconButton>
-                                </Box>
+                                <TeacherCard 
+                                    teacher={teacher}
+                                    isMain={false}
+                                    onRemove={() => handleRemoveTeacher(teacher._id)}
+                                />
                             </Grid>
                         ))}
                     </Grid>

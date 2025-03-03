@@ -91,14 +91,24 @@ const StudentClassForm = ({ open, onClose, classData }) => {
                 teachers: classData.teachers?.map(t => t._id) || []
             };
     
+            // Crea lo studente
             const response = await createStudentWithClass(studentData);
             console.log('Studente creato:', response);
+            
+            // Genera credenziali per lo studente
+            try {
+                await axiosInstance.post(`/students/${response._id}/generate-credentials`);
+                console.log('Credenziali generate per lo studente');
+            } catch (authError) {
+                console.error('Errore nella generazione delle credenziali:', authError);
+                // Decidere se mostrare un errore o continuare comunque
+            }
     
             showNotification('Studente creato e assegnato con successo', 'success');
             handleClose();
-            // Aggiungi qui una chiamata per aggiornare la lista degli studenti nella classe
+            
             if (typeof onClose === 'function') {
-                onClose(true); // Passa true per indicare che è necessario aggiornare i dati
+                onClose(true);
             }
         } catch (err) {
             console.error('Error creating student:', err);

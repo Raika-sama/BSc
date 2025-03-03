@@ -227,10 +227,10 @@ class StudentController extends BaseController {
             const studentData = req.body;
             
             logger.debug('Creating student with class:', { 
-                studentData,
+                studentData: {...studentData, email: '***' }, // Nascondi l'email nei log
                 user: req.user?.id
             });
-
+    
             // Verifica permessi
             if (req.user.role !== 'admin') {
                 throw createError(
@@ -238,17 +238,22 @@ class StudentController extends BaseController {
                     'Non autorizzato a creare studenti'
                 );
             }
-
-            // Usa il repository ereditato da BaseController
+    
+            // Usa il repository modificato che ora genera anche le credenziali
             const student = await this.repository.createWithClass(studentData);
             
             logger.info('Student created with class successfully:', {
                 studentId: student._id,
                 school: student.schoolId,
-                class: student.classId
+                class: student.classId,
+                hasCredentials: student.hasCredentials
             });
-
-            this.sendResponse(res, { student }, 201);
+    
+            // Risposta per il frontend
+            this.sendResponse(res, { 
+                student,
+                message: 'Studente creato e assegnato con successo'
+            }, 201);
         } catch (error) {
             logger.error('Error in createStudentWithClass:', error);
             next(error);
