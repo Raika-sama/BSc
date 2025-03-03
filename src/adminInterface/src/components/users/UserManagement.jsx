@@ -30,6 +30,7 @@ import UserForm from './UserForm';
 import UsersFilters from './list/UsersFilters';
 import { useUser } from '../../context/UserContext';
 import { useNavigate } from 'react-router-dom';
+import InactiveUsersToggle from './list/InactiveUsersToggle';
 
 const UserManagement = () => {
     const theme = useTheme();
@@ -50,8 +51,9 @@ const UserManagement = () => {
         message: '',
         severity: 'info'
     });
-
+    const [allUsers, setAllUsers] = useState([]);
     const { users, loading, totalUsers, createUser, getUsers, deleteUser } = useUser();
+    const [showInactive, setShowInactive] = useState(false);
 
     // Function to show notifications
     const showNotification = (message, severity = 'info') => {
@@ -78,16 +80,55 @@ const UserManagement = () => {
     // Funzione per caricare gli utenti
     const loadUsers = useCallback(async () => {
         try {
-            await getUsers({
+            // Rimuovi il filtro status, vogliamo sempre TUTTI gli utenti dal server
+            const filterParams = {
                 page: page + 1,
                 limit: pageSize,
                 ...filters
-            });
+            };
+            
+            // Rimuovi lo status se presente
+            if (filterParams.status) {
+                delete filterParams.status;
+            }
+            
+            console.log("Caricando utenti con parametri:", filterParams);
+            
+            // Chiamata API per ottenere tutti gli utenti
+            const result = await getUsers(filterParams);
+            
+            // Memorizza TUTTI gli utenti ricevuti dal server
+            if (result && result.users) {
+                setAllUsers(result.users);
+            }
         } catch (error) {
             console.error('Error loading users:', error);
             showNotification('Errore durante il caricamento degli utenti', 'error');
         }
     }, [page, pageSize, filters, getUsers, showNotification]);
+
+    const filteredUsers = useMemo(() => {
+        console.log("Filtrando utenti, showInactive:", showInactive, "utenti totali:", allUsers.length);
+        
+        // Se showInactive è true, mostra tutti gli utenti
+        if (showInactive) {
+            return allUsers;
+        }
+        
+        // Altrimenti, filtra per mostrare solo gli utenti attivi
+        return allUsers.filter(user => user.status === 'active');
+    }, [allUsers, showInactive]);
+
+const handleInactiveToggle = useCallback((value) => {
+    console.log("Toggle chiamato con value:", value);
+    
+    // Imposta semplicemente lo stato e resetta la pagina
+    // L'useEffect si occuperà del caricamento
+    setShowInactive(value !== undefined ? value : prev => !prev);
+    setPage(0); // Reset alla prima pagina
+    
+    // Non chiamare loadUsers() qui - lascia che sia l'useEffect a farlo
+}, []);
 
     // Effect principale per il caricamento dati - fixing the infinite loop
     useEffect(() => {
@@ -97,22 +138,24 @@ const UserManagement = () => {
             loadUsers(); 
             return;
         }
-
+    
         // Gestione del debounce per le ricerche
         if (debounceTimeout.current) {
             clearTimeout(debounceTimeout.current);
         }
-
-        debounceTimeout.current = setTimeout(loadUsers, 500);
-
+    
+        debounceTimeout.current = setTimeout(() => {
+            loadUsers();
+        }, 500);
+    
         // Cleanup
         return () => {
             if (debounceTimeout.current) {
                 clearTimeout(debounceTimeout.current);
             }
         };
-    }, [page, pageSize, filters]);  // Rimuovere loadUsers dalla dipendenza, viene già utilizzato getUsers e gli altri stati
-
+    }, [page, pageSize, filters, showInactive]); // NON includere loadUsers qui
+    
     // Calcolo dei dati per i trend
     const calculateTrendData = useCallback((roleFilter = null) => {
         if (!users?.length) return null;
@@ -369,6 +412,17 @@ const UserManagement = () => {
         setPage(0); // Reset alla prima pagina quando cambia la dimensione
     }, []);
 
+    const toggleFilters = useCallback(() => {
+        setIsFilterOpen(prev => !prev);
+    }, []);
+
+    const customActions = (
+        <InactiveUsersToggle 
+            showInactive={showInactive} 
+            onChange={handleInactiveToggle} 
+        />
+    );
+
 
     // Configurazione breadcrumbs
     const breadcrumbs = [
@@ -381,7 +435,7 @@ const UserManagement = () => {
             <ContentLayout
                 title="Gestione Utenti"
                 subtitle="Gestisci gli account e i permessi degli utenti"
-                breadcrumbs={breadcrumbs}
+                //breadcrumbs={breadcrumbs}
                 actions={
                     <Button
                         variant="contained"
@@ -400,13 +454,14 @@ const UserManagement = () => {
                             <ListLayout
                                 statsCards={statsCards}
                                 isFilterOpen={isFilterOpen}
+                                onToggleFilters={toggleFilters}
                                 filterComponent={
                                     <UsersFilters
                                         filters={filters}
                                         onFiltersChange={handleFiltersChange}
                                     />
                                 }
-                                rows={users || []}
+                                rows={filteredUsers || []} // CAMBIA DA users A filteredUsers
                                 columns={columns}
                                 getRowId={(row) => row?._id || Math.random().toString()}
                                 pageSize={pageSize}
@@ -420,6 +475,7 @@ const UserManagement = () => {
                                 onRefresh={loadUsers}
                                 searchPlaceholder="Cerca utenti..."
                                 emptyStateMessage="Nessun utente trovato"
+                                customActions={customActions}
                             />
                         } 
                     />

@@ -35,6 +35,7 @@ import  StatsCardsLayout  from './ui/StatsCardsLayout';
 const ListLayout = ({
     statsCards,
     isFilterOpen: propIsFilterOpen, // rinominiamo per chiarezza
+    onToggleFilters, // Nuova prop per gestire esternamente i filtri
     filterComponent,
     rows = [],
     columns,
@@ -95,6 +96,16 @@ const ListLayout = ({
             ...prev,
             [field]: !prev[field]
         }));
+    };
+
+    const handleToggleFilters = () => {
+        if (onToggleFilters) {
+            // Se è stata fornita una funzione esterna, usala
+            onToggleFilters();
+        } else {
+            // Altrimenti usa lo stato locale
+            setLocalIsFilterOpen(!localIsFilterOpen);
+        }
     };
 
  // Determina se il tema attuale è bicolore
@@ -246,11 +257,11 @@ const ListLayout = ({
                         />
                     )}
 
-                    {filterComponent && (
+                {filterComponent && (
                         <Button
                             variant={isFilterOpen ? "contained" : "outlined"}
                             startIcon={<FilterListIcon />}
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            onClick={handleToggleFilters} // Usa la nuova funzione invece di setIsFilterOpen
                             sx={{ 
                                 borderRadius: 2,
                                 textTransform: 'none'
@@ -450,6 +461,7 @@ const ListLayout = ({
                         selectionModel={selectionModel}
                         disableSelectionOnClick
                         autoHeight={false} // Importante: non usiamo autoHeight
+                        customActions={customActions}
                         components={{
                             LoadingOverlay: () => (
                                 <Box sx={loadingOverlay}>

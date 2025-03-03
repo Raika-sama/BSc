@@ -104,7 +104,8 @@ const initialState = {
     error: null,
     selectedStudent: null,
     totalStudents: 0,
-    unassignedStudents: []  // Aggiungi questa riga
+    unassignedStudents: [],
+    unassignedToSchoolStudents: []  // Aggiungi questa riga
 };
 
 // Reducer
@@ -224,7 +225,8 @@ const studentReducer = (state, action) => {
             case STUDENT_ACTIONS.SET_UNASSIGNED_TO_SCHOOL_STUDENTS:
                 return {
                     ...state,
-                    students: action.payload.map(student => normalizeStudent(student)),
+                    // Salva gli studenti non assegnati in una proprietà separata dello stato
+                    unassignedToSchoolStudents: action.payload.map(student => normalizeStudent(student)),
                     loading: false
                 };
             
@@ -758,55 +760,56 @@ return normalized;
         }
     };
 
-// Recupera studenti senza scuola
-const fetchUnassignedToSchoolStudents = async () => {
-    try {
-        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
-        
-        console.log('Chiamata API iniziata');
-        const response = await axiosInstance.get('/students/unassigned-to-school');
-        console.log('Risposta API completa:', response.data);
-
-        if (response.data.status === 'success') {
-            // Aggiungiamo più controlli sulla struttura della risposta
-            const students = response.data.data?.students || [];
-            console.log('Struttura risposta:', {
-                status: response.data.status,
-                hasData: !!response.data.data,
-                studentsArray: students,
-                studentsCount: students.length
-            });
-
-            // Se non ci sono studenti, non aggiorniamo lo stato
-            if (students.length === 0) {
-                console.log('Nessuno studente da assegnare trovato');
-                return [];
-            }
-
-            dispatch({
-                type: STUDENT_ACTIONS.SET_STUDENTS,
-                payload: {
-                    students: students,
-                    total: students.length
+    const fetchUnassignedToSchoolStudents = async () => {
+        try {
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+            
+            console.log('Chiamata API iniziata');
+            const response = await axiosInstance.get('/students/unassigned-to-school');
+            console.log('Risposta API completa:', response.data);
+    
+            if (response.data.status === 'success') {
+                // Aggiungiamo più controlli sulla struttura della risposta
+                const students = response.data.data?.students || [];
+                console.log('Struttura risposta:', {
+                    status: response.data.status,
+                    hasData: !!response.data.data,
+                    studentsArray: students,
+                    studentsCount: students.length
+                });
+    
+                // Se non ci sono studenti, non aggiorniamo lo stato
+                if (students.length === 0) {
+                    console.log('Nessuno studente da assegnare trovato');
+                    dispatch({
+                        type: STUDENT_ACTIONS.SET_UNASSIGNED_TO_SCHOOL_STUDENTS,
+                        payload: []
+                    });
+                    return [];
                 }
+    
+                // Importante: usa l'action SET_UNASSIGNED_TO_SCHOOL_STUDENTS invece di SET_STUDENTS
+                dispatch({
+                    type: STUDENT_ACTIONS.SET_UNASSIGNED_TO_SCHOOL_STUDENTS,
+                    payload: students
+                });
+                return students;
+            }
+        } catch (error) {
+            console.error('Errore dettagliato:', error);
+            console.error('Response error:', error.response);
+            const errorMessage = error.response?.data?.error?.message || 
+                               'Errore nel caricamento degli studenti';
+            dispatch({
+                type: STUDENT_ACTIONS.SET_ERROR,
+                payload: errorMessage
             });
-            return students;
+            showNotification(errorMessage, 'error');
+            return [];
+        } finally {
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: false });
         }
-    } catch (error) {
-        console.error('Errore dettagliato:', error);
-        console.error('Response error:', error.response);
-        const errorMessage = error.response?.data?.error?.message || 
-                           'Errore nel caricamento degli studenti';
-        dispatch({
-            type: STUDENT_ACTIONS.SET_ERROR,
-            payload: errorMessage
-        });
-        showNotification(errorMessage, 'error');
-        return [];
-    } finally {
-        dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: false });
-    }
-};
+    };
 
 // Assegna studenti alla scuola
 const batchAssignToSchool = async (studentIds, schoolId) => {
@@ -948,26 +951,27 @@ const resetPassword = async (studentId) => {
     return (
         <StudentContext.Provider value={{
             ...state,
-            students: state.students || [],
-            totalStudents: state.totalStudents || 0,
-            unassignedStudents: state.unassignedStudents || [], // Aggiungi questa riga
-            loading: state.loading || false,
-            error: state.error || null,
-            fetchStudents,
-            getStudentById,
-            createStudent,
-            updateStudent,
-            deleteStudent,
-            searchStudents,
-            clearError,
-            fetchUnassignedStudents,
-            batchAssignStudents,
-            fetchUnassignedToSchoolStudents,
-            batchAssignToSchool,
-            createStudentWithClass,
-            generateCredentials,
-            resetPassword
-        }}>
+                students: state.students || [],
+                totalStudents: state.totalStudents || 0,
+                unassignedStudents: state.unassignedStudents || [], 
+                unassignedToSchoolStudents: state.unassignedToSchoolStudents || [], // Aggiungi questa riga
+                loading: state.loading || false,
+                error: state.error || null,
+                fetchStudents,
+                getStudentById,
+                createStudent,
+                updateStudent,
+                deleteStudent,
+                searchStudents,
+                clearError,
+                fetchUnassignedStudents,
+                batchAssignStudents,
+                fetchUnassignedToSchoolStudents,
+                batchAssignToSchool,
+                createStudentWithClass,
+                generateCredentials,
+                resetPassword
+            }}>
             {children}
         </StudentContext.Provider>
     );

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
     Box,
-    Paper,
     Typography,
     Button,
     FormControl,
@@ -24,15 +23,13 @@ import CloseIcon from '@mui/icons-material/Close';
 import { DataGrid } from '@mui/x-data-grid';
 import { useStudent } from '../../context/StudentContext';
 import { useSchool } from '../../context/SchoolContext';
-import { useNavigate } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import SchoolIcon from '@mui/icons-material/School';
 import PeopleIcon from '@mui/icons-material/People';
 
 const AssignSchoolDialog = ({ open, onClose }) => {
-    const navigate = useNavigate();
     const { 
-        students, 
+        unassignedToSchoolStudents, // Utilizza la nuova proprietà invece di students
         loading, 
         error,
         fetchUnassignedToSchoolStudents,
@@ -48,48 +45,50 @@ const AssignSchoolDialog = ({ open, onClose }) => {
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [filteredStudents, setFilteredStudents] = useState([]);
 
-    // Primo useEffect per il caricamento
+    // Effetto per caricare i dati all'apertura del dialog
     useEffect(() => {
-        const loadData = async () => {
-            try {
-                console.log('Inizio caricamento dati iniziale');
-                const result = await fetchUnassignedToSchoolStudents();
-                console.log('Risultato caricamento:', result);
-                
-                if (!result || result.length === 0) {
-                    // Se non ci sono studenti, mostra una notifica
-                    console.log('Nessuno studente da assegnare trovato');
+        if (open) { // Carica solo quando il dialog è aperto
+            const loadData = async () => {
+                try {
+                    console.log('Inizio caricamento dati studenti non assegnati');
+                    await fetchUnassignedToSchoolStudents();
+                    await fetchSchools();
+                } catch (error) {
+                    console.error('Errore nel caricamento dati:', error);
                 }
-            } catch (error) {
-                console.error('Errore nel caricamento dati:', error);
-            }
-        };
-        
-        loadData();
-        fetchSchools();
-    }, []);
+            };
+            
+            loadData();
+        }
+    }, [open]); // Dipendenza da open per ricaricare i dati quando il dialog viene aperto
 
     // Effetto per il filtraggio
     useEffect(() => {
-        console.log('Effetto filtraggio attivato:', { studentsLength: students?.length });
+        console.log('Effetto filtraggio attivato:', { 
+            studentsLength: unassignedToSchoolStudents?.length 
+        });
         
-        if (students && Array.isArray(students) && students.length > 0) {
+        if (unassignedToSchoolStudents && Array.isArray(unassignedToSchoolStudents) && unassignedToSchoolStudents.length > 0) {
             const filtered = searchTerm.trim() === ''
-                ? [...students]
-                : students.filter(student => 
-                    student?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    student?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    student?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                ? [...unassignedToSchoolStudents]
+                : unassignedToSchoolStudents.filter(student => 
+                    (student?.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (student?.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (student?.email || '').toLowerCase().includes(searchTerm.toLowerCase())
                 );
             
-            console.log(`Filtrati ${filtered.length} studenti da ${students.length} totali`);
+            console.log(`Filtrati ${filtered.length} studenti da ${unassignedToSchoolStudents.length} totali`);
             setFilteredStudents(filtered);
         } else {
             console.log('Nessuno studente disponibile per il filtraggio');
             setFilteredStudents([]);
         }
-    }, [students, searchTerm]);
+    }, [unassignedToSchoolStudents, searchTerm]);
 
+    // Reset della selezione quando cambia l'elenco degli studenti
+    useEffect(() => {
+        setSelectedStudents([]);
+    }, [unassignedToSchoolStudents]);
 
     const columns = [
         {
@@ -138,10 +137,6 @@ const AssignSchoolDialog = ({ open, onClose }) => {
 
     const selectedSchoolName = schools.find(s => s._id === selectedSchool)?.name;
 
-
-    console.log('Current filteredStudents:', filteredStudents);
-    console.log('Current loading state:', loading);
-
     return (
         <Dialog
             open={open}
@@ -173,7 +168,7 @@ const AssignSchoolDialog = ({ open, onClose }) => {
                                 <PeopleIcon color="primary" />
                                 <Box>
                                     <Typography variant="h6">
-                                        {students.length}
+                                        {unassignedToSchoolStudents.length}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary">
                                         Studenti totali da assegnare
@@ -228,7 +223,7 @@ const AssignSchoolDialog = ({ open, onClose }) => {
                     </FormControl>
                 </Stack>
     
-                <Box sx={{ height: 400, width: '100%' }}> {/* Altezza ridotta per il dialog */}
+                <Box sx={{ height: 400, width: '100%' }}>
                     {loading ? (
                         <Box display="flex" justifyContent="center" alignItems="center" height="100%">
                             <CircularProgress />
