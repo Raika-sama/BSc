@@ -9,9 +9,10 @@ import { useAuth } from '../../hooks/useAuth';
 import { useImpostazioni } from '../../hooks/ImpostazioniContext';
 
 const NavItem = ({ icon, children, to, onClick }) => {
-  const activeBg = useColorModeValue('brand.50', 'rgba(0,136,204,0.2)');
-  const hoverBg = useColorModeValue('gray.100', 'gray.700');
-  const textColor = useColorModeValue('red.600', 'red.300');
+  const activeBg = useColorModeValue('brand.50', 'whiteAlpha.200');
+  const hoverBg = useColorModeValue('gray.100', 'whiteAlpha.300');
+  const textColor = 'rgba(0, 0, 0, 0.75)'; // Colore fisso nero al 75% di opacità
+  const logoutColor = useColorModeValue('red.600', 'red.300');
 
   // Se c'è un onClick, renderizza un button invece di un link
   if (onClick) {
@@ -24,15 +25,16 @@ const NavItem = ({ icon, children, to, onClick }) => {
         cursor="pointer"
         onClick={onClick}
         _hover={{ bg: hoverBg }}
+        color={icon === MdLogout ? logoutColor : textColor}
         fontWeight="medium"
       >
         <Icon
           mr="3"
           fontSize="18"
           as={icon}
-          color={icon === MdLogout ? textColor : "brand.500"}
+          color={icon === MdLogout ? logoutColor : textColor}
         />
-        <Text color={icon === MdLogout ? textColor : undefined}>{children}</Text>
+        <Text>{children}</Text>
       </Flex>
     );
   }
@@ -44,6 +46,7 @@ const NavItem = ({ icon, children, to, onClick }) => {
       to={to}
       _hover={{ textDecoration: 'none' }}
       w="100%"
+      color={textColor}
     >
       <Flex
         align="center"
@@ -58,7 +61,7 @@ const NavItem = ({ icon, children, to, onClick }) => {
           mr="3"
           fontSize="18"
           as={icon}
-          color="brand.500"
+          color={textColor}
         />
         <Text>{children}</Text>
       </Flex>
@@ -105,7 +108,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Versione mobile: Drawer */}
       <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
         <DrawerOverlay />
-        <DrawerContent>
+        <DrawerContent className="sidebar">
           <DrawerCloseButton />
           <DrawerHeader borderBottomWidth="1px">Menu</DrawerHeader>
           <DrawerBody p={0}>
@@ -118,7 +121,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       <Box
         display={{ base: 'none', md: 'block' }}
         w="240px"
-        bg={bgColor}
+        className="sidebar"
         borderRight="1px"
         borderColor={borderColor}
         position="sticky"

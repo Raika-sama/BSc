@@ -16,7 +16,6 @@ import {
   RadioGroup,
   Radio,
   Stack,
-  useColorMode,
   useToast,
   Tabs,
   TabList,
@@ -25,16 +24,13 @@ import {
   TabPanel
 } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
-import ThemeSelector from '../theme/ThemeSelector';
-import themeManager from '../theme/themeManager';
+import ThemeSelector from './ThemeSelector';
 
 /**
  * Modal per le impostazioni dell'applicazione
  */
 const ImpostazioniModal = ({ isOpen, onClose, setMenuPosition }) => {
-  const { colorMode, toggleColorMode } = useColorMode();
   const [menuPos, setMenuPos] = useState(localStorage.getItem('menuPosition') || 'top');
-  const [currentTheme, setCurrentTheme] = useState(themeManager.getCurrentTheme());
   const toast = useToast();
 
   // Sincronizza lo stato interno con lo stato dell'app
@@ -42,9 +38,6 @@ const ImpostazioniModal = ({ isOpen, onClose, setMenuPosition }) => {
     if (localStorage.getItem('menuPosition')) {
       setMenuPos(localStorage.getItem('menuPosition'));
     }
-    
-    // Ottiene il tema corrente
-    setCurrentTheme(themeManager.getCurrentTheme());
   }, [isOpen]); // Aggiorna quando il modal viene aperto
 
   const handleMenuPositionChange = (newPosition) => {
@@ -72,23 +65,6 @@ const ImpostazioniModal = ({ isOpen, onClose, setMenuPosition }) => {
     // Chiudi il modal
     onClose();
   };
-  
-  // Gestisce il cambiamento del tema
-  const handleThemeChange = (theme) => {
-    setCurrentTheme(theme);
-    
-    // Applica immediatamente il tema
-    themeManager.applyTheme(theme);
-    
-    // Mostra conferma
-    toast({
-      title: "Tema applicato",
-      description: `Il tema "${theme.name}" è stato applicato con successo.`,
-      status: "success",
-      duration: 3000,
-      isClosable: true,
-    });
-  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
@@ -108,17 +84,6 @@ const ImpostazioniModal = ({ isOpen, onClose, setMenuPosition }) => {
               {/* Scheda impostazioni generali */}
               <TabPanel px={0}>
                 <VStack spacing={6} align="stretch" divider={<Divider />}>
-                  <FormControl display="flex" alignItems="center" mb={4}>
-                    <FormLabel htmlFor="theme-toggle" mb="0">
-                      Tema scuro
-                    </FormLabel>
-                    <Switch 
-                      id="theme-toggle" 
-                      isChecked={colorMode === 'dark'}
-                      onChange={toggleColorMode}
-                    />
-                  </FormControl>
-                  
                   <FormControl mb={4}>
                     <FormLabel htmlFor="menu-position">Posizione del menu</FormLabel>
                     <Text fontSize="sm" color="gray.500" mb={2}>
@@ -150,10 +115,7 @@ const ImpostazioniModal = ({ isOpen, onClose, setMenuPosition }) => {
               
               {/* Scheda gestione temi */}
               <TabPanel px={0}>
-                <ThemeSelector 
-                  onThemeChange={handleThemeChange} 
-                  currentTheme={currentTheme}
-                />
+                <ThemeSelector />
               </TabPanel>
             </TabPanels>
           </Tabs>

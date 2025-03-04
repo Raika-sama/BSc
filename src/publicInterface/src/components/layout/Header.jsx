@@ -17,6 +17,8 @@ const Header = ({ onSidebarToggle, showMenu }) => {
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const textColor = useColorModeValue('red.600', 'red.300');
+  const menuTextColor = 'rgba(0, 0, 0, 0.75)'; // Colore fisso nero al 75% di opacità
+  const menuBgHover = useColorModeValue('gray.100', 'whiteAlpha.300');
 
   const handleLogout = async () => {
     try {
@@ -32,7 +34,7 @@ const Header = ({ onSidebarToggle, showMenu }) => {
       as="header" 
       position="sticky" 
       top="0"
-      bg={bgColor} 
+      className="topMenu"
       borderBottom="1px" 
       borderColor={borderColor}
       px={4}
@@ -48,9 +50,11 @@ const Header = ({ onSidebarToggle, showMenu }) => {
             onClick={onSidebarToggle}
             aria-label="Apri menu laterale"
             mr={2}
+            color={menuTextColor}
+            _hover={{ bg: menuBgHover }}
           />
           
-          <Heading as="h1" size="md" letterSpacing="tight">
+          <Heading as="h1" size="md" letterSpacing="tight" className="gradient-text">
             BrainScanner
           </Heading>
           
@@ -58,10 +62,10 @@ const Header = ({ onSidebarToggle, showMenu }) => {
           
           {showMenu && (
             <HStack spacing={4} display={{ base: 'none', md: 'flex' }}>
-              <Button as={Link} to="/" variant="ghost">Home</Button>
-              <Button as={Link} to="/dashboard" variant="ghost">Dashboard</Button>
-              <Button as={Link} to="/analisi" variant="ghost">Analisi</Button>
-              <Button as={Link} to="/supporto" variant="ghost">Supporto</Button>
+              <Button as={Link} to="/" variant="ghost" color={menuTextColor} _hover={{ bg: menuBgHover }}>Home</Button>
+              <Button as={Link} to="/dashboard" variant="ghost" color={menuTextColor} _hover={{ bg: menuBgHover }}>Dashboard</Button>
+              <Button as={Link} to="/analisi" variant="ghost" color={menuTextColor} _hover={{ bg: menuBgHover }}>Analisi</Button>
+              <Button as={Link} to="/supporto" variant="ghost" color={menuTextColor} _hover={{ bg: menuBgHover }}>Supporto</Button>
             </HStack>
           )}
           
@@ -73,6 +77,8 @@ const Header = ({ onSidebarToggle, showMenu }) => {
               onClick={toggleColorMode}
               variant="ghost"
               aria-label="Cambia tema"
+              color={menuTextColor}
+              _hover={{ bg: menuBgHover }}
             />
             
             <Menu>
@@ -83,10 +89,12 @@ const Header = ({ onSidebarToggle, showMenu }) => {
                 />
               </MenuButton>
               <MenuList>
-                <MenuItem as={Link} to="/profilo">Profilo</MenuItem>
+                <MenuItem as={Link} to="/profilo" color={menuTextColor} _hover={{ bg: menuBgHover }}>Profilo</MenuItem>
                 <MenuItem 
                   icon={<SettingsIcon />} 
                   onClick={openImpostazioni}
+                  color={menuTextColor}
+                  _hover={{ bg: menuBgHover }}
                 >
                   Impostazioni
                 </MenuItem>
@@ -94,6 +102,7 @@ const Header = ({ onSidebarToggle, showMenu }) => {
                   onClick={handleLogout}
                   icon={<Icon as={FiLogOut} color={textColor} />}
                   color={textColor}
+                  _hover={{ bg: menuBgHover }}
                 >
                   Logout
                 </MenuItem>
