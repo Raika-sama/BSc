@@ -89,6 +89,18 @@ class AuthController extends BaseController {
             // Imposta i cookie
             this.setTokenCookies(res, result.accessToken, result.refreshToken);
     
+            // Registra l'evento di login nello storico
+            await this.userService.logUserAction(
+                result.user._id,
+                'login',
+                {}, // Nessuna modifica da registrare
+                {
+                    ipAddress: req.ip,
+                    userAgent: req.headers['user-agent']
+                },
+                result.user._id // L'utente stesso ha effettuato il login
+            );
+    
             logger.debug('Login successful, cookies set', {
                 userId: result.user._id,
                 tokensSet: {
@@ -120,18 +132,29 @@ class AuthController extends BaseController {
     logout = async (req, res) => {
         try {
             const refreshToken = req.cookies['refresh-token'];
+            const userId = req.user.id;
 
             if (refreshToken) {
                 await this.authService.logout(refreshToken);
-                await this.sessionService.removeSession(req.user.id, refreshToken);
+                await this.sessionService.removeSession(userId, refreshToken);
             }
+
+            // Registra l'evento di logout nello storico
+            await this.userService.logUserAction(
+                userId,
+                'logout',
+                {}, // Nessuna modifica da registrare
+                {
+                    ipAddress: req.ip,
+                    userAgent: req.headers['user-agent']
+                },
+                userId // L'utente stesso ha effettuato il logout
+            );
 
             // Rimuovi cookie
             this.clearTokenCookies(res);
 
-            logger.info('Logout successful', { 
-                userId: req.user.id 
-            });
+            logger.info('Logout successful', { userId });
 
             this.sendResponse(res, {
                 status: 'success',
@@ -273,6 +296,18 @@ class AuthController extends BaseController {
     
             // Usa l'authService che internamente gestisce la verifica della password corrente
             await this.authService.updatePassword(userId, currentPassword, newPassword);
+    
+            // Registra l'evento di cambio password nello storico
+            await this.userService.logUserAction(
+                userId,
+                'password_changed',
+                {}, // Non registriamo i dettagli della password per sicurezza
+                {
+                    ipAddress: req.ip,
+                    userAgent: req.headers['user-agent']
+                },
+                userId
+            );
     
             // Invalida tutte le sessioni esistenti per sicurezza
             await this.sessionService.removeAllSessions(userId);

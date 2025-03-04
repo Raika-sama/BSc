@@ -171,19 +171,22 @@ const statsCards = useMemo(() => {
         {
             field: 'fullName',
             headerName: 'Nome Completo',
-            width: 200,
+            flex: 1.2,
+            minWidth: 200,
             valueGetter: (params) => 
                 `${params.row.firstName || ''} ${params.row.lastName || ''}`.trim()
         },
         {
             field: 'email',
             headerName: 'Email',
-            width: 200
+            flex: 1.5,
+            minWidth: 220
         },
         {
             field: 'schoolName',
             headerName: 'Scuola',
-            width: 250,
+            flex: 1.2,
+            minWidth: 200,
             valueGetter: (params) => params.row.schoolId?.name || 'N/D'
         },
         {
@@ -207,7 +210,7 @@ const statsCards = useMemo(() => {
         {
             field: 'status',
             headerName: 'Stato',
-            width: 130,
+            width: 140,
             renderCell: (params) => {
                 const status = params.value || 'pending';
                 const configs = {
@@ -231,7 +234,8 @@ const statsCards = useMemo(() => {
         {
             field: 'mainTeacher',
             headerName: 'Docente Principale',
-            width: 180,
+            flex: 1,
+            minWidth: 180,
             renderCell: (params) => {
                 const teacher = params.row.mainTeacher;
                 return teacher ? 
@@ -242,7 +246,7 @@ const statsCards = useMemo(() => {
         {
             field: 'testCount',
             headerName: 'Test Completati',
-            width: 130,
+            width: 140,
             renderCell: (params) => {
                 const count = params.row.testCount || 0;
                 return (
@@ -260,7 +264,7 @@ const statsCards = useMemo(() => {
         {
             field: 'actions',
             headerName: 'Azioni',
-            width: 120,
+            width: 100,
             renderCell: (params) => (
                 <Box sx={{ display: 'flex', gap: 1 }}>
                     <Tooltip title="Visualizza Dettagli">
@@ -269,15 +273,6 @@ const statsCards = useMemo(() => {
                             onClick={() => navigate(`/admin/students/${params.row._id}`)}
                         >
                             <VisibilityIcon sx={{ fontSize: '1.1rem' }} />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Elimina">
-                        <IconButton
-                            size="small"
-                            onClick={() => handleDeleteClick(params.row)}
-                            color="error"
-                        >
-                            <DeleteIcon sx={{ fontSize: '1.1rem' }} />
                         </IconButton>
                     </Tooltip>
                 </Box>

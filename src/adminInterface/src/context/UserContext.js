@@ -486,20 +486,67 @@ const validateUserData = (userData, isNewUser = false, isPartialUpdate = false) 
 };
 
     
-    const getUserHistory = async (userId) => {
-        try {
-            const response = await axiosInstance.get(`/users/${userId}/history`);
-            if (response.data.status === 'success') {
-                return response.data.data.history;
+const getUserHistory = async (userId) => {
+    try {
+        console.log(`Recuperando lo storico per l'utente ${userId}`);
+        const response = await axiosInstance.get(`/users/${userId}/history`);
+        
+        console.log('Risposta completa dal server per lo storico:', response);
+        console.log('Struttura risposta:', response.data);
+        
+        // Funzione ausiliaria per trovare in modo ricorsivo l'array dello storico
+        const findHistoryArray = (obj) => {
+            // Se è null o undefined, ritorna null
+            if (!obj) return null;
+            
+            // Se è già un array, verificare che sembri uno storico (ha userId, action, ecc.)
+            if (Array.isArray(obj)) {
+                // Verifica che contenga almeno un elemento con campi tipici dello storico
+                if (obj.length > 0 && (obj[0].action || obj[0].userId)) {
+                    console.log('Trovato array storico:', obj.length, 'elementi');
+                    return obj;
+                }
+                return null;
             }
-            return [];
-        } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || 'Errore nel recupero dello storico';
-            showNotification(errorMessage, 'error');
-            return [];
+            
+            // Se è un oggetto, cerca nelle proprietà
+            if (typeof obj === 'object') {
+                // Cerca prima nelle proprietà che più probabilmente contengono lo storico
+                if (obj.history && Array.isArray(obj.history)) {
+                    console.log('Trovato history array:', obj.history.length, 'elementi');
+                    return obj.history;
+                }
+                
+                // Altrimenti, cerca ricorsivamente nelle proprietà
+                for (const key in obj) {
+                    const result = findHistoryArray(obj[key]);
+                    if (result) return result;
+                }
+            }
+            
+            return null;
+        };
+        
+        // Cerca l'array dello storico nella risposta
+        const historyArray = findHistoryArray(response.data);
+        
+        if (historyArray) {
+            return historyArray;
         }
-    };
-    
+        
+        // Se non troviamo l'array, logga un errore dettagliato
+        console.error('Impossibile trovare un array di dati storico nella risposta:', response.data);
+        
+        // In caso di fallimento, ritorna un array vuoto
+        return [];
+    } catch (error) {
+        console.error('Errore completo nel recupero dello storico:', error);
+        const errorMessage = error.response?.data?.error?.message || 'Errore nel recupero dello storico';
+        showNotification(errorMessage, 'error');
+        return [];
+    }
+};
+
     const terminateSession = async (userId, sessionId) => {
         try {
             const response = await axiosInstance.delete(`/users/${userId}/sessions/${sessionId}`);

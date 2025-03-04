@@ -17,6 +17,7 @@ class UserController extends BaseController {
         this.getAvailableManagers = this.getAvailableManagers.bind(this);
         this.assignResources = this.assignResources.bind(this);
         this.updatePermissions = this.updatePermissions.bind(this);
+        this.getUserHistory = this.getUserHistory.bind(this); // Aggiungiamo il binding del nuovo metodo
     }
 
     /**
@@ -309,6 +310,29 @@ class UserController extends BaseController {
                     'Nessun dato fornito per l\'aggiornamento'
                 ));
             }
+            
+            // Se stiamo modificando il ruolo, registriamo questo evento specificamente
+            if (updateData.role) {
+                // Prima otteniamo il ruolo precedente
+                const user = await this.userService.getUserById(id);
+                const oldRole = user.role;
+                
+                if (oldRole !== updateData.role) {
+                    // Registra un evento di cambio ruolo nello storico
+                    await this.userService.logUserAction(
+                        id, 
+                        'role_changed',
+                        { 
+                            role: {
+                                old: oldRole,
+                                new: updateData.role
+                            }
+                        },
+                        {},
+                        req.user.id // L'amministratore che ha eseguito la modifica
+                    );
+                }
+            }
     
             const user = await this.userService.updateUser(id, updateData);
     
@@ -533,6 +557,58 @@ async delete(req, res) {
             });
         } catch (error) {
             console.error('Controller Error:', error);
+            return this.sendError(res, error);
+        }
+    }
+
+    /**
+     * Ottiene lo storico delle modifiche di un utente
+     * @route GET /users/:id/history
+     */
+    async getUserHistory(req, res) {
+        try {
+            const { id } = req.params;
+            
+            logger.debug('Getting user history', { 
+                userId: id,
+                requestedBy: req.user.id
+            });
+
+            // Controllo che l'ID sia valido
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return this.sendError(res, createError(
+                    ErrorTypes.VALIDATION.INVALID_ID,
+                    'ID utente non valido'
+                ));
+            }
+
+            // Controllo che l'utente esista
+            const user = await this.userService.getUserById(id);
+            
+            if (!user) {
+                return this.sendError(res, createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente non trovato'
+                ));
+            }
+
+            // Ottieni lo storico
+            const history = await this.userService.getUserHistory(id);
+            
+            logger.info('User history retrieved', { 
+                userId: id, 
+                entriesCount: history.length 
+            });
+
+            // Assicurati che la risposta abbia una struttura consistente
+            return this.sendResponse(res, {
+                status: 'success',
+                data: { 
+                    history: Array.isArray(history) ? history : [] 
+                }
+            });
+        } catch (error) {
+            logger.error('Get user history failed', { error, userId: req.params.id });
             return this.sendError(res, error);
         }
     }

@@ -15,9 +15,11 @@ import {
     DialogActions      // MUI
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete'; // Aggiungi questo import
 import StudentEditForm from './StudentEditForm';
 import { useStudent } from '../../../../context/StudentContext';  // Aggiungi questo import
 import { useNotification } from '../../../../context/NotificationContext';  // Aggiungi questo se non c'è già
+import { useNavigate } from 'react-router-dom'; // Aggiungi questo import
 
 // Modifica la definizione di CredentialsDialog
 const CredentialsDialog = ({ open, onClose, credentials, showNotification }) => {
@@ -87,12 +89,14 @@ const CredentialsDialog = ({ open, onClose, credentials, showNotification }) => 
 };
 
 const InfoTab = ({ student, setStudent }) => {
-    const { generateCredentials, resetPassword } = useStudent(); // Aggiungi questa riga
+    const { generateCredentials, resetPassword, deleteStudent } = useStudent(); // Aggiungi deleteStudent qui
     const { showNotification } = useNotification();
+    const navigate = useNavigate(); // Aggiungi questa import
     const [isEditing, setIsEditing] = useState(false);
     const [credentials, setCredentials] = useState(null);
     const [openCredentialsDialog, setOpenCredentialsDialog] = useState(false);
-    const [lastCredentials, setLastCredentials] = useState(null); // In InfoTab.jsx aggiungiamo un display temporaneo per il debug
+    const [lastCredentials, setLastCredentials] = useState(null);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false); // Stato per dialog eliminazione
 
 
  // Aggiungi questa funzione per gestire l'apertura del dialog
@@ -207,6 +211,21 @@ useEffect(() => {
     });
 }, [student.hasCredentials, student.credentialsSentAt]);
 
+    // Funzione per gestire l'eliminazione dello studente
+    const handleDeleteStudent = async () => {
+        try {
+            // Aggiungiamo il flag cascade=true per eliminare tutti i riferimenti
+            await deleteStudent(student.id);
+            showNotification("Studente e tutti i suoi riferimenti eliminati con successo", "success");
+            // Naviga indietro alla lista studenti
+            navigate("/admin/students");
+        } catch (error) {
+            console.error("Errore durante l'eliminazione dello studente:", error);
+            showNotification("Errore durante l'eliminazione dello studente", "error");
+        } finally {
+            setDeleteDialogOpen(false);
+        }
+    };
 
     // Vista informativa
     const InfoView = () => (
@@ -225,14 +244,25 @@ useEffect(() => {
                         Informazioni complete dello studente
                     </Typography>
                 </Box>
-                <Button
-                    variant="contained"
-                    startIcon={<EditIcon />}
-                    onClick={() => setIsEditing(true)}
-                    size="small"
-                >
-                    Modifica
-                </Button>
+                <Stack direction="row" spacing={1}>
+                    <Button
+                        variant="contained"
+                        startIcon={<EditIcon />}
+                        onClick={() => setIsEditing(true)}
+                        size="small"
+                    >
+                        Modifica
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        color="error"
+                        startIcon={<DeleteIcon />}
+                        onClick={() => setDeleteDialogOpen(true)}
+                        size="small"
+                    >
+                        Elimina
+                    </Button>
+                </Stack>
             </Box>
 
             <Grid container spacing={3}>
@@ -625,12 +655,46 @@ useEffect(() => {
 
     return (
         <>
+            {/* Dialog di conferma eliminazione */}
+            <Dialog
+                open={deleteDialogOpen}
+                onClose={() => setDeleteDialogOpen(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    Conferma Eliminazione
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ mb: 2 }}>
+                        Sei sicuro di voler eliminare lo studente <strong>{student.firstName} {student.lastName}</strong>?
+                    </DialogContentText>
+                    <DialogContentText color="error">
+                        Questa operazione eliminerà lo studente e tutti i riferimenti associati, inclusi i risultati dei test.
+                        L'operazione non è reversibile.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteDialogOpen(false)}>
+                        Annulla
+                    </Button>
+                    <Button 
+                        onClick={handleDeleteStudent}
+                        color="error" 
+                        variant="contained"
+                    >
+                        Elimina Definitivamente
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
             <CredentialsDialog 
                 open={openCredentialsDialog}
                 onClose={() => setOpenCredentialsDialog(false)}
                 credentials={credentials}
                 showNotification={showNotification}
             />
+            
             {isEditing ? (
         <Box>
             <Box sx={{ mb: 3 }}>

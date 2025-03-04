@@ -455,9 +455,11 @@ class StudentController extends BaseController {
     async delete(req, res, next) {
         try {
             const { id } = req.params;
+            const cascade = req.query.cascade === 'true'; // Legge il parametro cascade dalla query string
             
             logger.debug('Deleting student:', { 
                 studentId: id,
+                cascade,
                 user: req.user?.id
             });
 
@@ -469,10 +471,11 @@ class StudentController extends BaseController {
                 );
             }
 
-            await this.repository.delete(id);
+            // Passa il parametro cascade al repository
+            await this.repository.delete(id, cascade);
             
             this.sendResponse(res, { 
-                message: 'Studente eliminato con successo'
+                message: `Studente ${cascade ? 'e tutti i suoi riferimenti ' : ''}eliminato con successo`
             });
         } catch (error) {
             logger.error('Error deleting student:', error);

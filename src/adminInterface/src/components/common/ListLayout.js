@@ -215,13 +215,16 @@ const ListLayout = ({
             display: 'flex', 
             flexDirection: 'column', 
             gap: 3, 
-            height: '100%',
-            minHeight: '100vh',
-            overflow: 'hidden' // Aggiungi questa riga
+            height: 'calc(100vh - 180px)', // Account for header and padding
+            overflow: 'hidden',
+            maxWidth: '100%'
         }}>         
-            {/* Stats Cards - Usiamo il nuovo CardsLayout */}
-            {statsCards && <StatsCardsLayout cards={statsCards} />}
-
+            {/* Stats Cards */}
+            {statsCards && (
+                <Box sx={{ flexShrink: 0 }}>
+                    <StatsCardsLayout cards={statsCards} />
+                </Box>
+            )}
 
             {/* Toolbar */}
             <Box sx={{ 
@@ -229,7 +232,8 @@ const ListLayout = ({
                 flexWrap: 'wrap', 
                 gap: 2, 
                 justifyContent: 'space-between',
-                alignItems: 'center'
+                alignItems: 'center',
+                flexShrink: 0
             }}>
                 <Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
                     {onSearch && (
@@ -321,7 +325,7 @@ const ListLayout = ({
                 {isFilterOpen && filterComponent && (
                     <Collapse 
                         in={isFilterOpen}
-                        timeout={300}
+                        sx={{ flexShrink: 0 }}
                     >
                         <motion.div
                             initial={{ opacity: 0, y: -20 }}
@@ -408,24 +412,13 @@ const ListLayout = ({
                 elevation={0}
                 sx={{
                     flex: 1,
-                    width: '100%',
-                    '& .MuiDataGrid-root': {
-                        border: 'none',
-                        // Aggiungi questi stili per nascondere la scrollbar
-                        '& ::-webkit-scrollbar': {
-                            display: 'none'
-                        },
-                        msOverflowStyle: 'none',
-                        scrollbarWidth: 'none',
-                    },
+                    minHeight: 400,
                     display: 'flex',
                     flexDirection: 'column',
-                    borderRadius: 2,
                     overflow: 'hidden',
                     border: '1px solid',
                     borderColor: 'divider',
-                    minHeight: 400,
-                    height: '100%'
+                    borderRadius: 2
                 }}
             >
                 {tabsComponent}
@@ -435,14 +428,7 @@ const ListLayout = ({
                     display: 'flex',
                     flexDirection: 'column',
                     height: tabsComponent ? 'calc(100% - 48px)' : '100%',
-                    minHeight: 400,
-                    // Aggiungi questi stili per nascondere la scrollbar
-                    overflow: 'auto',
-                    '::-webkit-scrollbar': {
-                        display: 'none'
-                    },
-                    msOverflowStyle: 'none',
-                    scrollbarWidth: 'none',
+                    overflow: 'hidden'
                 }}>
                     <DataGrid
                         rows={rows}
@@ -502,14 +488,47 @@ const ListLayout = ({
                             )
                         }}
                         sx={{
-                            ...standardDataGridStyle,
-                            height: '100%', // Importante: il DataGrid deve occupare tutto lo spazio disponibile
-                            width: '100%',
-                            '& .MuiDataGrid-main': { // Assicuriamoci che il contenuto si espanda correttamente
+                            border: 'none',
+                            flex: 1,
+                            '& .MuiDataGrid-main': {
+                                overflow: 'hidden',
                                 flex: '1 1 auto'
-                            }
+                            },
+                            '& .MuiDataGrid-virtualScroller': {
+                                overflow: 'auto',
+                                '&::-webkit-scrollbar': {
+                                    width: '8px',
+                                    height: '8px'
+                                },
+                                '&::-webkit-scrollbar-thumb': {
+                                    backgroundColor: theme => alpha(theme.palette.primary.main, 0.2),
+                                    borderRadius: '4px',
+                                    '&:hover': {
+                                        backgroundColor: theme => alpha(theme.palette.primary.main, 0.3)
+                                    }
+                                }
+                            },
+                            '& .MuiDataGrid-row': {
+                                maxHeight: 'none !important',
+                                minHeight: '48px !important',
+                                alignItems: 'center',
+                                '&:hover': {
+                                    backgroundColor: theme => alpha(theme.palette.primary.main, 0.04)
+                                }
+                            },
+                            '& .MuiDataGrid-cell': {
+                                maxHeight: 'none !important',
+                                overflow: 'visible',
+                                whiteSpace: 'normal',
+                                lineHeight: '1.2',
+                                padding: '12px 16px',
+                                '&:focus': {
+                                    outline: 'none'
+                                }
+                            },
+                            ...standardDataGridStyle
                         }}
-                        density="comfortable"
+                        autoHeight={false}
                     />
                 </Box>
             </Paper>
