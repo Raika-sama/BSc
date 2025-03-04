@@ -1,0 +1,4 @@
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-03-03T21:30:16.826Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-03T21:30:16.827Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-03T21:30:16.840Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-03T21:30:16.840Z"}

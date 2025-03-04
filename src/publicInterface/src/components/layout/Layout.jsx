@@ -33,7 +33,7 @@ const Layout = ({ menuPosition = 'top' }) => {
       <Flex flex="1">
         <Sidebar isOpen={isOpen} onClose={onClose} />
         
-        <Box flex="1" p={4} maxW="100%">
+        <Box flex="1" p={4} maxW="100%" className="mainContent">
           <Outlet />  {/* Usa Outlet invece di children */}
         </Box>
       </Flex>

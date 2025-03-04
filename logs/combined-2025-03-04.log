@@ -1,0 +1,15 @@
+{"level":"info","message":"Inizializzazione modelli in corso...","timestamp":"2025-03-04T08:33:05.255Z"}
+{"level":"info","message":"Tutti i modelli sono stati caricati con successo","timestamp":"2025-03-04T08:33:05.285Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-04T08:33:05.897Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-04T08:33:05.898Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-04T08:33:05.899Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-04T08:33:06.179Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-04T08:33:06.182Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-04T08:33:06.182Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-03-04T08:33:42.242Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-04T08:33:42.243Z"}
+{"duration":"9ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741077222238_0at9v9fqt","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-03-04T08:33:42.247Z","url":"/api/v1/auth/verify","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-04T08:33:42.253Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-04T08:33:42.253Z"}
+{"duration":"5ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741077222250_yjrrnygoc","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-03-04T08:33:42.255Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"},"timestamp":"2025-03-04T11:44:27.549Z","userId":"67c02995250c5746c3d9647c"}
