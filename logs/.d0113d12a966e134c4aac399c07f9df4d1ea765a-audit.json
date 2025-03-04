@@ -36,6 +36,7 @@
             "hash": "592dec873bf86c98d3e9a355af0a5759f82daba2e1aa1bc67dd6b2e3b3353a75"
         },
         {
+<<<<<<< HEAD
             "date": 1741037361577,
             "name": "logs\\combined-2025-03-03.log",
             "hash": "5aa75a7b01f8b639f642d584a133c3761d35e34ceb35bbe8dd4ddac776a61179"
@@ -44,6 +45,11 @@
             "date": 1741077185230,
             "name": "logs\\combined-2025-03-04.log",
             "hash": "663c883d0bf51beeacde1d165928b9787b1b3810a1ff03ba4394761d79808776"
+=======
+            "date": 1741007057017,
+            "name": "logs\\combined-2025-03-03.log",
+            "hash": "c3f7de61461c8e28f0a246e082da0778966eda0f5db9c724126fe51033a3378e"
+>>>>>>> 84ef969bda510854821d5093c88e143daf4fd5c2
         }
     ],
     "hashType": "sha256"

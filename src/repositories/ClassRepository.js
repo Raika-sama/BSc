@@ -195,61 +195,7 @@ async findWithDetails(id) {
         }
     }
 
-    async addTeacher(classId, teacherId) {
-        try {
-            const classData = await this.findById(classId);
 
-            if (classData.teachers.includes(teacherId)) {
-                logger.warn('Tentativo di aggiungere un insegnante già assegnato', { classId, teacherId });
-                throw createError(
-                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
-                    'Insegnante già assegnato alla classe'
-                );
-            }
-
-            classData.teachers.push(teacherId);
-            await classData.save();
-
-            return classData;
-        } catch (error) {
-            if (error.code) throw error; // Se è già un errore formattato
-            logger.error('Errore nell\'aggiunta dell\'insegnante alla classe', { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nell\'aggiunta dell\'insegnante alla classe',
-                { originalError: error.message }
-            );
-        }
-    }
-
-    async removeTeacher(classId, teacherId) {
-        try {
-            const classData = await this.findById(classId);
-
-            if (classData.mainTeacher.toString() === teacherId) {
-                logger.warn('Tentativo di rimuovere l\'insegnante principale', { classId, teacherId });
-                throw createError(
-                    ErrorTypes.BUSINESS.INVALID_OPERATION,
-                    'Impossibile rimuovere l\'insegnante principale'
-                );
-            }
-
-            classData.teachers = classData.teachers.filter(
-                id => id.toString() !== teacherId
-            );
-
-            await classData.save();
-            return classData;
-        } catch (error) {
-            if (error.code) throw error;
-            logger.error('Errore nella rimozione dell\'insegnante dalla classe', { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella rimozione dell\'insegnante dalla classe',
-                { originalError: error.message }
-            );
-        }
-    }
 
     async addStudent(classId, studentId) {
         try {
@@ -842,6 +788,9 @@ async getMyClasses(userId) {
                     );
                 }
         
+                // Salva il vecchio mainTeacher se presente
+                const oldMainTeacher = classDoc.mainTeacher;
+                
                 // 2. Aggiorna la classe
                 classDoc.mainTeacher = teacherId;
                 classDoc.mainTeacherIsTemporary = false;
@@ -858,6 +807,40 @@ async getMyClasses(userId) {
                     { session }
                 );
         
+                // 4. Aggiorna l'utente docente (aggiungi la classe e gli studenti)
+                const students = await mongoose.model('Student').find(
+                    { classId: classId },
+                    { _id: 1 }
+                ).session(session);
+                
+                const studentIds = students.map(s => s._id);
+                
+                await mongoose.model('User').findByIdAndUpdate(
+                    teacherId,
+                    { 
+                        $addToSet: { 
+                            assignedClassIds: classId,
+                            assignedStudentIds: { $each: studentIds }
+                        } 
+                    },
+                    { session }
+                );
+        
+                // 5. Se c'era un docente principale precedente, rimuovi i riferimenti
+                if (oldMainTeacher && oldMainTeacher.toString() !== teacherId.toString()) {
+                    // Rimuovi la classe e gli studenti dal vecchio mainTeacher
+                    await mongoose.model('User').findByIdAndUpdate(
+                        oldMainTeacher,
+                        { 
+                            $pull: { 
+                                assignedClassIds: classId,
+                                assignedStudentIds: { $in: studentIds }
+                            } 
+                        },
+                        { session }
+                    );
+                }
+        
                 await session.commitTransaction();
                 return classDoc;
         
@@ -872,6 +855,7 @@ async getMyClasses(userId) {
                 session.endSession();
             }
         }
+        
 
         async removeMainTeacher(classId) {
             const session = await mongoose.startSession();
@@ -916,6 +900,25 @@ async getMyClasses(userId) {
                     { session }
                 );
         
+                // 5. Aggiorna l'utente docente (rimuovi la classe e gli studenti)
+                const students = await mongoose.model('Student').find(
+                    { classId: classId },
+                    { _id: 1 }
+                ).session(session);
+                
+                const studentIds = students.map(s => s._id);
+                
+                await mongoose.model('User').findByIdAndUpdate(
+                    previousTeacherId,
+                    { 
+                        $pull: { 
+                            assignedClassIds: classId,
+                            assignedStudentIds: { $in: studentIds }
+                        } 
+                    },
+                    { session }
+                );
+        
                 await session.commitTransaction();
                 
                 return classDoc;
@@ -932,6 +935,157 @@ async getMyClasses(userId) {
                 session.endSession();
             }
         }
+
+
+        async addTeacher(classId, teacherId) {
+            const session = await mongoose.startSession();
+            session.startTransaction();
+
+            try {
+                // 1. Trova la classe
+                const classDoc = await this.model.findById(classId).session(session);
+                if (!classDoc) {
+                    throw createError(
+                        ErrorTypes.RESOURCE.NOT_FOUND,
+                        'Classe non trovata'
+                    );
+                }
+
+                // 2. Verifica che il docente non sia già presente
+                if (classDoc.teachers.includes(teacherId)) {
+                    throw createError(
+                        ErrorTypes.RESOURCE.ALREADY_EXISTS,
+                        'Docente già assegnato alla classe'
+                    );
+                }
+
+                // 3. Aggiorna la classe
+                classDoc.teachers.push(teacherId);
+                await classDoc.save({ session });
+
+                // 4. Aggiorna gli studenti della classe
+                await mongoose.model('Student').updateMany(
+                    { classId: classId },
+                    { 
+                        $addToSet: { teachers: teacherId } 
+                    },
+                    { session }
+                );
+
+                // 5. Aggiorna l'utente docente (aggiungi la classe e gli studenti)
+                const students = await mongoose.model('Student').find(
+                    { classId: classId },
+                    { _id: 1 }
+                ).session(session);
+                
+                const studentIds = students.map(s => s._id);
+                
+                await mongoose.model('User').findByIdAndUpdate(
+                    teacherId,
+                    { 
+                        $addToSet: { 
+                            assignedClassIds: classId,
+                            assignedStudentIds: { $each: studentIds }
+                        } 
+                    },
+                    { session }
+                );
+
+                await session.commitTransaction();
+                return classDoc;
+
+            } catch (error) {
+                await session.abortTransaction();
+                throw createError(
+                    ErrorTypes.DATABASE.QUERY_FAILED,
+                    'Errore nell\'aggiunta del docente',
+                    { originalError: error.message }
+                );
+            } finally {
+                session.endSession();
+            }
+        }
+
+        async removeTeacher(classId, teacherId) {
+            const session = await mongoose.startSession();
+            session.startTransaction();
+        
+            try {
+                // 1. Trova la classe
+                const classDoc = await this.model.findById(classId).session(session);
+                if (!classDoc) {
+                    throw createError(
+                        ErrorTypes.RESOURCE.NOT_FOUND,
+                        'Classe non trovata'
+                    );
+                }
+        
+                // 2. Verifica che il docente non sia mainTeacher
+                if (classDoc.mainTeacher && classDoc.mainTeacher.toString() === teacherId.toString()) {
+                    throw createError(
+                        ErrorTypes.BUSINESS.INVALID_OPERATION,
+                        'Non è possibile rimuovere il docente principale. Usare removeMainTeacher invece.'
+                    );
+                }
+        
+                // 3. Verifica che il docente sia presente nell'array
+                if (!classDoc.teachers.some(t => t.toString() === teacherId.toString())) {
+                    throw createError(
+                        ErrorTypes.RESOURCE.NOT_FOUND,
+                        'Docente non trovato nella classe'
+                    );
+                }
+        
+                // 4. Aggiorna la classe
+                classDoc.teachers = classDoc.teachers.filter(
+                    t => t.toString() !== teacherId.toString()
+                );
+                await classDoc.save({ session });
+        
+                // 5. Aggiorna gli studenti della classe
+                await mongoose.model('Student').updateMany(
+                    { classId: classId },
+                    { 
+                        $pull: { teachers: teacherId } 
+                    },
+                    { session }
+                );
+        
+                // 6. Aggiorna l'utente docente (rimuovi la classe e gli studenti)
+                const students = await mongoose.model('Student').find(
+                    { classId: classId },
+                    { _id: 1 }
+                ).session(session);
+                
+                const studentIds = students.map(s => s._id);
+                
+                await mongoose.model('User').findByIdAndUpdate(
+                    teacherId,
+                    { 
+                        $pull: { 
+                            assignedClassIds: classId,
+                            assignedStudentIds: { $in: studentIds }
+                        } 
+                    },
+                    { session }
+                );
+        
+                await session.commitTransaction();
+                return classDoc;
+        
+            } catch (error) {
+                await session.abortTransaction();
+                throw createError(
+                    ErrorTypes.DATABASE.QUERY_FAILED,
+                    'Errore nella rimozione del docente',
+                    { originalError: error.message }
+                );
+            } finally {
+                session.endSession();
+            }
+        }
+        
+
 
 }
 

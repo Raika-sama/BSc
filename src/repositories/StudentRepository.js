@@ -13,7 +13,13 @@ const mongoose = require('mongoose');
 class StudentRepository extends BaseRepository {
     constructor() {
         super(Student);
+        this.studentAuthService = null; // Sarà iniettato dopo
     }
+
+    setStudentAuthService(service) {
+        this.studentAuthService = service;
+    }
+
 
     /**
      * Trova studenti con dettagli completi
@@ -674,65 +680,109 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
     }
 
     // Aggiungiamo un nuovo metodo specifico per la creazione con classe
-async createWithClass(studentData) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    async createWithClass(studentData) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
-    try {
-        // 1. Verifica l'unicità dell'email
-        const exists = await this.model.findOne({
-            email: studentData.email
-        }).session(session);
+        try {
+            // 1. Verifica l'unicità dell'email
+            const exists = await this.model.findOne({
+                email: studentData.email
+            }).session(session);
 
-        if (exists) {
-            throw createError(
-                ErrorTypes.VALIDATION.ALREADY_EXISTS,
-                'Email già registrata'
-            );
+            if (exists) {
+                throw createError(
+                    ErrorTypes.VALIDATION.ALREADY_EXISTS,
+                    'Email già registrata'
+                );
+            }
+
+            // 2. Verifica e recupera la classe
+            const classDoc = await Class.findById(studentData.classId)
+                .populate('mainTeacher', '_id firstName lastName email')
+                .populate('teachers', '_id firstName lastName email')
+                .session(session);
+                
+            if (!classDoc) {
+                throw createError(
+                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    'Classe non trovata'
+                );
+            }
+
+            // 3. Verifica capacità classe
+            if (classDoc.students.length >= classDoc.capacity) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'La classe ha raggiunto la capacità massima'
+                );
+            }
+
+            // 4. Prepara i dati dello studente includendo teacher e mainTeacher
+            const studentWithTeachers = {
+                ...studentData,
+                // Assicurati che mainTeacher e teachers vengano sempre assegnati
+                mainTeacher: classDoc.mainTeacher?._id || studentData.mainTeacher,
+                teachers: classDoc.teachers?.map(t => t._id) || studentData.teachers || []
+            };
+
+            // 5. Crea lo studente
+            const newStudent = await this.model.create([studentWithTeachers], { session });
+
+            // 6. Aggiorna la classe
+            classDoc.students.push({
+                studentId: newStudent[0]._id,
+                joinedAt: new Date(),
+                status: 'active'
+            });
+
+            await classDoc.save({ session });
+            await session.commitTransaction();
+
+            // 7. Student creato con successo, ora genera le credenziali
+            // Questo è fuori dalla transazione perché anche se fallisce
+            // vogliamo comunque che lo studente venga creato
+            try {
+                if (this.studentAuthService) {
+                    const credentials = await this.studentAuthService.generateCredentials(newStudent[0]._id);
+                    logger.info('Credenziali generate automaticamente', { 
+                        studentId: newStudent[0]._id,
+                        username: credentials.username
+                    });
+                    
+                    // Aggiorna il flag hasCredentials nello studente
+                    await this.model.findByIdAndUpdate(newStudent[0]._id, {
+                        $set: { 
+                            hasCredentials: true,
+                            credentialsSentAt: new Date()
+                        }
+                    });
+                } else {
+                    logger.warn('Impossibile generare credenziali: servizio non disponibile', {
+                        studentId: newStudent[0]._id
+                    });
+                }
+            } catch (authError) {
+                logger.error('Errore nella generazione automatica delle credenziali', { 
+                    error: authError, 
+                    studentId: newStudent[0]._id 
+                });
+                // Non interrompiamo il flusso, lo studente è già stato creato
+            }
+
+            return newStudent[0];
+        } catch (error) {
+            await session.abortTransaction();
+            logger.error('Error in createWithClass:', {
+                error,
+                studentData
+            });
+            throw error;
+        } finally {
+            session.endSession();
         }
-
-        // 2. Verifica e recupera la classe
-        const classDoc = await Class.findById(studentData.classId).session(session);
-        if (!classDoc) {
-            throw createError(
-                ErrorTypes.VALIDATION.NOT_FOUND,
-                'Classe non trovata'
-            );
-        }
-
-        // 3. Verifica capacità classe
-        if (classDoc.students.length >= classDoc.capacity) {
-            throw createError(
-                ErrorTypes.VALIDATION.BAD_REQUEST,
-                'La classe ha raggiunto la capacità massima'
-            );
-        }
-
-        // 4. Crea lo studente
-        const newStudent = await this.model.create([studentData], { session });
-
-        // 5. Aggiorna la classe
-        classDoc.students.push({
-            studentId: newStudent[0]._id,
-            joinedAt: new Date(),
-            status: 'active'
-        });
-
-        await classDoc.save({ session });
-        await session.commitTransaction();
-
-        return newStudent[0];
-    } catch (error) {
-        await session.abortTransaction();
-        logger.error('Error in createWithClass:', {
-            error,
-            studentData
-        });
-        throw error;
-    } finally {
-        session.endSession();
     }
-}
+
 
     /**
      * Assegna uno studente a una classe

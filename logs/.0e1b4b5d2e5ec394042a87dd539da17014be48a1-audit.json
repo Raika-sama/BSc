@@ -36,6 +36,7 @@
             "hash": "303c62f70b303ebf71e597355af18ce7decd6f136156c9213d78c0290491433d"
         },
         {
+<<<<<<< HEAD
             "date": 1741037361572,
             "name": "logs\\error-2025-03-03.log",
             "hash": "2ef996904c55c7a2c422941e8257e8f2a341737c29fc05c875f8cfadff792e21"
@@ -44,6 +45,11 @@
             "date": 1741077185228,
             "name": "logs\\error-2025-03-04.log",
             "hash": "3fe3faac95e54c2fd67ed4f39fd8c2768814f7e4593482e91ea9c9ed707f1c5d"
+=======
+            "date": 1741007057002,
+            "name": "logs\\error-2025-03-03.log",
+            "hash": "de862ac8215ecbe0cf9c32c6a75c3af3e3ab2f42508bf10e26e6ca93fea95e47"
+>>>>>>> 84ef969bda510854821d5093c88e143daf4fd5c2
         }
     ],
     "hashType": "sha256"

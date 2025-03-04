@@ -518,7 +518,7 @@ class SchoolRepository extends BaseRepository {
                                     academicYear: yearData.year,
                                     status: 'planned',
                                     capacity: maxStudents,
-                                    mainTeacher: school.manager || null,
+                                    mainTeacher: null, //per ora lasciamo null, poi si vedrà
                                     teachers: [],
                                     students: [],
                                     isActive: true,

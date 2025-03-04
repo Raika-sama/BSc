@@ -199,13 +199,7 @@ const ClassManagement = () => {
                             <FilterListIcon />
                         </IconButton>
                     </Tooltip>
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => navigate('/admin/classes/create')}
-                    >
-                        Nuova Classe
-                    </Button>
+                    
                 </Box>
             }
         >

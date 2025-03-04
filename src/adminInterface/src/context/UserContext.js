@@ -24,15 +24,20 @@ export const UserProvider = ({ children }) => {
             search: filters.search || '',
             sort: filters.sort || '-createdAt'
         });
-
+  
         if (filters.schoolId) {
             queryParams.append('schoolId', filters.schoolId);
         }
-
+  
         if (filters.role) {
             queryParams.append('role', filters.role);
         }
-
+  
+        // AGGIUNGI QUESTO BLOCCO per gestire il parametro status
+        if (filters.status) {
+            queryParams.append('status', filters.status);
+        }
+  
         const response = await axiosInstance.get(`/users?${queryParams.toString()}`);
         
         if (response.data.status === 'success') {

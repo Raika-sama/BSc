@@ -8,6 +8,7 @@
 const express = require('express');
 const logger = require('../utils/errors/logger/logger');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+const mongoose = require('mongoose'); // Add this import
 
 const createTestRouter = ({ authMiddleware, testController }) => {
     if (!authMiddleware) throw new Error('AuthMiddleware is required');
@@ -30,7 +31,72 @@ const createTestRouter = ({ authMiddleware, testController }) => {
         });
     };
 
-    // Middleware di logging
+    // Enhanced debugging middleware for model registration issues
+    router.use((req, res, next) => {
+        // Log detailed info about models when any test route is accessed
+        const registeredModels = mongoose.modelNames();
+        const resultModelInfo = mongoose.models.Result ? {
+            name: mongoose.models.Result.modelName,
+            hasDiscriminators: !!mongoose.models.Result.discriminators,
+            discriminators: mongoose.models.Result.discriminators ? 
+                Object.keys(mongoose.models.Result.discriminators) : [],
+            collection: mongoose.models.Result.collection?.name
+        } : 'Not registered';
+
+        logger.debug('Test Route Model Debug Info:', {
+            method: req.method,
+            path: req.path,
+            registeredModels,
+            resultModel: resultModelInfo,
+            userModel: mongoose.models.User ? {
+                name: mongoose.models.User.modelName,
+                collection: mongoose.models.User.collection?.name
+            } : 'Not registered',
+            testModel: mongoose.models.Test ? {
+                name: mongoose.models.Test.modelName,
+                collection: mongoose.models.Test.collection?.name,
+                schema: !!mongoose.models.Test.schema
+            } : 'Not registered',
+            repositoryCheck: testController.repository ? {
+                hasRepository: true,
+                modelName: testController.repository.model?.modelName,
+                hasModel: !!testController.repository.model
+            } : {
+                hasRepository: false
+            },
+            timestamp: new Date().toISOString()
+        });
+
+        next();
+    });
+
+    // Add debugging middleware specifically for the problematic route
+    router.get('/assigned/student/:studentId', (req, res, next) => {
+        logger.debug('Detailed debug for getAssignedTests route:', {
+            studentId: req.params.studentId,
+            testController: {
+                hasRepository: !!testController.repository,
+                repositoryType: testController.repository ? 
+                    testController.repository.constructor.name : 'undefined',
+                methodExists: typeof testController.getAssignedTests === 'function'
+            },
+            repositoryModel: testController.repository?.model ? {
+                name: testController.repository.model.modelName,
+                schema: !!testController.repository.model.schema,
+                base: !!testController.repository.model.base
+            } : 'No model'
+        });
+        next();
+    }, protect, restrictTo('teacher', 'admin'), asyncHandler(testController.getAssignedTests.bind(testController)));
+
+    // Aggiungi la rotta per i test completati
+    router.get('/student/:studentId/completed',
+        protect,
+        restrictTo('teacher', 'admin'),
+        asyncHandler(testController.getCompletedTests.bind(testController))
+    );
+
+    // Original middleware for general logging
     router.use((req, res, next) => {
         logger.debug('Test Route Called:', {
             method: req.method,
@@ -58,6 +124,22 @@ const createTestRouter = ({ authMiddleware, testController }) => {
     router.post('/assign',
         restrictTo('teacher', 'admin'),
         asyncHandler(testController.assignTest.bind(testController))
+    );
+
+    // Remove this as we've defined it above with debugging
+    /* 
+    router.get('/assigned/student/:studentId',
+        protect,
+        restrictTo('teacher', 'admin'),
+        asyncHandler(testController.getAssignedTests.bind(testController))
+    );
+    */
+
+    // Nuova route per revocare un test
+    router.post('/:testId/revoke',
+        protect,
+        restrictTo('teacher', 'admin'),
+        asyncHandler(testController.revokeTest.bind(testController))
     );
 
     // Route che richiedono autenticazione studente
@@ -92,15 +174,31 @@ const createTestRouter = ({ authMiddleware, testController }) => {
 
     // Gestione errori centralizzata
     router.use((err, req, res, next) => {
-        logger.error('Test Route Error:', {
-            error: err.message,
-            stack: err.stack,
-            path: req.path,
-            method: req.method,
-            userId: req.user?.id,
-            testId: req.params.testId,
-            timestamp: new Date().toISOString()
-        });
+        // Enhanced error logging for model registration errors
+        if (err.message && err.message.includes("Schema hasn't been registered for model")) {
+            logger.error('Model Registration Error:', {
+                error: err.message,
+                stack: err.stack,
+                path: req.path,
+                method: req.method,
+                registeredModels: mongoose.modelNames(),
+                timestamp: new Date().toISOString(),
+                controllerStatus: {
+                    hasRepository: !!testController.repository,
+                    modelName: testController.repository?.model?.modelName 
+                }
+            });
+        } else {
+            logger.error('Test Route Error:', {
+                error: err.message,
+                stack: err.stack,
+                path: req.path,
+                method: req.method,
+                userId: req.user?.id,
+                testId: req.params.testId,
+                timestamp: new Date().toISOString()
+            });
+        }
 
         // Gestione errori di validazione
         if (err.name === 'ValidationError') {
@@ -160,6 +258,9 @@ module.exports = createTestRouter;
  * GET    /tests/all                 - Lista tutti i test
  * POST   /tests/assign              - Assegna test a studente
  * GET    /tests/:testId/stats       - Statistiche test
+ * GET    /tests/assigned/student/:studentId - Ottiene i test assegnati a uno studente
+ * GET    /tests/student/:studentId/completed - Ottiene i test completati da uno studente
+ * POST   /tests/:testId/revoke      - Revoca un test assegnato
  * 
  * Route Protette (richiede autenticazione studente):
  * GET    /tests/my-tests           - Lista test assegnati

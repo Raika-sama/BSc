@@ -25,6 +25,9 @@ class ClassController extends BaseController {
         this.getById = this.getById.bind(this);
         this.removeMainTeacher = this.removeMainTeacher.bind(this);
         this.removeStudentsFromClass = this.removeStudentsFromClass.bind(this);
+        this.updateMainTeacher = this.updateMainTeacher.bind(this);
+        this.addTeacher = this.addTeacher.bind(this);
+        this.removeTeacher = this.removeTeacher.bind(this);
     }
 
  /**
@@ -247,12 +250,10 @@ class ClassController extends BaseController {
             this.sendError(res, error);
         }
     }
-    
 
    /**
      * Elimina tutte le classi della scuola dell'utente corrente
      */
-  
    async validateAcademicYear(academicYear) {
     const currentYear = new Date().getFullYear();
     const [startYear, endYear] = academicYear.split('/');
@@ -380,8 +381,6 @@ class ClassController extends BaseController {
             session.endSession();
         }
     }
-
-
     
     async getByAcademicYear(req, res) {
         try {
@@ -407,215 +406,265 @@ class ClassController extends BaseController {
 
     // Aggiungi questo metodo alla classe ClassController
 
-/**
- * Crea le classi iniziali per una nuova scuola
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @param {Function} next - Next middleware
- */
-async createInitialClasses(req, res, next) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    /**
+     * Crea le classi iniziali per una nuova scuola
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     * @param {Function} next - Next middleware
+     */
+    async createInitialClasses(req, res, next) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
-    try {
-        const { schoolId, academicYear, sections } = req.body;
+        try {
+            const { schoolId, academicYear, sections } = req.body;
 
-        // Validazione input
-        if (!schoolId || !academicYear || !sections) {
-            throw createError(
-                ErrorTypes.VALIDATION.BAD_REQUEST,
-                'Dati mancanti per la creazione delle classi iniziali'
-            );
-        }
-
-        logger.info('Inizializzazione classi per la scuola', {
-            schoolId,
-            academicYear,
-            sectionsCount: sections.length
-        });
-
-        // Verifica esistenza scuola
-        const school = await School.findById(schoolId).session(session);
-        if (!school) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Scuola non trovata'
-            );
-        }
-
-        // Usa il repository per creare le classi
-        const classes = await this.repository.createInitialClasses(
-            schoolId,
-            academicYear,
-            sections
-        );
-
-        await session.commitTransaction();
-
-        logger.info('Classi iniziali create con successo', {
-            schoolId,
-            classesCreated: classes.length
-        });
-
-        this.sendResponse(res, {
-            status: 'success',
-            data: {
-                classes,
-                message: `Create ${classes.length} classi con successo`
+            // Validazione input
+            if (!schoolId || !academicYear || !sections) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Dati mancanti per la creazione delle classi iniziali'
+                );
             }
-        });
 
-    } catch (error) {
-        await session.abortTransaction();
-        logger.error('Errore nella creazione delle classi iniziali:', {
-            error: error.message,
-            stack: error.stack
-        });
+            logger.info('Inizializzazione classi per la scuola', {
+                schoolId,
+                academicYear,
+                sectionsCount: sections.length
+            });
 
-        next(createError(
-            ErrorTypes.DATABASE.QUERY_FAILED,
-            'Errore durante la creazione delle classi iniziali',
-            { originalError: error.message }
-        ));
-    } finally {
-        session.endSession();
-    }
-}
+            // Verifica esistenza scuola
+            const school = await School.findById(schoolId).session(session);
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
 
-async getMyClasses(req, res, next) {
-    try {
-        logger.debug('ClassController: getMyClasses chiamato', {
-            userId: req.user._id,
-            role: req.user.role,
-            schoolId: req.user.schoolId
-        });
-
-        const result = await this.repository.getMyClasses(req.user._id);
-        logger.debug('ClassController: Risultato ottenuto', {
-            mainTeacherClassesCount: result.mainTeacherClasses?.length,
-            coTeacherClassesCount: result.coTeacherClasses?.length
-        });
-
-        this.sendResponse(res, {
-            status: 'success',
-            mainTeacherClasses: result.mainTeacherClasses,
-            coTeacherClasses: result.coTeacherClasses
-        });
-
-    } catch (error) {
-        logger.error('ClassController: Errore in getMyClasses', {
-            error: error.message,
-            stack: error.stack,
-            userId: req.user?._id
-        });
-        next(error);
-    }
-}
-async getById(req, res, next) {
-    try {
-        const { id } = req.params;
-        logger.debug('Getting class details for:', { classId: id });
-
-        const classDetails = await this.repository.findWithDetails(id);
-        
-        if (!classDetails) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Classe non trovata'
+            // Usa il repository per creare le classi
+            const classes = await this.repository.createInitialClasses(
+                schoolId,
+                academicYear,
+                sections
             );
-        }
 
-        this.sendResponse(res, { 
-            status: 'success',
-            class: classDetails 
-        });
+            await session.commitTransaction();
 
-    } catch (error) {
-        logger.error('Error getting class details:', { 
-            error: error.message,
-            classId: req.params.id 
-        });
-        next(error);
-    }
-}
+            logger.info('Classi iniziali create con successo', {
+                schoolId,
+                classesCreated: classes.length
+            });
 
-async removeStudentsFromClass(req, res, next) {
-    const { classId } = req.params;
-    const { studentIds } = req.body;
+            this.sendResponse(res, {
+                status: 'success',
+                data: {
+                    classes,
+                    message: `Create ${classes.length} classi con successo`
+                }
+            });
 
-    try {
-        if (!Array.isArray(studentIds) || studentIds.length === 0) {
-            return next(createError(
-                ErrorTypes.VALIDATION.BAD_REQUEST,
-                'Lista studenti non valida'
+        } catch (error) {
+            await session.abortTransaction();
+            logger.error('Errore nella creazione delle classi iniziali:', {
+                error: error.message,
+                stack: error.stack
+            });
+
+            next(createError(
+                ErrorTypes.DATABASE.QUERY_FAILED,
+                'Errore durante la creazione delle classi iniziali',
+                { originalError: error.message }
             ));
+        } finally {
+            session.endSession();
         }
-
-        const updatedClass = await this.repository.removeStudentsFromClass(
-            classId, 
-            studentIds
-        );
-
-        logger.info('Studenti rimossi dalla classe', {
-            classId,
-            studentCount: studentIds.length
-        });
-
-        this.sendResponse(res, { class: updatedClass });
-    } catch (error) {
-        logger.error('Errore nella rimozione studenti', {
-            error: error.message,
-            classId,
-            studentIds
-        });
-        next(error);
     }
-}
 
-async updateMainTeacher(req, res, next) {
-    try {
-        const { classId } = req.params;
-        const { teacherId } = req.body;
+    async getMyClasses(req, res, next) {
+        try {
+            logger.debug('ClassController: getMyClasses chiamato', {
+                userId: req.user._id,
+                role: req.user.role,
+                schoolId: req.user.schoolId
+            });
 
-        if (!teacherId) {
-            throw createError(
-                ErrorTypes.VALIDATION.BAD_REQUEST,
-                'ID docente richiesto'
-            );
+            const result = await this.repository.getMyClasses(req.user._id);
+            logger.debug('ClassController: Risultato ottenuto', {
+                mainTeacherClassesCount: result.mainTeacherClasses?.length,
+                coTeacherClassesCount: result.coTeacherClasses?.length
+            });
+
+            this.sendResponse(res, {
+                status: 'success',
+                mainTeacherClasses: result.mainTeacherClasses,
+                coTeacherClasses: result.coTeacherClasses
+            });
+
+        } catch (error) {
+            logger.error('ClassController: Errore in getMyClasses', {
+                error: error.message,
+                stack: error.stack,
+                userId: req.user?._id
+            });
+            next(error);
         }
-
-        const updatedClass = await this.repository.updateMainTeacher(classId, teacherId);
-        
-        this.sendResponse(res, { 
-            status: 'success',
-            data: { class: updatedClass }
-        });
-
-    } catch (error) {
-        next(error);
     }
-}
 
-async removeMainTeacher(req, res, next) {
-    try {
-        const { classId } = req.params;
-        
-        logger.debug('Removing main teacher from class:', { classId });
+    async getById(req, res, next) {
+        try {
+            const { id } = req.params;
+            logger.debug('Getting class details for:', { classId: id });
 
-        const updatedClass = await this.repository.removeMainTeacher(classId);
-        
-        this.sendResponse(res, {
-            status: 'success',
-            data: {
-                class: updatedClass
+            const classDetails = await this.repository.findWithDetails(id);
+            
+            if (!classDetails) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Classe non trovata'
+                );
             }
-        });
 
-    } catch (error) {
-        logger.error('Error in removeMainTeacher:', error);
-        next(error);
+            this.sendResponse(res, { 
+                status: 'success',
+                class: classDetails 
+            });
+
+        } catch (error) {
+            logger.error('Error getting class details:', { 
+                error: error.message,
+                classId: req.params.id 
+            });
+            next(error);
+        }
     }
-}
+
+    async removeStudentsFromClass(req, res, next) {
+        const { classId } = req.params;
+        const { studentIds } = req.body;
+
+        try {
+            if (!Array.isArray(studentIds) || studentIds.length === 0) {
+                return next(createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Lista studenti non valida'
+                ));
+            }
+
+            const updatedClass = await this.repository.removeStudentsFromClass(
+                classId, 
+                studentIds
+            );
+
+            logger.info('Studenti rimossi dalla classe', {
+                classId,
+                studentCount: studentIds.length
+            });
+
+            this.sendResponse(res, { class: updatedClass });
+        } catch (error) {
+            logger.error('Errore nella rimozione studenti', {
+                error: error.message,
+                classId,
+                studentIds
+            });
+            next(error);
+        }
+    }
+
+
+    async updateMainTeacher(req, res, next) {
+        try {
+            const { classId } = req.params;
+            const { teacherId } = req.body;
+    
+            if (!teacherId) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'ID docente richiesto'
+                );
+            }
+    
+            const updatedClass = await this.repository.updateMainTeacher(classId, teacherId);
+            
+            this.sendResponse(res, { 
+                status: 'success',
+                data: { class: updatedClass }
+            });
+    
+        } catch (error) {
+            next(error);
+        }
+    }
+    
+    async addTeacher(req, res, next) {
+        try {
+            const { classId } = req.params;
+            const { teacherId } = req.body;
+    
+            if (!teacherId) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'ID docente richiesto'
+                );
+            }
+    
+            const updatedClass = await this.repository.addTeacher(classId, teacherId);
+            
+            this.sendResponse(res, { 
+                status: 'success',
+                data: { class: updatedClass }
+            });
+    
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async removeTeacher(req, res, next) {
+        try {
+            const { classId, teacherId } = req.params;
+            
+            if (!teacherId) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'ID docente richiesto'
+                );
+            }
+
+            const updatedClass = await this.repository.removeTeacher(classId, teacherId);
+            
+            this.sendResponse(res, { 
+                status: 'success',
+                data: { class: updatedClass }
+            });
+
+        } catch (error) {
+            next(error);
+        }
+    }
+
+
+    async removeMainTeacher(req, res, next) {
+        try {
+            const { classId } = req.params;
+            
+            logger.debug('Removing main teacher from class:', { classId });
+    
+            const updatedClass = await this.repository.removeMainTeacher(classId);
+            
+            this.sendResponse(res, {
+                status: 'success',
+                data: {
+                    class: updatedClass
+                }
+            });
+    
+        } catch (error) {
+            logger.error('Error in removeMainTeacher:', error);
+            next(error);
+        }
+    }
 
 }
 
