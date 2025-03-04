@@ -12,6 +12,7 @@ const { setupCSIDependencies, createCSIController } = require('./engines/CSI/con
 const createCSIRoutes = require('./engines/CSI/routes/csi.routes');
 const createTestRouter = require('./routes/testRoutes');
 const createQuestionRoutes = require('./engines/CSI/routes/csi.question.routes');
+const YearTransitionController = require('./controllers/yearTransitionController');
 
 // Importa e registra i modelli CSI
 let models;
@@ -244,6 +245,7 @@ const startServer = async () => {
             studentBulkImportController,
             testController,
             csiController,
+            yearTransitionController: YearTransitionController,
             // CSI Dependencies
             ...csiDependencies,
             csiScorer: csiDependencies.csiScorer,  // Lo aggiungiamo esplicitamente

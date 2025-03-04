@@ -902,6 +902,76 @@ const getClassesByAcademicYear = async (schoolId, academicYear) => {
     }
 };
 
+// 1. Aggiungi questa funzione per ottenere l'anteprima della transizione
+const getTransitionPreview = async (schoolId, fromYear, toYear) => {
+    try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('Getting year transition preview:', { schoolId, fromYear, toYear });
+        
+        const response = await axiosInstance.get(
+            `/schools/${schoolId}/transition-preview`,
+            { params: { fromYear, toYear } }
+        );
+        
+        if (response.data.status === 'success') {
+            return response.data.data;
+        }
+        return null;
+    } catch (error) {
+        console.error('Error getting transition preview:', error);
+        const errorMessage = error.response?.data?.error?.message || 
+                           'Errore nel recupero dell\'anteprima della transizione';
+        setError(errorMessage);
+        showNotification(errorMessage, 'error');
+        return null;
+    } finally {
+        setLoading(false);
+    }
+};
+
+// 2. Aggiungi questa funzione per eseguire la transizione
+const executeYearTransition = async (schoolId, transitionData) => {
+    try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('Executing year transition:', { 
+            schoolId, 
+            fromYear: transitionData.fromYear,
+            toYear: transitionData.toYear,
+            exceptionsCount: transitionData.exceptions?.length || 0,
+            teacherAssignmentsCount: Object.keys(transitionData.teacherAssignments || {}).length || 0
+        });
+        
+        const response = await axiosInstance.post(
+            `/schools/${schoolId}/year-transition`,
+            transitionData
+        );
+        
+        if (response.data.status === 'success') {
+            showNotification('Transizione anno completata con successo', 'success');
+            
+            // Aggiorna lo stato della scuola selezionata
+            if (selectedSchool && selectedSchool._id === schoolId) {
+                await getSchoolById(schoolId);
+            }
+            
+            return response.data.data;
+        }
+    } catch (error) {
+        console.error('Error executing year transition:', error);
+        const errorMessage = error.response?.data?.error?.message || 
+                           'Errore nell\'esecuzione della transizione anno';
+        setError(errorMessage);
+        showNotification(errorMessage, 'error');
+        throw error;
+    } finally {
+        setLoading(false);
+    }
+};
+
     return (
         <SchoolContext.Provider value={{
             schools,
@@ -933,7 +1003,9 @@ const getClassesByAcademicYear = async (schoolId, academicYear) => {
             setupAcademicYear,
             activateAcademicYear,
             archiveAcademicYear,
-            getClassesByAcademicYear
+            getClassesByAcademicYear,
+            getTransitionPreview,
+            executeYearTransition
         }}>
             {children}
         </SchoolContext.Provider>

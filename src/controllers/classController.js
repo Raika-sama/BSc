@@ -261,125 +261,14 @@ class ClassController extends BaseController {
            parseInt(endYear) === currentYear + 1;
     }
 
-    // Nel ClassController
-    async handleYearTransition(req, res) {
-        const session = await mongoose.startSession();
-        session.startTransaction();
-
-        try {
-            logger.debug('handleYearTransition called with body:', req.body);
-            const { schoolId, fromYear, toYear, sections } = req.body;
-
-            // 1. Verifica input e scuola
-            if (!schoolId || !fromYear || !toYear || !sections) {
-                throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
-                    'Dati mancanti per la transizione'
-                );
-            }
-
-            const school = await School.findById(schoolId).session(session);
-            logger.debug('Found school:', school);
-
-            if (!school) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Scuola non trovata'
-                );
-            }
-
-            // 2. Cerca le classi esistenti del vecchio anno
-            const existingClasses = await Class.find({
-                schoolId,
-                academicYear: fromYear,
-                status: 'active'
-            }).session(session);
-
-            logger.debug('Found existing classes:', {
-                count: existingClasses.length,
-                classes: existingClasses.map(c => ({
-                    year: c.year,
-                    section: c.section,
-                    status: c.status
-                }))
-            });
-
-            // 3. Archivia le vecchie classi
-            const archiveResult = await Class.updateMany(
-                {
-                    schoolId,
-                    academicYear: fromYear,
-                    status: 'active'
-                },
-                {
-                    $set: {
-                        status: 'archived',
-                        'students.$[].status': 'transferred'
-                    }
-                },
-                { session }
-            );
-
-            logger.debug('Archived old classes', { archiveResult });
-
-            // 4. Crea le nuove classi promosse
-            const promotedClassesData = existingClasses
-                .filter(oldClass => oldClass.year < (school.schoolType === 'middle_school' ? 3 : 5))
-                .map(oldClass => ({
-                    schoolId,
-                    year: oldClass.year + 1,
-                    section: oldClass.section,
-                    academicYear: toYear,
-                    status: 'active',
-                    capacity: oldClass.capacity,
-                    mainTeacher: oldClass.mainTeacher,
-                    teachers: oldClass.teachers,
-                    isActive: true,
-                    students: []
-                }));
-
-            // 5. Crea le nuove prime classi
-            const newFirstYearClasses = sections.map(section => ({
-                schoolId,
-                year: 1,
-                section: section.name,
-                academicYear: toYear,
-                status: 'active',
-                capacity: section.maxStudents,
-                mainTeacher: section.mainTeacherId,
-                teachers: [],
-                isActive: true,
-                students: []
-            }));
-
-            // 6. Crea tutte le nuove classi
-            const allNewClasses = [...promotedClassesData, ...newFirstYearClasses];
-            logger.debug('Creating new classes:', {
-                count: allNewClasses.length,
-                promoted: promotedClassesData.length,
-                newFirstYear: newFirstYearClasses.length
-            });
-
-            const newClasses = await Class.create(allNewClasses, { session });
-
-            await session.commitTransaction();
-            logger.debug('Year transition completed successfully');
-
-            return this.sendResponse(res, {
-                message: 'Transizione anno completata',
-                newClasses
-            });
-
-        } catch (error) {
-            await session.abortTransaction();
-            logger.error('Error in handleYearTransition:', {
-                message: error.message,
-                stack: error.stack
-            });
-            return this.sendError(res, error);
-        } finally {
-            session.endSession();
-        }
+    /**
+     * Gestisce la transizione tra anni accademici
+     * @deprecated Use YearTransitionController.executeYearTransition instead
+     */
+    async handleYearTransition(req, res, next) {
+        console.warn('This method is deprecated. Use YearTransitionController.executeYearTransition instead');
+        // Redirect alla nuova implementazione
+        return res.redirect(307, `/api/schools/${req.body.schoolId}/year-transition`);
     }
     
     async getByAcademicYear(req, res) {

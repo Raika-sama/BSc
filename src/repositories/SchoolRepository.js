@@ -1609,7 +1609,7 @@ async changeSchoolType(schoolId, { schoolType, institutionType }) {
 // Aggiungi questi metodi alla classe SchoolRepository in SchoolRepository.js
 
 async activateAcademicYear(schoolId, yearId) {
-    const session = await mongoose.startSession();
+    const session = options.session;
     session.startTransaction();
 
     try {
@@ -1716,20 +1716,8 @@ async archiveAcademicYear(schoolId, yearId) {
             return school;
         }
 
-        // 4. Verifica se è l'anno attivo
+        // 4. Se ci sono anni pianificati e l'anno da archiviare è attivo, attiva il più recente
         if (yearToArchive.status === 'active') {
-            // Se è l'unico anno, non permettere l'archiviazione
-            const totalYears = school.academicYears.length;
-            const activeYears = school.academicYears.filter(y => y.status === 'active').length;
-            
-            if (activeYears === 1 && totalYears === 1) {
-                throw createError(
-                    ErrorTypes.BUSINESS.INVALID_OPERATION,
-                    'Impossibile archiviare l\'unico anno accademico disponibile'
-                );
-            }
-            
-            // Se ci sono anni pianificati, attiva il più recente
             const plannedYears = school.academicYears.filter(y => y.status === 'planned');
             if (plannedYears.length > 0) {
                 // Trova l'anno pianificato più recente
@@ -1746,7 +1734,72 @@ async archiveAcademicYear(schoolId, yearId) {
             }
         }
 
-        // 5. Archivia l'anno
+        // 5. Trova e aggiorna tutte le classi dell'anno
+        const classesToArchive = await this.classRepository.find({
+            schoolId,
+            academicYear: yearToArchive.year,
+            status: { $ne: 'archived' }
+        }).session(session);
+
+        // 6. Aggiorna le classi
+        for (const classDoc of classesToArchive) {
+            // Salva gli ID degli insegnanti prima di rimuoverli
+            const teacherIds = [...new Set([
+                classDoc.mainTeacher,
+                ...(classDoc.teachers || [])
+            ])].filter(id => id); // Rimuovi null/undefined
+
+            // Salva gli ID degli studenti
+            const studentIds = classDoc.students.map(s => s._id);
+
+            // Archivia la classe
+            classDoc.status = 'archived';
+            classDoc.isActive = false;
+            classDoc.archivedAt = new Date();
+            
+            // Rimuovi i riferimenti agli insegnanti
+            classDoc.mainTeacher = undefined;
+            classDoc.teachers = [];
+            
+            // Marca gli studenti come trasferiti
+            classDoc.students.forEach(student => {
+                student.status = 'transferred';
+                student.leftAt = new Date();
+            });
+
+            await classDoc.save({ session });
+
+            // 7. Aggiorna gli utenti (insegnanti)
+            if (teacherIds.length > 0) {
+                await this.userRepository.updateMany(
+                    { _id: { $in: teacherIds } },
+                    {
+                        $pull: {
+                            assignedClassIds: classDoc._id,
+                            assignedStudentIds: { $in: studentIds }
+                        }
+                    },
+                    { session }
+                );
+            }
+
+            // 8. Aggiorna gli studenti
+            if (studentIds.length > 0) {
+                await this.studentRepository.updateMany(
+                    { _id: { $in: studentIds } },
+                    {
+                        $set: {
+                            status: 'inactive',
+                            currentClass: null,
+                            updatedAt: new Date()
+                        }
+                    },
+                    { session }
+                );
+            }
+        }
+
+        // 9. Archivia l'anno
         yearToArchive.status = 'archived';
         await school.save({ session });
 
@@ -1754,7 +1807,8 @@ async archiveAcademicYear(schoolId, yearId) {
         
         logger.info('Anno accademico archiviato con successo', {
             schoolId,
-            yearId
+            yearId,
+            classesArchived: classesToArchive.length
         });
 
         return school;
