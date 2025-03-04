@@ -72,6 +72,19 @@ Esempio di permesso granulare:
 ```
 Questo permette all'utente di leggere e aggiornare classi, ma solo all'interno della scuola a cui è assegnato.
 
+### Ambiti Predefiniti per Ruolo
+
+Il sistema assegna automaticamente ambiti (scope) predefiniti per ogni ruolo e risorsa:
+
+| Ruolo | Ambito Predefinito | Note |
+|-------|-------------------|------|
+| `admin`, `developer` | `all` | Accesso completo a tutte le risorse |
+| `manager`, `pcto` | `school` | Limitato alla scuola assegnata |
+| `teacher` | `class` per classi/studenti<br>`school` per altre risorse | Accesso specifico alle classi assegnate |
+| `tutor` | `assigned` per studenti<br>`school` per altre risorse | Accesso specifico agli studenti assegnati |
+| `health` | `own` per test<br>`all` per altre risorse | Accesso solo ai propri test |
+| `student` | `own` | Limitato alle risorse assegnate |
+
 ## Accesso ai Test
 
 L'accesso ai test è regolato da un sistema di livelli numerici (0-8):
@@ -130,6 +143,22 @@ Le sessioni possono essere visualizzate e terminate dalla pagina di dettaglio ut
    - Termina la sessione
    - Cancella i cookie
 
+## Interfaccia di Gestione Permessi
+
+L'interfaccia di gestione permessi è organizzata in tre schede:
+
+### 1. Permessi Dettagliati
+Per ogni risorsa (users, schools, classes, ecc.):
+- **Selezione dell'ambito**: Menu a tendina che permette di scegliere tra "Tutte le risorse", "Scuola assegnata", "Classi assegnate", "Risorse assegnate" e "Risorse proprie"
+- **Selezione delle azioni**: Caselle di controllo per abilitare/disabilitare le singole azioni (read, create, update, delete, manage)
+
+### 2. Accesso Test
+- Selezione del livello di accesso ai test (0-8)
+- Visualizzazione della descrizione del livello selezionato
+
+### 3. Accesso Admin
+- Attivazione/disattivazione dell'accesso al pannello amministrativo
+
 ## Guida Pratica per Amministratori
 
 ### Creazione di un Nuovo Utente
@@ -151,9 +180,15 @@ Il sistema assegnerà automaticamente:
 1. Navigare a "Gestione Utenti" -> Selezionare l'utente
 2. Selezionare la scheda "Permessi"
 3. È possibile:
-   - Modificare i permessi dettagliati (risorse e azioni)
+   - Modificare i permessi dettagliati (risorse, azioni e ambiti)
    - Cambiare il livello di accesso ai test
    - Abilitare/disabilitare l'accesso al pannello amministrativo
+
+#### Personalizzazione avanzata dei permessi:
+1. Per ciascuna risorsa (es. "Gestione Studenti"), selezionare l'ambito desiderato dal menu a tendina
+2. Spuntare le azioni che l'utente può eseguire su quella risorsa (es. read, create, update)
+3. Ripetere per ogni risorsa che si desidera configurare
+4. Cliccare "Salva Permessi" per applicare le modifiche
 
 ### Assegnazione Risorse a un Utente
 
@@ -165,6 +200,15 @@ Il sistema assegnerà automaticamente:
    - Studenti (per tutor)
 
 Nota: È necessario assegnare le risorse appropriate in base al ruolo dell'utente per garantire il corretto funzionamento.
+
+### Reset dei Permessi
+
+Se è necessario riportare i permessi di un utente ai valori predefiniti per il suo ruolo:
+1. Navigare alla scheda "Permessi"
+2. Cliccare sul pulsante "Reimposta"
+3. Confermare l'operazione
+
+Questo resetterà tutti i permessi, gli scope e i livelli di accesso ai valori predefiniti in base al ruolo attuale dell'utente.
 
 ### Gestione Sessioni Utente
 
@@ -189,8 +233,9 @@ Nota: È necessario assegnare le risorse appropriate in base al ruolo dell'utent
 
 **Verificare**:
 1. Permessi granulari dell'utente (scheda Permessi)
-2. Assegnazione corretta di scuola/classi/studenti (scheda Risorse Assegnate)
-3. Livello di accesso ai test sia appropriato
+2. Scope (ambito) impostato correttamente
+3. Assegnazione corretta di scuola/classi/studenti (scheda Risorse Assegnate)
+4. Livello di accesso ai test sia appropriato
 
 ### Problema: Sessione terminata inaspettatamente
 
@@ -202,6 +247,8 @@ Nota: È necessario assegnare le risorse appropriate in base al ruolo dell'utent
 ## Best Practices
 
 1. **Principio del minimo privilegio**: Assegnare sempre i permessi minimi necessari per svolgere le funzioni richieste
+   - Limitare l'ambito all'area specifica (school, class, assigned) anziché assegnare "all"
+   - Limitare le azioni alle operazioni realmente necessarie (evitare "manage" quando non necessario)
 
 2. **Revisione periodica**: Controllare regolarmente gli accessi e i permessi degli utenti, soprattutto per ruoli privilegiati
 

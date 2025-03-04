@@ -39,6 +39,10 @@ const DocumentationViewer = () => {
         docPath = '/docs/ACCADEMICYEAR_GUIDE.md';
       } else if (docType === 'TestAssign-guide') { // Aggiungi questa condizione
         docPath = '/docs/TEST_ASSIGN.md';
+      } else if (docType === 'StudentBulkImport-guide') { // Aggiungi questa condizione
+        docPath = '/docs/GUIDA_IMPORT_STUDENTI.md';
+      } else if (docType === 'StudentBulkImport-system') { // Aggiungi questa condizione
+        docPath = '/docs/STUDENT_BULK_IMPORT.md';
       } else {
         throw new Error('Tipo di documentazione non supportato');
       }
@@ -172,7 +176,9 @@ const DocumentationViewer = () => {
       <MenuItem value="Section-system1">Guida al funzionamento delle sezioni</MenuItem>
       <MenuItem value="Section-system2">Guida al funzionamento del AccademicYear</MenuItem>
       <MenuItem value="TestAssign-guide">Guida alla assegnazione dei test</MenuItem>
-
+      <MenuItem value="StudentBulkImport-system">Student Bulk Import System </MenuItem>
+      <MenuItem value="StudentBulkImport-guide">Guida alla creazione di studenti con import Excel</MenuItem>
+      
     </Select>
   );
 

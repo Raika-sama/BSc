@@ -460,22 +460,50 @@ async delete(req, res) {
 
     /**
      * Cambia lo stato di un utente (attivo/inattivo/sospeso)
+     * @route PUT /users/:id/status
      */
     async changeStatus(req, res) {
         try {
             const { id } = req.params;
-            const { status } = req.body;
+            const { status, email, isDeleted, deletedAt } = req.body;
 
-            if (!status) {
+            logger.debug('Changing user status', { 
+                userId: id, 
+                newStatus: status, 
+                restoreEmail: email,
+                resetDeleted: isDeleted === false
+            });
+
+            if (!status || !['active', 'inactive', 'suspended'].includes(status)) {
                 return this.sendError(res, createError(
-                    ErrorTypes.VALIDATION.MISSING_FIELDS,
-                    'Stato richiesto'
+                    ErrorTypes.VALIDATION.INVALID_DATA,
+                    'Stato non valido. Valori ammessi: active, inactive, suspended'
                 ));
             }
 
-            const user = await this.userService.changeUserStatus(id, status);
+            // Preparazione dati per l'aggiornamento
+            const updateData = { status };
+
+            // Se stiamo riattivando un utente, gestiamo ripristino email e altri campi
+            if (status === 'active') {
+                // Se è fornita una email nel body (dal frontend) la usiamo per il ripristino
+                if (email) {
+                    updateData.email = email;
+                }
+                
+                // Resetta i flag di eliminazione se specificati
+                if (isDeleted === false) {
+                    updateData.isDeleted = false;
+                }
+                
+                if (deletedAt === null) {
+                    updateData.deletedAt = null;
+                }
+            }
+
+            const user = await this.userService.changeUserStatus(id, updateData);
             
-            logger.info('User status changed', { userId: id, status });
+            logger.info('User status changed', { userId: id, status, email });
 
             return this.sendResponse(res, {
                 status: 'success',
@@ -483,7 +511,7 @@ async delete(req, res) {
             });
         } catch (error) {
             logger.error('Change status failed', { error });
-            return this.handleError(res, error);
+            return this.sendError(res, error);
         }
     }
 

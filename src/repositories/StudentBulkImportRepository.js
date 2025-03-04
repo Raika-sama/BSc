@@ -7,7 +7,7 @@
 
 const mongoose = require('mongoose');
 const BaseRepository = require('./base/BaseRepository');
-const { Student } = require('../models');
+const { Student, Class } = require('../models');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 
@@ -20,15 +20,33 @@ class StudentBulkImportRepository extends BaseRepository {
     /**
      * Converte una data dal formato IT (DD/MM/YYYY) al formato ISO
      * @private
+     * @param {string} italianDate - Data in formato italiano DD/MM/YYYY
+     * @returns {string} - Data in formato ISO
      */
     _convertDate(italianDate) {
-        const [day, month, year] = italianDate.split('/');
-        return new Date(year, month - 1, day).toISOString();
+        // Gestisce diversi formati possibili
+        if (!italianDate) return null;
+        
+        // Prova a parsare come DD/MM/YYYY
+        if (typeof italianDate === 'string' && italianDate.includes('/')) {
+            const [day, month, year] = italianDate.split('/');
+            return new Date(year, month - 1, day).toISOString();
+        }
+        
+        // Se è già un Date object o una data ISO
+        if (italianDate instanceof Date || (typeof italianDate === 'string' && !isNaN(Date.parse(italianDate)))) {
+            return new Date(italianDate).toISOString();
+        }
+        
+        return null;
     }
 
     /**
      * Prepara i dati dello studente per l'inserimento
      * @private
+     * @param {Object} studentData - Dati grezzi dello studente
+     * @param {string} schoolId - ID della scuola
+     * @returns {Object} - Dati preparati per l'inserimento
      */
     _prepareStudentData(studentData, schoolId) {
         return {
@@ -37,19 +55,25 @@ class StudentBulkImportRepository extends BaseRepository {
             gender: studentData.gender,
             dateOfBirth: this._convertDate(studentData.dateOfBirth),
             email: studentData.email.trim().toLowerCase(),
-            parentEmail: studentData.parentEmail?.trim().toLowerCase(),
-            fiscalCode: studentData.fiscalCode?.trim().toUpperCase(),
+            parentEmail: studentData.parentEmail?.trim().toLowerCase() || null,
+            fiscalCode: studentData.fiscalCode?.trim().toUpperCase() || null,
             schoolId: schoolId,
-            specialNeeds: !!studentData.specialNeeds,
-            status: 'pending',
-            needsClassAssignment: true,
-            isActive: true
+            specialNeeds: studentData.specialNeeds === true,
+            status: studentData.classId ? 'active' : 'pending',
+            needsClassAssignment: !studentData.classId,
+            isActive: true,
+            // Aggiunti campi per assegnazione classe
+            classId: studentData.classId || null,
+            section: studentData.section || null,
+            year: studentData.year || null
         };
     }
 
     /**
      * Valida i dati preparati prima dell'inserimento
      * @private
+     * @param {Object} data - Dati preparati dello studente
+     * @returns {boolean} - true se valido, false altrimenti
      */
     _validatePreparedData(data) {
         return !!(
@@ -64,18 +88,17 @@ class StudentBulkImportRepository extends BaseRepository {
     }
 
     /**
-     * Esegue l'import massivo degli studenti
-     * @param {Array} studentsData - Array di dati degli studenti da importare
+     * Importa studenti con assegnazione opzionale alla classe
+     * @param {Array} studentsData - Array di studenti da importare
      * @param {string} schoolId - ID della scuola
-     * @returns {Object} Risultati dell'importazione
-     * @throws {Error} In caso di errori durante l'importazione
+     * @returns {Object} - Risultati dell'importazione
      */
-    async bulkImport(studentsData, schoolId) {
+    async bulkImportWithClass(studentsData, schoolId) {
         const session = await mongoose.startSession();
         session.startTransaction();
 
         try {
-            logger.debug('Starting bulk import process', { 
+            logger.debug('Starting bulk import with class assignment', { 
                 studentsCount: studentsData.length,
                 schoolId,
                 timestamp: new Date().toISOString()
@@ -104,7 +127,26 @@ class StudentBulkImportRepository extends BaseRepository {
                 });
             }
 
-            // Prepariamo tutti i dati
+            // Ottieni le classi per ID
+            let classes = [];
+            if (studentsData.some(s => s.classId)) {
+                const classIds = [...new Set(
+                    studentsData.filter(s => s.classId).map(s => s.classId)
+                )];
+                
+                classes = await Class.find(
+                    { _id: { $in: classIds } },
+                    null,
+                    { session }
+                );
+                
+                logger.debug('Found classes for assignment', {
+                    requestedClasses: classIds.length,
+                    foundClasses: classes.length
+                });
+            }
+
+            // Prepara tutti i dati degli studenti
             const preparedStudents = studentsData.map((student, index) => {
                 try {
                     // Salta gli studenti con email duplicate
@@ -121,8 +163,30 @@ class StudentBulkImportRepository extends BaseRepository {
                         });
                         return null;
                     }
-
+                    
+                    // Prepara dati di base
                     const preparedData = this._prepareStudentData(student, schoolId);
+                    
+                    // Se c'è un ID classe, verifica che esista
+                    if (student.classId) {
+                        const classObj = classes.find(c => c._id.toString() === student.classId);
+                        if (!classObj) {
+                            results.errors.push({
+                                row: index + 2,
+                                message: 'Classe non trovata',
+                                error: 'CLASS_NOT_FOUND',
+                                data: {
+                                    classId: student.classId,
+                                    studentName: `${student.firstName} ${student.lastName}`
+                                }
+                            });
+                            return null;
+                        }
+                        
+                        // Assegna mainTeacher e teachers dalla classe
+                        preparedData.mainTeacher = classObj.mainTeacher;
+                        preparedData.teachers = classObj.teachers;
+                    }
                     
                     // Validazione aggiuntiva dei dati preparati
                     if (!this._validatePreparedData(preparedData)) {
@@ -130,7 +194,6 @@ class StudentBulkImportRepository extends BaseRepository {
                     }
 
                     return preparedData;
-
                 } catch (error) {
                     results.errors.push({
                         row: index + 2,
@@ -159,9 +222,31 @@ class StudentBulkImportRepository extends BaseRepository {
             results.imported = insertedStudents.length;
             results.failed = studentsData.length - insertedStudents.length;
 
+            // Aggiorna le classi con i nuovi studenti
+            for (const classObj of classes) {
+                // Trova gli studenti inseriti per questa classe
+                const studentsForClass = insertedStudents.filter(
+                    s => s.classId && s.classId.toString() === classObj._id.toString()
+                );
+                
+                if (studentsForClass.length > 0) {
+                    // Aggiungi gli studenti alla classe
+                    const newStudentRecords = studentsForClass.map(student => ({
+                        studentId: student._id,
+                        status: 'active',
+                        joinedAt: new Date()
+                    }));
+                    
+                    classObj.students.push(...newStudentRecords);
+                    await classObj.save({ session });
+                    
+                    logger.debug(`Added ${studentsForClass.length} students to class ${classObj.year}${classObj.section}`);
+                }
+            }
+
             await session.commitTransaction();
             
-            logger.info('Bulk import completed successfully', {
+            logger.info('Bulk import with class completed successfully', {
                 imported: results.imported,
                 failed: results.failed,
                 errors: results.errors.length,
@@ -174,7 +259,7 @@ class StudentBulkImportRepository extends BaseRepository {
         } catch (error) {
             await session.abortTransaction();
             
-            logger.error('Error in bulk import:', { 
+            logger.error('Error in bulk import with class:', { 
                 error: error.message,
                 code: error.code,
                 stack: error.stack,
@@ -208,6 +293,25 @@ class StudentBulkImportRepository extends BaseRepository {
         } finally {
             session.endSession();
         }
+    }
+
+    /**
+     * Esegue l'import massivo di studenti senza assegnazione classe
+     * @param {Array} studentsData - Array di dati degli studenti da importare
+     * @param {string} schoolId - ID della scuola
+     * @returns {Object} Risultati dell'importazione
+     * @throws {Error} In caso di errori durante l'importazione
+     */
+    async bulkImport(studentsData, schoolId) {
+        return this.bulkImportWithClass(
+            studentsData.map(student => ({
+                ...student,
+                classId: null,
+                year: null,
+                section: null
+            })),
+            schoolId
+        );
     }
 }
 

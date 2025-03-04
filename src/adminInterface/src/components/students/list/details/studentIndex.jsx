@@ -151,24 +151,7 @@ const StudentIndex = ({ initialTab = 'info' }) => {
                 {/* Breadcrumbs e Header */}
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
                     <Box>
-                        <Breadcrumbs sx={{ mb: 1 }}>
-                            <Link 
-                                component="button"
-                                onClick={() => navigate('/admin/students')}
-                                sx={{ 
-                                    color: 'primary.main',
-                                    textDecoration: 'none',
-                                    '&:hover': {
-                                        textDecoration: 'underline'
-                                    }
-                                }}
-                            >
-                                Studenti
-                            </Link>
-                            <Typography color="text.secondary">
-                                Dettaglio Studente
-                            </Typography>
-                        </Breadcrumbs>
+                        
                         
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography 

@@ -223,7 +223,7 @@ const ApiExplorer = () => {
     <ContentLayout
       title="API Explorer"
       subtitle="Esplora e testa le API disponibili"
-      breadcrumbs={breadcrumbs}
+      //breadcrumbs={breadcrumbs}
       helpText="Usa questo strumento per testare le chiamate API disponibili nel sistema"
     >
       <Box sx={{ display: 'flex', gap: 2, height: '100%' }}>

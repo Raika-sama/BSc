@@ -1,4 +1,4 @@
-# Documentazione del Sistema di Gestione Utenti
+# Documentazione del Sistema di Gestione Utenti - Guida per Utenti Avanzati
 
 ## Panoramica del Sistema
 
@@ -9,7 +9,7 @@ Il sistema integra il controllo degli accessi basato sui ruoli (RBAC) con permes
 Caratteristiche principali:
 
 - Ruoli utente gerarchici (admin, developer, manager, teacher, ecc.)
-- Sistema di permessi basato su risorse
+- Sistema di permessi granulari a tre dimensioni (risorsa, azione, ambito)
 - Gestione del profilo utente
 - Relazioni utente-risorse (scuole, classi, studenti)
 - Controllo del livello di accesso ai test
@@ -212,6 +212,117 @@ userSchema.pre('save', function(next) {
 });
 ```
 
+## Sistema di Permessi Granulari
+
+### Introduzione
+
+Il sistema di permessi granulari implementa un modello di controllo degli accessi a tre dimensioni che combina:
+
+1. **Resource** (Risorsa): L'entità su cui si applica il permesso
+2. **Actions** (Azioni): Le operazioni permesse sulla risorsa
+3. **Scope** (Ambito): Il contesto specifico in cui il permesso viene applicato
+
+Questa struttura offre un controllo molto preciso, consentendo di configurare esattamente quali operazioni un utente può compiere su determinate risorse e in quali contesti.
+
+### Risorse Disponibili
+
+Le risorse rappresentano i differenti tipi di entità nel sistema:
+
+```javascript
+// Definite in PERMISSION_GROUPS in UserPermissions.jsx
+const resources = [
+    'users',      // Utenti del sistema
+    'schools',    // Scuole/istituti
+    'classes',    // Classi scolastiche
+    'students',   // Studenti
+    'tests',      // Test/valutazioni
+    'api',        // Endpoint API
+    'finance',    // Dati finanziari
+    'services',   // Stato dei servizi/sistemi
+    'analytics',  // Dati di analytics
+    'materials'   // Materiale didattico
+];
+```
+
+### Azioni Disponibili
+
+Le azioni rappresentano le operazioni che un utente può eseguire su una risorsa:
+
+```javascript
+// Azioni standard per ogni risorsa
+const actions = [
+    'read',       // Visualizzazione (GET)
+    'create',     // Creazione (POST)
+    'update',     // Modifica (PUT/PATCH)
+    'delete',     // Eliminazione (DELETE)
+    'manage'      // Gestione completa (include tutte le precedenti)
+];
+```
+
+### Ambiti (Scope) Disponibili
+
+L'ambito limita il contesto in cui un permesso viene applicato:
+
+```javascript
+// Definiti in PERMISSION_SCOPES in UserPermissions.jsx
+const scopes = [
+    'all',        // Tutte le risorse di quel tipo
+    'school',     // Solo risorse nella scuola assegnata
+    'class',      // Solo risorse nelle classi assegnate
+    'assigned',   // Solo risorse specificamente assegnate all'utente
+    'own'         // Solo risorse create/possedute dall'utente
+];
+```
+
+### Rappresentazione dei Permessi
+
+I permessi sono memorizzati come array di oggetti nella proprietà `permissions` dell'utente:
+
+```javascript
+// Esempio di permessi per un insegnante
+user.permissions = [
+    {
+        resource: 'classes',
+        actions: ['read', 'update'],
+        scope: 'school'
+    },
+    {
+        resource: 'students',
+        actions: ['read'],
+        scope: 'class'
+    },
+    {
+        resource: 'tests',
+        actions: ['read', 'create', 'update'],
+        scope: 'class'
+    }
+];
+```
+
+### Permessi Predefiniti per Ruolo
+
+Il sistema assegna automaticamente permessi predefiniti in base al ruolo dell'utente tramite il metodo `initializeUserPermissions` del `PermissionService`:
+
+```javascript
+// Funzionamento semplificato dell'inizializzazione dei permessi
+initializeUserPermissions(user) {
+    switch(user.role) {
+        case 'admin':
+            // Accesso completo a tutto
+            return this._setAdminPermissions(user);
+        case 'teacher':
+            // Accesso alle classi e studenti assegnati
+            return this._setTeacherPermissions(user);
+        case 'student':
+            // Accesso solo ai propri dati
+            return this._setStudentPermissions(user);
+        // Altri ruoli...
+        default:
+            return this._setDefaultPermissions(user);
+    }
+}
+```
+
 ## Sistema di Audit Utente
 
 Il sistema include una completa traccia di audit per le azioni degli utenti attraverso il modello `UserAudit`, definito in `src/models/UserAudit.js`:
@@ -338,6 +449,125 @@ async handlePasswordUpdate(userId, newPassword) {
 
     // Invalida tutte le sessioni esistenti
     await this.sessionService.removeAllSessions(userId);
+}
+```
+
+## Servizio di Gestione Permessi
+
+Il `PermissionService` in `src/services/PermissionService.js` è responsabile della gestione dei permessi utente.
+
+### Metodi Principali
+
+#### Inizializzazione Permessi
+
+```javascript
+/**
+ * Inizializza i permessi per un nuovo utente basati sul ruolo
+ * @param {Object} user - Utente da inizializzare
+ * @returns {Object} Utente con permessi inizializzati
+ */
+initializeUserPermissions(user) {
+    // Assegna livello di accesso ai test in base al ruolo
+    user.testAccessLevel = this.testAccessLevels[user.role] || 8;
+    
+    // Abilita accesso all'admin solo per admin e developer
+    user.hasAdminAccess = ['admin', 'developer'].includes(user.role);
+    
+    // Imposta permessi predefiniti basati sul ruolo
+    user.permissions = this.rolePermissions[user.role] || [];
+    
+    return user;
+}
+```
+
+#### Assegnazione Risorse
+
+```javascript
+/**
+ * Assegna risorse a un utente (scuola, classi, studenti)
+ * @param {string} userId - ID utente
+ * @param {Object} resources - Risorse da assegnare {schoolId, classIds, studentIds}
+ * @returns {Object} Utente aggiornato
+ */
+async assignResources(userId, resources) {
+    const user = await User.findById(userId);
+    
+    if (!user) {
+        throw createError(ErrorTypes.RESOURCE.NOT_FOUND, 'Utente non trovato');
+    }
+    
+    // Aggiorna le risorse assegnate
+    if (resources.schoolId) {
+        user.assignedSchoolId = resources.schoolId;
+    }
+    
+    if (resources.classIds && resources.classIds.length > 0) {
+        user.assignedClassIds = resources.classIds;
+    }
+    
+    if (resources.studentIds && resources.studentIds.length > 0) {
+        user.assignedStudentIds = resources.studentIds;
+    }
+    
+    await user.save();
+    return user;
+}
+```
+
+#### Aggiornamento Permessi
+
+```javascript
+/**
+ * Aggiorna i permessi di un utente
+ * @param {string} userId - ID utente
+ * @param {Array} permissions - Nuovi permessi
+ * @returns {Object} Utente aggiornato
+ */
+async updateUserPermissions(userId, permissions) {
+    const user = await User.findById(userId);
+    
+    if (!user) {
+        throw createError(ErrorTypes.RESOURCE.NOT_FOUND, 'Utente non trovato');
+    }
+    
+    // Valida i permessi
+    if (!this._validatePermissions(permissions)) {
+        throw createError(ErrorTypes.VALIDATION.INVALID_DATA, 'Permessi non validi');
+    }
+    
+    // Aggiorna i permessi
+    user.permissions = permissions;
+    
+    await user.save();
+    return user;
+}
+```
+
+#### Verifica Permessi
+
+```javascript
+/**
+ * Verifica se un utente ha un determinato permesso
+ * @param {Object} user - Utente
+ * @param {string} resource - Risorsa
+ * @param {string} action - Azione
+ * @param {Object} context - Contesto della richiesta
+ * @returns {boolean} True se l'utente ha il permesso
+ */
+hasPermission(user, resource, action, context = {}) {
+    // Admin e developer hanno sempre accesso completo
+    if (['admin', 'developer'].includes(user.role)) {
+        return true;
+    }
+    
+    // Controlla permessi espliciti
+    const explicitPermission = this._checkExplicitPermission(user, resource, action, context);
+    if (explicitPermission !== null) {
+        return explicitPermission;
+    }
+    
+    // Controlla permessi basati sul ruolo
+    return this._checkRolePermission(user, resource, action, context);
 }
 ```
 
