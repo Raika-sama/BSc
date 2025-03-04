@@ -20,6 +20,7 @@ const ClassController = require('./classController');
 const StudentController = require('./studentController');
 const TestController = require('./testController');
 const StudentAuthController = require('./StudentAuthController'); // Nuovo
+const YearTransitionController = require('./yearTransitionController');
 
 
 
@@ -53,7 +54,8 @@ const controllers = {
     class: new ClassController(classRepository, schoolRepository, userService),
     student: new StudentController(studentRepository, classRepository, schoolRepository),
     test: new TestController(testRepository, studentRepository, classRepository),
-    studentAuth: new StudentAuthController(studentAuthService, studentRepository) // Nuovo
+    studentAuth: new StudentAuthController(studentAuthService, studentRepository), // Nuovo
+    yearTransition: new YearTransitionController(schoolRepository, classRepository, studentRepository)
 };
 
 const requiredMethods = {

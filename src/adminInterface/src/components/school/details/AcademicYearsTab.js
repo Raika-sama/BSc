@@ -42,6 +42,7 @@ import {
 import { useSchool } from '../../../context/SchoolContext'; // Assicurati che il percorso sia corretto
 import { useNotification } from '../../../context/NotificationContext'; // Assicurati che il percorso sia corretto
 import { axiosInstance } from '../../../services/axiosConfig'; // Assicurati che il percorso sia corretto
+import YearTransitionButton from '../yearManagement/YearTransitionButton';
 
 const AcademicYearsTab = ({ school }) => {
     const { showNotification } = useNotification();
@@ -73,6 +74,8 @@ const AcademicYearsTab = ({ school }) => {
         status: "planned"
     });
     const [availableLetters, setAvailableLetters] = useState([]);
+    const [openArchiveDialog, setOpenArchiveDialog] = useState(false);
+    const [yearToArchive, setYearToArchive] = useState(null);
 
 
     useEffect(() => {
@@ -420,14 +423,21 @@ const handleCreateNewYear = async () => {
     };
     
     const handleArchiveYear = async (yearId) => {
+        setYearToArchive(currentYear);
+        setOpenArchiveDialog(true);
+    };
+
+    const handleConfirmArchive = async () => {
         try {
-            const response = await axiosInstance.post(`/schools/${school._id}/academic-years/${yearId}/archive`);
+            const response = await axiosInstance.post(
+                `/schools/${school._id}/academic-years/${yearToArchive._id}/archive`
+            );
             
             if (response.data.status === 'success') {
                 showNotification('Anno accademico archiviato con successo', 'success');
-                // Aggiorna i dati della scuola
                 await getSchoolById(school._id);
             }
+            setOpenArchiveDialog(false);
         } catch (error) {
             console.error('Error archiving academic year:', error);
             showNotification(
@@ -571,25 +581,33 @@ const handleCreateNewSection = async () => {
                                 </Paper>
                             </Grid>
                         </Grid>
-                        
                         <Box display="flex" justifyContent="space-between">
-                            <Button 
-                                variant="outlined" 
-                                startIcon={<ClassesIcon />}
-                                onClick={() => handleOpenClassesDialog(currentYear)}
-                            >
-                                Visualizza Classi
-                            </Button>
+                        <Button 
+                            variant="outlined" 
+                            startIcon={<ClassesIcon />}
+                            onClick={() => handleOpenClassesDialog(currentYear)}
+                        >
+                            Visualizza Classi
+                        </Button>
+                        
+                        <Box>
+                            <YearTransitionButton 
+                            school={school} 
+                            onTransitionComplete={() => getSchoolById(school._id)}
+                            />
                             
                             <Button 
-                                variant="outlined" 
-                                color="warning"
-                                startIcon={<ArchiveIcon />}
-                                onClick={() => handleArchiveYear(currentYear._id)}
+                            variant="outlined" 
+                            color="warning"
+                            startIcon={<ArchiveIcon />}
+                            onClick={() => handleArchiveYear(currentYear._id)}
+                            sx={{ ml: 1 }}
                             >
-                                Archivia Anno
+                            Archivia Anno
                             </Button>
                         </Box>
+                        </Box>
+                       
                     </>
                 ) : (
                     <Box>
@@ -873,6 +891,15 @@ const handleCreateNewSection = async () => {
                     
                     {newYearData.createClasses && (
     <Grid item xs={12}>
+        
+        <Button 
+                    variant="outlined" 
+                    size="small" 
+                    startIcon={<AddIcon />}
+                    onClick={handleOpenNewSectionDialog}
+                >
+                    Aggiungi nuova sezione
+                </Button>//da tenere???
         <Box sx={{ mb: 2 }}>
             <Button 
                 variant="outlined" 
@@ -1105,15 +1132,7 @@ const handleCreateNewSection = async () => {
         </Dialog>
     );
     
-    // Nel componente NewYearDialog modifica il pulsante di aggiunta sezione:
-    <Button 
-        variant="outlined" 
-        size="small" 
-        startIcon={<AddIcon />}
-        onClick={handleOpenNewSectionDialog}
-    >
-        Aggiungi nuova sezione
-    </Button>
+    
 
     // Dialog per visualizzazione classi
     const ClassesDialog = () => (
@@ -1174,14 +1193,62 @@ const handleCreateNewSection = async () => {
 
     return (
         <Box>
-            <CurrentYearCard />
+            <CurrentYearCard>
+           
+            </CurrentYearCard>
             <PlannedYearsCard />
             <PastYearsCard />
-            
+
             {/* Dialoghi */}
-            <NewYearDialog />
+            <NewYearDialog>
+                
+            </NewYearDialog>
             <ClassesDialog />
             <NewSectionDialog /> {/* Nuovo dialog */}
+
+            {/* Dialog di conferma archiviazione */}
+            <Dialog
+                open={openArchiveDialog}
+                onClose={() => setOpenArchiveDialog(false)}
+            >
+                <DialogTitle>
+                    Conferma Archiviazione Anno Accademico
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        <Typography paragraph>
+                            NOTA: Questa operazione è riservata agli utenti Administrator e Developer.
+                        </Typography>
+                        <Typography paragraph>
+                            Stai per archiviare l'anno accademico {yearToArchive?.year}. Questa operazione:
+                        </Typography>
+                        <ul>
+                            <li>Archivierà tutte le classi dell'anno</li>
+                            <li>Rimuoverà tutti i riferimenti agli insegnanti dalle classi</li>
+                            <li>Disattiverà gli studenti delle classi coinvolte</li>
+                            <li>Rimuoverà i riferimenti alle classi e agli studenti dai profili degli insegnanti</li>
+                            {yearToArchive?.status === 'active' && (
+                                <li>Attiverà automaticamente l'anno pianificato più recente (se presente)</li>
+                            )}
+                        </ul>
+                        <Typography color="error">
+                            Questa operazione non può essere annullata. Sei sicuro di voler procedere?
+                        </Typography>
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenArchiveDialog(false)}>
+                        Annulla
+                    </Button>
+                    <Button 
+                        onClick={handleConfirmArchive} 
+                        color="warning"
+                        variant="contained"
+                    >
+                        Conferma Archiviazione
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

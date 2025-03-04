@@ -1,84 +1,112 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent, Typography, Box } from '@mui/material';
-import { CardHeader, IconButton } from '@mui/material';
-import { Refresh } from '@mui/icons-material';
+import {
+    Box,
+    Card,
+    CardContent,
+    Typography,
+    IconButton,
+    alpha,
+    useTheme
+} from '@mui/material';
+import {
+    TrendingUp,
+    TrendingDown,
+} from '@mui/icons-material';
 
-const AnimatedStatCard = ({ title, value, icon, color, trend, percentage }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      whileHover={{ 
-        scale: 1.02,
-        transition: { duration: 0.2 }
-      }}
-      whileTap={{ scale: 0.98 }}
-    >
-      <Card>
-        <CardHeader
-          avatar={
-            <motion.div
-              initial={{ rotate: 0 }}
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.8, type: "spring" }}
-            >
-              <Box
+const AnimatedStatCard = ({ title, value, icon, color, trend, percentage, index = 0 }) => {
+    const theme = useTheme();
+    const isUp = trend === 'up';
+    const trendColor = isUp ? 'success.main' : 'error.main';
+    const TrendIcon = isUp ? TrendingUp : TrendingDown;
+    
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1, duration: 0.5 }}
+        >
+            <Card 
+                elevation={0}
                 sx={{
-                  backgroundColor: `${color}.light`,
-                  borderRadius: 2,
-                  p: 1.5,
-                  display: 'flex',
+                    height: '100%',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: theme.shadows[4]
+                    },
+                    position: 'relative',
+                    overflow: 'hidden'
                 }}
-              >
-                {icon}
-              </Box>
-            </motion.div>
-          }
-          action={
-            <IconButton size="small">
-              <Refresh />  {/* Qui era l'errore: cambiato da RefreshIcon a Refresh */}
-            </IconButton>
-          }
-        />
-        <CardContent>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            <Typography variant="h4" component="div" gutterBottom>
-              {value}
-            </Typography>
-          </motion.div>
-          <Box display="flex" alignItems="center" justifyContent="space-between">
-            <Typography variant="body2" color="text.secondary">
-              {title}
-            </Typography>
-            {trend && (
-              <motion.div
-                initial={{ x: -20 }}
-                animate={{ x: 0 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-              >
+            >
+                {/* Background decoration */}
                 <Box 
-                  display="flex" 
-                  alignItems="center" 
-                  sx={{ color: trend === 'up' ? 'success.main' : 'error.main' }}
-                >
-                  {trend === 'up' ? "↑" : "↓"}
-                  <Typography variant="body2" component="span" sx={{ ml: 0.5 }}>
-                    {percentage}%
-                  </Typography>
-                </Box>
-              </motion.div>
-            )}
-          </Box>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
+                    sx={{
+                        position: 'absolute',
+                        top: -10,
+                        right: -10,
+                        width: 100,
+                        height: 100,
+                        borderRadius: '50%',
+                        backgroundColor: alpha(theme.palette[color].main, 0.1),
+                        zIndex: 0
+                    }}
+                />
+                <CardContent sx={{ position: 'relative', zIndex: 1 }}>
+                    <Box 
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            mb: 2
+                        }}
+                    >
+                        <Typography variant="h6" color="textSecondary">
+                            {title}
+                        </Typography>
+                        <Box 
+                            sx={{ 
+                                backgroundColor: alpha(theme.palette[color].main, 0.1), 
+                                borderRadius: '50%',
+                                p: 1,
+                                color: `${color}.main`
+                            }}
+                        >
+                            {icon}
+                        </Box>
+                    </Box>
+
+                    <Typography 
+                        variant="h4" 
+                        sx={{ 
+                            fontWeight: 700, 
+                            mb: 1.5,
+                            color: theme.palette.mode === 'light' ? 'text.primary' : 'text.primary'
+                        }}
+                    >
+                        {value.toLocaleString()}
+                    </Typography>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <TrendIcon sx={{ color: trendColor, fontSize: '1rem', mr: 0.5 }} />
+                        <Typography 
+                            variant="body2" 
+                            component="span" 
+                            sx={{ color: trendColor, fontWeight: 500 }}
+                        >
+                            {percentage}%
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" sx={{ ml: 1 }}>
+                            rispetto al mese scorso
+                        </Typography>
+                    </Box>
+                </CardContent>
+            </Card>
+        </motion.div>
+    );
 };
 
 export default AnimatedStatCard;

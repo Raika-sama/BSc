@@ -122,6 +122,15 @@ const TEST_ACCESS_LEVELS = [
     { value: 8, label: 'Student - Test Assegnati', description: 'Accesso solo ai test assegnati' }
 ];
 
+// Definizione degli scope di permesso disponibili
+const PERMISSION_SCOPES = [
+    { value: 'all', label: 'Tutte le risorse', description: 'Accesso a tutte le risorse di questo tipo' },
+    { value: 'school', label: 'Scuola assegnata', description: 'Solo risorse della scuola assegnata' },
+    { value: 'class', label: 'Classi assegnate', description: 'Solo risorse delle classi assegnate' },
+    { value: 'assigned', label: 'Risorse assegnate', description: 'Solo risorse specificamente assegnate all\'utente' },
+    { value: 'own', label: 'Risorse proprie', description: 'Solo risorse create/possedute dall\'utente' }
+];
+
 const UserPermissions = ({ userData, onUpdate }) => {
     const { updateUser } = useUser();
     const [tabValue, setTabValue] = useState(0);
@@ -134,6 +143,8 @@ const UserPermissions = ({ userData, onUpdate }) => {
     const [testAccessLevel, setTestAccessLevel] = useState(userData.testAccessLevel || 8);
     // Stato per l'accesso al frontend admin
     const [hasAdminAccess, setHasAdminAccess] = useState(false);
+    // Nuovo: stato per tenere traccia dello scope selezionato per ogni risorsa
+    const [selectedScopes, setSelectedScopes] = useState({});
 
     // Inizializza lo stato dai dati utente
     useEffect(() => {
@@ -144,9 +155,44 @@ const UserPermissions = ({ userData, onUpdate }) => {
             setTestAccessLevel(userData.testAccessLevel !== undefined ? userData.testAccessLevel : getDefaultTestAccessLevel(userData.role));
             // Inizializza l'accesso admin
             setHasAdminAccess(userData.hasAdminAccess || ['admin', 'developer'].includes(userData.role));
+            
+            // Inizializza gli scope selezionati in base ai permessi esistenti
+            const scopes = {};
+            if (userData.permissions) {
+                userData.permissions.forEach(perm => {
+                    scopes[perm.resource] = perm.scope || 'all';
+                });
+            }
+            
+            // Imposta valori di default per le risorse senza scope specificato
+            Object.keys(PERMISSION_GROUPS).forEach(group => {
+                const resource = PERMISSION_GROUPS[group].resources[0];
+                if (!scopes[resource]) {
+                    scopes[resource] = getDefaultScope(userData.role, resource);
+                }
+            });
+            
+            setSelectedScopes(scopes);
         }
     }, [userData]); // Dipende solo da userData
     
+    // Funzione per ottenere lo scope predefinito in base al ruolo e alla risorsa
+    const getDefaultScope = (role, resource) => {
+        // Mapping di default per scope in base al ruolo
+        const roleScopeMap = {
+            admin: 'all',
+            developer: 'all',
+            manager: 'school',
+            pcto: 'school',
+            teacher: resource === 'classes' || resource === 'students' ? 'class' : 'school',
+            tutor: resource === 'students' ? 'assigned' : 'school',
+            researcher: 'all',
+            health: resource === 'tests' ? 'own' : 'all',
+            student: 'own'
+        };
+        
+        return roleScopeMap[role] || 'own';
+    };
 
     // Funzione per ottenere il livello di accesso ai test predefinito in base al ruolo
     const getDefaultTestAccessLevel = (role) => {
@@ -162,6 +208,40 @@ const UserPermissions = ({ userData, onUpdate }) => {
             student: 8
         };
         return defaultLevels[role] || 8;
+    };
+
+    // Gestisci il cambio di scope per una risorsa
+    const handleScopeChange = (resource, newScope) => {
+        // Aggiorna lo stato degli scope selezionati
+        setSelectedScopes(prev => ({
+            ...prev,
+            [resource]: newScope
+        }));
+        
+        // Aggiorna i permessi esistenti per questa risorsa con il nuovo scope
+        setPermissions(prev => {
+            // Trova tutti i permessi per questa risorsa
+            const resourcePermissions = prev.filter(p => p.resource === resource);
+            
+            // Se non ci sono permessi per questa risorsa, non fare nulla
+            if (resourcePermissions.length === 0) return prev;
+            
+            // Raccogli tutte le azioni dai permessi esistenti per questa risorsa
+            const allActions = resourcePermissions.flatMap(p => p.actions);
+            
+            // Rimuovi i permessi vecchi per questa risorsa
+            const otherPermissions = prev.filter(p => p.resource !== resource);
+            
+            // Aggiungi un nuovo permesso con tutte le azioni raccolte e il nuovo scope
+            return [
+                ...otherPermissions,
+                {
+                    resource,
+                    actions: [...new Set(allActions)], // Rimuovi azioni duplicate
+                    scope: newScope
+                }
+            ];
+        });
     };
 
     // Gestisci il cambio di permesso
@@ -214,11 +294,14 @@ const UserPermissions = ({ userData, onUpdate }) => {
     };
 
     // Verifica se un permesso è attivo
-    const isPermissionEnabled = (resource, action, scope = 'all') => {
+    const isPermissionEnabled = (resource, action, scope) => {
+        // Se non è specificato uno scope, usa quello selezionato per la risorsa
+        const effectiveScope = scope || selectedScopes[resource] || 'all';
+        
         return permissions.some(p => 
             p.resource === resource && 
             p.actions.includes(action) && 
-            p.scope === scope
+            p.scope === effectiveScope
         );
     };
 
@@ -353,6 +436,8 @@ const handleSave = async () => {
                 <Grid container spacing={3}>
                     {Object.entries(PERMISSION_GROUPS).map(([key, group]) => {
                         const Icon = group.icon;
+                        const resource = group.resources[0];
+                        const currentScope = selectedScopes[resource] || 'all';
                         
                         return (
                             <Grid item xs={12} md={6} key={key}>
@@ -363,6 +448,27 @@ const handleSave = async () => {
                                     />
                                     <Divider />
                                     <CardContent>
+                                        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                                            <InputLabel id={`scope-select-${resource}`}>Ambito</InputLabel>
+                                            <Select
+                                                labelId={`scope-select-${resource}`}
+                                                value={currentScope}
+                                                label="Ambito"
+                                                onChange={(e) => handleScopeChange(resource, e.target.value)}
+                                                size="small"
+                                            >
+                                                {PERMISSION_SCOPES.map(scope => (
+                                                    <MenuItem 
+                                                        key={scope.value} 
+                                                        value={scope.value}
+                                                        title={scope.description}
+                                                    >
+                                                        {scope.label}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                        
                                         <Typography variant="subtitle2" gutterBottom>
                                             Azioni:
                                         </Typography>
@@ -373,11 +479,11 @@ const handleSave = async () => {
                                                         control={
                                                             <Checkbox
                                                                 size="small"
-                                                                checked={isPermissionEnabled(group.resources[0], action)}
+                                                                checked={isPermissionEnabled(resource, action, currentScope)}
                                                                 onChange={(e) => handlePermissionChange(
-                                                                    group.resources[0], 
+                                                                    resource, 
                                                                     action, 
-                                                                    'all', 
+                                                                    currentScope, 
                                                                     e.target.checked
                                                                 )}
                                                             />
@@ -419,7 +525,7 @@ const handleSave = async () => {
                                 Descrizione del livello di accesso:
                             </Typography>
                             <Typography variant="body2">
-                                {TEST_ACCESS_LEVELS.find(l => l.value === testAccessLevel)?.description || 
+                                {TEST_ACCESS_LEVELS.find(l => l.value === parseInt(testAccessLevel))?.description || 
                                 'Descrizione non disponibile'}
                             </Typography>
                         </Paper>
@@ -453,7 +559,15 @@ const handleSave = async () => {
                 <Button
                     variant="outlined"
                     onClick={() => {
-                        // Reimposta i permessi in base al ruolo
+                        // Reimposta gli scope predefiniti per ogni risorsa
+                        const defaultScopes = {};
+                        Object.keys(PERMISSION_GROUPS).forEach(group => {
+                            const resource = PERMISSION_GROUPS[group].resources[0];
+                            defaultScopes[resource] = getDefaultScope(userData.role, resource);
+                        });
+                        setSelectedScopes(defaultScopes);
+                        
+                        // Reimposta gli altri valori
                         setTestAccessLevel(getDefaultTestAccessLevel(userData.role));
                         setHasAdminAccess(['admin', 'developer'].includes(userData.role));
                         setPermissions([]);

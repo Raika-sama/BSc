@@ -399,19 +399,14 @@ class UserService {
     /**
      * Cambia lo stato di un utente
      * @param {string} userId - ID utente
-     * @param {string} newStatus - Nuovo stato
+     * @param {Object} updateData - Dati di aggiornamento con stato e altri campi opzionali
      */
-    async changeUserStatus(userId, newStatus) {
+    async changeUserStatus(userId, updateData) {
         try {
-            const validStatuses = ['active', 'inactive', 'suspended'];
-            if (!validStatuses.includes(newStatus)) {
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_STATUS,
-                    'Stato non valido'
-                );
-            }
-
+            logger.info(`Changing user status for ${userId}`, { updateData });
+            
             const user = await this.userRepository.findById(userId);
+            
             if (!user) {
                 throw createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,
@@ -419,18 +414,64 @@ class UserService {
                 );
             }
 
-            user.status = newStatus;
-            if (newStatus !== 'active') {
-                // Termina tutte le sessioni se l'utente viene disattivato
-                await this.sessionService.removeAllSessions(userId);
+            // Prepara i dati di aggiornamento base
+            const dataToUpdate = {
+                status: updateData.status
+            };
+            
+            // Se stiamo riattivando un utente, potrebbero essere necessari ulteriori aggiornamenti
+            if (updateData.status === 'active' && user.status !== 'active') {
+                logger.info(`Reactivating user ${userId}`, { 
+                    currentEmail: user.email,
+                    providedEmail: updateData.email,
+                    isDeleted: user.isDeleted
+                });
+                
+                // Ripristina l'email se specificata
+                if (updateData.email) {
+                    dataToUpdate.email = updateData.email;
+                } else if (user.email && user.email.startsWith('deleted_')) {
+                    // Tenta di estrarre la email originale dal pattern deleted_TIMESTAMP_email
+                    const emailParts = user.email.split('_');
+                    if (emailParts.length >= 3) {
+                        const originalEmail = emailParts.slice(2).join('_');
+                        if (originalEmail.includes('@')) {
+                            dataToUpdate.email = originalEmail;
+                            logger.info(`Extracted original email from deleted_prefixed email: ${originalEmail}`);
+                        }
+                    }
+                }
+                
+                // Ripristina flag di eliminazione
+                dataToUpdate.isDeleted = false;
+                dataToUpdate.deletedAt = null;
+                
+                // Se erano stati cancellati i riferimenti alle risorse, verifica se possiamo recuperarli
+                if (user.previousAssignments) {
+                    if (!user.assignedSchoolIds?.length && user.previousAssignments.schoolIds) {
+                        dataToUpdate.assignedSchoolIds = user.previousAssignments.schoolIds;
+                    }
+                    if (!user.assignedClassIds?.length && user.previousAssignments.classIds) {
+                        dataToUpdate.assignedClassIds = user.previousAssignments.classIds;
+                    }
+                    if (!user.assignedStudentIds?.length && user.previousAssignments.studentIds) {
+                        dataToUpdate.assignedStudentIds = user.previousAssignments.studentIds;
+                    }
+                }
+            } 
+            // Se stiamo disattivando l'utente, potrebbe essere una preparazione per soft delete
+            else if (updateData.status === 'inactive' && user.status === 'active') {
+                // Non facciamo nulla di particolare qui - il cambio di status è sufficiente
+                // Il deleteUser si occupa degli altri passi necessari per il soft delete completo
             }
-
-            await user.save();
-            logger.info('User status changed', { userId, newStatus });
-
-            return this.sanitizeUser(user);
+            
+            // Aggiorna l'utente con i dati preparati
+            const updatedUser = await this.userRepository.update(userId, dataToUpdate);
+            logger.info(`User status updated successfully for ${userId}`, { newStatus: updateData.status });
+            
+            return updatedUser;
         } catch (error) {
-            logger.error('Error changing user status', { error });
+            logger.error('Error changing user status:', { error, userId });
             throw error;
         }
     }

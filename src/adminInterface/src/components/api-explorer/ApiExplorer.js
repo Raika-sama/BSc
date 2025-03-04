@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { axiosInstance } from '../../services/axiosConfig';
 import ContentLayout from '../common/ContentLayout';
 
@@ -16,6 +16,12 @@ import {
   TextField,
   Button,
   alpha,
+  ListItemButton,
+  Collapse,
+  Tooltip,
+  Badge,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   PlayArrow as PlayArrowIcon,
@@ -23,6 +29,10 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Delete as DeleteIcon,
+  History as HistoryIcon,
+  Clear as ClearIcon,
+  CheckCircle as SuccessIcon,
+  Error as ErrorIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 
@@ -133,17 +143,31 @@ const ApiExplorer = () => {
   const [params, setParams] = useState({});
   const [queryParams, setQueryParams] = useState({});
   const [bodyContent, setBodyContent] = useState('');
+  const [errorDetails, setErrorDetails] = useState(null);
+  const [historyFilter, setHistoryFilter] = useState('all'); // all, success, error
 
   const breadcrumbs = [
     { text: 'Dashboard', path: '/admin' },
     { text: 'Strumenti', path: '/admin/tools' }
   ];
 
+  const filteredHistory = useMemo(() => {
+    switch (historyFilter) {
+      case 'success':
+        return history.filter(item => item.success);
+      case 'error':
+        return history.filter(item => !item.success);
+      default:
+        return history;
+    }
+  }, [history, historyFilter]);
+
   const handleRequest = async () => {
     if (!selectedEndpoint) return;
     
     setLoading(true);
     setResponse(null);
+    setErrorDetails(null);
     
     const startTime = performance.now();
     
@@ -152,39 +176,75 @@ const ApiExplorer = () => {
       let url = selectedEndpoint.path;
       if (selectedEndpoint.params) {
         Object.entries(params).forEach(([key, value]) => {
+          if (!value) throw new Error(`Missing required URL parameter: ${key}`);
           url = url.replace(key, value);
         });
       }
 
       // Add query parameters
       if (selectedEndpoint.query) {
-        const queryString = new URLSearchParams(queryParams).toString();
+        const queryString = new URLSearchParams(
+          Object.entries(queryParams).filter(([_, v]) => v !== '')
+        ).toString();
         if (queryString) {
           url += `?${queryString}`;
+        }
+      }
+
+      // Validate JSON body if present
+      let parsedBody;
+      if (selectedEndpoint.body && bodyContent) {
+        try {
+          parsedBody = JSON.parse(bodyContent);
+        } catch (e) {
+          throw new Error('Invalid JSON in request body');
         }
       }
 
       const response = await axiosInstance({
         method: selectedEndpoint.method,
         url,
-        data: selectedEndpoint.body ? JSON.parse(bodyContent || '{}') : undefined
+        data: parsedBody
       });
       
       const endTime = performance.now();
-      setRequestTime(endTime - startTime);
+      const duration = endTime - startTime;
       
+      setRequestTime(duration);
       setResponse(response.data);
+      
+      // Add to history
       setHistory(prev => [{
         endpoint: selectedEndpoint,
         timestamp: new Date().toISOString(),
-        duration: endTime - startTime,
+        duration,
         status: response.status,
-      }, ...prev.slice(0, 9)]);
+        success: true
+      }, ...prev.slice(0, 19)]); // Keep last 20 requests
       
     } catch (error) {
-      setResponse({ 
-        error: error.response?.data || error.message 
+      const errorResponse = {
+        error: error.response?.data || error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText
+      };
+      
+      setResponse(errorResponse);
+      setErrorDetails({
+        message: error.message,
+        status: error.response?.status,
+        details: error.response?.data
       });
+      
+      // Add failed request to history
+      setHistory(prev => [{
+        endpoint: selectedEndpoint,
+        timestamp: new Date().toISOString(),
+        duration: performance.now() - startTime,
+        status: error.response?.status || 'ERROR',
+        success: false,
+        error: error.message
+      }, ...prev.slice(0, 19)]);
     } finally {
       setLoading(false);
     }
@@ -219,118 +279,286 @@ const ApiExplorer = () => {
     }
   };
 
+  const clearHistory = () => {
+    setHistory([]);
+    setShowHistory(false);
+  };
+
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString();
+  };
+
   return (
     <ContentLayout
       title="API Explorer"
       subtitle="Esplora e testa le API disponibili"
-      breadcrumbs={breadcrumbs}
+      //breadcrumbs={breadcrumbs}
       helpText="Usa questo strumento per testare le chiamate API disponibili nel sistema"
+      action={
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Tooltip title="Request History">
+            <IconButton 
+              onClick={() => setShowHistory(!showHistory)}
+              color={showHistory ? 'primary' : 'default'}
+            >
+              <Badge badgeContent={history.length} color="primary">
+                <HistoryIcon />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+          {history.length > 0 && (
+            <Tooltip title="Clear History">
+              <IconButton onClick={clearHistory}>
+                <ClearIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      }
     >
       <Box sx={{ display: 'flex', gap: 2, height: '100%' }}>
-        {/* Left Panel - Endpoints */}
-        <Paper 
-          elevation={0}
-          sx={{ 
-            width: 400, 
-            height: '100%',
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 2,
-            overflow: 'hidden'
-          }}
-        >
-          <Tabs
-            value={currentTab}
-            onChange={(e, v) => setCurrentTab(v)}
-            variant="scrollable"
-            scrollButtons="auto"
-            sx={{
-              borderBottom: 1,
+        {/* Left Panel - Endpoints & History */}
+        <Box sx={{ width: 400, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {/* Endpoints Panel */}
+          <Paper 
+            elevation={0}
+            sx={{ 
+              flex: showHistory ? 0.6 : 1,
+              border: '1px solid',
               borderColor: 'divider',
-              bgcolor: theme => alpha(theme.palette.primary.main, 0.03),
-              '& .MuiTab-root': {
-                textTransform: 'uppercase',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                minWidth: 100
-              }
+              borderRadius: 2,
+              overflow: 'hidden',
+              transition: 'flex 0.3s ease'
             }}
           >
-            {Object.keys(endpoints).map(category => (
-              <Tab 
-                key={category} 
-                label={category} 
-                value={category}
-              />
-            ))}
-          </Tabs>
-          
-          <List sx={{ 
-            overflow: 'auto', 
-            height: 'calc(100% - 48px)',
-            '& .MuiListItem-root': {
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                bgcolor: theme => alpha(theme.palette.primary.main, 0.04)
-              },
-              '&.Mui-selected': {
-                bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
+            <Tabs
+              value={currentTab}
+              onChange={(e, v) => setCurrentTab(v)}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
+                bgcolor: theme => alpha(theme.palette.primary.main, 0.03),
+                '& .MuiTab-root': {
+                  textTransform: 'uppercase',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  minWidth: 100
+                }
+              }}
+            >
+              {Object.keys(endpoints).map(category => (
+                <Tab 
+                  key={category} 
+                  label={category} 
+                  value={category}
+                />
+              ))}
+            </Tabs>
+            
+            <List sx={{ 
+              overflow: 'auto', 
+              height: 'calc(100% - 48px)',
+              '& .MuiListItem-root': {
+                transition: 'all 0.2s ease',
                 '&:hover': {
-                  bgcolor: theme => alpha(theme.palette.primary.main, 0.12)
+                  bgcolor: theme => alpha(theme.palette.primary.main, 0.04)
+                },
+                '&.Mui-selected': {
+                  bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
+                  '&:hover': {
+                    bgcolor: theme => alpha(theme.palette.primary.main, 0.12)
+                  }
                 }
               }
-            }
-          }}>
-            {endpoints[currentTab].map((endpoint, index) => (
-              <ListItem
-                key={index}
-                button
-                selected={selectedEndpoint?.path === endpoint.path}
-                onClick={() => handleEndpointSelect(endpoint)}
-                sx={{ borderBottom: '1px solid', borderColor: 'divider' }}
-              >
-                <ListItemText
-                  primary={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Chip
-                        label={endpoint.method}
-                        size="small"
-                        sx={{
-                          bgcolor: getMethodColor(endpoint.method),
-                          color: 'white',
-                          minWidth: 60,
-                          fontWeight: 600
-                        }}
-                      />
+            }}>
+              {endpoints[currentTab].map((endpoint, index) => (
+                <ListItem
+                  key={index}
+                  button
+                  selected={selectedEndpoint?.path === endpoint.path}
+                  onClick={() => handleEndpointSelect(endpoint)}
+                  sx={{ borderBottom: '1px solid', borderColor: 'divider' }}
+                >
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Chip
+                          label={endpoint.method}
+                          size="small"
+                          sx={{
+                            bgcolor: getMethodColor(endpoint.method),
+                            color: 'white',
+                            minWidth: 60,
+                            fontWeight: 600
+                          }}
+                        />
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            fontFamily: 'monospace',
+                            fontSize: '0.8rem',
+                            color: theme => theme.palette.mode === 'dark' ? 'grey.300' : 'grey.800'
+                          }}
+                        >
+                          {endpoint.path}
+                        </Typography>
+                      </Box>
+                    }
+                    secondary={
                       <Typography 
-                        variant="body2" 
+                        variant="caption" 
                         sx={{ 
-                          fontFamily: 'monospace',
-                          fontSize: '0.8rem',
-                          color: theme => theme.palette.mode === 'dark' ? 'grey.300' : 'grey.800'
+                          color: 'text.secondary',
+                          display: 'block',
+                          mt: 0.5
                         }}
                       >
-                        {endpoint.path}
+                        {endpoint.description}
                       </Typography>
-                    </Box>
-                  }
-                  secondary={
-                    <Typography 
-                      variant="caption" 
-                      sx={{ 
-                        color: 'text.secondary',
-                        display: 'block',
-                        mt: 0.5
-                      }}
+                    }
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+
+          {/* History Panel */}
+          <Collapse in={showHistory} timeout="auto">
+            <Paper
+              elevation={0}
+              sx={{
+                flex: 0.4,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                overflow: 'hidden'
+              }}
+            >
+              <Box sx={{ 
+                p: 2, 
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  Request History
+                </Typography>
+                <Box>
+                  <Tooltip title="Show All">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => setHistoryFilter('all')}
+                      color={historyFilter === 'all' ? 'primary' : 'default'}
                     >
-                      {endpoint.description}
-                    </Typography>
-                  }
-                />
-              </ListItem>
-            ))}
-          </List>
-        </Paper>
+                      <HistoryIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Show Successful">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => setHistoryFilter('success')}
+                      color={historyFilter === 'success' ? 'primary' : 'default'}
+                    >
+                      <SuccessIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Show Errors">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => setHistoryFilter('error')}
+                      color={historyFilter === 'error' ? 'primary' : 'default'}
+                    >
+                      <ErrorIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Box>
+              <List sx={{ 
+                overflow: 'auto',
+                maxHeight: 300,
+                '& .MuiListItemButton-root': {
+                  borderBottom: '1px solid',
+                  borderColor: 'divider'
+                }
+              }}>
+                {filteredHistory.map((item, index) => (
+                  <ListItemButton 
+                    key={index}
+                    onClick={() => {
+                      setCurrentTab(item.endpoint.category);
+                      handleEndpointSelect(item.endpoint);
+                    }}
+                  >
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Chip
+                            label={item.endpoint.method}
+                            size="small"
+                            sx={{
+                              bgcolor: getMethodColor(item.endpoint.method),
+                              color: 'white',
+                              minWidth: 60,
+                              fontWeight: 600
+                            }}
+                          />
+                          <Typography 
+                            variant="body2"
+                            sx={{ 
+                              fontFamily: 'monospace',
+                              fontSize: '0.8rem'
+                            }}
+                          >
+                            {item.endpoint.path}
+                          </Typography>
+                        </Box>
+                      }
+                      secondary={
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 1,
+                          mt: 0.5 
+                        }}>
+                          {item.success ? (
+                            <SuccessIcon 
+                              fontSize="small" 
+                              sx={{ color: 'success.main' }} 
+                            />
+                          ) : (
+                            <ErrorIcon 
+                              fontSize="small" 
+                              sx={{ color: 'error.main' }} 
+                            />
+                          )}
+                          <Typography variant="caption">
+                            {formatTimestamp(item.timestamp)}
+                          </Typography>
+                          <Typography variant="caption">
+                            {item.duration.toFixed(0)}ms
+                          </Typography>
+                          {!item.success && (
+                            <Typography 
+                              variant="caption" 
+                              sx={{ color: 'error.main' }}
+                            >
+                              {item.status}
+                            </Typography>
+                          )}
+                        </Box>
+                      }
+                    />
+                  </ListItemButton>
+                ))}
+              </List>
+            </Paper>
+          </Collapse>
+        </Box>
 
         {/* Right Panel - Request/Response */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -529,8 +757,63 @@ const ApiExplorer = () => {
               </Box>
             </Paper>
           )}
+
+          {/* Error Alert */}
+          {errorDetails && (
+            <Alert 
+              severity="error" 
+              sx={{ 
+                mb: 2,
+                '& .MuiAlert-message': {
+                  width: '100%'
+                }
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                {errorDetails.message}
+              </Typography>
+              {errorDetails.details && (
+                <Box
+                  component="pre"
+                  sx={{
+                    mt: 1,
+                    p: 1,
+                    bgcolor: 'background.paper',
+                    borderRadius: 1,
+                    overflow: 'auto',
+                    fontSize: '0.875rem',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  <code>
+                    {JSON.stringify(errorDetails.details, null, 2)}
+                  </code>
+                </Box>
+              )}
+            </Alert>
+          )}
         </Box>
       </Box>
+
+      {/* Loading Overlay */}
+      {loading && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: 'rgba(0, 0, 0, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      )}
     </ContentLayout>
   );
 };

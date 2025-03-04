@@ -16,6 +16,9 @@ class StudentBulkImportController extends BaseController {
 
     /**
      * Legge e parsa il file Excel
+     * @private
+     * @param {Buffer} buffer - Buffer del file Excel
+     * @returns {Array} - Array di oggetti JSON dal file Excel
      */
     _parseExcelFile(buffer) {
         try {
@@ -46,7 +49,10 @@ class StudentBulkImportController extends BaseController {
     }
 
     /**
-     * Gestisce l'import massivo degli studenti
+     * Gestisce l'import massivo degli studenti dal file Excel
+     * @param {Object} req - Express request object
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
      */
     async bulkImport(req, res, next) {
         try {
@@ -111,7 +117,87 @@ class StudentBulkImportController extends BaseController {
     }
 
     /**
+     * Gestisce l'import massivo degli studenti con assegnazione classe
+     * @param {Object} req - Express request object
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     */
+    async bulkImportWithClass(req, res, next) {
+        try {
+            logger.debug('Starting bulk import with class process');
+
+            // Verifica presenza dei dati necessari
+            const { students, schoolId } = req.body;
+            
+            if (!Array.isArray(students) || students.length === 0) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Lista studenti richiesta'
+                );
+            }
+
+            if (!schoolId) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'ID scuola richiesto'
+                );
+            }
+
+            logger.debug('Students data received', { 
+                count: students.length,
+                withClassIds: students.filter(s => s.classId).length
+            });
+
+            // Valida i dati (senza validazione pesante come per il file Excel)
+            // Questa validazione leggera è possibile perché i dati sono già stati validati nel frontend
+            const invalidStudents = students.filter(s => !s.firstName || !s.lastName || !s.email);
+            if (invalidStudents.length > 0) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Alcuni studenti non hanno i campi obbligatori',
+                    { 
+                        details: invalidStudents.map(s => `${s.firstName || ''} ${s.lastName || ''} - dati incompleti`) 
+                    }
+                );
+            }
+
+            // Esegui l'import con assegnazione classe
+            const result = await this.repository.bulkImportWithClass(students, schoolId);
+
+            // Invia la risposta
+            this.sendResponse(res, {
+                message: 'Import completato con successo',
+                data: {
+                    imported: result.imported,
+                    failed: result.failed,
+                    errors: result.errors
+                }
+            });
+
+        } catch (error) {
+            logger.error('Error in bulk import with class controller:', {
+                error: error.message,
+                stack: error.stack
+            });
+
+            // Se è un errore di validazione, mantieni i dettagli
+            if (error.code === ErrorTypes.VALIDATION.BAD_REQUEST.code) {
+                this.sendError(res, {
+                    statusCode: 400,
+                    message: error.message,
+                    details: error.metadata?.details
+                });
+                return;
+            }
+
+            next(error);
+        }
+    }
+
+    /**
      * Genera il template Excel per l'import
+     * @param {Object} req - Express request object
+     * @param {Object} res - Express response object
      */
     generateTemplate(req, res) {
         try {
@@ -119,7 +205,7 @@ class StudentBulkImportController extends BaseController {
             // Crea il workbook
             const wb = XLSX.utils.book_new();
             
-            // Prepara i dati del template
+            // Prepara i dati del template (versione aggiornata con anno e sezione)
             const templateData = [{
                 firstName: 'Mario',
                 lastName: 'Rossi',
@@ -128,7 +214,9 @@ class StudentBulkImportController extends BaseController {
                 email: 'mario.rossi@email.com',
                 fiscalCode: 'RSSMRA90A01H501A',
                 parentEmail: 'genitore@email.com',
-                specialNeeds: 'NO'
+                specialNeeds: 'NO',
+                year: '1',             // Anno scolastico (opzionale)
+                section: 'A'           // Sezione (opzionale)
             }];
 
             // Crea il worksheet

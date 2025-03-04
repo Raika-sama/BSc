@@ -327,10 +327,40 @@ const changeUserStatus = async (userId, newStatus) => {
         }
         
         console.log(`Cambio stato utente ${userId} a ${newStatus}`);
+
+        // Ottieni prima i dettagli dell'utente per verificare se è un'operazione di riattivazione
+        const currentUser = await getUserById(userId);
+        const isReactivation = currentUser.status === 'inactive' && newStatus === 'active';
+
+        // Dati da inviare al server
+        const dataToSend = { status: newStatus };
+
+        // Se stiamo riattivando un utente che è stato soft-deleted
+        if (isReactivation) {
+            console.log("Riattivando utente che era stato disattivato");
+            
+            // Controlla se l'email è stata modificata durante la disattivazione
+            if (currentUser.email && currentUser.email.startsWith('deleted_')) {
+                console.log("Ripristino email originale");
+                
+                // Prova a estrarre l'email originale dal formato "deleted_timestamp_email"
+                const emailParts = currentUser.email.split('_');
+                if (emailParts.length >= 3) {
+                    // Ricostruisci l'email originale eliminando "deleted_timestamp_"
+                    const originalEmail = emailParts.slice(2).join('_');
+                    dataToSend.email = originalEmail;
+                    console.log("Email originale estratta:", originalEmail);
+                }
+            }
+
+            // Ripristina anche altri campi che potrebbero essere stati cancellati
+            dataToSend.isDeleted = false;
+            dataToSend.deletedAt = null;
+            
+            console.log("Dati completi per la riattivazione:", dataToSend);
+        }
         
-        const response = await axiosInstance.put(`/users/${userId}/status`, { 
-            status: newStatus 
-        });
+        const response = await axiosInstance.put(`/users/${userId}/status`, dataToSend);
         
         if (response.data.status === 'success') {
             let updatedUser;

@@ -25,6 +25,7 @@ import PublicCSITest from '../components/engines/CSI/publicCSI';
 import StudentForm from '../components/students/StudentForm';
 import StudentEditForm from '../components/students/list/tabs/InfoTab';
 import DocumentationViewer from '../components/docViewer/DocumentationViewer';
+import YearTransitionWizard from '../components/school/yearManagement/YearTransitionWizard';
 
 // Importa le icone da Material-UI
 import {
@@ -158,6 +159,16 @@ export const adminRoutes = [
         title: 'Dettagli Scuola',
         icon: SchoolIcon,
         permissions: [PERMISSIONS.SCHOOLS.READ],
+        writePermission: PERMISSIONS.SCHOOLS.WRITE,
+        managePermission: PERMISSIONS.SCHOOLS.MANAGE,
+        showInMenu: false
+    },
+    {
+        path: 'schools/:id/year-transition',
+        element: YearTransitionWizard,
+        title: 'Transizione Anno Accademico',
+        icon: SchoolIcon,
+        permissions: [PERMISSIONS.SCHOOLS.WRITE],
         writePermission: PERMISSIONS.SCHOOLS.WRITE,
         managePermission: PERMISSIONS.SCHOOLS.MANAGE,
         showInMenu: false

@@ -11,6 +11,7 @@
 const express = require('express');
 const logger = require('../utils/errors/logger/logger');
 const userController = require('../controllers/userController');
+const createYearTransitionRouter = require('./yearTransitionRoutes');
 
 /**
  * Crea il router per le scuole
@@ -122,6 +123,13 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
     router.post('/:id/academic-years/:yearId/archive',
         asyncHandler(schoolController.archiveAcademicYear.bind(schoolController))
     );
+
+    /**
+     * Integra le route per la transizione tra anni accademici
+     */
+    const yearTransitionRouter = createYearTransitionRouter({ authMiddleware });
+    router.use('/:schoolId', yearTransitionRouter);
+
 
     /**
      * @route GET /api/schools/:id/classes

@@ -78,11 +78,18 @@ const createStudentRouter = ({
         asyncHandler(studentBulkImportController.generateTemplate.bind(studentBulkImportController))
     );
 
+    // Route originale per import da file
     router.post('/bulk-import', 
         restrictTo('admin'),
         uploadExcel,
         handleMulterError,
         asyncHandler(studentBulkImportController.bulkImport.bind(studentBulkImportController))
+    );
+    
+    // Nuova route per import con assegnazione classe
+    router.post('/bulk-import-with-class', 
+        restrictTo('admin'),
+        asyncHandler(studentBulkImportController.bulkImportWithClass.bind(studentBulkImportController))
     );
 
     // 5. Route per gestione classi
@@ -215,18 +222,21 @@ module.exports = createStudentRouter;
 /**
  * @summary Documentazione delle Route
  * 
- * GET    /api/v1/students                    - Lista studenti (teacher/admin)
- * POST   /api/v1/students                    - Crea studente (admin)
- * GET    /api/v1/students/:id                - Dettaglio studente (teacher/admin)
- * PUT    /api/v1/students/:id                - Modifica studente (admin)
- * DELETE /api/v1/students/:id                - Elimina studente (admin)
- * GET    /api/v1/students/search             - Ricerca studenti (teacher/admin)
- * GET    /api/v1/students/my-students        - Studenti del docente (teacher/admin)
- * GET    /api/v1/students/class/:id          - Studenti per classe (teacher/admin)
- * POST   /api/v1/students/:id/assign-class   - Assegna a classe (admin)
+ * GET    /api/v1/students                     - Lista studenti (teacher/admin)
+ * POST   /api/v1/students                     - Crea studente (admin)
+ * GET    /api/v1/students/:id                 - Dettaglio studente (teacher/admin)
+ * PUT    /api/v1/students/:id                 - Modifica studente (admin)
+ * DELETE /api/v1/students/:id                 - Elimina studente (admin)
+ * GET    /api/v1/students/search              - Ricerca studenti (teacher/admin)
+ * GET    /api/v1/students/my-students         - Studenti del docente (teacher/admin)
+ * GET    /api/v1/students/class/:id           - Studenti per classe (teacher/admin)
+ * POST   /api/v1/students/:id/assign-class    - Assegna a classe (admin)
  * POST   /api/v1/students/:id/remove-from-class - Rimuove da classe (admin)
  * GET    /api/v1/students/unassigned/:schoolId - Lista studenti non assegnati (admin)
- * POST   /api/v1/students/batch-assign       - Assegnazione multipla a classe (admin)
+ * POST   /api/v1/students/batch-assign        - Assegnazione multipla a classe (admin)
+ * POST   /api/v1/students/bulk-import         - Import massivo da file Excel (admin)
+ * POST   /api/v1/students/bulk-import-with-class - Import con assegnazione classe (admin)
+ * GET    /api/v1/students/template            - Scarica template Excel (admin)
  * 
  * Controllo Accessi:
  * - Admin: accesso completo
