@@ -13,6 +13,32 @@
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-04T08:33:42.253Z"}
 {"duration":"5ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741077222250_yjrrnygoc","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-03-04T08:33:42.255Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
 {"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"},"timestamp":"2025-03-04T11:44:27.549Z","userId":"67c02995250c5746c3d9647c"}
+<<<<<<< HEAD
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-04T17:08:23.278Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-04T17:08:23.280Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-04T17:08:23.303Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-04T17:08:23.868Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-04T17:08:23.869Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-04T17:08:23.870Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-04T17:08:24.114Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-04T17:08:24.116Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-04T17:08:24.117Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-03-04T17:09:00.698Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-04T17:09:00.699Z"}
+{"duration":"8ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741108140694_bf9jydpnq","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-03-04T17:09:00.702Z","url":"/api/v1/auth/verify","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-04T17:09:00.707Z"}
+{"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-04T17:09:00.708Z"}
+{"duration":"4ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741108140705_pefvlkbbl","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-03-04T17:09:00.709Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-04T20:42:45.173Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-04T20:42:45.176Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-04T20:42:45.198Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-04T20:42:45.768Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-04T20:42:45.769Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-04T20:42:45.770Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-04T20:42:46.042Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-04T20:42:46.045Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-04T20:42:46.045Z"}
+=======
 {"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-04T17:00:54.853Z"}
 {"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-04T17:00:54.860Z"}
 {"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-04T17:00:54.920Z"}
@@ -114,6 +140,7 @@
 {"duration":"7ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741118965198_vi2qhm4n8","responseSize":"144 Bytes","statusCode":500,"timestamp":"2025-03-04T20:09:25.205Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
 {"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-03-04T20:09:26.847Z","userId":"677bfe44f6789c907c9f3766"}
 {"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import with class completed successfully","timestamp":"2025-03-04T20:11:17.741Z"}
+<<<<<<< HEAD
 {"academicYear":"2024/2025","level":"info","message":"Inizializzazione classi per la scuola","schoolId":"67c763375b0426e1cb851fea","sectionsCount":1,"timestamp":"2025-03-04T20:31:51.891Z"}
 {"classesCreated":5,"level":"info","message":"Classi iniziali create con successo","schoolId":"67c763375b0426e1cb851fea","timestamp":"2025-03-04T20:31:52.371Z"}
 {"level":"info","message":"Manager rimosso con successo e assignedSchoolIds aggiornato","oldManagerId":"677bfe44f6789c907c9f3766","schoolId":"67c763375b0426e1cb851fea","timestamp":"2025-03-04T20:32:07.238Z","wasAlsoUser":false}
@@ -271,3 +298,6 @@
 {"error":"this.classRepository.find(...).session is not a function","level":"error","message":"Errore nell'archiviazione dell'anno accademico","schoolId":"67c763375b0426e1cb851fea","timestamp":"2025-03-04T22:09:39.346Z","yearId":"67c763375b0426e1cb851feb"}
 {"error":"this.classRepository.find(...).session is not a function","level":"error","message":"Errore nell'archiviazione dell'anno accademico","schoolId":"67c763375b0426e1cb851fea","stack":"TypeError: this.classRepository.find(...).session is not a function\n    at SchoolRepository.archiveAcademicYear (C:\\Users\\ricca\\Desktop\\BSc\\src\\repositories\\SchoolRepository.js:1742:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async SchoolController.archiveAcademicYear (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\schoolController.js:1267:31)","timestamp":"2025-03-04T22:09:39.348Z","yearId":"67c763375b0426e1cb851feb"}
 {"duration":"170ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741126179179_pukb7n8mu","responseSize":"120 Bytes","statusCode":500,"timestamp":"2025-03-04T22:09:39.350Z","url":"/api/v1/schools/67c763375b0426e1cb851fea/academic-years/67c763375b0426e1cb851feb/archive","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+=======
+>>>>>>> 457a2380b14293573ee634cdd7ba14f1f47b5d17
+>>>>>>> 17a36497726bba5040f84fe88e83e9322e04a107
