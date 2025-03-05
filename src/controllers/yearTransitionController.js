@@ -76,21 +76,108 @@ class YearTransitionController {
         academicYear: fromYear
       });
       
-      // 4. Trova le classi dell'anno di destinazione (già create in precedenza)
-      const newClasses = await Class.find({
+      // 4. Trova le classi dell'anno di destinazione (già esistenti)
+      const existingNewClasses = await Class.find({
         schoolId,
         academicYear: toYear,
         isActive: true
       }).populate('mainTeacher', 'firstName lastName email')
       .lean();
       
-      logger.debug('Found new classes', {
-        count: newClasses.length,
+      logger.debug('Found existing classes in target year', {
+        count: existingNewClasses.length,
         schoolId,
         academicYear: toYear
       });
       
-      // 5. Formatta le classi per il frontend
+      // 5. Analizza quali classi devono esistere nel nuovo anno
+      // Raccogli tutte le sezioni esistenti
+      const sections = new Set();
+      currentClasses.forEach(cls => {
+        sections.add(cls.section);
+      });
+      
+      // Aggiungi anche le sezioni che potrebbero già esistere nel nuovo anno
+      existingNewClasses.forEach(cls => {
+        sections.add(cls.section);
+      });
+      
+      // Determina quali classi devono essere create nel nuovo anno
+      const requiredNewClasses = [];
+      const existingClassesMap = {};
+      
+      // Crea una mappa delle classi che già esistono nel nuovo anno (per lookup veloce)
+      existingNewClasses.forEach(cls => {
+        const key = `${cls.year}-${cls.section}`;
+        existingClassesMap[key] = cls;
+      });
+      
+      // Calcola il massimo livello in base al tipo di scuola
+      const maxYear = school.schoolType === 'middle_school' ? 3 : 5;
+      
+      // Per ogni sezione e anno, prevedi le classi da creare
+      sections.forEach(section => {
+        // Per il primo anno, crea sempre una classe (le nuove matricole)
+        const firstYearKey = `1-${section}`;
+        if (!existingClassesMap[firstYearKey]) {
+          requiredNewClasses.push({
+            id: new mongoose.Types.ObjectId().toString(), // Corretto: uso del new operator
+            year: 1,
+            section: section,
+            isNew: true,
+            studentCount: 0, // Sarà determinato dalle iscrizioni
+            status: 'pending',
+            type: 'new_enrollment'
+          });
+        }
+        
+        // Per gli altri anni, prevedi le promozioni dalle classi attuali
+        currentClasses.forEach(currentClass => {
+          if (currentClass.section === section && currentClass.year < maxYear) {
+            const nextYear = currentClass.year + 1;
+            const newClassKey = `${nextYear}-${section}`;
+            
+            // Verifica se la classe nel nuovo anno esiste già
+            if (!existingClassesMap[newClassKey]) {
+              requiredNewClasses.push({
+                id: new mongoose.Types.ObjectId().toString(), // Corretto: uso del new operator
+                year: nextYear,
+                section: section,
+                isNew: true,
+                studentCount: 0, // Sarà calcolato in base agli studenti promossi
+                mainTeacher: currentClass.mainTeacher ? {
+                  id: currentClass.mainTeacher._id,
+                  name: `${currentClass.mainTeacher.firstName || ''} ${currentClass.mainTeacher.lastName || ''}`,
+                  email: currentClass.mainTeacher.email
+                } : null,
+                status: 'pending',
+                type: 'promotion',
+                sourceClassId: currentClass._id.toString()
+              });
+            }
+          }
+        });
+      });
+      
+      // 6. Unisci le classi esistenti e quelle da creare per avere un quadro completo
+      const allNewClasses = [
+        ...existingNewClasses.map(cls => ({
+          id: cls._id.toString(),
+          year: cls.year,
+          section: cls.section,
+          isNew: false,
+          studentCount: cls.students?.length || 0,
+          mainTeacher: cls.mainTeacher ? {
+            id: cls.mainTeacher._id.toString(),
+            name: `${cls.mainTeacher.firstName || ''} ${cls.mainTeacher.lastName || ''}`,
+            email: cls.mainTeacher.email
+          } : null,
+          status: cls.status
+        })),
+        ...requiredNewClasses
+      ];
+      
+      // 7. Formatta le classi correnti per il frontend
       const formattedCurrentClasses = currentClasses.map(cls => ({
         id: cls._id.toString(),
         year: cls.year,
@@ -102,18 +189,7 @@ class YearTransitionController {
         status: cls.status
       }));
       
-      const formattedNewClasses = newClasses.map(cls => ({
-        id: cls._id.toString(),
-        year: cls.year,
-        section: cls.section,
-        studentCount: 0, // Sarà calcolato in base agli studenti promossi
-        mainTeacher: cls.mainTeacher?._id?.toString(),
-        mainTeacherName: cls.mainTeacher ? `${cls.mainTeacher.firstName || ''} ${cls.mainTeacher.lastName || ''}` : null,
-        mainTeacherEmail: cls.mainTeacher?.email,
-        status: cls.status
-      }));
-      
-      // 6. Trova tutti gli studenti attivi nell'anno corrente
+      // 8. Trova tutti gli studenti attivi nell'anno corrente
       const students = await Student.find({
         schoolId,
         classId: { $in: currentClasses.map(c => c._id) },
@@ -125,7 +201,7 @@ class YearTransitionController {
         schoolId
       });
       
-      // 7. Determina la promozione standard degli studenti
+      // 9. Determina la promozione standard degli studenti
       const promotedStudents = [];
       const graduatingStudents = [];
       const warnings = [];
@@ -138,7 +214,7 @@ class YearTransitionController {
       
       // Crea una mappa delle nuove classi per lookup veloce
       const newClassesMap = {};
-      formattedNewClasses.forEach(cls => {
+      allNewClasses.forEach(cls => {
         // Crea la chiave nel formato "year-section"
         const key = `${cls.year}-${cls.section}`;
         newClassesMap[key] = cls;
@@ -159,8 +235,6 @@ class YearTransitionController {
         const currentSection = currentClass.section;
         
         // Determina se lo studente si diploma (ultimo anno)
-        const maxYear = school.schoolType === 'middle_school' ? 3 : 5;
-        
         if (currentYear >= maxYear) {
           // Lo studente si diploma o esce dal sistema
           graduatingStudents.push({
@@ -184,14 +258,14 @@ class YearTransitionController {
           if (!destinationClass) {
             warnings.push({
               message: `Impossibile promuovere lo studente ${student.firstName} ${student.lastName}`,
-              details: `Classe destinazione ${newYear}${newSection} non trovata`,
+              details: `Classe destinazione ${newYear}-${newSection} non trovata`,
               studentId: student._id.toString()
             });
             return;
           }
           
           // Incrementa il conteggio degli studenti nella classe di destinazione
-          destinationClass.studentCount++;
+          destinationClass.studentCount = (destinationClass.studentCount || 0) + 1;
           
           promotedStudents.push({
             id: student._id.toString(),
@@ -207,16 +281,16 @@ class YearTransitionController {
         }
       });
       
-      // 8. Prepara i dati di anteprima
+      // 10. Prepara i dati di anteprima
       const previewData = {
         currentClasses: formattedCurrentClasses,
-        newClasses: formattedNewClasses,
+        newClasses: allNewClasses,
         promotedStudents,
         graduatingStudents,
         warnings
       };
       
-      // 9. Invia la risposta
+      // 11. Invia la risposta
       res.status(200).json({
         status: 'success',
         data: previewData
@@ -249,7 +323,13 @@ class YearTransitionController {
       });
       
       const { schoolId } = req.params;
-      const { fromYear, toYear, exceptions = [], teacherAssignments = {} } = req.body;
+      const { 
+        fromYear, 
+        toYear, 
+        exceptions = [], 
+        teacherAssignments = {},
+        newClasses = [] // array di classi da creare
+      } = req.body;
       
       // Validazione input
       if (!schoolId || !fromYear || !toYear) {
@@ -288,63 +368,99 @@ class YearTransitionController {
         );
       }
       
-      // 3. Aggiorna gli stati degli anni accademici
+      // 3. Crea le nuove classi necessarie per il nuovo anno
+      const createdClassesIds = {};
+      const classCreationOperations = [];
+      
+      for (const newClass of newClasses) {
+        if (newClass.isNew) { // Solo se è una nuova classe da creare
+          const classData = {
+            year: newClass.year,
+            section: newClass.section,
+            academicYear: toYear,
+            schoolId,
+            mainTeacher: newClass.mainTeacherId || null,
+            status: 'pending', // Le classi sono in pending fino all'attivazione dell'anno
+            isActive: true,
+            students: [] // Gli studenti verranno aggiunti successivamente
+          };
+          
+          classCreationOperations.push(
+            Class.create([classData], { session })
+              .then(result => {
+                const createdClass = result[0];
+                createdClassesIds[`${newClass.year}-${newClass.section}`] = createdClass._id;
+                return createdClass;
+              })
+          );
+        }
+      }
+      
+      // Crea tutte le nuove classi
+      const createdClasses = await Promise.all(classCreationOperations);
+      
+      logger.debug('Created new classes', {
+        count: createdClasses.length,
+        classIds: createdClasses.map(c => c._id.toString())
+      });
+      
+      // 4. Trova tutte le classi esistenti nel nuovo anno
+      const existingNewClasses = await Class.find({
+        schoolId,
+        academicYear: toYear,
+        isActive: true
+      }).session(session);
+      
+      // 5. Crea una mappa di tutte le classi nel nuovo anno (esistenti + appena create)
+      const allNewClassesMap = {};
+      
+      // Aggiungi le classi esistenti alla mappa
+      existingNewClasses.forEach(cls => {
+        const key = `${cls.year}-${cls.section}`;
+        allNewClassesMap[key] = cls;
+      });
+      
+      // Aggiungi le classi appena create alla mappa
+      createdClasses.forEach(cls => {
+        const key = `${cls.year}-${cls.section}`;
+        allNewClassesMap[key] = cls;
+      });
+      
+      // 6. Aggiorna gli stati degli anni accademici se necessario
       if (fromYearData.status === 'active') {
         fromYearData.status = 'archived';
       }
       
-      toYearData.status = 'active';
-      
       await school.save({ session });
       
-      // 4. Trova le classi dell'anno corrente
+      // 7. Trova le classi dell'anno corrente
       const currentClasses = await Class.find({
         schoolId,
         academicYear: fromYear,
         isActive: true
       }).session(session);
       
-      // 5. Trova le classi del nuovo anno
-      const newClasses = await Class.find({
-        schoolId,
-        academicYear: toYear,
-        isActive: true
-      }).session(session);
-      
-      // 6. Crea mappa delle eccezioni per lookup veloce
+      // 8. Crea mappa delle eccezioni per lookup veloce
       const exceptionsMap = {};
       exceptions.forEach(exception => {
         exceptionsMap[exception.studentId] = exception;
       });
       
-      // 7. Trova tutti gli studenti attivi nell'anno corrente
+      // 9. Trova tutti gli studenti attivi nell'anno corrente
       const students = await Student.find({
         schoolId,
         classId: { $in: currentClasses.map(c => c._id) },
         status: 'active'
       }).session(session);
       
-      // 8. Crea mappe per lookup veloce
+      // 10. Crea mappe per lookup veloce
       // Mappa delle classi correnti per ID
       const currentClassesMap = {};
       currentClasses.forEach(cls => {
         currentClassesMap[cls._id.toString()] = cls;
       });
       
-      // Mappa delle nuove classi per anno e sezione
-      const newClassesMap = {};
-      newClasses.forEach(cls => {
-        const key = `${cls.year}-${cls.section}`;
-        newClassesMap[key] = cls;
-      });
-      
-      // Mappa delle nuove classi per ID
-      const newClassesById = {};
-      newClasses.forEach(cls => {
-        newClassesById[cls._id.toString()] = cls;
-      });
-      
-      // 9. Gestisci ogni studente in base alle regole di promozione o eccezioni
+      // 11. Gestisci ogni studente in base alle regole di promozione o eccezioni
       const maxYear = school.schoolType === 'middle_school' ? 3 : 5;
       const studentOperations = [];
       const classStudentUpdates = {};
@@ -372,7 +488,7 @@ class YearTransitionController {
             case 'retained': // Bocciato (rimane nello stesso anno/sezione)
               // Cerca la classe corrispondente nel nuovo anno accademico
               const retainedClassKey = `${currentYear}-${currentSection}`;
-              const retainedClass = newClassesMap[retainedClassKey];
+              const retainedClass = allNewClassesMap[retainedClassKey];
               
               if (retainedClass) {
                 // Aggiorna lo studente
@@ -413,7 +529,7 @@ class YearTransitionController {
               
             case 'section_change': // Cambio sezione (stesso anno ma sezione diversa)
               const sectionChangeClassKey = `${currentYear}-${exception.destinationSection}`;
-              const sectionChangeClass = newClassesMap[sectionChangeClassKey];
+              const sectionChangeClass = allNewClassesMap[sectionChangeClassKey];
               
               if (sectionChangeClass) {
                 // Aggiorna lo studente
@@ -455,7 +571,7 @@ class YearTransitionController {
               
             case 'custom': // Destinazione personalizzata
               const customClassKey = `${exception.destinationYear}-${exception.destinationSection}`;
-              const customClass = newClassesMap[customClassKey];
+              const customClass = allNewClassesMap[customClassKey];
               
               if (customClass) {
                 // Aggiorna lo studente
@@ -540,7 +656,7 @@ class YearTransitionController {
           const newYear = currentYear + 1;
           const newSection = currentSection;
           const newClassKey = `${newYear}-${newSection}`;
-          const newClass = newClassesMap[newClassKey];
+          const newClass = allNewClassesMap[newClassKey];
           
           if (newClass) {
             // Aggiorna lo studente
@@ -583,34 +699,32 @@ class YearTransitionController {
         studentOperations.push(student.save({ session }));
       });
       
-      // 10. Salva tutti gli studenti aggiornati
+      // 12. Salva tutti gli studenti aggiornati
       await Promise.all(studentOperations);
       
-      // 11. Aggiorna le classi con le assegnazioni docenti
+      // 13. Aggiorna le classi con le assegnazioni docenti
       const classTeacherUpdates = [];
       
       // Itera sulle assegnazioni docenti
       Object.entries(teacherAssignments).forEach(([classId, teacherId]) => {
-        if (newClassesById[classId]) {
-          classTeacherUpdates.push(
-            Class.findByIdAndUpdate(
-              classId,
-              { 
-                $set: { 
-                  mainTeacher: teacherId,
-                  mainTeacherIsTemporary: false
-                }
-              },
-              { session }
-            )
-          );
-        }
+        classTeacherUpdates.push(
+          Class.findByIdAndUpdate(
+            classId,
+            { 
+              $set: { 
+                mainTeacher: teacherId,
+                mainTeacherIsTemporary: false
+              }
+            },
+            { session }
+          )
+        );
       });
       
       // Esegui gli aggiornamenti docenti
       await Promise.all(classTeacherUpdates);
       
-      // 12. Aggiorna le classi con gli studenti
+      // 14. Aggiorna le classi con gli studenti
       const classStudentOps = [];
       
       Object.entries(classStudentUpdates).forEach(([classId, students]) => {
@@ -625,7 +739,7 @@ class YearTransitionController {
       
       await Promise.all(classStudentOps);
       
-      // 13. Archivia le classi dell'anno vecchio
+      // 15. Archivia le classi dell'anno vecchio ma mantienile per lo storico
       await Class.updateMany(
         {
           schoolId,
@@ -641,10 +755,10 @@ class YearTransitionController {
         { session }
       );
       
-      // 14. Commit della transazione
+      // 16. Commit della transazione
       await session.commitTransaction();
       
-      // 15. Invia la risposta
+      // 17. Invia la risposta
       res.status(200).json({
         status: 'success',
         message: 'Transizione anno completata con successo',
@@ -652,7 +766,8 @@ class YearTransitionController {
           fromYear,
           toYear,
           studentsProcessed: students.length,
-          exceptionsApplied: exceptions.length
+          exceptionsApplied: exceptions.length,
+          newClassesCreated: createdClasses.length
         }
       });
       

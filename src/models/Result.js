@@ -61,7 +61,7 @@ baseResultSchema.index({ tipo: 1, dataCompletamento: -1 });
 baseResultSchema.index({ studentId: 1, tipo: 1 });
 baseResultSchema.index({ token: 1 }, { sparse: true });
 
-// 6. Schema specifico per CSI
+// 4. Schema specifico per CSI
 const csiResultSchema = new mongoose.Schema({
     testRef: {
         type: mongoose.Schema.Types.ObjectId,

@@ -37,7 +37,8 @@ import {
     Archive as ArchiveIcon,
     ViewList as ClassesIcon,
     KeyboardArrowDown as KeyboardArrowDownIcon,
-    KeyboardArrowUp as KeyboardArrowUpIcon
+    KeyboardArrowUp as KeyboardArrowUpIcon,
+    Restore as RestoreIcon
 } from '@mui/icons-material';
 import { useSchool } from '../../../context/SchoolContext'; // Assicurati che il percorso sia corretto
 import { useNotification } from '../../../context/NotificationContext'; // Assicurati che il percorso sia corretto
@@ -76,6 +77,8 @@ const AcademicYearsTab = ({ school }) => {
     const [availableLetters, setAvailableLetters] = useState([]);
     const [openArchiveDialog, setOpenArchiveDialog] = useState(false);
     const [yearToArchive, setYearToArchive] = useState(null);
+    const [openReactivateDialog, setOpenReactivateDialog] = useState(false);
+    const [yearToReactivate, setYearToReactivate] = useState(null);
 
 
     useEffect(() => {
@@ -686,21 +689,11 @@ const handleCreateNewSection = async () => {
                                             </Box>
                                         }
                                         secondary={
-                                            <Box sx={{ mt: 1 }}>
-                                                <Grid container spacing={2}>
-                                                    <Grid item xs={6}>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Inizio: {formatDate(year.startDate)}
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid item xs={6}>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Fine: {formatDate(year.endDate)}
-                                                        </Typography>
-                                                    </Grid>
-                                                </Grid>
-                                            </Box>
+                                            <Typography variant="body2" component="span" color="text.secondary">
+                                                Inizio: {formatDate(year.startDate)} • Fine: {formatDate(year.endDate)}
+                                            </Typography>
                                         }
+                                        disableTypography
                                     />
                                 </ListItem>
                                 {index < plannedYears.length - 1 && <Divider component="li" />}
@@ -733,14 +726,25 @@ const handleCreateNewSection = async () => {
                             <React.Fragment key={year._id || index}>
                                 <ListItem
                                     secondaryAction={
-                                        <Tooltip title="Visualizza Classi">
-                                            <IconButton 
-                                                edge="end" 
-                                                onClick={() => handleOpenClassesDialog(year)}
-                                            >
-                                                <ClassesIcon />
-                                            </IconButton>
-                                        </Tooltip>
+                                        <Box>
+                                            <Tooltip title="Visualizza Classi">
+                                                <IconButton 
+                                                    edge="end" 
+                                                    onClick={() => handleOpenClassesDialog(year)}
+                                                >
+                                                    <ClassesIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Riattiva Anno">
+                                                <IconButton 
+                                                    edge="end" 
+                                                    color="primary"
+                                                    onClick={() => handleReactivateYear(year)}
+                                                >
+                                                    <RestoreIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
                                     }
                                 >
                                     <ListItemText
@@ -758,21 +762,11 @@ const handleCreateNewSection = async () => {
                                             </Box>
                                         }
                                         secondary={
-                                            <Box sx={{ mt: 1 }}>
-                                                <Grid container spacing={2}>
-                                                    <Grid item xs={6}>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Inizio: {formatDate(year.startDate)}
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid item xs={6}>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Fine: {formatDate(year.endDate)}
-                                                        </Typography>
-                                                    </Grid>
-                                                </Grid>
-                                            </Box>
+                                            <Typography variant="body2" component="span" color="text.secondary">
+                                                Inizio: {formatDate(year.startDate)} • Fine: {formatDate(year.endDate)}
+                                            </Typography>
                                         }
+                                        disableTypography
                                     />
                                 </ListItem>
                                 {index < pastYears.length - 1 && <Divider component="li" />}
@@ -805,6 +799,33 @@ const handleCreateNewSection = async () => {
             // Altrimenti, aggiungila
             setSelectedSections(prev => [...prev, sectionId]);
             showNotification(`Sezione ${section.name} inclusa nell'anno accademico`, 'success');
+        }
+    };
+
+    // Funzione per gestire la riattivazione di un anno archiviato
+    const handleReactivateYear = async (year) => {
+        setYearToReactivate(year);
+        setOpenReactivateDialog(true);
+    };
+
+    const handleConfirmReactivate = async () => {
+        try {
+            const response = await axiosInstance.post(
+                `/schools/${school._id}/academic-years/${yearToReactivate._id}/reactivate`
+            );
+            
+            if (response.data.status === 'success') {
+                showNotification('Anno accademico riattivato con successo. Ora è in stato "pianificato" e può essere attivato.', 'success');
+                await getSchoolById(school._id);
+            }
+            setOpenReactivateDialog(false);
+        } catch (error) {
+            console.error('Error reactivating academic year:', error);
+            showNotification(
+                error.response?.data?.error?.message || 'Errore nella riattivazione dell\'anno accademico', 
+                'error'
+            );
+            setOpenReactivateDialog(false);
         }
     };
 
@@ -951,12 +972,13 @@ const handleCreateNewSection = async () => {
                                 <Box>
                                     <Typography 
                                         variant="body2"
+                                        component="span"
                                         sx={isTemp ? { fontStyle: 'italic', color: 'primary.main' } : {}}
                                     >
                                         Sezione {section.name} {isAlreadyConfigured && "(già configurata)"}
                                         {isTemp && " (nuova)"}
                                     </Typography>
-                                    <Typography variant="caption" color="text.secondary">
+                                    <Typography variant="caption" component="span" display="block" color="text.secondary">
                                         Max {section.maxStudents} studenti
                                         {usedInOtherYears && !isAlreadyConfigured && ` • Usata in ${section.usedInYears.length} anni`}
                                     </Typography>
@@ -1148,7 +1170,7 @@ const handleCreateNewSection = async () => {
             <DialogContent>
                 {loadingClasses ? (
                     <Box sx={{ p: 2, textAlign: 'center' }}>
-                        <Typography>Caricamento classi...</Typography>
+                        <Typography component="div">Caricamento classi...</Typography>
                     </Box>
                 ) : yearClasses.length > 0 ? (
                     <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -1156,11 +1178,11 @@ const handleCreateNewSection = async () => {
                             <Grid item xs={12} sm={6} md={4} key={classItem._id}>
                                 <Card variant="outlined">
                                     <CardContent>
-                                        <Typography variant="h6" gutterBottom>
+                                        <Typography component="div" variant="h6" gutterBottom>
                                             {classItem.year}ª {classItem.section}
                                         </Typography>
                                         <Stack spacing={1}>
-                                            <Typography variant="body2">
+                                            <Typography component="div" variant="body2">
                                                 Studenti: {classItem.activeStudentsCount || 0} / {classItem.capacity || '-'}
                                             </Typography>
                                             <Chip 
@@ -1179,7 +1201,7 @@ const handleCreateNewSection = async () => {
                     </Grid>
                 ) : (
                     <Box sx={{ p: 2, textAlign: 'center' }}>
-                        <Typography color="text.secondary">
+                        <Typography component="div" color="text.secondary">
                             Nessuna classe trovata per questo anno accademico
                         </Typography>
                     </Box>
@@ -1215,26 +1237,30 @@ const handleCreateNewSection = async () => {
                     Conferma Archiviazione Anno Accademico
                 </DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
-                        <Typography paragraph>
+                    <Box sx={{ mb: 2 }}>
+                        <Typography component="div">
                             NOTA: Questa operazione è riservata agli utenti Administrator e Developer.
                         </Typography>
-                        <Typography paragraph>
+                    </Box>
+                    <Box sx={{ mb: 2 }}>
+                        <Typography component="div">
                             Stai per archiviare l'anno accademico {yearToArchive?.year}. Questa operazione:
                         </Typography>
-                        <ul>
-                            <li>Archivierà tutte le classi dell'anno</li>
-                            <li>Rimuoverà tutti i riferimenti agli insegnanti dalle classi</li>
-                            <li>Disattiverà gli studenti delle classi coinvolte</li>
-                            <li>Rimuoverà i riferimenti alle classi e agli studenti dai profili degli insegnanti</li>
-                            {yearToArchive?.status === 'active' && (
-                                <li>Attiverà automaticamente l'anno pianificato più recente (se presente)</li>
-                            )}
-                        </ul>
-                        <Typography color="error">
+                    </Box>
+                    <ul>
+                        <li>Archivierà tutte le classi dell'anno</li>
+                        <li>Rimuoverà tutti i riferimenti agli insegnanti dalle classi</li>
+                        <li>Disattiverà gli studenti delle classi coinvolte</li>
+                        <li>Rimuoverà i riferimenti alle classi e agli studenti dai profili degli insegnanti</li>
+                        {yearToArchive?.status === 'active' && (
+                            <li>Attiverà automaticamente l'anno pianificato più recente (se presente)</li>
+                        )}
+                    </ul>
+                    <Box sx={{ mt: 2 }}>
+                        <Typography component="div" color="error">
                             Questa operazione non può essere annullata. Sei sicuro di voler procedere?
                         </Typography>
-                    </DialogContentText>
+                    </Box>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenArchiveDialog(false)}>
@@ -1246,6 +1272,50 @@ const handleCreateNewSection = async () => {
                         variant="contained"
                     >
                         Conferma Archiviazione
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Dialog di conferma riattivazione */}
+            <Dialog
+                open={openReactivateDialog}
+                onClose={() => setOpenReactivateDialog(false)}
+            >
+                <DialogTitle>
+                    Conferma Riattivazione Anno Accademico
+                </DialogTitle>
+                <DialogContent>
+                    <Box sx={{ mb: 2 }}>
+                        <Typography component="div">
+                            Stai per riattivare l'anno accademico {yearToReactivate?.year}.
+                        </Typography>
+                    </Box>
+                    <Box sx={{ mb: 2 }}>
+                        <Typography component="div">
+                            Questa operazione:
+                        </Typography>
+                        <ul>
+                            <li>Ripristinerà l'anno accademico in stato "pianificato"</li>
+                            <li>Permetterà di attivare nuovamente l'anno</li>
+                            <li>Non ripristinerà automaticamente le classi e gli studenti archiviati</li>
+                        </ul>
+                    </Box>
+                    <Box sx={{ mt: 2 }}>
+                        <Typography component="div">
+                            Vuoi procedere con la riattivazione dell'anno accademico?
+                        </Typography>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenReactivateDialog(false)}>
+                        Annulla
+                    </Button>
+                    <Button 
+                        onClick={handleConfirmReactivate} 
+                        color="primary"
+                        variant="contained"
+                    >
+                        Conferma Riattivazione
                     </Button>
                 </DialogActions>
             </Dialog>

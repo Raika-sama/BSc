@@ -447,7 +447,6 @@ const ListLayout = ({
                         selectionModel={selectionModel}
                         disableSelectionOnClick
                         autoHeight={false} // Importante: non usiamo autoHeight
-                        customActions={customActions}
                         components={{
                             LoadingOverlay: () => (
                                 <Box sx={loadingOverlay}>
@@ -528,7 +527,6 @@ const ListLayout = ({
                             },
                             ...standardDataGridStyle
                         }}
-                        autoHeight={false}
                     />
                 </Box>
             </Paper>

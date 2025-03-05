@@ -38,6 +38,7 @@ class SchoolController extends BaseController {
         this.getAcademicYears = this.getAcademicYears.bind(this);
         this.activateAcademicYear = this.activateAcademicYear.bind(this);
         this.archiveAcademicYear = this.archiveAcademicYear.bind(this);
+        this.reactivateAcademicYear = this.reactivateAcademicYear.bind(this);
         this.getClassesByAcademicYear = this.getClassesByAcademicYear.bind(this);
         this.createSection = this.createSection.bind(this);
     }
@@ -1452,6 +1453,77 @@ async createSection(req, res) {
     }
 }
     
+    /**
+     * Riattiva un anno accademico precedentemente archiviato
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     */
+    async reactivateAcademicYear(req, res) {
+        try {
+            const { id: schoolId, yearId } = req.params;
+            
+            logger.debug('Richiesta riattivazione anno accademico archiviato', {
+                schoolId,
+                yearId,
+                userId: req.user.id
+            });
+
+            // Verifica autorizzazioni (solo admin e manager della scuola)
+            const school = await this.repository.findById(schoolId);
+            if (!school) {
+                return this.sendError(res, createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                ));
+            }
+
+            if (req.user.role !== 'admin' && 
+                (!school.manager || school.manager.toString() !== req.user._id.toString())) {
+                return this.sendError(res, createError(
+                    ErrorTypes.AUTHORIZATION.FORBIDDEN,
+                    'Non autorizzato a riattivare anni accademici per questa scuola'
+                ));
+            }
+
+            // Verifica che l'anno esista e sia archiviato
+            const yearToReactivate = school.academicYears.id(yearId);
+            if (!yearToReactivate) {
+                return this.sendError(res, createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Anno accademico non trovato'
+                ));
+            }
+
+            if (yearToReactivate.status !== 'archived') {
+                return this.sendError(res, createError(
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
+                    'Solo gli anni accademici archiviati possono essere riattivati'
+                ));
+            }
+
+            const updatedSchool = await this.repository.reactivateAcademicYear(schoolId, yearId);
+            
+            logger.info('Anno accademico riattivato con successo', {
+                schoolId,
+                yearId,
+                yearValue: yearToReactivate.year,
+                userId: req.user.id
+            });
+            
+            this.sendResponse(res, { 
+                school: updatedSchool,
+                message: 'Anno accademico riattivato con successo. Ora è in stato "planned" e può essere attivato.'
+            });
+        } catch (error) {
+            logger.error('Errore nella riattivazione dell\'anno accademico', {
+                error: error.message,
+                stack: error.stack,
+                schoolId: req.params.id,
+                yearId: req.params.yearId
+            });
+            this.sendError(res, error);
+        }
+    }
 }
 
 module.exports = SchoolController;  // CORRETTO

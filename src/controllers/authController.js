@@ -344,7 +344,7 @@ class AuthController extends BaseController {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'lax', // Cambiato da 'strict' a 'lax' per migliore compatibilità
-                maxAge: 60 * 60 * 1000 // 1 ora
+                maxAge: 72 * 60 * 60 * 1000 // 72 ore (3 giorni)
             });
         }
     
@@ -353,7 +353,7 @@ class AuthController extends BaseController {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'lax', // Cambiato da 'strict' a 'lax' per migliore compatibilità
-                maxAge: 7 * 24 * 60 * 60 * 1000 // 7 giorni
+                maxAge: 30 * 24 * 60 * 60 * 1000 // 30 giorni
             });
         }
     }

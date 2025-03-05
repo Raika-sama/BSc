@@ -139,6 +139,138 @@ class TestRepository {
     }
 
     /**
+     * Assegna un test a tutti gli studenti di una classe
+     * @param {Object} testData - Dati del test da assegnare
+     * @param {string} classId - ID della classe
+     * @param {string} assignedBy - ID dell'utente che assegna il test
+     * @returns {Promise<Object>} Risultato dell'operazione
+     */
+    async assignTestToClass(testData, classId, assignedBy) {
+        // Utilizziamo una sessione per garantire l'atomicità dell'operazione
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        
+        try {
+            // 1. Verifica che la classe esista
+            const Class = mongoose.model('Class');
+            const classDoc = await Class.findById(classId).session(session);
+            
+            if (!classDoc) {
+                throw createError(
+                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    'Classe non trovata'
+                );
+            }
+            
+            // 2. Recupera tutti gli studenti attivi della classe
+            const students = await Student.find({
+                classId: classId,
+                status: 'active',
+                isActive: true
+            }).session(session);
+            
+            if (!students.length) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Nessuno studente attivo trovato nella classe'
+                );
+            }
+            
+            logger.debug('Found students for class test assignment:', {
+                classId,
+                studentsCount: students.length
+            });
+            
+            // 3. Verifica tipo di test supportato
+            if (testData.tipo !== 'CSI') {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'Tipo di test non supportato'
+                );
+            }
+            
+            // 4. Per i test CSI, recupera la configurazione attiva
+            let csiConfigId = null;
+            if (testData.tipo === 'CSI') {
+                const CSIConfig = mongoose.model('CSIConfig');
+                const activeConfig = await CSIConfig.findOne({ active: true }).session(session);
+                
+                if (!activeConfig) {
+                    throw createError(
+                        ErrorTypes.RESOURCE.NOT_FOUND,
+                        'Nessuna configurazione CSI attiva trovata'
+                    );
+                }
+                
+                csiConfigId = activeConfig._id;
+            }
+            
+            // 5. Crea un test per ogni studente
+            const tests = [];
+            const testPromises = students.map(async (student) => {
+                const test = new Test({
+                    nome: `Test ${testData.tipo} per ${student.firstName} ${student.lastName}`,
+                    tipo: testData.tipo,
+                    descrizione: `Test ${testData.tipo} assegnato a ${student.firstName} ${student.lastName} (classe ${classDoc.year}${classDoc.section})`,
+                    configurazione: {
+                        ...testData.configurazione,
+                        questionVersion: '1.0.0'
+                    },
+                    studentId: student._id,
+                    assignedBy,
+                    assignedAt: new Date(),
+                    status: 'pending',
+                    attempts: 0,
+                    active: true,
+                    csiConfig: csiConfigId
+                });
+                
+                await test.save({ session });
+                tests.push(test);
+                
+                logger.debug('Assigned test to student in class:', {
+                    testId: test._id,
+                    studentId: student._id,
+                    studentName: `${student.firstName} ${student.lastName}`
+                });
+                
+                return test;
+            });
+            
+            await Promise.all(testPromises);
+            
+            // 6. Commit della transazione
+            await session.commitTransaction();
+            
+            // 7. Log del risultato
+            logger.info('Tests assigned to all students in class:', {
+                classId,
+                testsCount: tests.length,
+                assignedBy
+            });
+            
+            return {
+                success: true,
+                testsAssigned: tests.length,
+                students: students.map(s => ({
+                    id: s._id,
+                    name: `${s.firstName} ${s.lastName}`
+                }))
+            };
+        } catch (error) {
+            await session.abortTransaction();
+            logger.error('Error assigning tests to class:', {
+                error: error.message,
+                classId,
+                assignedBy
+            });
+            throw error;
+        } finally {
+            session.endSession();
+        }
+    }
+
+    /**
      * Recupera i test assegnati a uno studente
      * @param {string} studentId - ID dello studente
      * @param {string} assignedBy - Filtra per assegnatore (opzionale)
@@ -210,6 +342,93 @@ class TestRepository {
     }
 
     /**
+     * Recupera i test assegnati a tutti gli studenti di una classe
+     * @param {string} classId - ID della classe
+     * @param {string} assignedBy - Filtra per assegnatore (opzionale)
+     * @returns {Promise<Array>} Lista dei test assegnati raggruppati per studente
+     */
+    async getAssignedTestsByClass(classId, assignedBy = null) {
+        try {
+            // 1. Recupera gli studenti della classe
+            const students = await Student.find({ 
+                classId: classId,
+                status: 'active',
+                isActive: true
+            }).select('_id firstName lastName');
+            
+            if (!students.length) {
+                return [];
+            }
+            
+            // 2. Costruisci i filtri
+            const studentIds = students.map(s => s._id);
+            const filters = {
+                studentId: { $in: studentIds },
+                active: true
+            };
+            
+            // Se è specificato l'assegnatore, filtra solo i suoi test
+            if (assignedBy) {
+                filters.assignedBy = assignedBy;
+            }
+            
+            // 3. Recupera i test
+            const tests = await Test.find(filters)
+                .select({
+                    studentId: 1,
+                    tipo: 1,
+                    status: 1,
+                    'configurazione.questionVersion': 1,
+                    versione: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    nome: 1,
+                    descrizione: 1,
+                    assignedAt: 1
+                })
+                .lean();
+            
+            // 4. Organizza i test per studente
+            const studentMap = new Map();
+            students.forEach(student => {
+                studentMap.set(student._id.toString(), {
+                    student: {
+                        id: student._id,
+                        firstName: student.firstName,
+                        lastName: student.lastName
+                    },
+                    tests: []
+                });
+            });
+            
+            tests.forEach(test => {
+                const studentId = test.studentId.toString();
+                if (studentMap.has(studentId)) {
+                    studentMap.get(studentId).tests.push(test);
+                }
+            });
+            
+            // 5. Converti la Map in array
+            const result = Array.from(studentMap.values());
+            
+            logger.debug('Tests by class retrieved:', {
+                classId,
+                studentsCount: result.length,
+                totalTests: tests.length
+            });
+            
+            return result;
+        } catch (error) {
+            logger.error('Error getting tests by class:', {
+                error: error.message,
+                classId,
+                assignedBy
+            });
+            throw error;
+        }
+    }
+
+    /**
      * Revoca un test assegnato
      * @param {string} testId - ID del test da revocare
      * @returns {Promise<Object>} Risultato dell'operazione
@@ -258,6 +477,82 @@ class TestRepository {
                 testId
             });
             throw error;
+        }
+    }
+
+    /**
+     * Revoca tutti i test assegnati agli studenti di una classe
+     * @param {string} classId - ID della classe
+     * @param {string} testType - Tipo di test da revocare (opzionale)
+     * @returns {Promise<Object>} Risultato dell'operazione
+     */
+    async revokeClassTests(classId, testType = null) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        
+        try {
+            // 1. Recupera gli ID degli studenti nella classe
+            const students = await Student.find({
+                classId: classId,
+                status: 'active',
+                isActive: true
+            }).select('_id').session(session);
+            
+            if (!students.length) {
+                throw createError(
+                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    'Nessuno studente trovato nella classe'
+                );
+            }
+            
+            const studentIds = students.map(s => s._id);
+            
+            // 2. Costruisci il filtro per i test
+            const filter = {
+                studentId: { $in: studentIds },
+                active: true,
+                status: { $ne: 'completed' } // Escludiamo i test già completati
+            };
+            
+            // Se specificato, filtriamo per tipo di test
+            if (testType) {
+                filter.tipo = testType;
+            }
+            
+            // 3. Revoca i test
+            const result = await Test.updateMany(
+                filter,
+                {
+                    active: false,
+                    revokedAt: new Date()
+                },
+                { session }
+            );
+            
+            // 4. Commit della transazione
+            await session.commitTransaction();
+            
+            // 5. Log dell'operazione
+            logger.info('Class tests revoked:', {
+                classId,
+                testType: testType || 'all',
+                modifiedCount: result.modifiedCount
+            });
+            
+            return {
+                success: true,
+                modifiedCount: result.modifiedCount
+            };
+        } catch (error) {
+            await session.abortTransaction();
+            logger.error('Error revoking class tests:', {
+                error: error.message,
+                classId,
+                testType
+            });
+            throw error;
+        } finally {
+            session.endSession();
         }
     }
 

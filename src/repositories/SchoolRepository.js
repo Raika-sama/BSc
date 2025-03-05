@@ -1609,7 +1609,7 @@ async changeSchoolType(schoolId, { schoolType, institutionType }) {
 // Aggiungi questi metodi alla classe SchoolRepository in SchoolRepository.js
 
 async activateAcademicYear(schoolId, yearId) {
-    const session = options.session;
+    const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
@@ -1716,26 +1716,12 @@ async archiveAcademicYear(schoolId, yearId) {
             return school;
         }
 
-        // 4. Se ci sono anni pianificati e l'anno da archiviare è attivo, attiva il più recente
-        if (yearToArchive.status === 'active') {
-            const plannedYears = school.academicYears.filter(y => y.status === 'planned');
-            if (plannedYears.length > 0) {
-                // Trova l'anno pianificato più recente
-                const mostRecentYear = plannedYears.sort((a, b) => {
-                    const yearA = parseInt(a.year.split('/')[0]);
-                    const yearB = parseInt(b.year.split('/')[0]);
-                    return yearB - yearA;
-                })[0];
-                
-                mostRecentYear.status = 'active';
-                logger.debug('Attivato automaticamente anno pianificato', { 
-                    yearId: mostRecentYear._id 
-                });
-            }
-        }
+        // 4. Rimuovo l'attivazione automatica dell'anno successivo
+        // È una decisione amministrativa che deve essere fatta separatamente
 
         // 5. Trova e aggiorna tutte le classi dell'anno
-        const classesToArchive = await this.classRepository.find({
+        const Class = mongoose.model('Class');
+        const classesToArchive = await Class.find({
             schoolId,
             academicYear: yearToArchive.year,
             status: { $ne: 'archived' }
@@ -1750,7 +1736,7 @@ async archiveAcademicYear(schoolId, yearId) {
             ])].filter(id => id); // Rimuovi null/undefined
 
             // Salva gli ID degli studenti
-            const studentIds = classDoc.students.map(s => s._id);
+            const studentIds = classDoc.students.map(s => s.studentId || s);
 
             // Archivia la classe
             classDoc.status = 'archived';
@@ -1771,7 +1757,8 @@ async archiveAcademicYear(schoolId, yearId) {
 
             // 7. Aggiorna gli utenti (insegnanti)
             if (teacherIds.length > 0) {
-                await this.userRepository.updateMany(
+                const User = mongoose.model('User');
+                await User.updateMany(
                     { _id: { $in: teacherIds } },
                     {
                         $pull: {
@@ -1785,12 +1772,13 @@ async archiveAcademicYear(schoolId, yearId) {
 
             // 8. Aggiorna gli studenti
             if (studentIds.length > 0) {
-                await this.studentRepository.updateMany(
+                const Student = mongoose.model('Student');
+                await Student.updateMany(
                     { _id: { $in: studentIds } },
                     {
                         $set: {
                             status: 'inactive',
-                            currentClass: null,
+                            classId: null,
                             updatedAt: new Date()
                         }
                     },
@@ -1816,6 +1804,7 @@ async archiveAcademicYear(schoolId, yearId) {
         await session.abortTransaction();
         logger.error('Errore nell\'archiviazione dell\'anno accademico', {
             error: error.message,
+            stack: error.stack,
             schoolId,
             yearId
         });
@@ -1861,6 +1850,106 @@ async getClassesByAcademicYear(schoolId, academicYear) {
             academicYear
         });
         throw error;
+    }
+}
+
+/**
+ * Riattiva un anno accademico precedentemente archiviato
+ * @param {String} schoolId - ID della scuola
+ * @param {String} yearId - ID dell'anno accademico da riattivare
+ * @returns {Promise<Object>} La scuola aggiornata
+ */
+async reactivateAcademicYear(schoolId, yearId) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        logger.debug('Inizio riattivazione anno accademico archiviato', { 
+            schoolId, 
+            yearId 
+        });
+
+        // 1. Verifica che la scuola esista
+        const school = await this.model.findById(schoolId).session(session);
+        if (!school) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            );
+        }
+
+        // 2. Trova l'anno da riattivare
+        const yearToReactivate = school.academicYears.id(yearId);
+        if (!yearToReactivate) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Anno accademico non trovato'
+            );
+        }
+
+        // 3. Verifica che l'anno sia archiviato
+        if (yearToReactivate.status !== 'archived') {
+            throw createError(
+                ErrorTypes.BUSINESS.INVALID_OPERATION,
+                'Solo gli anni accademici archiviati possono essere riattivati'
+            );
+        }
+
+        // 4. Modifica lo stato dell'anno in planned
+        yearToReactivate.status = 'planned';
+        yearToReactivate.updatedAt = new Date();
+        
+        // 5. Salva le modifiche
+        await school.save({ session });
+
+        // 6. Riattiva le classi associate all'anno accademico
+        const Class = mongoose.model('Class');
+        const classesToReactivate = await Class.find({
+            schoolId,
+            academicYear: yearToReactivate.year,
+            isActive: false
+        }).session(session);
+        
+        logger.debug('Classi da riattivare trovate:', {
+            count: classesToReactivate.length,
+            academicYear: yearToReactivate.year
+        });
+
+        // 7. Aggiorna ogni classe
+        for (const classDoc of classesToReactivate) {
+            // Riattiva la classe
+            classDoc.isActive = true;
+            classDoc.status = 'planned';
+            classDoc.archivedAt = undefined;
+            classDoc.updatedAt = new Date();
+            
+            // Nota: lasciamo gli studenti e gli insegnanti disconnessi
+            // Dovranno essere riassegnati manualmente
+
+            await classDoc.save({ session });
+        }
+
+        await session.commitTransaction();
+        
+        logger.info('Anno accademico riattivato con successo', {
+            schoolId,
+            yearId,
+            yearValue: yearToReactivate.year,
+            classesReactivated: classesToReactivate.length
+        });
+
+        return school;
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Errore nella riattivazione dell\'anno accademico', {
+            error: error.message,
+            stack: error.stack,
+            schoolId,
+            yearId
+        });
+        throw error;
+    } finally {
+        session.endSession();
     }
 }
 

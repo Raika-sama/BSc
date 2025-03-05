@@ -14,6 +14,9 @@ class TestController extends BaseController {
         this.assignTest = this.assignTest.bind(this);
         this.getAssignedTests = this.getAssignedTests.bind(this);
         this.revokeTest = this.revokeTest.bind(this);
+        this.assignTestToClass = this.assignTestToClass.bind(this);
+        this.getAssignedTestsByClass = this.getAssignedTestsByClass.bind(this);
+        this.revokeClassTests = this.revokeClassTests.bind(this);
         
         // Log repository details for debugging
         logger.debug('TestController initialized with repository:', {
@@ -86,6 +89,68 @@ class TestController extends BaseController {
             this.sendResponse(res, { test }, 201);
         } catch (error) {
             logger.error('Error in test assignment:', {
+                error: error.message,
+                stack: error.stack
+            });
+            this.sendError(res, error);
+        }
+    }
+
+    /**
+     * Assegna un test a tutti gli studenti di una classe
+     * @route POST /tests/assign-to-class
+     */
+    async assignTestToClass(req, res) {
+        try {
+            const { testType, config, classId } = req.body;
+            const assignedBy = req.user.id;
+            
+            logger.debug('Assigning test to class:', {
+                testType,
+                classId,
+                assignedBy,
+                config: config ? 'present' : 'not present'
+            });
+            
+            // Validazione input
+            if (!testType || !classId) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'I campi testType e classId sono obbligatori'
+                );
+            }
+            
+            // Verifica permessi
+            if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
+                throw createError(
+                    ErrorTypes.AUTH.FORBIDDEN,
+                    'Non autorizzato ad assegnare test a una classe'
+                );
+            }
+            
+            // Assegna il test attraverso il repository
+            const result = await this.repository.assignTestToClass(
+                {
+                    tipo: testType,
+                    configurazione: config || {}
+                },
+                classId,
+                assignedBy
+            );
+            
+            logger.info('Tests assigned successfully to class:', {
+                classId,
+                testsCount: result.testsAssigned,
+                assignedBy
+            });
+    
+            this.sendResponse(res, { 
+                success: true,
+                message: `${result.testsAssigned} test assegnati agli studenti della classe`,
+                data: result
+            }, 201);
+        } catch (error) {
+            logger.error('Error in class test assignment:', {
                 error: error.message,
                 stack: error.stack
             });
@@ -171,6 +236,49 @@ class TestController extends BaseController {
     }
     
     /**
+     * Recupera i test assegnati agli studenti di una classe
+     * @route GET /tests/assigned/class/:classId
+     */
+    async getAssignedTestsByClass(req, res) {
+        try {
+            const { classId } = req.params;
+            
+            logger.debug('Getting assigned tests for class:', { 
+                classId,
+                userId: req.user.id
+            });
+            
+            if (!classId) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'ID classe non valido'
+                );
+            }
+            
+            // Verifica permessi
+            const isAdmin = req.user.role === 'admin';
+            const assignedBy = isAdmin ? null : req.user.id;
+            
+            const testsByStudent = await this.repository.getAssignedTestsByClass(classId, assignedBy);
+            
+            logger.debug('Tests by class retrieved:', {
+                classId,
+                studentsCount: testsByStudent.length
+            });
+            
+            this.sendResponse(res, { 
+                studentsWithTests: testsByStudent
+            });
+        } catch (error) {
+            logger.error('Error getting class tests:', {
+                error: error.message,
+                classId: req.params.classId
+            });
+            this.sendError(res, error);
+        }
+    }
+    
+    /**
      * Revoca un test assegnato
      * @route POST /tests/:testId/revoke
      */
@@ -224,6 +332,58 @@ class TestController extends BaseController {
             logger.error('Error revoking test:', {
                 error: error.message,
                 testId: req.params.testId
+            });
+            this.sendError(res, error);
+        }
+    }
+    
+    /**
+     * Revoca tutti i test assegnati agli studenti di una classe
+     * @route POST /tests/class/:classId/revoke
+     */
+    async revokeClassTests(req, res) {
+        try {
+            const { classId } = req.params;
+            const { testType } = req.body; // Parametro opzionale
+            
+            logger.debug('Revoking tests for class:', { 
+                classId, 
+                testType: testType || 'all',
+                userId: req.user.id 
+            });
+            
+            if (!classId) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'ID classe non valido'
+                );
+            }
+            
+            // Verifica permessi
+            if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
+                throw createError(
+                    ErrorTypes.AUTH.FORBIDDEN,
+                    'Non autorizzato a revocare test di classe'
+                );
+            }
+            
+            // Revoca i test
+            const result = await this.repository.revokeClassTests(classId, testType);
+            
+            logger.info('Class tests revoked successfully:', {
+                classId,
+                modifiedCount: result.modifiedCount,
+                userId: req.user.id
+            });
+            
+            this.sendResponse(res, { 
+                success: true,
+                message: `${result.modifiedCount} test revocati con successo` 
+            });
+        } catch (error) {
+            logger.error('Error revoking class tests:', {
+                error: error.message,
+                classId: req.params.classId
             });
             this.sendError(res, error);
         }

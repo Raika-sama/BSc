@@ -125,6 +125,15 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
     );
 
     /**
+     * @route POST /api/schools/:id/academic-years/:yearId/reactivate
+     * @desc Riattiva un anno accademico archiviato
+     * @access Private - Admin e manager della scuola
+     */
+    router.post('/:id/academic-years/:yearId/reactivate',
+        asyncHandler(schoolController.reactivateAcademicYear.bind(schoolController))
+    );
+
+    /**
      * Integra le route per la transizione tra anni accademici
      */
     const yearTransitionRouter = createYearTransitionRouter({ authMiddleware });
@@ -359,6 +368,7 @@ module.exports = createSchoolRouter;
  * POST   /schools/:id/academic-years     - Crea nuovo anno accademico
  * POST   /schools/:id/academic-years/:yearId/activate - Attiva un anno accademico
  * POST   /schools/:id/academic-years/:yearId/archive - Archivia un anno accademico
+ * POST   /schools/:id/academic-years/:yearId/reactivate - Riattiva un anno archiviato
  * GET    /schools/:id/classes            - Ottiene classi per anno accademico
  * 
  * Route Admin:
