@@ -41,6 +41,7 @@ class SchoolController extends BaseController {
         this.reactivateAcademicYear = this.reactivateAcademicYear.bind(this);
         this.getClassesByAcademicYear = this.getClassesByAcademicYear.bind(this);
         this.createSection = this.createSection.bind(this);
+        this.updateAcademicYear = this.updateAcademicYear.bind(this); // Nuovo metodo bindato
     }
 
     // Aggiungi questi metodi di utility
@@ -1522,6 +1523,97 @@ async createSection(req, res) {
                 yearId: req.params.yearId
             });
             this.sendError(res, error);
+        }
+    }
+
+    /**
+     * Aggiorna un anno accademico esistente
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     */
+    async updateAcademicYear(req, res) {
+        try {
+            const { id: schoolId } = req.params;
+            const { yearId } = req.params;
+            const { selectedSections, ...updateData } = req.body;
+            
+            logger.info(`Aggiornamento anno accademico ${yearId} per scuola ${schoolId}`, {
+                updateData,
+                selectedSections: selectedSections ? selectedSections.length : 'nessuna'
+            });
+
+            // Validare i dati di aggiornamento
+            if (updateData.year && !updateData.year.match(/^\d{4}\/\d{4}$/)) {
+                return this.sendError(res, createError(
+                    400, 
+                    ErrorTypes.VALIDATION_ERROR, 
+                    'Il formato dell\'anno accademico deve essere YYYY/YYYY'
+                ));
+            }
+
+            // Verificare che la scuola esista
+            const school = await this.repository.findById(schoolId);
+            if (!school) {
+                return this.sendError(res, createError(
+                    404, 
+                    ErrorTypes.RESOURCE_NOT_FOUND, 
+                    'Scuola non trovata'
+                ));
+            }
+
+            // Verificare che l'utente abbia i permessi
+            if (req.user.role !== 'admin' && 
+                (!school.manager || school.manager.toString() !== req.user._id.toString())) {
+                return this.sendError(res, createError(
+                    403, 
+                    ErrorTypes.AUTHORIZATION_FORBIDDEN, 
+                    'Non autorizzato a modificare anni accademici per questa scuola'
+                ));
+            }
+
+            // Cercare l'anno accademico da aggiornare
+            const academicYearIndex = school.academicYears.findIndex(
+                year => year._id.toString() === yearId
+            );
+            
+            if (academicYearIndex === -1) {
+                return this.sendError(res, createError(
+                    404, 
+                    ErrorTypes.RESOURCE_NOT_FOUND, 
+                    'Anno accademico non trovato'
+                ));
+            }
+
+            // Utilizza il repository per aggiornare l'anno accademico
+            const updatedSchool = await this.repository.updateAcademicYear(
+                schoolId, 
+                yearId, 
+                updateData, 
+                selectedSections // Passiamo l'array delle sezioni selezionate
+            );
+            
+            return this.sendResponse(res, {
+                message: 'Anno accademico aggiornato con successo',
+                academicYear: updatedSchool.academicYears.id(yearId)
+            });
+            
+        } catch (error) {
+            logger.error('Errore nell\'aggiornamento dell\'anno accademico:', error);
+            
+            // Gestione errori specifici
+            if (error.code === ErrorTypes.RESOURCE.ALREADY_EXISTS.code) {
+                return this.sendError(res, {
+                    statusCode: 409, // Conflict
+                    message: error.message,
+                    code: error.code
+                });
+            }
+            
+            return this.sendError(res, createError(
+                500, 
+                ErrorTypes.INTERNAL_SERVER_ERROR, 
+                'Errore nell\'aggiornamento dell\'anno accademico'
+            ));
         }
     }
 }

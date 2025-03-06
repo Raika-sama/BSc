@@ -13,19 +13,28 @@ import {
    MenuItem,
    Typography,
    Alert,
+   AlertTitle,
    LinearProgress,
    IconButton,
    Paper,
    Stepper,
    Step,
    StepLabel,
-   Divider
+   Divider,
+   List,
+   ListItem,
+   ListItemText,
+   ListItemIcon,
+   Stack
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DownloadIcon from '@mui/icons-material/Download';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import EmailIcon from '@mui/icons-material/Email';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import * as XLSX from 'xlsx';
 import { useSchool } from '../../context/SchoolContext';
 import { axiosInstance } from '../../services/axiosConfig';
@@ -45,6 +54,8 @@ const StudentBulkImportForm = ({ open, onClose }) => {
    const [parsedData, setParsedData] = useState([]);
    const [availableClasses, setAvailableClasses] = useState([]);
    const [activeStep, setActiveStep] = useState(0);
+   const [duplicateEmails, setDuplicateEmails] = useState([]);
+   const [existingEmails, setExistingEmails] = useState([]);
 
    // Steps per il processo di import
    const steps = ['Selezione File', 'Revisione Dati', 'Risultato Import'];
@@ -66,7 +77,15 @@ const StudentBulkImportForm = ({ open, onClose }) => {
            const response = await axiosInstance.get(`/classes?schoolId=${schoolId}`);
            
            if (response.data.status === 'success') {
-               setAvailableClasses(response.data.data.classes || []);
+               // Assicuriamoci che ogni classe abbia year e section come stringhe per la comparazione
+               const classes = response.data.data.classes.map(c => ({
+                   ...c,
+                   year: c.year.toString(),
+                   section: c.section
+               }));
+               
+               console.log('Available classes loaded:', classes);
+               setAvailableClasses(classes || []);
            }
        } catch (error) {
            console.error('Error loading classes:', error);
@@ -75,6 +94,40 @@ const StudentBulkImportForm = ({ open, onClose }) => {
            setLoading(false);
        }
    };
+
+   // Controlla se ci sono email duplicate
+   const checkDuplicateEmails = async (emails) => {
+        if (!emails || emails.length === 0) return [];
+        
+        try {
+            const response = await axiosInstance.post('/students/check-emails', { 
+                emails: emails.map(e => e.toLowerCase().trim())
+            });
+            
+            // Aggiungere questo log per vedere la risposta completa
+            console.log('Full server response:', response.data);
+            
+            if (response.data.status === 'success') {
+                const duplicates = response.data.data.duplicates || [];
+                console.log('Duplicate emails check:', duplicates);
+                return duplicates;
+            }
+            return [];
+        } catch (error) {
+            console.error('Error checking duplicate emails:', error);
+            return [];
+        }
+    };
+
+    // Gestisce il cambio di email di uno studente
+    const handleEmailChange = (oldEmail, newEmail) => {
+        // Rimuovi la vecchia email dall'elenco delle email duplicate
+        setExistingEmails(prev => prev.filter(email => email !== oldEmail));
+        
+        // Aggiorna anche l'array duplicateEmails se necessario
+        setDuplicateEmails(prev => prev.filter(item => item.email !== oldEmail));
+    };
+
 
    // Gestisce il cambio di scuola
    const handleSchoolChange = (e) => {
@@ -86,6 +139,7 @@ const StudentBulkImportForm = ({ open, onClose }) => {
    // Gestisce il cambio di file
    const handleFileChange = (event) => {
        const selectedFile = event.target.files[0];
+       
        if (selectedFile) {
            if (!selectedFile.name.match(/\.(xls|xlsx)$/)) {
                setError('Solo file Excel (.xls, .xlsx) sono supportati');
@@ -104,11 +158,11 @@ const StudentBulkImportForm = ({ open, onClose }) => {
    };
 
    // Effettua il parsing del file Excel
-   const parseExcelFile = (file) => {
+   const parseExcelFile = async (file) => {
        setLoading(true);
        
        const reader = new FileReader();
-       reader.onload = (e) => {
+       reader.onload = async (e) => {
            try {
                const data = new Uint8Array(e.target.result);
                const workbook = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'DD/MM/YYYY' });
@@ -123,7 +177,7 @@ const StudentBulkImportForm = ({ open, onClose }) => {
                // Normalizza i dati
                const normalizedData = jsonData.map(row => {
                    // Standardizza i nomi delle colonne e formatta i dati
-                   return {
+                   const student = {
                        firstName: row.firstName || row['Nome'] || row['nome'] || '',
                        lastName: row.lastName || row['Cognome'] || row['cognome'] || '',
                        gender: row.gender || row['Genere'] || row['genere'] || '',
@@ -133,9 +187,45 @@ const StudentBulkImportForm = ({ open, onClose }) => {
                        parentEmail: row.parentEmail || row['Email Genitore'] || row['email genitore'] || '',
                        specialNeeds: row.specialNeeds === 'SI' || row.specialNeeds === 'YES' || row.specialNeeds === true
                    };
+                   
+                   // Gestisci correttamente i campi per anno e sezione
+                   const year = row.year || row.anno || row.Anno || '';
+                   const section = row.section || row.sezione || row.Sezione || '';
+                   
+                   // Aggiungi informazioni sulla classe
+                   if (year && section) {
+                       student.year = year.toString(); // Converti in stringa per coerenza
+                       student.section = section.toString().toUpperCase();
+                       
+                       // Cerca se esiste una classe corrispondente
+                       if (availableClasses && availableClasses.length) {
+                           const matchingClass = availableClasses.find(
+                               c => c.year.toString() === student.year && 
+                                    c.section === student.section
+                           );
+                           
+                           if (matchingClass) {
+                               student.classId = matchingClass._id;
+                               console.log(`Assigned class ID ${matchingClass._id} to student ${student.firstName} ${student.lastName}`);
+                           } else {
+                               console.log(`No matching class found for ${student.year}${student.section}`);
+                           }
+                       }
+                   }
+                   
+                   return student;
                });
                
                console.log('Parsed Excel data:', normalizedData);
+               
+               // Verifica email duplicate nel database
+               const emails = normalizedData.map(student => student.email).filter(Boolean);
+               if (emails.length > 0) {
+                   const duplicates = await checkDuplicateEmails(emails);
+                   setExistingEmails(duplicates || []);
+                   console.log('Existing emails in database:', duplicates);
+               }
+               
                setParsedData(normalizedData);
                
                // Vai al passo successivo
@@ -191,6 +281,7 @@ const StudentBulkImportForm = ({ open, onClose }) => {
        setLoading(true);
        setError(null);
        setResult(null);
+       setDuplicateEmails([]); // Resetta le email duplicate
 
        try {
            // Prepara i dati da inviare
@@ -199,24 +290,115 @@ const StudentBulkImportForm = ({ open, onClose }) => {
                schoolId: schoolId
            };
 
+           // Log dettagliato prima dell'invio
+           console.log('Sending import data to server:', {
+               studentsCount: importData.students.length,
+               schoolId: importData.schoolId,
+               firstStudent: importData.students[0],
+               studentsWithClassId: importData.students.filter(s => s.classId).length,
+               studentsWithYearSection: importData.students.filter(s => s.year && s.section).length
+           });
+           
            // Esegui l'import
            const response = await axiosInstance.post('/students/bulk-import-with-class', importData);
-
-           // Processa il risultato
-           setResult(response.data.data);
+    
+            // Estrai correttamente il risultato considerando la struttura anniddata
+            // La struttura è response.data.data.data
+            const resultData = response.data.data?.data || {};
+            
+            console.log('CORRECTLY EXTRACTED RESULT:', resultData);
+            
+            // Ora resultData dovrebbe avere direttamente i campi imported, failed, errors
+            const imported = Number(resultData.imported) || 0;
+            const failed = Number(resultData.failed) || 0;
+            
+            // Imposta il risultato
+            setResult({
+                imported,
+                failed,
+                errors: resultData.errors || []
+            });
+       
+           
+           // Gestisci le email duplicate
+           let duplicateEmails = [];
+           
+           // Prima controlla le email duplicate dai dati di risposta
+           if (resultData && resultData.errors && resultData.errors.length > 0) {
+               const duplicatesFromErrors = resultData.errors
+                   .filter(err => err.error === 'DUPLICATE_EMAIL')
+                   .map(err => ({
+                       email: err.data.email,
+                       name: `${err.data.firstName} ${err.data.lastName}`,
+                       row: err.row
+                   }));
+               
+               duplicateEmails = [...duplicateEmails, ...duplicatesFromErrors];
+           }
+           
+           // Poi aggiungi le email già esistenti che abbiamo verificato prima
+           if (existingEmails.length > 0) {
+               // Mappa le email esistenti al formato richiesto
+               const existingEmailsData = existingEmails.map(email => {
+                   // Trova lo studente con questa email
+                   const student = confirmedData.find(s => s.email?.toLowerCase() === email.toLowerCase());
+                   return {
+                       email: email,
+                       name: student ? `${student.firstName} ${student.lastName}` : '',
+                       row: '?'
+                   };
+               });
+               
+               // Aggiungi solo le email che non sono già state incluse
+               existingEmailsData.forEach(item => {
+                   if (!duplicateEmails.some(d => d.email.toLowerCase() === item.email.toLowerCase())) {
+                       duplicateEmails.push(item);
+                   }
+               });
+           }
+           
+           // Se ci sono duplicati, imposta l'array
+           if (duplicateEmails.length > 0) {
+               console.log('Setting duplicate emails:', duplicateEmails);
+               setDuplicateEmails(duplicateEmails);
+           }
+           
            setActiveStep(2); // Vai al passo finale
 
            // Mostra notifiche
-           if (response.data.data.imported > 0) {
-               showNotification(`Importati ${response.data.data.imported} studenti con successo`, 'success');
+           if (resultData.imported > 0) {
+               showNotification(`Importati ${resultData.imported} studenti con successo`, 'success');
            }
-           if (response.data.data.failed > 0) {
-               showNotification(`${response.data.data.failed} studenti non importati`, 'warning');
+           if (resultData.failed > 0) {
+               showNotification(`${resultData.failed} studenti non importati`, 'warning');
            }
+           console.log('RENDERING RESULT:', result);
 
        } catch (error) {
            console.error('Error uploading data:', error);
-           setError(error.response?.data?.error?.message || 'Errore durante l\'import');
+           
+           // Gestisci errori dal server
+           if (error.response?.data?.error) {
+               const serverError = error.response.data.error;
+               setError(serverError.message || 'Errore durante l\'import');
+               
+               // Se l'errore contiene dettagli sulle email duplicate
+               if (serverError.details && Array.isArray(serverError.details)) {
+                   if (serverError.message.includes('Email già presente')) {
+                       // Estrai informazioni sulle email duplicate, se disponibili
+                       const duplicateKey = serverError.details.find(d => d.duplicateKey);
+                       if (duplicateKey) {
+                           setDuplicateEmails([{ email: duplicateKey.email }]);
+                           
+                           // Vai comunque allo step dei risultati per mostrare le email duplicate
+                           setActiveStep(2);
+                       }
+                   }
+               }
+           } else {
+               setError('Errore durante l\'import degli studenti');
+           }
+           
            showNotification('Errore durante l\'import degli studenti', 'error');
        } finally {
            setLoading(false);
@@ -227,6 +409,7 @@ const StudentBulkImportForm = ({ open, onClose }) => {
    const handleCancelPreview = () => {
        setActiveStep(0);
        setParsedData([]);
+       setExistingEmails([]);
    };
 
    // Gestisce la navigazione tra gli step
@@ -245,6 +428,8 @@ const StudentBulkImportForm = ({ open, onClose }) => {
        setResult(null);
        setParsedData([]);
        setActiveStep(0);
+       setExistingEmails([]);
+       setDuplicateEmails([]);
        onClose();
    };
 
@@ -309,39 +494,131 @@ const StudentBulkImportForm = ({ open, onClose }) => {
            case 1: // Step 2: Revisione Dati
                return (
                    <Box sx={{ mt: 2 }}>
+                       {existingEmails.length > 0 && (
+                           <Alert severity="warning" sx={{ mb: 2 }}>
+                               <Typography variant="subtitle2" gutterBottom>
+                                   Attenzione: sono state trovate {existingEmails.length} email già presenti nel sistema:
+                               </Typography>
+                               <List dense>
+                                   {existingEmails.slice(0, 5).map((email, i) => (
+                                       <ListItem key={i} sx={{ py: 0 }}>
+                                           <ListItemIcon sx={{ minWidth: 36 }}>
+                                               <EmailIcon fontSize="small" color="warning" />
+                                           </ListItemIcon>
+                                           <ListItemText primary={email} />
+                                       </ListItem>
+                                   ))}
+                                   {existingEmails.length > 5 && (
+                                       <ListItem>
+                                           <Typography variant="caption">
+                                               ...e altre {existingEmails.length - 5} email
+                                           </Typography>
+                                       </ListItem>
+                                   )}
+                               </List>
+                               <Typography variant="body2" mt={1}>
+                                   Gli studenti con email duplicate non verranno importati.
+                               </Typography>
+                           </Alert>
+                       )}
+                       
                        <ExcelPreview 
-                           data={parsedData}
-                           onConfirm={handleConfirmImport}
-                           onCancel={handleCancelPreview}
-                           availableClasses={availableClasses}
-                       />
+                            data={parsedData}
+                            onConfirm={handleConfirmImport}
+                            onCancel={handleCancelPreview}
+                            availableClasses={availableClasses}
+                            existingEmails={existingEmails}
+                            onEmailChange={handleEmailChange}
+                        />
                    </Box>
                );
-           case 2: // Step 3: Risultato Import
+               case 2: // Step 3: Risultato Import
                return (
                    <Box sx={{ mt: 2 }}>
                        <Typography variant="h6" gutterBottom>
-                           Risultato Import:
+                           Riepilogo Importazione Studenti
                        </Typography>
-                       <Typography>
-                           Studenti importati con successo: {result?.imported || 0}
-                       </Typography>
-                       {result?.failed > 0 && (
-                           <Typography color="error">
-                               Studenti non importati: {result.failed}
-                           </Typography>
-                       )}
-                       {result?.errors && result.errors.length > 0 && (
-                           <Box sx={{ mt: 2 }}>
-                               <Typography color="error" gutterBottom>
-                                   Errori riscontrati:
+                       
+                       {result && (
+                           <Paper sx={{ p: 3, mb: 3, backgroundColor: 'success.light' }}>
+                               <Stack direction="row" spacing={2} alignItems="center" mb={2}>
+                                   <CheckCircleIcon fontSize="large" color="success" />
+                                   <Typography variant="h6" color="success.dark">
+                                       Importazione Completata
+                                   </Typography>
+                               </Stack>
+                               
+                               <Typography variant="body1" paragraph>
+                                    <strong>{result?.imported || 0}</strong> studenti importati con successo.
+                                    {(result?.failed > 0) && (
+                                        <span> {result.failed} studenti non sono stati importati a causa di errori.</span>
+                                    )}
+                                </Typography>
+                               
+                               <Typography variant="body2" color="text.secondary">
+                                   Gli studenti importati sono ora disponibili nel sistema e possono essere assegnati alle classi.
                                </Typography>
-                               {result.errors.map((error, index) => (
-                                   <Alert key={index} severity="error" sx={{ mb: 1 }}>
-                                       Riga {error.row}: {error.message}
-                                   </Alert>
-                               ))}
+                           </Paper>
+                       )}
+                       
+                       {/* Mostra le email duplicate in una sezione dedicata */}
+                       {duplicateEmails.length > 0 && (
+                           <Box sx={{ mt: 2, mb: 2 }}>
+                               <Alert severity="warning" sx={{ mb: 1 }}>
+                                   <AlertTitle>Email duplicate ({duplicateEmails.length})</AlertTitle>
+                                   I seguenti studenti non sono stati importati perché le loro email sono già presenti nel sistema:
+                               </Alert>
+                               <List dense sx={{ bgcolor: 'background.paper' }}>
+                                   {duplicateEmails.map((item, index) => (
+                                       <ListItem key={index}>
+                                           <ListItemIcon>
+                                               <EmailIcon color="warning" />
+                                           </ListItemIcon>
+                                           <ListItemText 
+                                               primary={item.email} 
+                                               secondary={
+                                                   item.name 
+                                                       ? `${item.name} (Riga ${item.row || 'non disponibile'})` 
+                                                       : `Email esistente nel database`
+                                               } 
+                                           />
+                                       </ListItem>
+                                   ))}
+                               </List>
                            </Box>
+                       )}
+                       
+                       {/* Altri errori non legati alle email duplicate */}
+                       {result?.errors && result.errors.length > 0 && result.errors.some(err => err.error !== 'DUPLICATE_EMAIL') && (
+                           <Box sx={{ mt: 2 }}>
+                               <Alert severity="error" sx={{ mb: 1 }}>
+                                   <AlertTitle>Altri errori ({result.errors.filter(err => err.error !== 'DUPLICATE_EMAIL').length})</AlertTitle>
+                                   I seguenti studenti non sono stati importati a causa di errori:
+                               </Alert>
+                               <List dense>
+                                   {result.errors
+                                       .filter(err => err.error !== 'DUPLICATE_EMAIL')
+                                       .map((error, index) => (
+                                           <ListItem key={index}>
+                                               <ListItemIcon>
+                                                   <ErrorOutlineIcon color="error" />
+                                               </ListItemIcon>
+                                               <ListItemText 
+                                                   primary={`Riga ${error.row}: ${error.message}`}
+                                                   secondary={error.data?.firstName ? `${error.data.firstName} ${error.data.lastName || ''}` : ''}
+                                               />
+                                           </ListItem>
+                                       ))}
+                               </List>
+                           </Box>
+                       )}
+                       
+                       {/* Messaggi speciali quando nessuno studente è stato importato */}
+                       {result?.imported === 0 && !duplicateEmails.length && (
+                           <Alert severity="info" sx={{ mt: 2 }}>
+                               <AlertTitle>Nessuno studente importato</AlertTitle>
+                               Non è stato possibile importare alcuno studente. Verifica i dati e riprova.
+                           </Alert>
                        )}
                    </Box>
                );

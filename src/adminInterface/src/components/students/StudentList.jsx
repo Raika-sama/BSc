@@ -57,6 +57,11 @@ const StudentList = () => {
     const [page, setPage] = useState(0);
     const [assignSchoolOpen, setAssignSchoolOpen] = useState(false);
 
+    // Aggiungo la funzione toggleFilters
+    const toggleFilters = () => {
+        setIsFilterOpen(prev => !prev);
+    };
+
     // Filtri
     const [filters, setFilters] = useState({
         search: '',
@@ -65,6 +70,39 @@ const StudentList = () => {
         status: '',
         specialNeeds: ''
     });
+    
+    // Nuovo stato per i filtri applicati
+    const [appliedFilters, setAppliedFilters] = useState({
+        search: '',
+        schoolId: '',
+        classFilter: '',
+        status: '',
+        specialNeeds: ''
+    });
+
+    // Estrattori dei valori di filtro individuali
+    const searchTerm = filters.search;
+    const schoolFilter = filters.schoolId;
+    const classFilter = filters.classFilter;
+    const statusFilter = filters.status;
+    const specialNeedsFilter = filters.specialNeeds;
+
+    // Funzioni setter per i singoli filtri
+    const setSearchTerm = (value) => {
+        setFilters(prev => ({ ...prev, search: value }));
+    };
+    const setSchoolFilter = (value) => {
+        setFilters(prev => ({ ...prev, schoolId: value }));
+    };
+    const setClassFilter = (value) => {
+        setFilters(prev => ({ ...prev, classFilter: value }));
+    };
+    const setStatusFilter = (value) => {
+        setFilters(prev => ({ ...prev, status: value }));
+    };
+    const setSpecialNeedsFilter = (value) => {
+        setFilters(prev => ({ ...prev, specialNeeds: value }));
+    };
 
     // Caricamento dati
     const loadStudents = async () => {
@@ -72,18 +110,18 @@ const StudentList = () => {
             const queryFilters = {
                 page: page + 1,
                 limit: pageSize,
-                search: filters.search.trim(),
-                schoolId: filters.schoolId,
-                status: filters.status,
+                search: appliedFilters.search.trim(),
+                schoolId: appliedFilters.schoolId,
+                status: appliedFilters.status,
             };
 
-            if (filters.specialNeeds !== '') {
-                queryFilters.specialNeeds = filters.specialNeeds === 'true';
+            if (appliedFilters.specialNeeds !== '') {
+                queryFilters.specialNeeds = appliedFilters.specialNeeds === 'true';
             }
 
-            if (filters.classFilter) {
-                const year = parseInt(filters.classFilter.match(/^\d+/)[0]);
-                const section = filters.classFilter.slice(year.toString().length);
+            if (appliedFilters.classFilter) {
+                const year = parseInt(appliedFilters.classFilter.match(/^\d+/)[0]);
+                const section = appliedFilters.classFilter.slice(year.toString().length);
                 queryFilters.year = year;
                 queryFilters.section = section;
             }
@@ -94,9 +132,28 @@ const StudentList = () => {
         }
     };
 
+    // Funzione per applicare i filtri
+    const applyFilters = () => {
+        setAppliedFilters({...filters});
+        setPage(0); // Reset alla prima pagina quando si applicano nuovi filtri
+    };
+
+    // Funzione per resettare i filtri
+    const resetFilters = () => {
+        const emptyFilters = {
+            search: '',
+            schoolId: '',
+            classFilter: '',
+            status: '',
+            specialNeeds: ''
+        };
+        setFilters(emptyFilters);
+        setAppliedFilters(emptyFilters);
+    };
+
     useEffect(() => {
         loadStudents();
-    }, [page, pageSize, filters]);
+    }, [page, pageSize, appliedFilters]); // Ora dipende da appliedFilters invece di filters
 
 // Creiamo le stats cards utilizzando i dati degli studenti
 const statsCards = useMemo(() => {
@@ -288,7 +345,7 @@ const statsCards = useMemo(() => {
                 <Box display="flex" gap={2}>
                     <Tooltip title="Filtri">
                         <IconButton 
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            onClick={toggleFilters}
                             color="primary"
                         >
                             <FilterListIcon />
@@ -321,17 +378,21 @@ const statsCards = useMemo(() => {
             <ListLayout
                 statsCards={statsCards} // Modifica qui: passiamo direttamente l'array di cards
                 isFilterOpen={isFilterOpen}
+                onToggleFilters={toggleFilters}
                 filterComponent={
                     <FilterToolbar
-                        filters={filters}
-                        setFilters={setFilters}
-                        onReset={() => setFilters({
-                            search: '',
-                            schoolId: '',
-                            classFilter: '',
-                            status: '',
-                            specialNeeds: ''
-                        })}
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        schoolFilter={schoolFilter}
+                        setSchoolFilter={setSchoolFilter}
+                        classFilter={classFilter}
+                        setClassFilter={setClassFilter}
+                        statusFilter={statusFilter}
+                        setStatusFilter={setStatusFilter}
+                        specialNeedsFilter={specialNeedsFilter}
+                        setSpecialNeedsFilter={setSpecialNeedsFilter}
+                        handleSearch={applyFilters}
+                        handleResetFilters={resetFilters}
                     />
                 }
                 rows={students || []}

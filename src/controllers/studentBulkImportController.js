@@ -32,13 +32,54 @@ class StudentBulkImportController extends BaseController {
             // Prendi il primo foglio
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             
-            // Converti in JSON
+            // Converti in JSON con opzioni specifiche per mantenere i valori originali
             const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
                 raw: false,
-                dateNF: 'DD/MM/YYYY'
+                dateNF: 'DD/MM/YYYY',
+                defval: null // Usa null per celle vuote invece di undefined
             });
 
-            return jsonData;
+            // Processa ogni riga per assicurarsi che i campi critici siano formattati correttamente
+            const processedData = jsonData.map(row => ({
+                ...row,
+                // Standardizza i nomi dei campi (permette colonne in italiano o inglese)
+                firstName: row.firstName || row.nome || row.Nome || null,
+                lastName: row.lastName || row.cognome || row.Cognome || null,
+                email: row.email || row.Email || null,
+                gender: row.gender || row.genere || row.Genere || null,
+                dateOfBirth: row.dateOfBirth || row['data di nascita'] || row['Data di Nascita'] || null,
+                parentEmail: row.parentEmail || row['email genitore'] || row['Email Genitore'] || null,
+                fiscalCode: row.fiscalCode || row['codice fiscale'] || row['Codice Fiscale'] || null,
+                
+                // Formatta correttamente i campi
+                firstName: row.firstName ? String(row.firstName).trim() : null,
+                lastName: row.lastName ? String(row.lastName).trim() : null,
+                email: row.email ? String(row.email).trim().toLowerCase() : null,
+                parentEmail: row.parentEmail ? String(row.parentEmail).trim().toLowerCase() : null,
+                fiscalCode: row.fiscalCode ? String(row.fiscalCode).trim().toUpperCase() : null,
+                
+                // Gestisci correttamente i campi per la classe
+                year: row.year || row.anno || row.Anno || null,
+                section: row.section || row.sezione || row.Sezione || null,
+                classId: row.classId ? String(row.classId).trim() : null,
+
+                // Normalizza i valori booleani
+                specialNeeds: row.specialNeeds === true || 
+                             row.specialNeeds === 'true' || 
+                             row.specialNeeds === '1' || 
+                             row.specialNeeds === 'SI' || 
+                             row.specialNeeds === 'SÌ' || 
+                             row.specialNeeds === 'YES',
+            }));
+
+            logger.debug('Excel data parsed:', {
+                rowCount: processedData.length,
+                sampleRow: processedData[0],
+                hasClassIds: processedData.some(row => row.classId),
+                hasYearSection: processedData.some(row => row.year && row.section)
+            });
+
+            return processedData;
         } catch (error) {
             logger.error('Error parsing Excel file:', error);
             throw createError(
@@ -145,7 +186,8 @@ class StudentBulkImportController extends BaseController {
 
             logger.debug('Students data received', { 
                 count: students.length,
-                withClassIds: students.filter(s => s.classId).length
+                withClassIds: students.filter(s => s.classId).length,
+                withYearSection: students.filter(s => s.year && s.section).length
             });
 
             // Valida i dati (senza validazione pesante come per il file Excel)
@@ -161,18 +203,54 @@ class StudentBulkImportController extends BaseController {
                 );
             }
 
-            // Esegui l'import con assegnazione classe
-            const result = await this.repository.bulkImportWithClass(students, schoolId);
+            try {
+                // Esegui l'import con assegnazione classe
+                const result = await this.repository.bulkImportWithClass(students, schoolId);
 
-            // Invia la risposta
-            this.sendResponse(res, {
-                message: 'Import completato con successo',
-                data: {
-                    imported: result.imported,
-                    failed: result.failed,
-                    errors: result.errors
+                // Invia la risposta
+                this.sendResponse(res, {
+                    message: 'Import completato con successo',
+                    data: {
+                        imported: result.imported,
+                        failed: result.failed,
+                        errors: result.errors
+                    }
+                });
+            } catch (error) {
+                // Gestisci errori specifici dal repository 
+                if (error.code && error.code === ErrorTypes.VALIDATION.BAD_REQUEST.code) {
+                    // Errore di validazione con dettagli
+                    logger.warn('Validation error in bulk import:', {
+                        message: error.message,
+                        details: error.metadata?.details || []
+                    });
+
+                    this.sendError(res, {
+                        statusCode: 400,
+                        message: error.message,
+                        details: error.metadata?.details || []
+                    });
+                    return;
                 }
-            });
+                
+                if (error.code && error.code === ErrorTypes.VALIDATION.ALREADY_EXISTS.code) {
+                    // Errore per email duplicata
+                    logger.warn('Duplicate email error in bulk import:', {
+                        message: error.message,
+                        details: error.metadata?.duplicateKey
+                    });
+
+                    this.sendError(res, {
+                        statusCode: 400,
+                        message: error.message,
+                        details: error.metadata?.details || ['Email già presente nel sistema']
+                    });
+                    return;
+                }
+                
+                // Rilancia altri errori per essere gestiti dal gestore globale
+                throw error;
+            }
 
         } catch (error) {
             logger.error('Error in bulk import with class controller:', {
@@ -180,17 +258,15 @@ class StudentBulkImportController extends BaseController {
                 stack: error.stack
             });
 
-            // Se è un errore di validazione, mantieni i dettagli
-            if (error.code === ErrorTypes.VALIDATION.BAD_REQUEST.code) {
-                this.sendError(res, {
-                    statusCode: 400,
-                    message: error.message,
-                    details: error.metadata?.details
-                });
-                return;
-            }
-
-            next(error);
+            // Gestisci errori non gestiti sopra
+            const statusCode = error.code ? (error.code >= 400 && error.code < 600 ? error.code : 500) : 500;
+            const message = error.message || 'Errore durante l\'import degli studenti';
+            
+            this.sendError(res, {
+                statusCode,
+                message,
+                details: error.metadata?.details || []
+            });
         }
     }
 

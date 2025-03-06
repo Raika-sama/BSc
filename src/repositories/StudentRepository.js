@@ -1261,6 +1261,47 @@ async countByClasses(classIds) {
     }
 }
 
+/**
+ * Trova studenti per email
+ * @param {Array<string>} emails - Array di email da cercare
+ * @returns {Promise<Array>} Lista degli studenti trovati
+ */
+async findByEmails(emails) {
+    try {
+        if (!emails || !Array.isArray(emails) || emails.length === 0) {
+            return [];
+        }
+        
+        // Normalizza le email (converti in minuscolo e rimuovi spazi)
+        const normalizedEmails = emails.map(email => 
+            email.toString().trim().toLowerCase()
+        );
+        
+        logger.debug('Searching for students by emails:', { 
+            emailCount: normalizedEmails.length,
+            sampleEmails: normalizedEmails.slice(0, 3)
+        });
+        
+        // Cerca gli studenti con le email specificate
+        const students = await this.model.find({
+            email: { $in: normalizedEmails }
+        });
+        
+        logger.debug('Found students by emails:', {
+            searchedCount: normalizedEmails.length,
+            foundCount: students.length
+        });
+        
+        return students;
+    } catch (error) {
+        logger.error('Error in findByEmails:', {
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
+    }
+}
+
 
 }
 

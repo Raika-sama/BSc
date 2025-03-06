@@ -1953,6 +1953,247 @@ async reactivateAcademicYear(schoolId, yearId) {
     }
 }
 
+    /**
+     * Aggiorna un anno accademico esistente
+     * @param {String} schoolId - ID della scuola
+     * @param {String} yearId - ID dell'anno accademico da aggiornare
+     * @param {Object} updateData - Dati da aggiornare
+     * @param {Array} sections - Array opzionale di sezioni da abilitare per questo anno
+     * @returns {Promise<Object>} La scuola aggiornata
+     */
+    async updateAcademicYear(schoolId, yearId, updateData, sections = null) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            logger.debug('Updating academic year', {
+                schoolId,
+                yearId,
+                updateData,
+                sectionsCount: sections?.length
+            });
+            
+            // Verifica che l'anno accademico non esista già con lo stesso nome
+            if (updateData.year) {
+                const existingYear = await this.model.findOne({
+                    _id: schoolId,
+                    'academicYears.year': updateData.year,
+                    'academicYears._id': { $ne: yearId }
+                });
+                
+                if (existingYear) {
+                    throw createError(
+                        ErrorTypes.RESOURCE.ALREADY_EXISTS,
+                        `Esiste già un anno accademico con l'anno ${updateData.year}`
+                    );
+                }
+            }
+            
+            // Recupera la scuola
+            const school = await this.model.findById(schoolId).session(session);
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+            
+            // Cerca l'anno accademico da aggiornare
+            const academicYearIndex = school.academicYears.findIndex(
+                year => year._id.toString() === yearId
+            );
+            
+            if (academicYearIndex === -1) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Anno accademico non trovato'
+                );
+            }
+
+            // Salva i dati attuali per controlli successivi
+            const currentYearData = school.academicYears[academicYearIndex];
+            const currentYear = currentYearData.year;
+            const status = currentYearData.status;
+
+            // Valida le date se presenti
+            if (updateData.startDate && updateData.endDate) {
+                const startDate = new Date(updateData.startDate);
+                const endDate = new Date(updateData.endDate);
+                
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                    throw createError(
+                        ErrorTypes.VALIDATION.INVALID_INPUT,
+                        'Date non valide'
+                    );
+                }
+                
+                if (startDate >= endDate) {
+                    throw createError(
+                        ErrorTypes.VALIDATION.INVALID_INPUT,
+                        'La data di inizio deve essere precedente alla data di fine'
+                    );
+                }
+            }
+            
+            // Aggiorna i campi dell'anno accademico
+            if (updateData.year) school.academicYears[academicYearIndex].year = updateData.year;
+            if (updateData.startDate) school.academicYears[academicYearIndex].startDate = updateData.startDate;
+            if (updateData.endDate) school.academicYears[academicYearIndex].endDate = updateData.endDate;
+            if (updateData.description) school.academicYears[academicYearIndex].description = updateData.description;
+            
+            // Gestisci le sezioni se fornite
+            if (sections && Array.isArray(sections)) {
+                logger.debug('Updating sections for academic year', {
+                    sectionsCount: sections.length
+                });
+
+                // Valida le sezioni
+                const invalidSections = sections.some(section => !/^[A-Z]$/.test(section));
+                if (invalidSections) {
+                    throw createError(
+                        ErrorTypes.VALIDATION.INVALID_INPUT,
+                        'Le sezioni devono essere singole lettere maiuscole'
+                    );
+                }
+
+                // Trova le sezioni nuove (quelle non presenti nell'anno)
+                const currentSections = currentYearData.sections || [];
+                const newSections = sections.filter(s => !currentSections.includes(s));
+
+                // Aggiorna le sezioni dell'anno
+                school.academicYears[academicYearIndex].sections = [...new Set([...currentSections, ...sections])];
+
+                // Crea classi per le nuove sezioni
+                if (newSections.length > 0) {
+                    const schoolType = school.schoolType;
+                    const years = schoolType === 'middle_school' ? [1, 2, 3] : 
+                                 schoolType === 'high_school' ? [1, 2, 3, 4, 5] : [1];
+
+                    const targetAcademicYear = updateData.year || currentYear;
+
+                    // Per ogni nuova sezione, verifica quali classi devono essere create
+                    for (const section of newSections) {
+                        // Verifica che la sezione esista nella configurazione della scuola
+                        const sectionExists = school.sections.some(s => s.name === section && s.isActive);
+                        if (!sectionExists) {
+                            logger.warn('Tentativo di aggiungere una sezione non configurata', {
+                                section,
+                                schoolId
+                            });
+                            continue;
+                        }
+
+                        for (const year of years) {
+                            // Verifica se la classe esiste già
+                            const existingClass = await mongoose.model('Class').findOne({
+                                schoolId,
+                                section: section,
+                                year: year,
+                                academicYear: targetAcademicYear
+                            }).session(session);
+
+                            // Se la classe non esiste, creala
+                            if (!existingClass) {
+                                const newClass = new (mongoose.model('Class'))({
+                                    schoolId: school._id,
+                                    section: section,
+                                    year: year,
+                                    academicYear: targetAcademicYear,
+                                    isActive: true,
+                                    status: 'planned',
+                                    students: [],
+                                    capacity: school.defaultMaxStudentsPerClass,
+                                    createdAt: new Date()
+                                });
+
+                                await newClass.save({ session });
+                                
+                                logger.debug('Creata nuova classe', {
+                                    section,
+                                    year,
+                                    academicYear: targetAcademicYear
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Salva le modifiche alla scuola
+            await school.save({ session });
+            
+            // Se è stato modificato l'anno di un anno accademico attivo, aggiorna anche le classi
+            if (status === 'active' && updateData.year && updateData.year !== currentYear) {
+                await mongoose.model('Class').updateMany(
+                    { 
+                        schoolId: schoolId, 
+                        academicYear: currentYear 
+                    },
+                    { academicYear: updateData.year },
+                    { session }
+                );
+                
+                logger.info(`Aggiornato anno accademico delle classi da ${currentYear} a ${updateData.year}`);
+            }
+            
+            await session.commitTransaction();
+            return school;
+            
+        } catch (error) {
+            await session.abortTransaction();
+            logger.error('Error updating academic year:', {
+                error: error.message,
+                stack: error.stack,
+                schoolId,
+                yearId
+            });
+            throw error;
+        } finally {
+            session.endSession();
+        }
+    }
+
+    /**
+     * Trova studenti per email
+     * @param {Array<string>} emails - Array di email da cercare
+     * @returns {Promise<Array>} Lista degli studenti trovati
+     */
+    async findByEmails(emails) {
+        try {
+            if (!emails || !Array.isArray(emails) || emails.length === 0) {
+                return [];
+            }
+            
+            // Normalizza le email (converti in minuscolo e rimuovi spazi)
+            const normalizedEmails = emails.map(email => 
+                email.toString().trim().toLowerCase()
+            );
+            
+            logger.debug('Searching for students by emails:', { 
+                emailCount: normalizedEmails.length,
+                sampleEmails: normalizedEmails.slice(0, 3)
+            });
+            
+            // Cerca gli studenti con le email specificate
+            const students = await this.model.find({
+                email: { $in: normalizedEmails }
+            });
+            
+            logger.debug('Found students by emails:', {
+                searchedCount: normalizedEmails.length,
+                foundCount: students.length
+            });
+            
+            return students;
+        } catch (error) {
+            logger.error('Error in findByEmails:', {
+                error: error.message,
+                stack: error.stack
+            });
+            throw error;
+        }
+    }
+
 }
 
 module.exports = SchoolRepository;

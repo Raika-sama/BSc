@@ -61,6 +61,10 @@ const ClassManagement = () => {
         });
     }, []);
 
+    const toggleFilters = () => {
+        setIsFilterOpen(prev => !prev);
+    };
+
     const handleApplyFilters = () => {
         // La logica dei filtri rimane la stessa
         const filtered = filterClasses(isAdmin ? mainTeacherClasses : 
@@ -193,7 +197,7 @@ const ClassManagement = () => {
                 <Box sx={{ display: 'flex', gap: 2 }}>
                     <Tooltip title="Filtri">
                         <IconButton 
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            onClick={toggleFilters}
                             color="primary"
                         >
                             <FilterListIcon />
@@ -212,6 +216,7 @@ const ClassManagement = () => {
                 <ListLayout
                     statsCards={statsCards}
                     isFilterOpen={isFilterOpen}
+                    onToggleFilters={toggleFilters}
                     filterComponent={
                         <FilterToolbar
                             schoolFilter={schoolFilter}

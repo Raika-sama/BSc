@@ -21,7 +21,8 @@ import {
     Person as PersonIcon,
     AdminPanelSettings as AdminIcon,
     SupervisorAccount as TeacherIcon,
-    School as SchoolIcon
+    School as SchoolIcon,
+    FilterList as FilterListIcon
 } from '@mui/icons-material';
 import { ContentLayout } from '../common/commonIndex';
 import ListLayout from '../common/ListLayout';
@@ -437,14 +438,24 @@ const handleInactiveToggle = useCallback((value) => {
                 subtitle="Gestisci gli account e i permessi degli utenti"
                 //breadcrumbs={breadcrumbs}
                 actions={
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => setIsFormOpen(true)}
-                        sx={{ borderRadius: 2 }}
-                    >
-                        Nuovo Utente
-                    </Button>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Tooltip title="Filtri">
+                            <IconButton 
+                                onClick={toggleFilters}
+                                color="primary"
+                            >
+                                <FilterListIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => setIsFormOpen(true)}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Nuovo Utente
+                        </Button>
+                    </Box>
                 }
             >
                 <Routes>

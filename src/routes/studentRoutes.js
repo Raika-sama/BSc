@@ -71,6 +71,15 @@ const createStudentRouter = ({
     router.get('/count', 
         asyncHandler(studentController.countByClasses.bind(studentController))
     );
+    
+    /**
+     * @route POST /api/students/check-emails
+     * @desc Verifica se le email fornite sono già presenti nel database
+     * @access Private - Richiede autenticazione
+     */
+    router.post('/check-emails', 
+        asyncHandler(studentController.checkEmails.bind(studentController))
+    );
 
     // 4. Route di importazione bulk (solo admin)
     router.get('/template', 
@@ -237,6 +246,7 @@ module.exports = createStudentRouter;
  * POST   /api/v1/students/bulk-import         - Import massivo da file Excel (admin)
  * POST   /api/v1/students/bulk-import-with-class - Import con assegnazione classe (admin)
  * GET    /api/v1/students/template            - Scarica template Excel (admin)
+ * POST   /api/v1/students/check-emails        - Verifica email duplicate
  * 
  * Controllo Accessi:
  * - Admin: accesso completo
