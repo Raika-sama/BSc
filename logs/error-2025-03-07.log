@@ -92,3 +92,4 @@
 {"error":{"code":11000,"index":0,"keyPattern":{"sessionTokens.token":1},"keyValue":{"sessionTokens.token":null}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:00:05.656Z"}
 {"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:00:05.894Z"}
 {"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:05:16.187Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:50:00.356Z"}
