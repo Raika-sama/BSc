@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-const { School } = require('../../../src/models');
-const SchoolRepository = require('../../../src/repositories/SchoolRepository');
-const { ErrorTypes } = require('../../../src/utils/errors/errorTypes');
+const { School } = require('../../../models');
+const SchoolRepository = require('../../../repositories/SchoolRepository');
+const { ErrorTypes } = require('../../..//utils/errors/errorTypes');
 
 describe('SchoolRepository', () => {
     let schoolRepository;

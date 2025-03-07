@@ -13,6 +13,7 @@ const createCSIRoutes = require('./engines/CSI/routes/csi.routes');
 const createTestRouter = require('./routes/testRoutes');
 const createQuestionRoutes = require('./engines/CSI/routes/csi.question.routes');
 const YearTransitionController = require('./controllers/yearTransitionController');
+const testSystemController = require('./controllers/testSystemController'); // Importo il controller per i test di sistema
 
 // Importa e registra i modelli CSI
 let models;
@@ -246,6 +247,7 @@ const startServer = async () => {
             testController,
             csiController,
             yearTransitionController: YearTransitionController,
+            testSystemController, // Aggiungo il controller per i test di sistema
             // CSI Dependencies
             ...csiDependencies,
             csiScorer: csiDependencies.csiScorer,  // Lo aggiungiamo esplicitamente

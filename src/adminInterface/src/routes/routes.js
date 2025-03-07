@@ -26,6 +26,7 @@ import StudentForm from '../components/students/StudentForm';
 import StudentEditForm from '../components/students/list/tabs/InfoTab';
 import DocumentationViewer from '../components/docViewer/DocumentationViewer';
 import YearTransitionWizard from '../components/school/yearManagement/YearTransitionWizard';
+import SystemTestsManagement from '../components/systemTests/SystemTestsManagement';
 
 // Importa le icone da Material-UI
 import {
@@ -38,7 +39,8 @@ import {
     Science as ResearcherIcon,
     Analytics as AnalyticsIcon,
     Security as SecurityIcon,
-    Description as DescriptionIcon, // Aggiungi questa riga per importare l'icona Description
+    Description as DescriptionIcon,
+    BugReport as BugIcon, // Aggiungo l'icona per i system tests
 } from '@mui/icons-material';
 
 // Aggiornamento delle definizioni dei permessi
@@ -102,6 +104,11 @@ const PERMISSIONS = {
         READ: 'services:read',
         WRITE: 'services:write',
         MANAGE: 'services:manage'
+    },
+    SYSTEM: {
+        READ: 'system:read',
+        WRITE: 'system:write',
+        MANAGE: 'system:manage'
     }
 };
 
@@ -372,6 +379,18 @@ export const adminRoutes = [
         icon: DescriptionIcon, // Importa questa icona in cima al file
         permissions: null, // accessibile a tutti gli utenti autenticati
         showInMenu: true // Mostra nel menu sidebar
+    },
+    // Aggiungo la nuova rotta per la gestione dei test di sistema
+    {
+        path: 'system-tests',
+        element: SystemTestsManagement,
+        title: 'Test di Sistema',
+        icon: BugIcon,
+        permissions: [PERMISSIONS.SYSTEM.READ],
+        writePermission: PERMISSIONS.SYSTEM.WRITE,
+        managePermission: PERMISSIONS.SYSTEM.MANAGE,
+        showInMenu: true,
+        rolesAllowed: ['admin', 'developer'] // Solo admin e developer possono accedere
     }
 ];
 

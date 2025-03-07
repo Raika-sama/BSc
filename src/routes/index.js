@@ -22,9 +22,10 @@ const createRouter = (dependencies) => {
         'schoolController',
         'userController',
         'studentController',
-        'studentAuthController', // Aggiunto
+        'studentAuthController',
         'testController',
-        'csiController'
+        'csiController',
+        'testSystemController' // Aggiunta nuova dipendenza
     ];
 
     requiredDependencies.forEach(dep => {
@@ -38,13 +39,20 @@ const createRouter = (dependencies) => {
 
     // Importa le route con le dipendenze
     const authRoutes = require('./authRoutes')(dependencies);
-    const studentAuthRoutes = require('./studentAuthRoutes')(dependencies); // Aggiunto
+    const studentAuthRoutes = require('./studentAuthRoutes')(dependencies);
     const classRoutes = require('./classRoutes')(dependencies);
     const schoolRoutes = require('./schoolRoutes')(dependencies);
     const userRoutes = require('./userRoutes')(dependencies);
     const studentRoutes = require('./studentRoutes')(dependencies);
     const testRoutes = require('./testRoutes')(dependencies);
     const csiRoutes = require('../engines/CSI/routes/csi.routes')(dependencies);
+    
+    // Importa e crea le rotte per i test di sistema
+    const createTestSystemRouter = require('./testSystemRoutes');
+    const testSystemRoutes = createTestSystemRouter({
+        authMiddleware: dependencies.authMiddleware,
+        testSystemController: dependencies.testSystemController
+    });
 
     // Middleware di logging globale
     router.use((req, res, next) => {
@@ -60,14 +68,14 @@ const createRouter = (dependencies) => {
     });
 
     // Route pubbliche
-    const publicRoutes = ['/auth', '/student-auth', '/tests/csi/public']; // Aggiunto student-auth
+    const publicRoutes = ['/auth', '/student-auth', '/tests/csi/public'];
     router.use('/auth', authRoutes);
     router.use('/student-auth', studentAuthRoutes);
     router.use('/tests/csi/public', csiRoutes.publicRoutes);
 
 
     // Route protette
-    const protectedPaths = ['/classes', '/schools', '/users', '/students', '/tests'];
+    const protectedPaths = ['/classes', '/schools', '/users', '/students', '/tests', '/system-tests'];
     
     // Middleware di protezione per route protette
     router.use(protectedPaths, (req, res, next) => {
@@ -87,6 +95,7 @@ const createRouter = (dependencies) => {
     router.use('/students', studentRoutes);
     router.use('/tests', testRoutes);
     router.use('/tests/csi', csiRoutes.protectedRoutes);
+    router.use('/system-tests', testSystemRoutes); // Aggiunte le rotte per i test di sistema
 
     // Log delle route caricate
     logger.info('Routes initialized:', {
@@ -123,6 +132,7 @@ module.exports = createRouter;
  * 
  * Route Pubbliche:
  * - /auth                   -> Autenticazione e gestione utenti
+ * - /student-auth          -> Autenticazione studenti
  * - /tests/csi/public      -> Route pubbliche CSI
  * 
  * Route Protette:
@@ -132,6 +142,7 @@ module.exports = createRouter;
  * - /students             -> Gestione studenti
  * - /tests                -> Gestione test
  * - /tests/csi            -> Route protette CSI
+ * - /system-tests         -> Gestione dei test di sistema
  * 
  * Middleware:
  * - Logging globale per tutte le richieste
