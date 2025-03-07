@@ -35,8 +35,23 @@ const authService = {
         hasStudent: !!response.data?.data?.student
       });
       
+      // Estrai il token JWT dalla risposta o dai cookie
+      const token = extractToken(response);
+      if (token) {
+        localStorage.setItem('student-token', token);
+        console.log('Token JWT salvato nel localStorage');
+      } else {
+        console.warn('Nessun token trovato nella risposta');
+      }
+      
       // Caso 1: Risposta di primo accesso
       if (response.data?.data?.isFirstAccess) {
+        // Salviamo l'ID dello studente per uso futuro
+        if (response.data.data?.studentId) {
+          localStorage.setItem('studentId', response.data.data.studentId);
+          console.log('Student ID salvato:', localStorage.getItem('studentId'));
+        }
+        
         return {
           isFirstAccess: true,
           studentId: response.data.data?.studentId || '',
@@ -46,28 +61,50 @@ const authService = {
       
       // Caso 2: Risposta con student nella data.data
       if (response.data?.data?.student) {
-        localStorage.setItem('student', JSON.stringify(response.data.data.student));
+        const studentData = response.data.data.student;
+        
+        // Salviamo l'ID dello studente separatamente
+        if (studentData._id || studentData.id) {
+          localStorage.setItem('studentId', studentData._id || studentData.id);
+          console.log('Student ID salvato:', localStorage.getItem('studentId'));
+        }
+        
+        localStorage.setItem('student', JSON.stringify(studentData));
         return {
           success: true,
           data: {
-            student: response.data.data.student
+            student: studentData
           }
         };
       }
       
       // Caso 3: Risposta con student nella data
       if (response.data?.student) {
-        localStorage.setItem('student', JSON.stringify(response.data.student));
+        const studentData = response.data.student;
+        
+        // Salviamo l'ID dello studente separatamente
+        if (studentData._id || studentData.id) {
+          localStorage.setItem('studentId', studentData._id || studentData.id);
+          console.log('Student ID salvato:', localStorage.getItem('studentId'));
+        }
+        
+        localStorage.setItem('student', JSON.stringify(studentData));
         return {
           success: true,
           data: {
-            student: response.data.student
+            student: studentData
           }
         };
       }
       
       // Caso 4: Risposta senza student ma con successo (supponiamo che lo student sia nel cookie)
       if (response.data?.success || response.data?.status === 'success') {
+        // Controlliamo se nella risposta c'è un campo studentId
+        if (response.data.data?.studentId || response.data?.studentId) {
+          localStorage.setItem('studentId', response.data.data?.studentId || response.data?.studentId);
+          console.log('Student ID salvato:', localStorage.getItem('studentId'));
+        }
+        
         // Proviamo a recuperare lo studente dal localStorage esistente o impostiamo un valore provvisorio
         const existingStudent = localStorage.getItem('student');
         if (!existingStudent) {
@@ -141,6 +178,13 @@ const authService = {
         withCredentials: true
       });
       
+      // Estrai e salva il token JWT
+      const token = extractToken(response);
+      if (token) {
+        localStorage.setItem('student-token', token);
+        console.log('Token JWT salvato nel localStorage dopo il primo accesso');
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Errore durante il primo accesso:', error);
@@ -184,6 +228,8 @@ const authService = {
       
       // Prima rimuovi i dati locali
       localStorage.removeItem('student');
+      localStorage.removeItem('studentId'); // Rimuovi anche l'ID salvato separatamente
+      localStorage.removeItem('student-token'); // Aggiungi esplicitamente rimozione token
       localStorage.removeItem('lastTestAttempt');
       localStorage.removeItem('menuPosition');
       
@@ -220,7 +266,12 @@ const authService = {
    * @returns {boolean}
    */
   isAuthenticated: () => {
-    return !!localStorage.getItem('student');
+    // Controlliamo sia il token che i dati studente
+    const hasToken = !!localStorage.getItem('student-token') || 
+                     document.cookie.includes('student-token=');
+    const hasStudentData = !!localStorage.getItem('student');
+    
+    return hasToken && hasStudentData;
   },
   
   /**
@@ -228,9 +279,118 @@ const authService = {
    * @returns {Object|null}
    */
   getStudent: () => {
-    const studentData = localStorage.getItem('student');
-    return studentData ? JSON.parse(studentData) : null;
+    try {
+      const studentData = localStorage.getItem('student');
+      return studentData ? JSON.parse(studentData) : null;
+    } catch (error) {
+      console.error('Errore nel parsing dei dati studente:', error);
+      return null;
+    }
+  },
+  
+  /**
+   * Recupera l'ID dello studente dal localStorage
+   * @returns {string|null}
+   */
+  getStudentId: () => {
+    // Prima prova a recuperare direttamente l'ID salvato
+    const directId = localStorage.getItem('studentId');
+    if (directId) return directId;
+
+    // Se non c'è un ID diretto, prova a recuperarlo dai dati studente
+    try {
+      const studentData = localStorage.getItem('student');
+      if (studentData) {
+        const student = JSON.parse(studentData);
+        return student._id || student.id || null;
+      }
+    } catch (error) {
+      console.error('Errore nel recupero ID studente:', error);
+    }
+    return null;
+  },
+
+  /**
+   * Salva i dati dello studente nel localStorage
+   * @param {Object} studentData - I dati dello studente da salvare
+   */
+  saveStudent: (studentData) => {
+    if (!studentData) return;
+    
+    try {
+      // Salva i dati completi dello studente
+      localStorage.setItem('student', JSON.stringify(studentData));
+      
+      // Salva anche l'ID separatamente per un accesso più veloce
+      if (studentData._id || studentData.id) {
+        localStorage.setItem('studentId', studentData._id || studentData.id);
+      }
+    } catch (error) {
+      console.error('Errore nel salvataggio dei dati studente:', error);
+    }
+  },
+
+  /**
+   * Recupera il token di autenticazione
+   * @returns {string|null}
+   */
+  getToken: () => {
+    const tokenFromStorage = localStorage.getItem('student-token');
+    
+    // Se non troviamo il token nel localStorage, proviamo a cercarlo nei cookie
+    if (!tokenFromStorage) {
+      const tokenFromCookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('student-token='))
+        ?.split('=')[1];
+      
+      if (tokenFromCookie) {
+        // Se lo troviamo nel cookie, salviamolo anche nel localStorage per coerenza
+        localStorage.setItem('student-token', tokenFromCookie);
+        return tokenFromCookie;
+      }
+    }
+    
+    return tokenFromStorage;
+  },
+
+  /**
+   * Salva il token di autenticazione
+   * @param {string} token - Il token da salvare
+   */
+  saveToken: (token) => {
+    if (token) {
+      localStorage.setItem('student-token', token);
+    }
+  },
+};
+
+/**
+ * Funzione di utilità per estrarre il token JWT dalla risposta o dai cookie
+ * @param {Object} response - Risposta HTTP da axios
+ * @returns {string|null} - Il token JWT o null
+ */
+const extractToken = (response) => {
+  // 1. Controlla se il token è nella risposta
+  if (response.data?.token) {
+    return response.data.token;
   }
+  
+  // 2. Cerca nel formato di risposta annidato
+  if (response.data?.data?.token) {
+    return response.data.data.token;
+  }
+  
+  // 3. Cerca nei cookie (dopo la risposta saranno già impostati)
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'student-token') {
+      return value;
+    }
+  }
+  
+  return null;
 };
 
 export default authService;

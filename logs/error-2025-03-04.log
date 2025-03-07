@@ -44,3 +44,4 @@
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Authentication failed","path":"/logout","timestamp":"2025-03-04T20:09:25.201Z"}
 {"error":{"message":"Autenticazione richiesta","metadata":{}},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-04T20:09:25.203Z"}
 >>>>>>> 457a2380b14293573ee634cdd7ba14f1f47b5d17
+{"error":"studentAuthController is not defined","level":"error","message":"Errore durante l'avvio del server:","stack":"ReferenceError: studentAuthController is not defined\n    at startServer (C:\\Users\\hanga\\Desktop\\BrainScanner\\src\\app.js:244:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-03-04T22:37:16.555Z"}

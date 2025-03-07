@@ -141,3 +141,10 @@
 {"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-03-04T20:09:26.847Z","userId":"677bfe44f6789c907c9f3766"}
 {"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import with class completed successfully","timestamp":"2025-03-04T20:11:17.741Z"}
 >>>>>>> 457a2380b14293573ee634cdd7ba14f1f47b5d17
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-04T22:37:15.064Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-04T22:37:15.067Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-04T22:37:15.091Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-04T22:37:16.156Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-04T22:37:16.157Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-04T22:37:16.158Z"}
+{"error":"studentAuthController is not defined","level":"error","message":"Errore durante l'avvio del server:","stack":"ReferenceError: studentAuthController is not defined\n    at startServer (C:\\Users\\hanga\\Desktop\\BrainScanner\\src\\app.js:244:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-03-04T22:37:16.555Z"}
