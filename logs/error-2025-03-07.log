@@ -92,4 +92,20 @@
 {"error":{"code":11000,"index":0,"keyPattern":{"sessionTokens.token":1},"keyValue":{"sessionTokens.token":null}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:00:05.656Z"}
 {"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:00:05.894Z"}
 {"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:05:16.187Z"}
+<<<<<<< Updated upstream
 {"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:50:00.356Z"}
+=======
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:14:28.303Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:14:47.317Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:31:23.972Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:43:53.712Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:48:17.028Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:08:19.683Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:09:34.566Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:12:23.350Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:16:31.546Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:17:58.911Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:25:37.497Z"}
+>>>>>>> Stashed changes
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:53:50.537Z"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:59:01.312Z"}

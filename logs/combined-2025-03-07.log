@@ -511,6 +511,7 @@
 {"level":"info","message":"Ambiente: development","timestamp":"2025-03-07T20:04:58.541Z"}
 {"level":"info","message":"User created","timestamp":"2025-03-07T20:05:15.976Z","userId":"67cb517ba693bfb54385c5d5"}
 {"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:05:16.187Z"}
+<<<<<<< Updated upstream
 {"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-07T21:37:08.871Z"}
 {"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-07T21:37:08.876Z"}
 {"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-07T21:37:08.942Z"}
@@ -531,3 +532,87 @@
 {"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-07T21:50:58.027Z"}
 {"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-07T21:50:58.030Z"}
 {"level":"info","message":"Ambiente: development","timestamp":"2025-03-07T21:50:58.031Z"}
+=======
+{"level":"info","message":"User created","timestamp":"2025-03-07T20:14:28.089Z","userId":"67cb53a3e1e65afea3024edc"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:14:28.303Z"}
+{"level":"info","message":"User created","timestamp":"2025-03-07T20:14:47.123Z","userId":"67cb53b78dd241a17a197992"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:14:47.317Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-07T20:31:07.507Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-07T20:31:07.511Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-07T20:31:07.552Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-07T20:31:09.267Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-07T20:31:09.268Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-07T20:31:09.269Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-07T20:31:09.612Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-07T20:31:09.618Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-07T20:31:09.619Z"}
+{"level":"info","message":"User created","timestamp":"2025-03-07T20:31:23.746Z","userId":"67cb579bc65e016745143ac2"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:31:23.972Z"}
+{"level":"info","message":"User created","timestamp":"2025-03-07T20:43:53.498Z","userId":"67cb5a8979d0a305f2c5217f"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:43:53.712Z"}
+{"entriesCount":10,"level":"info","message":"User history retrieved","timestamp":"2025-03-07T20:45:18.690Z","userId":"677bfe44f6789c907c9f3766"}
+{"entriesCount":10,"level":"info","message":"User history retrieved","timestamp":"2025-03-07T20:45:18.692Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"info","message":"User created","timestamp":"2025-03-07T20:48:16.799Z","userId":"67cb5b90b7bca388b58bd14b"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:48:17.028Z"}
+{"level":"info","message":"User created","timestamp":"2025-03-07T21:08:19.455Z","userId":"67cb6043764818254e55ed4b"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:08:19.683Z"}
+{"level":"info","message":"User created","timestamp":"2025-03-07T21:09:34.359Z","userId":"67cb608e16dd6ee5f5c666ca"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:09:34.566Z"}
+{"level":"info","message":"User created","timestamp":"2025-03-07T21:12:23.102Z","userId":"67cb61362bac81e31e397dbe"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:12:23.350Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-07T21:16:19.245Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-07T21:16:19.251Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-07T21:16:19.301Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-07T21:16:20.327Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-07T21:16:20.328Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-07T21:16:20.331Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-07T21:16:20.700Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-07T21:16:20.708Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-07T21:16:20.709Z"}
+{"level":"info","message":"User created","timestamp":"2025-03-07T21:16:31.332Z","userId":"67cb622f3f5eb66a959c898a"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:16:31.546Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-07T21:17:49.145Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-07T21:17:49.161Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-07T21:17:49.242Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-07T21:17:50.049Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-07T21:17:50.050Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-07T21:17:50.051Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-07T21:17:50.342Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-07T21:17:50.346Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-07T21:17:50.347Z"}
+{"level":"info","message":"User created","timestamp":"2025-03-07T21:17:58.680Z","userId":"67cb62865bb49c1fedc92562"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:17:58.911Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-07T21:23:42.776Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-07T21:23:42.781Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-07T21:23:42.821Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-07T21:23:43.579Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-07T21:23:43.580Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-07T21:23:43.582Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-07T21:23:43.882Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-07T21:23:43.886Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-07T21:23:43.887Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-07T21:25:18.994Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-07T21:25:19.004Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-07T21:25:19.120Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-07T21:25:22.763Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-07T21:25:22.770Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-07T21:25:22.779Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-07T21:25:23.219Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-07T21:25:23.227Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-07T21:25:23.228Z"}
+{"level":"info","message":"User created","timestamp":"2025-03-07T21:25:37.279Z","userId":"67cb6451eb3d54d26b3fc277"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:25:37.497Z"}
+>>>>>>> Stashed changes
+{"level":"info","message":"User created","timestamp":"2025-03-07T21:53:50.284Z","userId":"67cb6aeead28f7df318b3dc5"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:53:50.537Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-07T21:58:42.265Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-07T21:58:42.270Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-07T21:58:42.311Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-07T21:58:43.215Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-07T21:58:43.217Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-07T21:58:43.219Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-07T21:58:43.553Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-07T21:58:43.560Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-07T21:58:43.561Z"}
+{"level":"info","message":"User created","timestamp":"2025-03-07T21:59:01.092Z","userId":"67cb6c25fa6bcd14f913c569"}
+{"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:59:01.312Z"}
