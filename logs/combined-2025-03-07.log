@@ -512,6 +512,7 @@
 {"level":"info","message":"User created","timestamp":"2025-03-07T20:05:15.976Z","userId":"67cb517ba693bfb54385c5d5"}
 {"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:05:16.187Z"}
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 {"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-07T21:37:08.871Z"}
 {"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-07T21:37:08.876Z"}
 {"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-07T21:37:08.942Z"}
@@ -533,6 +534,8 @@
 {"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-07T21:50:58.030Z"}
 {"level":"info","message":"Ambiente: development","timestamp":"2025-03-07T21:50:58.031Z"}
 =======
+=======
+>>>>>>> Stashed changes
 {"level":"info","message":"User created","timestamp":"2025-03-07T20:14:28.089Z","userId":"67cb53a3e1e65afea3024edc"}
 {"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T20:14:28.303Z"}
 {"level":"info","message":"User created","timestamp":"2025-03-07T20:14:47.123Z","userId":"67cb53b78dd241a17a197992"}
@@ -602,6 +605,7 @@
 {"level":"info","message":"Ambiente: development","timestamp":"2025-03-07T21:25:23.228Z"}
 {"level":"info","message":"User created","timestamp":"2025-03-07T21:25:37.279Z","userId":"67cb6451eb3d54d26b3fc277"}
 {"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:25:37.497Z"}
+<<<<<<< Updated upstream
 >>>>>>> Stashed changes
 {"level":"info","message":"User created","timestamp":"2025-03-07T21:53:50.284Z","userId":"67cb6aeead28f7df318b3dc5"}
 {"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:53:50.537Z"}
@@ -616,3 +620,5 @@
 {"level":"info","message":"Ambiente: development","timestamp":"2025-03-07T21:58:43.561Z"}
 {"level":"info","message":"User created","timestamp":"2025-03-07T21:59:01.092Z","userId":"67cb6c25fa6bcd14f913c569"}
 {"error":{"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"test@example.com"}},"level":"error","message":"Error creating user","timestamp":"2025-03-07T21:59:01.312Z"}
+=======
+>>>>>>> Stashed changes
