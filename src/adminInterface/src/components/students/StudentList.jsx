@@ -57,6 +57,11 @@ const StudentList = () => {
     const [page, setPage] = useState(0);
     const [assignSchoolOpen, setAssignSchoolOpen] = useState(false);
 
+    // Aggiungo la funzione toggleFilters
+    const toggleFilters = () => {
+        setIsFilterOpen(prev => !prev);
+    };
+
     // Filtri
     const [filters, setFilters] = useState({
         search: '',
@@ -65,6 +70,43 @@ const StudentList = () => {
         status: '',
         specialNeeds: ''
     });
+    
+    // Nuovo stato per i filtri applicati
+    const [appliedFilters, setAppliedFilters] = useState({
+        search: '',
+        schoolId: '',
+        classFilter: '',
+        status: '',
+        specialNeeds: ''
+    });
+
+    // Estrattori dei valori di filtro individuali
+    const searchTerm = filters.search;
+    const schoolFilter = filters.schoolId;
+    const classFilter = filters.classFilter;
+    const statusFilter = filters.status;
+    const specialNeedsFilter = filters.specialNeeds;
+    
+    const handleRowClick = (params) => {
+        navigate(`/admin/students/${params.row._id}`);
+    };
+
+    // Funzioni setter per i singoli filtri
+    const setSearchTerm = (value) => {
+        setFilters(prev => ({ ...prev, search: value }));
+    };
+    const setSchoolFilter = (value) => {
+        setFilters(prev => ({ ...prev, schoolId: value }));
+    };
+    const setClassFilter = (value) => {
+        setFilters(prev => ({ ...prev, classFilter: value }));
+    };
+    const setStatusFilter = (value) => {
+        setFilters(prev => ({ ...prev, status: value }));
+    };
+    const setSpecialNeedsFilter = (value) => {
+        setFilters(prev => ({ ...prev, specialNeeds: value }));
+    };
 
     // Caricamento dati
     const loadStudents = async () => {
@@ -72,18 +114,18 @@ const StudentList = () => {
             const queryFilters = {
                 page: page + 1,
                 limit: pageSize,
-                search: filters.search.trim(),
-                schoolId: filters.schoolId,
-                status: filters.status,
+                search: appliedFilters.search.trim(),
+                schoolId: appliedFilters.schoolId,
+                status: appliedFilters.status,
             };
 
-            if (filters.specialNeeds !== '') {
-                queryFilters.specialNeeds = filters.specialNeeds === 'true';
+            if (appliedFilters.specialNeeds !== '') {
+                queryFilters.specialNeeds = appliedFilters.specialNeeds === 'true';
             }
 
-            if (filters.classFilter) {
-                const year = parseInt(filters.classFilter.match(/^\d+/)[0]);
-                const section = filters.classFilter.slice(year.toString().length);
+            if (appliedFilters.classFilter) {
+                const year = parseInt(appliedFilters.classFilter.match(/^\d+/)[0]);
+                const section = appliedFilters.classFilter.slice(year.toString().length);
                 queryFilters.year = year;
                 queryFilters.section = section;
             }
@@ -94,9 +136,28 @@ const StudentList = () => {
         }
     };
 
+    // Funzione per applicare i filtri
+    const applyFilters = () => {
+        setAppliedFilters({...filters});
+        setPage(0); // Reset alla prima pagina quando si applicano nuovi filtri
+    };
+
+    // Funzione per resettare i filtri
+    const resetFilters = () => {
+        const emptyFilters = {
+            search: '',
+            schoolId: '',
+            classFilter: '',
+            status: '',
+            specialNeeds: ''
+        };
+        setFilters(emptyFilters);
+        setAppliedFilters(emptyFilters);
+    };
+
     useEffect(() => {
         loadStudents();
-    }, [page, pageSize, filters]);
+    }, [page, pageSize, appliedFilters]); // Ora dipende da appliedFilters invece di filters
 
 // Creiamo le stats cards utilizzando i dati degli studenti
 const statsCards = useMemo(() => {
@@ -107,6 +168,8 @@ const statsCards = useMemo(() => {
         specialNeedsStudents: students.filter(s => s.specialNeeds).length,
         assignedStudents: students.filter(s => s.classId).length
     };
+
+    
 
 
     return [
@@ -171,19 +234,22 @@ const statsCards = useMemo(() => {
         {
             field: 'fullName',
             headerName: 'Nome Completo',
-            width: 200,
+            flex: 1.2,
+            minWidth: 200,
             valueGetter: (params) => 
                 `${params.row.firstName || ''} ${params.row.lastName || ''}`.trim()
         },
         {
             field: 'email',
             headerName: 'Email',
-            width: 200
+            flex: 1.5,
+            minWidth: 220
         },
         {
             field: 'schoolName',
             headerName: 'Scuola',
-            width: 250,
+            flex: 1.2,
+            minWidth: 200,
             valueGetter: (params) => params.row.schoolId?.name || 'N/D'
         },
         {
@@ -207,7 +273,7 @@ const statsCards = useMemo(() => {
         {
             field: 'status',
             headerName: 'Stato',
-            width: 130,
+            width: 140,
             renderCell: (params) => {
                 const status = params.value || 'pending';
                 const configs = {
@@ -231,7 +297,8 @@ const statsCards = useMemo(() => {
         {
             field: 'mainTeacher',
             headerName: 'Docente Principale',
-            width: 180,
+            flex: 1,
+            minWidth: 180,
             renderCell: (params) => {
                 const teacher = params.row.mainTeacher;
                 return teacher ? 
@@ -242,7 +309,7 @@ const statsCards = useMemo(() => {
         {
             field: 'testCount',
             headerName: 'Test Completati',
-            width: 130,
+            width: 140,
             renderCell: (params) => {
                 const count = params.row.testCount || 0;
                 return (
@@ -260,7 +327,7 @@ const statsCards = useMemo(() => {
         {
             field: 'actions',
             headerName: 'Azioni',
-            width: 120,
+            width: 100,
             renderCell: (params) => (
                 <Box sx={{ display: 'flex', gap: 1 }}>
                     <Tooltip title="Visualizza Dettagli">
@@ -269,15 +336,6 @@ const statsCards = useMemo(() => {
                             onClick={() => navigate(`/admin/students/${params.row._id}`)}
                         >
                             <VisibilityIcon sx={{ fontSize: '1.1rem' }} />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Elimina">
-                        <IconButton
-                            size="small"
-                            onClick={() => handleDeleteClick(params.row)}
-                            color="error"
-                        >
-                            <DeleteIcon sx={{ fontSize: '1.1rem' }} />
                         </IconButton>
                     </Tooltip>
                 </Box>
@@ -293,7 +351,7 @@ const statsCards = useMemo(() => {
                 <Box display="flex" gap={2}>
                     <Tooltip title="Filtri">
                         <IconButton 
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            onClick={toggleFilters}
                             color="primary"
                         >
                             <FilterListIcon />
@@ -326,17 +384,21 @@ const statsCards = useMemo(() => {
             <ListLayout
                 statsCards={statsCards} // Modifica qui: passiamo direttamente l'array di cards
                 isFilterOpen={isFilterOpen}
+                onToggleFilters={toggleFilters}
                 filterComponent={
                     <FilterToolbar
-                        filters={filters}
-                        setFilters={setFilters}
-                        onReset={() => setFilters({
-                            search: '',
-                            schoolId: '',
-                            classFilter: '',
-                            status: '',
-                            specialNeeds: ''
-                        })}
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        schoolFilter={schoolFilter}
+                        setSchoolFilter={setSchoolFilter}
+                        classFilter={classFilter}
+                        setClassFilter={setClassFilter}
+                        statusFilter={statusFilter}
+                        setStatusFilter={setStatusFilter}
+                        specialNeedsFilter={specialNeedsFilter}
+                        setSpecialNeedsFilter={setSpecialNeedsFilter}
+                        handleSearch={applyFilters}
+                        handleResetFilters={resetFilters}
                     />
                 }
                 rows={students || []}
@@ -349,6 +411,8 @@ const statsCards = useMemo(() => {
                 page={page}
                 onPageChange={setPage}
                 loading={loading}
+                onRowClick={handleRowClick} // Aggiungiamo l'handler
+
             />
 
             {/* Delete Dialog */}

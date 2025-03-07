@@ -937,9 +937,10 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
     /**
      * Elimina uno studente e gestisce le relazioni
      * @param {string} studentId - ID dello studente
+     * @param {boolean} cascade - Se true, rimuove anche tutti i riferimenti in altre collections
      * @returns {Promise<Object>} Risultato dell'eliminazione
      */
-    async delete(studentId) {
+    async delete(studentId, cascade = false) {
         const session = await mongoose.startSession();
         session.startTransaction();
 
@@ -952,9 +953,41 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                 );
             }
 
-            // TODO: Quando implementeremo i test, qui andrà gestita la pulizia
-            // dei risultati dei test e altri dati correlati
+            // Se cascade è true, rimuovi i riferimenti nelle classi e negli utenti
+            if (cascade) {
+                logger.debug('Eliminazione in cascata attivata per lo studente:', {
+                    studentId,
+                    hasClass: !!student.classId
+                });
 
+                // 1. Rimuovi lo studente dalle classi
+                if (student.classId) {
+                    logger.debug('Rimuovendo studente dalla classe:', { classId: student.classId });
+                    await Class.updateOne(
+                        { _id: student.classId },
+                        { $pull: { students: { studentId: new mongoose.Types.ObjectId(studentId) } } }
+                    ).session(session);
+                }
+
+                // 2. Rimuovi lo studente dagli utenti (docenti/tutor che lo hanno assegnato)
+                logger.debug('Rimuovendo studente dagli utenti assegnati');
+                const User = mongoose.model('User');
+                await User.updateMany(
+                    { assignedStudentIds: new mongoose.Types.ObjectId(studentId) },
+                    { $pull: { assignedStudentIds: new mongoose.Types.ObjectId(studentId) } }
+                ).session(session);
+                
+                // 3. Rimuovi i risultati dei test associati allo studente
+                const Result = mongoose.model('Result');
+                if (Result) {
+                    logger.debug('Rimuovendo risultati dei test dello studente');
+                    await Result.deleteMany({ 
+                        studentId: new mongoose.Types.ObjectId(studentId) 
+                    }).session(session);
+                }
+            }
+
+            // Elimina lo studente
             await this.model.deleteOne({ _id: studentId }, { session });
             await session.commitTransaction();
 
@@ -963,7 +996,8 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             await session.abortTransaction();
             logger.error('Error in delete student:', {
                 error,
-                studentId
+                studentId,
+                cascade
             });
             throw error;
         } finally {
@@ -1224,6 +1258,47 @@ async countByClasses(classIds) {
             'Errore nel conteggio degli studenti',
             { originalError: error.message }
         );
+    }
+}
+
+/**
+ * Trova studenti per email
+ * @param {Array<string>} emails - Array di email da cercare
+ * @returns {Promise<Array>} Lista degli studenti trovati
+ */
+async findByEmails(emails) {
+    try {
+        if (!emails || !Array.isArray(emails) || emails.length === 0) {
+            return [];
+        }
+        
+        // Normalizza le email (converti in minuscolo e rimuovi spazi)
+        const normalizedEmails = emails.map(email => 
+            email.toString().trim().toLowerCase()
+        );
+        
+        logger.debug('Searching for students by emails:', { 
+            emailCount: normalizedEmails.length,
+            sampleEmails: normalizedEmails.slice(0, 3)
+        });
+        
+        // Cerca gli studenti con le email specificate
+        const students = await this.model.find({
+            email: { $in: normalizedEmails }
+        });
+        
+        logger.debug('Found students by emails:', {
+            searchedCount: normalizedEmails.length,
+            foundCount: students.length
+        });
+        
+        return students;
+    } catch (error) {
+        logger.error('Error in findByEmails:', {
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
     }
 }
 

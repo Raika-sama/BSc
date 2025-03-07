@@ -61,6 +61,11 @@ const ClassManagement = () => {
         });
     }, []);
 
+    const toggleFilters = () => {
+        setIsFilterOpen(prev => !prev);
+    };
+
+   
     const handleApplyFilters = () => {
         // La logica dei filtri rimane la stessa
         const filtered = filterClasses(isAdmin ? mainTeacherClasses : 
@@ -133,6 +138,11 @@ const ClassManagement = () => {
         navigate(`/admin/classes/${classData.classId}/tests`);
     };
 
+    const handleRowClick = (params) => {
+        navigate(`/admin/classes/${params.row.classId}`);
+    };
+
+
     // Usa useMemo per le colonne
     const columns = useMemo(() => createColumns(
         handleViewDetails,
@@ -193,7 +203,7 @@ const ClassManagement = () => {
                 <Box sx={{ display: 'flex', gap: 2 }}>
                     <Tooltip title="Filtri">
                         <IconButton 
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            onClick={toggleFilters}
                             color="primary"
                         >
                             <FilterListIcon />
@@ -212,6 +222,7 @@ const ClassManagement = () => {
                 <ListLayout
                     statsCards={statsCards}
                     isFilterOpen={isFilterOpen}
+                    onToggleFilters={toggleFilters}
                     filterComponent={
                         <FilterToolbar
                             schoolFilter={schoolFilter}
@@ -254,6 +265,8 @@ const ClassManagement = () => {
                     getRowId={(row) => row.classId}
                     pageSize={pageSize}
                     onPageSizeChange={setPageSize}
+                    onRowClick={handleRowClick} // Aggiungiamo l'handler
+
                 />
 
                 {/* Delete Dialog */}

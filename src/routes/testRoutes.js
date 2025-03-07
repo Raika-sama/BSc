@@ -126,14 +126,24 @@ const createTestRouter = ({ authMiddleware, testController }) => {
         asyncHandler(testController.assignTest.bind(testController))
     );
 
-    // Remove this as we've defined it above with debugging
-    /* 
-    router.get('/assigned/student/:studentId',
+    // Nuove route per la gestione dei test a livello di classe
+    router.post('/assign-to-class',
         protect,
         restrictTo('teacher', 'admin'),
-        asyncHandler(testController.getAssignedTests.bind(testController))
+        asyncHandler(testController.assignTestToClass.bind(testController))
     );
-    */
+
+    router.get('/assigned/class/:classId',
+        protect,
+        restrictTo('teacher', 'admin'),
+        asyncHandler(testController.getAssignedTestsByClass.bind(testController))
+    );
+
+    router.post('/class/:classId/revoke',
+        protect,
+        restrictTo('teacher', 'admin'),
+        asyncHandler(testController.revokeClassTests.bind(testController))
+    );
 
     // Nuova route per revocare un test
     router.post('/:testId/revoke',
@@ -257,6 +267,9 @@ module.exports = createTestRouter;
  * Route Protette (richiede autenticazione docente/admin):
  * GET    /tests/all                 - Lista tutti i test
  * POST   /tests/assign              - Assegna test a studente
+ * POST   /tests/assign-to-class     - Assegna test a tutti gli studenti di una classe
+ * GET    /tests/assigned/class/:classId - Ottiene i test assegnati agli studenti di una classe
+ * POST   /tests/class/:classId/revoke  - Revoca tutti i test di una classe
  * GET    /tests/:testId/stats       - Statistiche test
  * GET    /tests/assigned/student/:studentId - Ottiene i test assegnati a uno studente
  * GET    /tests/student/:studentId/completed - Ottiene i test completati da uno studente

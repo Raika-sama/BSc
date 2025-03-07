@@ -37,7 +37,9 @@ import {
     Archive as ArchiveIcon,
     ViewList as ClassesIcon,
     KeyboardArrowDown as KeyboardArrowDownIcon,
-    KeyboardArrowUp as KeyboardArrowUpIcon
+    KeyboardArrowUp as KeyboardArrowUpIcon,
+    Restore as RestoreIcon,
+    Edit as EditIcon // Nuova icona per la modifica
 } from '@mui/icons-material';
 import { useSchool } from '../../../context/SchoolContext'; // Assicurati che il percorso sia corretto
 import { useNotification } from '../../../context/NotificationContext'; // Assicurati che il percorso sia corretto
@@ -58,6 +60,7 @@ const AcademicYearsTab = ({ school }) => {
     const [plannedYears, setPlannedYears] = useState([]);
     
     const [openNewYearDialog, setOpenNewYearDialog] = useState(false);
+    const [openEditYearDialog, setOpenEditYearDialog] = useState(false); // Nuovo stato per il dialog di modifica
     const [openClassesDialog, setOpenClassesDialog] = useState(false);
     const [selectedYear, setSelectedYear] = useState(null);
     const [yearClasses, setYearClasses] = useState([]);
@@ -73,10 +76,18 @@ const AcademicYearsTab = ({ school }) => {
         endDate: "",
         status: "planned"
     });
+    const [editYearData, setEditYearData] = useState({ // Nuovo stato per i dati di modifica
+        year: "",
+        startDate: "",
+        endDate: "",
+        description: ""
+    });
     const [availableLetters, setAvailableLetters] = useState([]);
     const [openArchiveDialog, setOpenArchiveDialog] = useState(false);
     const [yearToArchive, setYearToArchive] = useState(null);
-
+    const [openReactivateDialog, setOpenReactivateDialog] = useState(false);
+    const [yearToReactivate, setYearToReactivate] = useState(null);
+    const [yearToEdit, setYearToEdit] = useState(null); // Nuovo stato per l'anno da modificare
 
     useEffect(() => {
         if (school && school.academicYears) {
@@ -523,6 +534,86 @@ const handleCreateNewSection = async () => {
     }
 };
     
+    // Nuova funzione per aprire il dialog di modifica dell'anno accademico
+    const handleOpenEditYearDialog = (year) => {
+        setYearToEdit(year);
+        
+        // Prepara i dati delle sezioni della scuola
+        const allSections = school.sections.map(s => ({
+            id: s._id,
+            name: s.name,
+            maxStudents: s.maxStudents || school.defaultMaxStudentsPerClass,
+            isActive: s.isActive,
+            // Verifichiamo se questa sezione è abilitata per questo anno accademico
+            isEnabledForYear: s.academicYears && s.academicYears.some(
+                ay => ay.year === year.year && ay.status === 'active'
+            )
+        }));
+        
+        // Popola il campo selectedSections con le sezioni attualmente abilitate per questo anno
+        const enabledSections = allSections
+            .filter(s => s.isEnabledForYear)
+            .map(s => s.name);
+        
+        setSchoolSections(allSections);
+        setSelectedSections(enabledSections);
+        
+        // Popola i campi del form con i dati dell'anno accademico
+        setEditYearData({
+            year: year.year,
+            startDate: year.startDate ? new Date(year.startDate).toISOString().split('T')[0] : '',
+            endDate: year.endDate ? new Date(year.endDate).toISOString().split('T')[0] : '',
+            description: year.description || ''
+        });
+        
+        setOpenEditYearDialog(true);
+    };
+    
+    // Funzione per chiudere il dialog di modifica
+    const handleCloseEditYearDialog = () => {
+        setOpenEditYearDialog(false);
+        setYearToEdit(null);
+    };
+    
+    // Funzione per gestire i cambiamenti nei campi di input per la modifica
+    const handleEditYearInputChange = (e) => {
+        const { name, value } = e.target;
+        setEditYearData({
+            ...editYearData,
+            [name]: value
+        });
+    };
+    
+    // Funzione per salvare le modifiche all'anno accademico
+    const handleSaveEditedYear = async () => {
+        try {
+            // Prepara i dati da inviare
+            const dataToSend = {
+                ...editYearData,
+                selectedSections
+            };
+            
+            const response = await axiosInstance.put(
+                `/schools/${school._id}/academic-years/${yearToEdit._id}`, 
+                dataToSend
+            );
+            
+            if (response.data.status === 'success') {
+                showNotification('Anno accademico aggiornato con successo', 'success');
+                // Aggiorna i dati della scuola per riflettere le modifiche
+                await getSchoolById(school._id);
+                
+                handleCloseEditYearDialog();
+            }
+        } catch (error) {
+            console.error('Error updating academic year:', error);
+            showNotification(
+                error.response?.data?.error?.message || 'Errore nell\'aggiornamento dell\'anno accademico', 
+                'error'
+            );
+        }
+    };
+    
     // Card per l'anno corrente
     const CurrentYearCard = () => (
         <Card elevation={3} sx={{ mb: 3 }}>
@@ -581,31 +672,41 @@ const handleCreateNewSection = async () => {
                                 </Paper>
                             </Grid>
                         </Grid>
-                        <Box display="flex" justifyContent="space-between">
-                        <Button 
-                            variant="outlined" 
-                            startIcon={<ClassesIcon />}
-                            onClick={() => handleOpenClassesDialog(currentYear)}
-                        >
-                            Visualizza Classi
-                        </Button>
-                        
-                        <Box>
-                            <YearTransitionButton 
-                            school={school} 
-                            onTransitionComplete={() => getSchoolById(school._id)}
-                            />
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                            <Box>
+                                <Button 
+                                    variant="outlined" 
+                                    startIcon={<ClassesIcon />}
+                                    onClick={() => handleOpenClassesDialog(currentYear)}
+                                    sx={{ mr: 1 }}
+                                >
+                                    Visualizza Classi
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<EditIcon />}
+                                    onClick={() => handleOpenEditYearDialog(currentYear)}
+                                >
+                                    Modifica
+                                </Button>
+                            </Box>
                             
-                            <Button 
-                            variant="outlined" 
-                            color="warning"
-                            startIcon={<ArchiveIcon />}
-                            onClick={() => handleArchiveYear(currentYear._id)}
-                            sx={{ ml: 1 }}
-                            >
-                            Archivia Anno
-                            </Button>
-                        </Box>
+                            <Box>
+                                <YearTransitionButton 
+                                    school={school} 
+                                    onTransitionComplete={() => getSchoolById(school._id)}
+                                />
+                                
+                                <Button 
+                                    variant="outlined" 
+                                    color="warning"
+                                    startIcon={<ArchiveIcon />}
+                                    onClick={() => handleArchiveYear(currentYear._id)}
+                                    sx={{ ml: 1 }}
+                                >
+                                    Archivia Anno
+                                </Button>
+                            </Box>
                         </Box>
                        
                     </>
@@ -651,6 +752,14 @@ const handleCreateNewSection = async () => {
                                 <ListItem
                                     secondaryAction={
                                         <Box>
+                                            <Tooltip title="Modifica Anno">
+                                                <IconButton 
+                                                    edge="end" 
+                                                    onClick={() => handleOpenEditYearDialog(year)}
+                                                >
+                                                    <EditIcon />
+                                                </IconButton>
+                                            </Tooltip>
                                             <Tooltip title="Visualizza Classi">
                                                 <IconButton 
                                                     edge="end" 
@@ -686,21 +795,11 @@ const handleCreateNewSection = async () => {
                                             </Box>
                                         }
                                         secondary={
-                                            <Box sx={{ mt: 1 }}>
-                                                <Grid container spacing={2}>
-                                                    <Grid item xs={6}>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Inizio: {formatDate(year.startDate)}
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid item xs={6}>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Fine: {formatDate(year.endDate)}
-                                                        </Typography>
-                                                    </Grid>
-                                                </Grid>
-                                            </Box>
+                                            <Typography variant="body2" component="span" color="text.secondary">
+                                                Inizio: {formatDate(year.startDate)} • Fine: {formatDate(year.endDate)}
+                                            </Typography>
                                         }
+                                        disableTypography
                                     />
                                 </ListItem>
                                 {index < plannedYears.length - 1 && <Divider component="li" />}
@@ -733,14 +832,33 @@ const handleCreateNewSection = async () => {
                             <React.Fragment key={year._id || index}>
                                 <ListItem
                                     secondaryAction={
-                                        <Tooltip title="Visualizza Classi">
-                                            <IconButton 
-                                                edge="end" 
-                                                onClick={() => handleOpenClassesDialog(year)}
-                                            >
-                                                <ClassesIcon />
-                                            </IconButton>
-                                        </Tooltip>
+                                        <Box>
+                                            <Tooltip title="Modifica Anno">
+                                                <IconButton 
+                                                    edge="end" 
+                                                    onClick={() => handleOpenEditYearDialog(year)}
+                                                >
+                                                    <EditIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Visualizza Classi">
+                                                <IconButton 
+                                                    edge="end" 
+                                                    onClick={() => handleOpenClassesDialog(year)}
+                                                >
+                                                    <ClassesIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Riattiva Anno">
+                                                <IconButton 
+                                                    edge="end" 
+                                                    color="primary"
+                                                    onClick={() => handleReactivateYear(year)}
+                                                >
+                                                    <RestoreIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
                                     }
                                 >
                                     <ListItemText
@@ -758,21 +876,11 @@ const handleCreateNewSection = async () => {
                                             </Box>
                                         }
                                         secondary={
-                                            <Box sx={{ mt: 1 }}>
-                                                <Grid container spacing={2}>
-                                                    <Grid item xs={6}>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Inizio: {formatDate(year.startDate)}
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid item xs={6}>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Fine: {formatDate(year.endDate)}
-                                                        </Typography>
-                                                    </Grid>
-                                                </Grid>
-                                            </Box>
+                                            <Typography variant="body2" component="span" color="text.secondary">
+                                                Inizio: {formatDate(year.startDate)} • Fine: {formatDate(year.endDate)}
+                                            </Typography>
                                         }
+                                        disableTypography
                                     />
                                 </ListItem>
                                 {index < pastYears.length - 1 && <Divider component="li" />}
@@ -805,6 +913,33 @@ const handleCreateNewSection = async () => {
             // Altrimenti, aggiungila
             setSelectedSections(prev => [...prev, sectionId]);
             showNotification(`Sezione ${section.name} inclusa nell'anno accademico`, 'success');
+        }
+    };
+
+    // Funzione per gestire la riattivazione di un anno archiviato
+    const handleReactivateYear = async (year) => {
+        setYearToReactivate(year);
+        setOpenReactivateDialog(true);
+    };
+
+    const handleConfirmReactivate = async () => {
+        try {
+            const response = await axiosInstance.post(
+                `/schools/${school._id}/academic-years/${yearToReactivate._id}/reactivate`
+            );
+            
+            if (response.data.status === 'success') {
+                showNotification('Anno accademico riattivato con successo. Ora è in stato "pianificato" e può essere attivato.', 'success');
+                await getSchoolById(school._id);
+            }
+            setOpenReactivateDialog(false);
+        } catch (error) {
+            console.error('Error reactivating academic year:', error);
+            showNotification(
+                error.response?.data?.error?.message || 'Errore nella riattivazione dell\'anno accademico', 
+                'error'
+            );
+            setOpenReactivateDialog(false);
         }
     };
 
@@ -951,12 +1086,13 @@ const handleCreateNewSection = async () => {
                                 <Box>
                                     <Typography 
                                         variant="body2"
+                                        component="span"
                                         sx={isTemp ? { fontStyle: 'italic', color: 'primary.main' } : {}}
                                     >
                                         Sezione {section.name} {isAlreadyConfigured && "(già configurata)"}
                                         {isTemp && " (nuova)"}
                                     </Typography>
-                                    <Typography variant="caption" color="text.secondary">
+                                    <Typography variant="caption" component="span" display="block" color="text.secondary">
                                         Max {section.maxStudents} studenti
                                         {usedInOtherYears && !isAlreadyConfigured && ` • Usata in ${section.usedInYears.length} anni`}
                                     </Typography>
@@ -1148,7 +1284,7 @@ const handleCreateNewSection = async () => {
             <DialogContent>
                 {loadingClasses ? (
                     <Box sx={{ p: 2, textAlign: 'center' }}>
-                        <Typography>Caricamento classi...</Typography>
+                        <Typography component="div">Caricamento classi...</Typography>
                     </Box>
                 ) : yearClasses.length > 0 ? (
                     <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -1156,11 +1292,11 @@ const handleCreateNewSection = async () => {
                             <Grid item xs={12} sm={6} md={4} key={classItem._id}>
                                 <Card variant="outlined">
                                     <CardContent>
-                                        <Typography variant="h6" gutterBottom>
+                                        <Typography component="div" variant="h6" gutterBottom>
                                             {classItem.year}ª {classItem.section}
                                         </Typography>
                                         <Stack spacing={1}>
-                                            <Typography variant="body2">
+                                            <Typography component="div" variant="body2">
                                                 Studenti: {classItem.activeStudentsCount || 0} / {classItem.capacity || '-'}
                                             </Typography>
                                             <Chip 
@@ -1179,7 +1315,7 @@ const handleCreateNewSection = async () => {
                     </Grid>
                 ) : (
                     <Box sx={{ p: 2, textAlign: 'center' }}>
-                        <Typography color="text.secondary">
+                        <Typography component="div" color="text.secondary">
                             Nessuna classe trovata per questo anno accademico
                         </Typography>
                     </Box>
@@ -1187,6 +1323,198 @@ const handleCreateNewSection = async () => {
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleCloseClassesDialog}>Chiudi</Button>
+            </DialogActions>
+        </Dialog>
+    );
+
+    // Nuovo dialog per la modifica dell'anno accademico
+    const EditYearDialog = () => (
+        <Dialog 
+            open={openEditYearDialog} 
+            onClose={handleCloseEditYearDialog}
+            fullWidth
+            maxWidth="md"
+        >
+            <DialogTitle>Modifica Anno Accademico</DialogTitle>
+            <DialogContent>
+                <DialogContentText sx={{ mb: 2 }}>
+                    Modifica i dettagli dell'anno accademico {yearToEdit?.year}.
+                </DialogContentText>
+                
+                <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                        <TextField
+                            label="Anno Accademico"
+                            name="year"
+                            value={editYearData.year}
+                            onChange={handleEditYearInputChange}
+                            fullWidth
+                            margin="normal"
+                            helperText="Formato: YYYY/YYYY (es. 2023/2024)"
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <TextField
+                            label="Data Inizio"
+                            name="startDate"
+                            type="date"
+                            value={editYearData.startDate}
+                            onChange={handleEditYearInputChange}
+                            fullWidth
+                            margin="normal"
+                            InputLabelProps={{ shrink: true }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <TextField
+                            label="Data Fine"
+                            name="endDate"
+                            type="date"
+                            value={editYearData.endDate}
+                            onChange={handleEditYearInputChange}
+                            fullWidth
+                            margin="normal"
+                            InputLabelProps={{ shrink: true }}
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <TextField
+                            label="Descrizione"
+                            name="description"
+                            value={editYearData.description}
+                            onChange={handleEditYearInputChange}
+                            fullWidth
+                            margin="normal"
+                            multiline
+                            rows={2}
+                        />
+                    </Grid>
+                    
+                    <Grid item xs={12}>
+                        <Box sx={{ mb: 2 }}>
+                            <Button 
+                                variant="outlined" 
+                                onClick={() => setShowSectionSelector(!showSectionSelector)}
+                                startIcon={showSectionSelector ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                size="small"
+                            >
+                                {showSectionSelector ? 'Nascondi sezioni' : 'Gestisci sezioni per questo anno'}
+                            </Button>
+                        </Box>
+                        
+                        <Collapse in={showSectionSelector}>
+                            <Paper elevation={0} variant="outlined" sx={{ p: 2, mb: 2 }}>
+                                <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Typography variant="subtitle1">
+                                        Sezioni abilitate per questo anno accademico
+                                    </Typography>
+                                    <Button 
+                                        size="small" 
+                                        onClick={() => {
+                                            if (selectedSections.length === schoolSections.filter(s => s.isActive).length) {
+                                                // Se tutte le sezioni attive sono selezionate, deseleziona tutte
+                                                setSelectedSections([]);
+                                            } else {
+                                                // Altrimenti, seleziona tutte le sezioni attive
+                                                setSelectedSections(schoolSections.filter(s => s.isActive).map(s => s.name));
+                                            }
+                                        }}
+                                    >
+                                        {selectedSections.length === schoolSections.filter(s => s.isActive).length 
+                                            ? 'Deseleziona tutte' 
+                                            : 'Seleziona tutte'}
+                                    </Button>
+                                </Box>
+                                
+                                {schoolSections.length > 0 ? (
+                                    <Grid container spacing={1}>
+                                        {schoolSections
+                                            .filter(section => section.isActive) // Mostra solo sezioni attive
+                                            .map((section) => (
+                                                <Grid item xs={12} sm={6} md={4} key={section.id}>
+                                                    <FormControlLabel
+                                                        control={
+                                                            <Checkbox
+                                                                checked={selectedSections.includes(section.name)}
+                                                                onChange={() => {
+                                                                    if (selectedSections.includes(section.name)) {
+                                                                        setSelectedSections(prev => prev.filter(s => s !== section.name));
+                                                                    } else {
+                                                                        setSelectedSections(prev => [...prev, section.name]);
+                                                                    }
+                                                                }}
+                                                            />
+                                                        }
+                                                        label={
+                                                            <Box>
+                                                                <Typography variant="body2" component="span">
+                                                                    Sezione {section.name}
+                                                                </Typography>
+                                                                <Typography variant="caption" component="span" display="block" color="text.secondary">
+                                                                    Max {section.maxStudents} studenti
+                                                                </Typography>
+                                                            </Box>
+                                                        }
+                                                    />
+                                                </Grid>
+                                            ))}
+                                    </Grid>
+                                ) : (
+                                    <Typography color="text.secondary">
+                                        Nessuna sezione attiva disponibile
+                                    </Typography>
+                                )}
+
+                                {/* Sezioni inattive */}
+                                {schoolSections.filter(section => !section.isActive).length > 0 && (
+                                    <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #eee' }}>
+                                        <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                                            Sezioni inattive:
+                                        </Typography>
+                                        <Grid container spacing={1}>
+                                            {schoolSections
+                                                .filter(section => !section.isActive)
+                                                .map((section) => (
+                                                    <Grid item key={section.id}>
+                                                        <Chip
+                                                            label={`Sezione ${section.name}`}
+                                                            variant={selectedSections.includes(section.name) ? "filled" : "outlined"}
+                                                            color={selectedSections.includes(section.name) ? "primary" : "default"}
+                                                            onClick={() => {
+                                                                if (selectedSections.includes(section.name)) {
+                                                                    setSelectedSections(prev => prev.filter(s => s !== section.name));
+                                                                } else {
+                                                                    setSelectedSections(prev => [...prev, section.name]);
+                                                                }
+                                                            }}
+                                                        />
+                                                    </Grid>
+                                                ))}
+                                        </Grid>
+                                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                                            Clicca su una sezione inattiva per includerla in questo anno accademico
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </Paper>
+                        </Collapse>
+                    </Grid>
+                </Grid>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleCloseEditYearDialog}>Annulla</Button>
+                <Button 
+                    onClick={handleSaveEditedYear}
+                    variant="contained"
+                    disabled={
+                        !editYearData.year || 
+                        !editYearData.year.match(/^\d{4}\/\d{4}$/) ||
+                        !editYearData.startDate ||
+                        !editYearData.endDate
+                    }
+                >
+                    Salva Modifiche
+                </Button>
             </DialogActions>
         </Dialog>
     );
@@ -1203,6 +1531,7 @@ const handleCreateNewSection = async () => {
             <NewYearDialog>
                 
             </NewYearDialog>
+            <EditYearDialog /> {/* Nuovo dialog per la modifica */}
             <ClassesDialog />
             <NewSectionDialog /> {/* Nuovo dialog */}
 
@@ -1215,26 +1544,30 @@ const handleCreateNewSection = async () => {
                     Conferma Archiviazione Anno Accademico
                 </DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
-                        <Typography paragraph>
+                    <Box sx={{ mb: 2 }}>
+                        <Typography component="div">
                             NOTA: Questa operazione è riservata agli utenti Administrator e Developer.
                         </Typography>
-                        <Typography paragraph>
+                    </Box>
+                    <Box sx={{ mb: 2 }}>
+                        <Typography component="div">
                             Stai per archiviare l'anno accademico {yearToArchive?.year}. Questa operazione:
                         </Typography>
-                        <ul>
-                            <li>Archivierà tutte le classi dell'anno</li>
-                            <li>Rimuoverà tutti i riferimenti agli insegnanti dalle classi</li>
-                            <li>Disattiverà gli studenti delle classi coinvolte</li>
-                            <li>Rimuoverà i riferimenti alle classi e agli studenti dai profili degli insegnanti</li>
-                            {yearToArchive?.status === 'active' && (
-                                <li>Attiverà automaticamente l'anno pianificato più recente (se presente)</li>
-                            )}
-                        </ul>
-                        <Typography color="error">
+                    </Box>
+                    <ul>
+                        <li>Archivierà tutte le classi dell'anno</li>
+                        <li>Rimuoverà tutti i riferimenti agli insegnanti dalle classi</li>
+                        <li>Disattiverà gli studenti delle classi coinvolte</li>
+                        <li>Rimuoverà i riferimenti alle classi e agli studenti dai profili degli insegnanti</li>
+                        {yearToArchive?.status === 'active' && (
+                            <li>Attiverà automaticamente l'anno pianificato più recente (se presente)</li>
+                        )}
+                    </ul>
+                    <Box sx={{ mt: 2 }}>
+                        <Typography component="div" color="error">
                             Questa operazione non può essere annullata. Sei sicuro di voler procedere?
                         </Typography>
-                    </DialogContentText>
+                    </Box>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenArchiveDialog(false)}>
@@ -1246,6 +1579,50 @@ const handleCreateNewSection = async () => {
                         variant="contained"
                     >
                         Conferma Archiviazione
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Dialog di conferma riattivazione */}
+            <Dialog
+                open={openReactivateDialog}
+                onClose={() => setOpenReactivateDialog(false)}
+            >
+                <DialogTitle>
+                    Conferma Riattivazione Anno Accademico
+                </DialogTitle>
+                <DialogContent>
+                    <Box sx={{ mb: 2 }}>
+                        <Typography component="div">
+                            Stai per riattivare l'anno accademico {yearToReactivate?.year}.
+                        </Typography>
+                    </Box>
+                    <Box sx={{ mb: 2 }}>
+                        <Typography component="div">
+                            Questa operazione:
+                        </Typography>
+                        <ul>
+                            <li>Ripristinerà l'anno accademico in stato "pianificato"</li>
+                            <li>Permetterà di attivare nuovamente l'anno</li>
+                            <li>Non ripristinerà automaticamente le classi e gli studenti archiviati</li>
+                        </ul>
+                    </Box>
+                    <Box sx={{ mt: 2 }}>
+                        <Typography component="div">
+                            Vuoi procedere con la riattivazione dell'anno accademico?
+                        </Typography>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenReactivateDialog(false)}>
+                        Annulla
+                    </Button>
+                    <Button 
+                        onClick={handleConfirmReactivate} 
+                        color="primary"
+                        variant="contained"
+                    >
+                        Conferma Riattivazione
                     </Button>
                 </DialogActions>
             </Dialog>

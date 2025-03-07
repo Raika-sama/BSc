@@ -15,7 +15,8 @@ import { useNotification } from '../../context/NotificationContext';
 // Importiamo i componenti
 import OverviewTab from './details/OverviewTab';
 import AdminDetailsTab from './details/AdminDetailsTab';
-const AcademicYearsTab = React.lazy(() => import('./details/AcademicYearsTab'));
+// Importiamo il componente refactorizzato utilizzando React.lazy
+const AcademicYearsTab = React.lazy(() => import('./academicYears/AcademicYearsTab'));
 import SectionManagement from './schoolComponents/SectionManagement';
 import SchoolUsersManagement from './schoolComponents/SchoolUsersManagement';
 
@@ -199,7 +200,11 @@ const SchoolDetails = () => {
                     >
                         {activeTab === 0 && <OverviewTab school={selectedSchool} />}
                         {activeTab === 1 && <AdminDetailsTab school={selectedSchool} />}
-                        {activeTab === 2 && <AcademicYearsTab school={selectedSchool} />}
+                        {activeTab === 2 && (
+                            <React.Suspense fallback={<Box display="flex" justifyContent="center" py={4}><CircularProgress /></Box>}>
+                                <AcademicYearsTab school={selectedSchool} />
+                            </React.Suspense>
+                        )}
                         {activeTab === 3 && <SectionManagement schoolId={id} />}
                         {activeTab === 4 && (
                             <SchoolUsersManagement

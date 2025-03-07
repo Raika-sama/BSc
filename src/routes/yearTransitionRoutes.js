@@ -1,6 +1,6 @@
 // src/routes/yearTransitionRoutes.js
 const express = require('express');
-const yearTransitionController = require('../controllers/yearTransitionController');
+const YearTransitionController = require('../controllers/yearTransitionController');
 const logger = require('../utils/errors/logger/logger');
 
 /**
@@ -14,6 +14,9 @@ const createYearTransitionRouter = ({ authMiddleware }) => {
 
   const router = express.Router({ mergeParams: true }); // mergeParams per accedere ai parametri del router principale
   const { protect, restrictTo } = authMiddleware;
+  
+  // Istanzia il controller
+  const yearTransitionController = new YearTransitionController();
 
   /**
    * Utility per gestire le funzioni asincrone e catturare errori
@@ -24,10 +27,11 @@ const createYearTransitionRouter = ({ authMiddleware }) => {
     Promise.resolve(fn(req, res, next)).catch((error) => {
       logger.error('Year Transition Route Error:', {
         error: error.message,
+        stack: error.stack,
         path: req.path,
         method: req.method,
         userId: req.user?.id,
-        timestamp: new Date().toISOString()
+        role: req.user?.role
       });
       next(error);
     });
@@ -55,7 +59,7 @@ const createYearTransitionRouter = ({ authMiddleware }) => {
   router.get(
     '/transition-preview',
     restrictTo('admin', 'manager'),
-    asyncHandler(yearTransitionController.getTransitionPreview)
+    asyncHandler(yearTransitionController.getTransitionPreview.bind(yearTransitionController))
   );
 
   /**
@@ -66,7 +70,7 @@ const createYearTransitionRouter = ({ authMiddleware }) => {
   router.post(
     '/year-transition',
     restrictTo('admin', 'manager'),
-    asyncHandler(yearTransitionController.executeYearTransition)
+    asyncHandler(yearTransitionController.executeYearTransition.bind(yearTransitionController))
   );
 
   return router;

@@ -2,74 +2,25 @@ import React from 'react';
 import {
     Grid,
     Typography,
-    Autocomplete,
     TextField,
+    Divider,
     Box,
-    Chip,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    IconButton,
-    Tooltip
+    Alert
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import SectionManager from '../components/SectionManager';
 
-const AVAILABLE_SECTIONS = Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map(letter => ({
-    label: letter,
-    value: letter
-}));
-
-    
-    const Step3Sections = ({ formData, onChange, errors = {} }) => {
-        const handleAddSection = (event, newValue) => {
-            // Manteniamo il formato semplice qui
-            const sections = newValue.map(item => ({
-                name: item.value,
-                maxStudents: formData.defaultMaxStudentsPerClass || 25
-            }));
-            
-            onChange({
-                ...formData,
-                sections: sections
-            });
-        };
-    
-        
-
-    const handleUpdateSectionMaxStudents = (sectionName, newValue) => {
-        const maxAllowed = formData.schoolType === 'middle_school' ? 30 : 35;
-        const value = Math.min(Math.max(15, Number(newValue)), maxAllowed);
-
-        const updatedSections = formData.sections.map(section => 
-            section.name === sectionName 
-                ? { ...section, maxStudents: value }
-                : section
-        );
-
+const Step3Sections = ({ formData, onChange, errors }) => {
+    const handleDefaultMaxStudentsChange = (value) => {
+        // Aggiorna il valore di default
         onChange({
-            ...formData,
-            sections: updatedSections
+            defaultMaxStudentsPerClass: value,
+            // Aggiorna anche i valori delle sezioni esistenti se non sono stati personalizzati
+            sections: formData.sections.map(section => ({
+                ...section,
+                maxStudents: section.maxStudents === formData.defaultMaxStudentsPerClass ? value : section.maxStudents
+            }))
         });
     };
-
-    const handleRemoveSection = (sectionName) => {
-        const updatedSections = formData.sections.filter(
-            section => section.name !== sectionName
-        );
-        onChange({
-            ...formData,
-            sections: updatedSections
-        });
-    };
-
-    const selectedSections = formData.sections?.map(section => ({
-        label: section.name,
-        value: section.name
-    })) || [];
 
     return (
         <Grid container spacing={3}>
@@ -77,108 +28,52 @@ const AVAILABLE_SECTIONS = Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map(letter =
                 <Typography variant="h6" gutterBottom>
                     Configurazione Sezioni
                 </Typography>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                    Configura le sezioni della scuola e il numero massimo di studenti per classe.
+                    Per le scuole medie il limite è 30 studenti, per le superiori 35.
+                </Typography>
             </Grid>
 
             <Grid item xs={12}>
-            <Autocomplete
-                multiple
-                options={AVAILABLE_SECTIONS}
-                value={selectedSections}
-                onChange={handleAddSection}
-                getOptionLabel={(option) => option.label}
-                renderInput={(params) => (
-                    <TextField
-                        {...params}
-                        label="Seleziona Sezioni"
-                        error={!!errors.sections}
-                        helperText={errors.sections}
-                    />
-                )}
-                renderTags={(tagValue, getTagProps) =>
-                    tagValue.map((option, index) => {
-                        const { key, ...otherProps } = getTagProps({ index });
-                        return (
-                            <Chip
-                                key={key}
-                                label={option.label}
-                                {...otherProps}
-                                size="small"
-                            />
-                        );
-                    })
-                }
-            />
+                <TextField
+                    fullWidth
+                    type="number"
+                    label="Numero massimo studenti per classe (default)"
+                    value={formData.defaultMaxStudentsPerClass}
+                    onChange={(e) => handleDefaultMaxStudentsChange(parseInt(e.target.value))}
+                    error={!!errors?.defaultMaxStudentsPerClass}
+                    helperText={errors?.defaultMaxStudentsPerClass || 'Questo valore verrà usato come default per tutte le sezioni'}
+                    InputProps={{
+                        inputProps: { 
+                            min: 15, 
+                            max: formData.schoolType === 'middle_school' ? 30 : 35 
+                        }
+                    }}
+                />
             </Grid>
 
-            {formData.sections?.length > 0 && (
-                <Grid item xs={12}>
-                    <TableContainer component={Paper} variant="outlined">
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Sezione</TableCell>
-                                    <TableCell align="center">Numero Massimo Studenti</TableCell>
-                                    <TableCell align="right">Azioni</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {formData.sections.map((section) => (
-                                    <TableRow key={section.name}>
-                                        <TableCell>
-                                            <Typography variant="body1">
-                                                Sezione {section.name}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            <TextField
-                                                type="number"
-                                                value={section.maxStudents}
-                                                onChange={(e) => handleUpdateSectionMaxStudents(
-                                                    section.name,
-                                                    e.target.value
-                                                )}
-                                                InputProps={{
-                                                    inputProps: {
-                                                        min: 15,
-                                                        max: formData.schoolType === 'middle_school' ? 30 : 35,
-                                                        style: { textAlign: 'center' }
-                                                    }
-                                                }}
-                                                size="small"
-                                                sx={{ width: '100px' }}
-                                            />
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            <Tooltip title="Rimuovi sezione">
-                                                <IconButton
-                                                    onClick={() => handleRemoveSection(section.name)}
-                                                    size="small"
-                                                    color="error"
-                                                >
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </Grid>
-            )}
+            <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+            </Grid>
 
-            {formData.sections?.length > 0 && (
-                <Grid item xs={12}>
-                    <Box sx={{ mt: 2 }}>
-                        <Typography variant="caption" color="textSecondary">
-                            * Il numero massimo di studenti per classe è limitato a:
-                            {formData.schoolType === 'middle_school' 
-                                ? ' 30 studenti per le scuole medie'
-                                : ' 35 studenti per le scuole superiori'}
-                        </Typography>
-                    </Box>
-                </Grid>
-            )}
+            <Grid item xs={12}>
+                <SectionManager
+                    sections={formData.sections}
+                    onSectionsChange={(sections) => onChange({ sections })}
+                    defaultMaxStudents={formData.defaultMaxStudentsPerClass}
+                    schoolType={formData.schoolType}
+                    errors={errors}
+                />
+            </Grid>
+
+            <Grid item xs={12}>
+                <Box sx={{ mt: 2 }}>
+                    <Alert severity="info">
+                        Le sezioni possono avere un numero di studenti che si discosta dal valore di default,
+                        ma deve rimanere entro il 50% in meno e il 20% in più.
+                    </Alert>
+                </Box>
+            </Grid>
         </Grid>
     );
 };

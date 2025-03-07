@@ -261,27 +261,48 @@ userSchema.methods.updateSessionLastUsed = function(token) {
     return this;
 };
 
-// Middleware per audit automatico
+// Middleware per audit automatico - versione migliorata che filtra modifiche non significative
 userSchema.pre('save', async function(next) {
+    // Ignora gli oggetti nuovi (questi vengono gestiti altrove)
     if (this.isNew) return next();
     
-    const changes = this.modifiedPaths().reduce((acc, path) => {
-        acc[path] = {
-            old: this._original ? this._original[path] : undefined,
-            new: this[path]
-        };
-        return acc;
-    }, {});
+    // Lista di campi da ignorare per l'audit (modifiche routine/non significative)
+    const ignoredFields = [
+        'lastLogin',               // Aggiornato ad ogni login
+        'loginAttempts',           // Aggiornato durante i tentativi di login
+        'sessionTokens',           // Aggiornato durante il ciclo di sessione 
+        'updatedAt',               // Timestamp automatico
+        'lockUntil',               // Gestione blocco account
+        'sessions',                // Gestione sessioni
+        '__v'                      // Versione Mongoose
+    ];
     
-    if (Object.keys(changes).length > 0) {
+    // Ottieni solo i campi modificati che non sono nella lista da ignorare
+    const significantChanges = this.modifiedPaths()
+        .filter(path => !ignoredFields.includes(path) && !path.startsWith('sessionTokens'))
+        .reduce((acc, path) => {
+            acc[path] = {
+                old: this._original ? this._original[path] : undefined,
+                new: this[path]
+            };
+            return acc;
+        }, {});
+    
+    // Registra l'audit solo se ci sono modifiche significative
+    if (Object.keys(significantChanges).length > 0) {
         try {
+            console.log('Creating audit log for significant changes:', {
+                userId: this._id,
+                changedFields: Object.keys(significantChanges)
+            });
+            
             // Verifica che UserAudit sia disponibile
             const UserAudit = mongoose.models.UserAudit || require('./UserAudit');
             await UserAudit.create({
                 userId: this._id,
                 action: 'updated',
                 performedBy: this._performedBy || this._id,
-                changes
+                changes: significantChanges
             });
         } catch (error) {
             console.error('Error creating audit log:', error);
@@ -366,5 +387,14 @@ userSchema.pre('save', function(next) {
     next();
 });
 
+// Pre-remove middleware per rimuovere i riferimenti agli studenti
+userSchema.pre('remove', async function(next) {
+    // Rimuovi lo studente da assignedStudentIds
+    this.assignedStudentIds = this.assignedStudentIds.filter(id => 
+        id.toString() !== this._id.toString()
+    );
+    await this.save();
+    next();
+});
 
 module.exports = mongoose.model('User', userSchema);

@@ -46,14 +46,14 @@ const config = {
     // Configurazione JWT aggiornata
     jwt: {
         secret: process.env.JWT_SECRET,
-        expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+        expiresIn: process.env.JWT_EXPIRES_IN || '72h',  // Aumentato da 24h a 72h
         refreshSecret: process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET, // Fallback al JWT_SECRET se non configurato
-        refreshExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d',
-        cookieExpiresIn: parseInt(process.env.JWT_COOKIE_EXPIRES_IN || '1', 10),
+        refreshExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '30d',  // Aumentato da 7d a 30d
+        cookieExpiresIn: parseInt(process.env.JWT_COOKIE_EXPIRES_IN || '3', 10), // Aumentato da 1 a 3
         cookieOptions: {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 24 * 60 * 60 * 1000
+            maxAge: 72 * 60 * 60 * 1000  // Aumentato da 24h a 72h (3 giorni)
         }
     },
 

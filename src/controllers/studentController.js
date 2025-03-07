@@ -24,6 +24,7 @@ class StudentController extends BaseController {
         this.getUnassignedToSchoolStudents = this.getUnassignedToSchoolStudents.bind(this);
         this.createStudentWithClass = this.createStudentWithClass.bind(this);
         this.countByClasses = this.countByClasses.bind(this);
+        this.checkEmails = this.checkEmails.bind(this);
     }
 
     /**
@@ -313,6 +314,69 @@ class StudentController extends BaseController {
             next(error);
         }
     }
+    
+    /**
+     * Verifica quali email sono già presenti nel sistema
+     * @param {Object} req - Express request object con array di email nel body
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     */
+    async checkEmails(req, res, next) {
+        try {
+            const { emails } = req.body;
+            
+            // Validazione input
+            if (!emails || !Array.isArray(emails)) {
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'Formato richiesta non valido. Fornire un array di email.'
+                });
+            }
+            
+            // Filtra email valide e le normalizza
+            const validEmails = emails
+                .filter(email => email && typeof email === 'string')
+                .map(email => email.trim().toLowerCase());
+                
+            if (validEmails.length === 0) {
+                return this.sendResponse(res, {
+                    data: {
+                        duplicates: []
+                    }
+                });
+            }
+            
+            logger.debug('Checking for duplicate emails', {
+                emailCount: validEmails.length,
+                sampleEmails: validEmails.slice(0, 3)
+            });
+            
+            // Cerca le email nel database
+            const existingStudents = await this.repository.findByEmails(validEmails);
+            
+            // Estrai solo le email duplicate
+            const duplicates = existingStudents.map(student => student.email);
+            
+            logger.debug('Email check completed', {
+                checked: validEmails.length,
+                duplicatesFound: duplicates.length
+            });
+            
+            // Invia risposta
+            this.sendResponse(res, {
+                status: 'success',  // Aggiungi questo se non c'è
+                    duplicates
+                
+            });
+            
+        } catch (error) {
+            logger.error('Error checking emails', {
+                error: error.message,
+                stack: error.stack
+            });
+            next(error);
+        }
+    }
 
     /**
      * Assegna uno studente a una classe
@@ -455,9 +519,11 @@ class StudentController extends BaseController {
     async delete(req, res, next) {
         try {
             const { id } = req.params;
+            const cascade = req.query.cascade === 'true'; // Legge il parametro cascade dalla query string
             
             logger.debug('Deleting student:', { 
                 studentId: id,
+                cascade,
                 user: req.user?.id
             });
 
@@ -469,10 +535,11 @@ class StudentController extends BaseController {
                 );
             }
 
-            await this.repository.delete(id);
+            // Passa il parametro cascade al repository
+            await this.repository.delete(id, cascade);
             
             this.sendResponse(res, { 
-                message: 'Studente eliminato con successo'
+                message: `Studente ${cascade ? 'e tutti i suoi riferimenti ' : ''}eliminato con successo`
             });
         } catch (error) {
             logger.error('Error deleting student:', error);

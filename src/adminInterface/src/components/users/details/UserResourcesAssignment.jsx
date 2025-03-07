@@ -30,9 +30,9 @@ import { axiosInstance } from '../../../services/axiosConfig';
 // Definisci quali risorse sono rilevanti per ogni ruolo
 const ROLE_RESOURCE_REQUIREMENTS = {
     admin: {
-        needsSchool: false,
-        needsClasses: false,
-        needsStudents: false
+        needsSchool: true,
+        needsClasses: true,
+        needsStudents: true
     },
     developer: {
         needsSchool: false,

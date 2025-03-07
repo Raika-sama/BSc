@@ -1,10 +1,14 @@
 const mongoose = require('mongoose');
 
+/**
+ * Schema per il log delle modifiche agli utenti
+ */
 const userAuditSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: true,
+        index: true
     },
     action: {
         type: String,
@@ -21,12 +25,18 @@ const userAuditSchema = new mongoose.Schema({
         default: {}
     },
     ipAddress: String,
-    userAgent: String
+    userAgent: String,
+    metadata: {
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
+    }
 }, {
     timestamps: true
 });
 
-userAuditSchema.index({ userId: 1, createdAt: -1 });
+// Indici per migliorare le prestazioni
+userAuditSchema.index({ createdAt: -1 });
 userAuditSchema.index({ action: 1 });
+userAuditSchema.index({ userId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('UserAudit', userAuditSchema);

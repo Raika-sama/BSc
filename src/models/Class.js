@@ -120,5 +120,29 @@ classSchema.virtual('activeStudentsCount').get(function() {
   return this.students.filter(s => s.status === 'active').length;
 });
 
+// Pre-remove middleware per rimuovere i riferimenti agli studenti quando uno studente viene eliminato
+classSchema.pre('remove', async function(next) {
+    try {
+        // Se lo studente viene eliminato, rimuovilo dalla lista degli studenti della classe
+        const studentIdToRemove = this._studentIdToRemove; // questo verrà settato dal controller
+        if (studentIdToRemove && this.students) {
+            this.students = this.students.filter(record => 
+                !record.studentId || record.studentId.toString() !== studentIdToRemove.toString()
+            );
+            this.markModified('students');
+            await this.save();
+        }
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Metodo di utilità per settare l'ID dello studente da rimuovere
+classSchema.methods.setStudentToRemove = function(studentId) {
+    this._studentIdToRemove = studentId;
+    return this;
+};
+
 const Class = mongoose.model('Class', classSchema);
 module.exports = Class;

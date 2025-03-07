@@ -1,6 +1,6 @@
 // src/components/students/ExcelPreview.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Box,
     Paper,
@@ -37,7 +37,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 /**
  * Componente per la visualizzazione e modifica dei dati Excel prima dell'import
  */
-const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [] }) => {
+const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [], existingEmails = [], onEmailChange, onDataUpdate }) => {
     const [previewData, setPreviewData] = useState([]);
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [editOpen, setEditOpen] = useState(false);
@@ -46,6 +46,8 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [] }) => {
         section: ''
     });
     const [errors, setErrors] = useState({});
+    const isInitialRender = useRef(true);
+    const hasDataUpdated = useRef(false);
 
     // Anni scolastici disponibili (1-5)
     const years = [1, 2, 3, 4, 5];
@@ -56,19 +58,44 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [] }) => {
     // Inizializza i dati con validazione
     useEffect(() => {
         if (data && data.length > 0) {
+            console.log('ExcelPreview: Received data:', data);
+            console.log('ExcelPreview: Existing emails:', existingEmails);
+            
             const validatedData = data.map((student, index) => {
-                // Aggiungi campi per l'assegnazione della classe e validazione
-                return {
+                // Normalizza i dati per assicurare coerenza
+                const normalizedStudent = {
                     ...student,
                     id: index,
                     year: student.year || '',
                     section: student.section || '',
-                    validated: validateStudent(student)
+                    classId: student.classId || null
                 };
+                
+                // Log per debug
+                if (normalizedStudent.year && normalizedStudent.section) {
+                    console.log(`Student ${index}: year=${normalizedStudent.year}, section=${normalizedStudent.section}, classId=${normalizedStudent.classId}`);
+                }
+                
+                // Valida lo studente
+                normalizedStudent.validated = validateStudent(normalizedStudent);
+                
+                return normalizedStudent;
             });
+            
             setPreviewData(validatedData);
+            isInitialRender.current = false;
         }
-    }, [data]);
+    }, [data, availableClasses, existingEmails]);
+
+    // Effetto per notificare il parent dei cambiamenti significativi nei dati
+    useEffect(() => {
+        // Evita di inviare aggiornamenti durante il rendering iniziale o quando non ci sono dati
+        if (!isInitialRender.current && previewData.length > 0 && onDataUpdate && hasDataUpdated.current) {
+            console.log('Notifying parent of data update');
+            onDataUpdate(previewData);
+            hasDataUpdated.current = false; // Reset il flag dopo l'aggiornamento
+        }
+    }, [previewData, onDataUpdate]);
 
     // Funzione per validare un singolo studente
     const validateStudent = (student) => {
@@ -84,6 +111,14 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [] }) => {
         // Validazione email
         if (student.email && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(student.email)) {
             errors.email = 'Email non valida';
+        }
+        
+        // Verifica se l'email è già presente nel sistema
+        if (student.email && existingEmails.length > 0 && 
+            existingEmails.some(e => e.toLowerCase() === student.email.toLowerCase())) {
+            errors.email = 'Email già presente nel sistema';
+            // Marca questo errore come di tipo "duplicate" per gestirlo diversamente nella UI
+            errors._isDuplicate = true;
         }
         
         // Validazione email genitore
@@ -104,17 +139,37 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [] }) => {
         return Object.keys(errors).length === 0 ? true : errors;
     };
 
+    // Funzione per trovare l'ID classe basato su anno e sezione
+    const findClassId = (year, section) => {
+        if (!year || !section || !availableClasses || !availableClasses.length) {
+            return null;
+        }
+        
+        const matchingClass = availableClasses.find(
+            c => c.year.toString() === year.toString() && 
+                 c.section.toUpperCase() === section.toUpperCase()
+        );
+        
+        return matchingClass ? matchingClass._id : null;
+    };
+
     // Funzione per applicare un'assegnazione di classe a tutti gli studenti
     const applyBulkClassAssignment = () => {
         if (!bulkClassAssignment.year || !bulkClassAssignment.section) {
             return;
         }
         
+        // Trova la classe corrispondente tra quelle disponibili
+        const classId = findClassId(bulkClassAssignment.year, bulkClassAssignment.section);
+        console.log(`Bulk assign: year=${bulkClassAssignment.year}, section=${bulkClassAssignment.section}, foundClassId=${classId}`);
+
+        hasDataUpdated.current = true; // Segnala che ci sarà un aggiornamento significativo
         setPreviewData(prevData => prevData.map(student => {
             const updated = {
                 ...student,
                 year: bulkClassAssignment.year,
-                section: bulkClassAssignment.section
+                section: bulkClassAssignment.section,
+                classId: classId
             };
             updated.validated = validateStudent(updated);
             return updated;
@@ -131,15 +186,44 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [] }) => {
     const handleSaveEdit = () => {
         if (!selectedStudent) return;
         
+        // Se sono stati impostati sia year che section, cerca la classe corrispondente
+        let updatedStudent = {...selectedStudent};
+        
+        if (updatedStudent.year && updatedStudent.section) {
+            updatedStudent.classId = findClassId(updatedStudent.year, updatedStudent.section);
+            console.log(`Student edit: year=${updatedStudent.year}, section=${updatedStudent.section}, classId=${updatedStudent.classId}`);
+        } else {
+            // Se non sono entrambi settati, resetta il classId
+            updatedStudent.classId = null;
+        }
+
+        // Controlla se l'email è stata modificata 
+        const oldEmail = previewData.find(s => s.id === updatedStudent.id)?.email;
+        const emailChanged = oldEmail && oldEmail !== updatedStudent.email;
+        
+        if (emailChanged) {
+            // Informa il componente parent della modifica dell'email
+            if (onEmailChange) {
+                onEmailChange(oldEmail, updatedStudent.email);
+                
+                // Debug log
+                console.log(`Email changed in handleSaveEdit: ${oldEmail} -> ${updatedStudent.email}`);
+            }
+        }
+
         // Valida lo studente aggiornato
-        const validated = validateStudent(selectedStudent);
-        selectedStudent.validated = validated;
+        const validated = validateStudent(updatedStudent);
+        updatedStudent.validated = validated;
+        
+        // Se l'email è cambiata o la validazione è cambiata, segnala che ci sono modifiche importanti
+        if (emailChanged || (previewData.find(s => s.id === updatedStudent.id)?.validated !== validated)) {
+            hasDataUpdated.current = true;
+        }
         
         // Aggiorna i dati
         setPreviewData(prevData => 
             prevData.map(student => 
-                student.id === selectedStudent.id ? 
-                {...selectedStudent, validated} : student
+                student.id === updatedStudent.id ? updatedStudent : student
             )
         );
         
@@ -148,6 +232,7 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [] }) => {
     
     // Gestisce la rimozione di uno studente
     const handleRemove = (studentId) => {
+        hasDataUpdated.current = true; // Segnala che ci sarà un aggiornamento significativo
         setPreviewData(prevData => prevData.filter(student => student.id !== studentId));
     };
     
@@ -162,28 +247,33 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [] }) => {
             return;
         }
         
-        // Prepara i dati da inviare
-        const finalData = previewData.map(student => {
-            // Mantieni solo i dati necessari e rimuovi campi di UI
-            const { id, validated, ...cleanedStudent } = student;
-            
-            // Assegna i dati della classe
-            if (student.year && student.section) {
-                // Trova la classe corrispondente tra quelle disponibili
-                const matchingClass = availableClasses.find(
-                    c => c.year.toString() === student.year.toString() && c.section === student.section
-                );
+        // Prepara i dati da inviare (solo gli studenti validi)
+        const finalData = previewData
+            .filter(student => student.validated === true) 
+            .map(student => {
+                // Mantieni solo i dati necessari e rimuovi campi di UI
+                const { id, validated, ...cleanedStudent } = student;
                 
-                if (matchingClass) {
-                    cleanedStudent.classId = matchingClass._id;
+                // Log per debug
+                if (cleanedStudent.classId || (cleanedStudent.year && cleanedStudent.section)) {
+                    console.log(`Finalizing student: ${cleanedStudent.firstName} ${cleanedStudent.lastName}, year=${cleanedStudent.year}, section=${cleanedStudent.section}, classId=${cleanedStudent.classId}`);
                 }
-            }
-            
-            return cleanedStudent;
-        });
+                
+                return cleanedStudent;
+            });
+        
+        // Debug log prima di inviare
+        console.log('Final data before sending to parent:', finalData);
         
         // Invia i dati validati al componente parent
         onConfirm(finalData);
+    };
+    
+    // Funzione per verificare se uno studente ha email duplicata
+    const hasEmailDuplicate = (student) => {
+        return student.email && existingEmails.some(
+            e => e.toLowerCase() === student.email.toLowerCase()
+        );
     };
     
     // Verifica se ci sono studenti non validi
@@ -193,6 +283,8 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [] }) => {
     const totalStudents = previewData.length;
     const validStudents = previewData.filter(student => student.validated === true).length;
     const invalidStudents = totalStudents - validStudents;
+    const studentsWithClass = previewData.filter(s => s.classId || (s.year && s.section)).length;
+    const duplicateEmailCount = previewData.filter(student => hasEmailDuplicate(student)).length;
     
     return (
         <Box sx={{ width: '100%' }}>
@@ -258,6 +350,15 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [] }) => {
                 </Alert>
             )}
             
+            {/* Email duplicate */}
+            {duplicateEmailCount > 0 && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                    <Typography variant="body2">
+                        Sono presenti {duplicateEmailCount} studenti con email già esistenti nel sistema che non verranno importati.
+                    </Typography>
+                </Alert>
+            )}
+            
             {/* Visualizzazione stati */}
             <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
                 <Chip 
@@ -271,6 +372,19 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [] }) => {
                         icon={<ErrorOutlineIcon />} 
                         label={`${invalidStudents} Non Validi`} 
                         color="error" 
+                        variant="outlined" 
+                    />
+                )}
+                <Chip 
+                    label={`${studentsWithClass} Con Classe`} 
+                    color="primary" 
+                    variant="outlined" 
+                />
+                {duplicateEmailCount > 0 && (
+                    <Chip 
+                        icon={<ErrorOutlineIcon />}
+                        label={`${duplicateEmailCount} Email Duplicate`} 
+                        color="warning" 
                         variant="outlined" 
                     />
                 )}
@@ -292,44 +406,73 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [] }) => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {previewData.map((student) => (
-                            <TableRow 
-                                key={student.id}
-                                sx={{ 
-                                    backgroundColor: student.validated !== true ? 'rgba(255, 0, 0, 0.05)' : 'inherit' 
-                                }}
-                            >
-                                <TableCell>{student.firstName}</TableCell>
-                                <TableCell>{student.lastName}</TableCell>
-                                <TableCell>{student.email}</TableCell>
-                                <TableCell>{student.dateOfBirth}</TableCell>
-                                <TableCell>{student.year || '-'}</TableCell>
-                                <TableCell>{student.section || '-'}</TableCell>
-                                <TableCell>
-                                    {student.validated === true ? (
-                                        <Chip size="small" label="Valido" color="success" />
-                                    ) : (
-                                        <Tooltip title={
-                                            <div>
-                                                {Object.entries(student.validated).map(([key, value]) => (
-                                                    <div key={key}><b>{key}</b>: {value}</div>
-                                                ))}
-                                            </div>
-                                        }>
-                                            <Chip size="small" label="Errori" color="error" />
-                                        </Tooltip>
-                                    )}
-                                </TableCell>
-                                <TableCell align="center">
-                                    <IconButton size="small" onClick={() => handleEdit(student)}>
-                                        <EditIcon fontSize="small" />
-                                    </IconButton>
-                                    <IconButton size="small" onClick={() => handleRemove(student.id)}>
-                                        <DeleteIcon fontSize="small" />
-                                    </IconButton>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                        {previewData.map((student) => {
+                            const isDuplicate = hasEmailDuplicate(student);
+                            const hasOtherErrors = student.validated !== true && !student.validated._isDuplicate;
+                            
+                            return (
+                                <TableRow 
+                                    key={student.id}
+                                    sx={{ 
+                                        backgroundColor: isDuplicate 
+                                            ? 'rgba(255, 152, 0, 0.1)' 
+                                            : (student.validated !== true ? 'rgba(255, 0, 0, 0.05)' : 'inherit')
+                                    }}
+                                >
+                                    <TableCell>{student.firstName}</TableCell>
+                                    <TableCell>{student.lastName}</TableCell>
+                                    <TableCell>
+                                        {student.email}
+                                        {isDuplicate && (
+                                            <Typography variant="caption" display="block" color="error">
+                                                Duplicata
+                                            </Typography>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>{student.dateOfBirth}</TableCell>
+                                    <TableCell>{student.year || '-'}</TableCell>
+                                    <TableCell>{student.section || '-'}</TableCell>
+                                    <TableCell>
+                                        {student.validated === true ? (
+                                            <Chip size="small" label="Valido" color="success" />
+                                        ) : isDuplicate ? (
+                                            <Tooltip title="Email già presente nel sistema">
+                                                <Chip 
+                                                    size="small" 
+                                                    label="Email Duplicata" 
+                                                    color="warning" 
+                                                />
+                                            </Tooltip>
+                                        ) : (
+                                            <Tooltip title={
+                                                <div>
+                                                    {Object.entries(student.validated)
+                                                        .filter(([key]) => !key.startsWith('_'))
+                                                        .map(([key, value]) => (
+                                                            <div key={key}><b>{key}</b>: {value}</div>
+                                                        ))
+                                                    }
+                                                </div>
+                                            }>
+                                                <Chip 
+                                                    size="small" 
+                                                    label="Errori" 
+                                                    color="error" 
+                                                />
+                                            </Tooltip>
+                                        )}
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <IconButton size="small" onClick={() => handleEdit(student)}>
+                                            <EditIcon fontSize="small" />
+                                        </IconButton>
+                                        <IconButton size="small" onClick={() => handleRemove(student.id)}>
+                                            <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </TableContainer>
@@ -394,6 +537,11 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [] }) => {
                                     error={selectedStudent.validated !== true && 'email' in selectedStudent.validated}
                                     helperText={selectedStudent.validated !== true && selectedStudent.validated.email}
                                 />
+                                {hasEmailDuplicate(selectedStudent) && (
+                                    <Alert severity="warning" sx={{ mt: 1 }} size="small">
+                                        Questa email è già presente nel sistema
+                                    </Alert>
+                                )}
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField

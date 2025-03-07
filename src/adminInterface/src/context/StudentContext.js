@@ -587,14 +587,15 @@ return normalized;
         try {
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
             
-            const response = await axiosInstance.delete(`/students/${studentId}`);
+            // Aggiungiamo il parametro cascade=true per eliminare tutti i riferimenti
+            const response = await axiosInstance.delete(`/students/${studentId}?cascade=true`);
 
             if (response.data.status === 'success') {
                 dispatch({
                     type: STUDENT_ACTIONS.DELETE_STUDENT,
                     payload: studentId
                 });
-                showNotification('Studente eliminato con successo', 'success');
+                showNotification('Studente e tutti i suoi riferimenti eliminati con successo', 'success');
             }
         } catch (error) {
             const errorMessage = error.response?.data?.error?.message || 

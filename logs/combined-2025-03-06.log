@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {"level":"warn","message":"Mongoose connection disconnected","timestamp":"2025-03-06T19:33:49.218Z"}
 {"error":{"reason":{"commonWireVersion":0,"compatible":true,"heartbeatFrequencyMS":10000,"localThresholdMS":15,"logicalSessionTimeoutMinutes":null,"maxElectionId":"7fffffff00000000000003fc","maxSetVersion":378,"servers":{},"setName":"atlas-ewe2jc-shard-0","stale":false,"type":"ReplicaSetNoPrimary"}},"level":"error","message":"Error in session cleanup","timestamp":"2025-03-06T19:33:54.247Z"}
 {"level":"info","message":"Mongoose connected to MongoDB Atlas","timestamp":"2025-03-06T19:34:05.289Z"}
@@ -22,3 +23,236 @@
 {"level":"info","message":"Richiesta login studente","timestamp":"2025-03-06T20:52:55.427Z","username":"ciccio@pasticcio.it"}
 {"level":"info","message":"Tentativo di autenticazione studente","timestamp":"2025-03-06T20:52:55.428Z","username":"ciccio@pasticcio.it"}
 {"level":"info","message":"Primo accesso rilevato","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-06T20:52:55.452Z","username":"ciccio@pasticcio.it"}
+=======
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T13:33:54.383Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T13:33:54.388Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T13:33:54.437Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-06T13:33:56.146Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T13:33:56.148Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T13:33:56.149Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T13:33:56.697Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T13:33:56.705Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T13:33:56.706Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T13:56:54.572Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T13:56:54.577Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T13:56:54.624Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-06T13:56:55.674Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T13:56:55.676Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T13:56:55.677Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T13:56:56.052Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T13:56:56.060Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T13:56:56.061Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T13:57:46.483Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T13:57:46.487Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T13:57:46.532Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-06T13:57:47.306Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T13:57:47.308Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T13:57:47.312Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T13:57:47.699Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T13:57:47.707Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T13:57:47.708Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T14:09:32.750Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T14:09:32.759Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T14:09:32.807Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-06T14:09:34.464Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T14:09:34.466Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T14:09:34.469Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T14:09:35.002Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T14:09:35.015Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T14:09:35.016Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T14:10:57.237Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T14:10:57.242Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T14:10:57.280Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-06T14:10:58.073Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T14:10:58.075Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T14:10:58.076Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T14:10:58.354Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T14:10:58.358Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T14:10:58.359Z"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T14:11:45.263Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T14:19:20.112Z"}
+{"error":"Nessun dato valido da importare","level":"error","message":"Error in bulk import:","timestamp":"2025-03-06T14:19:20.180Z"}
+{"error":"Nessun dato valido da importare","level":"error","message":"Error in bulk import with class controller:","timestamp":"2025-03-06T14:19:20.181Z"}
+{"error":"Cannot read properties of undefined (reading 'code')","level":"error","message":"Student Route Error:","method":"POST","path":"/bulk-import-with-class","timestamp":"2025-03-06T14:19:20.185Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":"Cannot read properties of undefined (reading 'code')","level":"error","message":"Student route error:","method":"POST","path":"/bulk-import-with-class","stack":"TypeError: Cannot read properties of undefined (reading 'code')\n    at StudentBulkImportController.bulkImportWithClass (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\studentBulkImportController.js:226:66)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-03-06T14:19:20.186Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"486ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741270759701_mxecxojj6","responseSize":"106 Bytes","statusCode":400,"timestamp":"2025-03-06T14:19:20.187Z","url":"/api/v1/students/bulk-import-with-class","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T14:21:20.007Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T14:32:21.153Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T14:32:21.161Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T14:32:21.217Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-06T14:32:22.792Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T14:32:22.794Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T14:32:22.795Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T14:32:23.303Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T14:32:23.313Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T14:32:23.313Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T14:32:40.655Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T14:32:40.656Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T14:34:01.244Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T14:34:01.245Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T14:48:50.411Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T14:48:50.413Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T14:49:27.106Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T14:49:27.107Z"}
+{"level":"warn","message":"Route not found:","method":"POST","path":"/api/v1/students/check-emails","timestamp":"2025-03-06T15:05:14.092Z"}
+{"duration":"142ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741273513952_m2uz3kxzl","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-03-06T15:05:14.095Z","url":"/api/v1/students/check-emails","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T15:05:16.806Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T15:05:16.808Z"}
+{"level":"warn","message":"Route not found:","method":"POST","path":"/api/v1/students/check-emails","timestamp":"2025-03-06T15:05:42.187Z"}
+{"duration":"125ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741273542064_ed4dzc1vb","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-03-06T15:05:42.189Z","url":"/api/v1/students/check-emails","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T15:05:49.148Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T15:05:49.149Z"}
+{"level":"warn","message":"Route not found:","method":"POST","path":"/api/v1/students/check-emails","timestamp":"2025-03-06T15:07:20.418Z"}
+{"duration":"135ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741273640285_t8atwvoaw","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-03-06T15:07:20.420Z","url":"/api/v1/students/check-emails","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T15:08:01.670Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T15:08:01.671Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T15:29:44.996Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T15:29:45.006Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T15:29:45.098Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-06T15:29:46.663Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T15:29:46.666Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T15:29:46.670Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T15:29:47.338Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T15:29:47.359Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T15:29:47.361Z"}
+{"error":"this.repository.findByEmails is not a function","level":"error","message":"Error checking emails","stack":"TypeError: this.repository.findByEmails is not a function\n    at StudentController.checkEmails (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\studentController.js:355:60)\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:28:25\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at AuthMiddleware.protect (C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:115:13)","timestamp":"2025-03-06T15:30:03.786Z"}
+{"error":"this.repository.findByEmails is not a function","level":"error","message":"Student route error:","method":"POST","path":"/check-emails","stack":"TypeError: this.repository.findByEmails is not a function\n    at StudentController.checkEmails (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\studentController.js:355:60)\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:28:25\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at AuthMiddleware.protect (C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:115:13)","timestamp":"2025-03-06T15:30:03.789Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"166ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741275003626_3xjb7rkym","responseSize":"100 Bytes","statusCode":400,"timestamp":"2025-03-06T15:30:03.793Z","url":"/api/v1/students/check-emails","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T15:30:06.596Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T15:30:06.601Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T18:07:59.857Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T18:07:59.865Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T18:07:59.964Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-06T18:08:00.978Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T18:08:00.980Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T18:08:00.981Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T18:08:01.313Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T18:08:01.321Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T18:08:01.322Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T18:17:21.367Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T18:17:21.376Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T18:17:21.477Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-06T18:17:22.798Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T18:17:22.801Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T18:17:22.804Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T18:17:23.403Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T18:17:23.411Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T18:17:23.411Z"}
+{"error":"this.repository.findByEmails is not a function","level":"error","message":"Error checking emails","stack":"TypeError: this.repository.findByEmails is not a function\n    at StudentController.checkEmails (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\studentController.js:355:60)\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:28:25\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at AuthMiddleware.protect (C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:115:13)","timestamp":"2025-03-06T18:18:07.676Z"}
+{"error":"this.repository.findByEmails is not a function","level":"error","message":"Student route error:","method":"POST","path":"/check-emails","stack":"TypeError: this.repository.findByEmails is not a function\n    at StudentController.checkEmails (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\studentController.js:355:60)\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:28:25\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at AuthMiddleware.protect (C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:115:13)","timestamp":"2025-03-06T18:18:07.680Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"140ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741285087546_4xwkgpvx5","responseSize":"100 Bytes","statusCode":400,"timestamp":"2025-03-06T18:18:07.686Z","url":"/api/v1/students/check-emails","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T18:26:37.749Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T18:26:37.754Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T18:26:37.812Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-06T18:26:39.612Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T18:26:39.613Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T18:26:39.615Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T18:26:40.022Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T18:26:40.031Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T18:26:40.032Z"}
+{"error":"this.repository.findByEmails is not a function","level":"error","message":"Error checking emails","stack":"TypeError: this.repository.findByEmails is not a function\n    at StudentController.checkEmails (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\studentController.js:355:60)\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:28:25\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at AuthMiddleware.protect (C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:115:13)","timestamp":"2025-03-06T18:26:55.577Z"}
+{"error":"this.repository.findByEmails is not a function","level":"error","message":"Student route error:","method":"POST","path":"/check-emails","stack":"TypeError: this.repository.findByEmails is not a function\n    at StudentController.checkEmails (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\studentController.js:355:60)\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:28:25\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at AuthMiddleware.protect (C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:115:13)","timestamp":"2025-03-06T18:26:55.580Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"153ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741285615432_706ceuwfx","responseSize":"100 Bytes","statusCode":400,"timestamp":"2025-03-06T18:26:55.587Z","url":"/api/v1/students/check-emails","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T18:28:38.943Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T18:28:38.948Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T18:28:38.995Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-06T18:28:39.899Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T18:28:39.900Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T18:28:39.903Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T18:28:40.212Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T18:28:40.216Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T18:28:40.216Z"}
+{"error":"this.repository.findByEmails is not a function","level":"error","message":"Error checking emails","stack":"TypeError: this.repository.findByEmails is not a function\n    at StudentController.checkEmails (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\studentController.js:355:60)\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:28:25\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at AuthMiddleware.protect (C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:115:13)","timestamp":"2025-03-06T18:28:53.995Z"}
+{"error":"this.repository.findByEmails is not a function","level":"error","message":"Student route error:","method":"POST","path":"/check-emails","stack":"TypeError: this.repository.findByEmails is not a function\n    at StudentController.checkEmails (C:\\Users\\ricca\\Desktop\\BSc\\src\\controllers\\studentController.js:355:60)\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:28:25\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at AuthMiddleware.protect (C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:115:13)","timestamp":"2025-03-06T18:28:53.997Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"136ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741285733864_h105405wx","responseSize":"100 Bytes","statusCode":400,"timestamp":"2025-03-06T18:28:54.001Z","url":"/api/v1/students/check-emails","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T18:34:50.021Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T18:34:50.025Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T18:34:50.072Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-06T18:34:50.826Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T18:34:50.827Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T18:34:50.829Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T18:34:51.162Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T18:34:51.169Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T18:34:51.170Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T18:37:50.797Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T18:37:50.801Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T18:37:50.837Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-06T18:37:51.560Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T18:37:51.561Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T18:37:51.563Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T18:37:51.829Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T18:37:51.833Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T18:37:51.834Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T18:41:35.582Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T18:41:35.587Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T18:41:35.623Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-06T18:41:36.360Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T18:41:36.361Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T18:41:36.362Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T18:41:36.643Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T18:41:36.647Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T18:41:36.647Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-06T18:43:55.632Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-06T18:43:55.637Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-06T18:43:55.679Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-06T18:43:56.512Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-06T18:43:56.513Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-06T18:43:56.514Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-06T18:43:56.860Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-06T18:43:56.863Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-06T18:43:56.864Z"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T18:44:27.220Z"}
+{"error":{"code":"AUTH_002","message":"Token scaduto","metadata":{},"status":401},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-03-06T18:49:45.247Z"}
+{"error":{"code":"AUTH_002","message":"Token scaduto","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-06T18:49:45.249Z"}
+{"duration":"14ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741286985238_4wziinplt","responseSize":"72 Bytes","statusCode":401,"timestamp":"2025-03-06T18:49:45.252Z","url":"/api/v1/auth/verify","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"error":{"code":"AUTH_002","message":"Token scaduto","metadata":{},"status":401},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-03-06T18:49:45.273Z"}
+{"error":{"code":"AUTH_002","message":"Token scaduto","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-03-06T18:49:45.274Z"}
+{"duration":"8ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741286985268_arz5huw12","responseSize":"72 Bytes","statusCode":401,"timestamp":"2025-03-06T18:49:45.276Z","url":"/api/v1/auth/refresh-token","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-03-06T18:49:49.320Z","userId":"677bfe44f6789c907c9f3766"}
+{"action":"login","level":"info","message":"User audit record created","timestamp":"2025-03-06T18:49:49.364Z","userId":"677bfe44f6789c907c9f3766"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T18:53:04.136Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T18:53:04.139Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T18:56:12.212Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T18:56:12.213Z"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T18:56:54.234Z"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T18:58:03.321Z"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T18:59:39.870Z"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T19:39:27.850Z"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T19:41:05.748Z"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T19:46:05.931Z"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T19:47:47.129Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-03-06T20:44:48.836Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-03-06T20:44:48.851Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-06T20:44:48.853Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-06T20:44:48.854Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"86ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741293888773_8hwpreevp","responseSize":"401 Bytes","statusCode":500,"timestamp":"2025-03-06T20:44:48.859Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-03-06T20:45:05.923Z","userId":"67c0296a250c5746c3d96444"}
+{"action":"login","level":"info","message":"User audit record created","timestamp":"2025-03-06T20:45:05.972Z","userId":"67c0296a250c5746c3d96444"}
+{"entriesCount":1,"level":"info","message":"User history retrieved","timestamp":"2025-03-06T20:46:12.951Z","userId":"67c0296a250c5746c3d96444"}
+{"entriesCount":1,"level":"info","message":"User history retrieved","timestamp":"2025-03-06T20:46:12.952Z","userId":"67c0296a250c5746c3d96444"}
+{"academicYear":"2025/2026","count":5,"level":"info","message":"Created classes for new academic year:","sectionsUsed":["G"],"timestamp":"2025-03-06T20:48:03.924Z"}
+{"level":"info","message":"Anno accademico creato con successo","schoolId":"67c236a42373b42426264bf6","timestamp":"2025-03-06T20:48:03.967Z","year":"2025/2026"}
+{"level":"info","message":"Aggiornamento anno accademico 67ca0a03ce4bd1c954512530 per scuola 67c236a42373b42426264bf6","selectedSections":1,"timestamp":"2025-03-06T20:48:49.811Z","updateData":{"description":"","endDate":"2026-06-30","startDate":"2025-09-01","year":"2025/2026"}}
+{"classId":"679fdad474255ebc8afab6a4","level":"info","message":"Class tests revoked:","modifiedCount":3,"testType":"CSI","timestamp":"2025-03-06T20:51:59.946Z"}
+{"classId":"679fdad474255ebc8afab6a4","level":"info","message":"Class tests revoked successfully:","modifiedCount":3,"timestamp":"2025-03-06T20:51:59.946Z","userId":"67c0296a250c5746c3d96444"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T20:54:47.038Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T20:54:47.038Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T20:55:52.710Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T20:55:52.710Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T20:57:05.223Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T20:57:05.224Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T20:57:37.135Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T20:57:37.136Z"}
+{"assignedBy":"67c0296a250c5746c3d96444","csiConfigId":"67a65a423218fb8ab7bbc040","level":"info","message":"Test assigned to student:","studentId":"67b20991d8fdac4600a0def6","testId":"67ca0cedce4bd1c954512847","testType":"CSI","timestamp":"2025-03-06T21:00:29.920Z"}
+{"assignedBy":"67c0296a250c5746c3d96444","level":"info","message":"Test assigned successfully:","studentId":"67b20991d8fdac4600a0def6","testId":"67ca0cedce4bd1c954512847","timestamp":"2025-03-06T21:00:29.921Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T21:04:32.832Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T21:04:32.833Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T21:05:55.632Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T21:05:55.632Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T21:15:36.995Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T21:15:36.998Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T21:16:13.046Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T21:16:13.046Z"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T21:26:41.304Z"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T21:34:43.922Z"}
+>>>>>>> aa0498b4ddafee4cf0da9f8b1cc8fc5309af7611

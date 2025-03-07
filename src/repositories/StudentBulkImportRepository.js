@@ -115,7 +115,7 @@ class StudentBulkImportRepository extends BaseRepository {
             const emails = studentsData.map(student => student.email?.trim().toLowerCase()).filter(Boolean);
             const existingEmails = await this.model.find(
                 { email: { $in: emails } },
-                { email: 1 },
+                { email: 1, firstName: 1, lastName: 1 },
                 { session }
             );
 
@@ -125,34 +125,12 @@ class StudentBulkImportRepository extends BaseRepository {
                     count: existingEmails.length,
                     emails: results.duplicates
                 });
-            }
-
-            // Ottieni le classi per ID
-            let classes = [];
-            if (studentsData.some(s => s.classId)) {
-                const classIds = [...new Set(
-                    studentsData.filter(s => s.classId).map(s => s.classId)
-                )];
                 
-                classes = await Class.find(
-                    { _id: { $in: classIds } },
-                    null,
-                    { session }
-                );
-                
-                logger.debug('Found classes for assignment', {
-                    requestedClasses: classIds.length,
-                    foundClasses: classes.length
-                });
-            }
-
-            // Prepara tutti i dati degli studenti
-            const preparedStudents = studentsData.map((student, index) => {
-                try {
-                    // Salta gli studenti con email duplicate
+                // Aggiungi errori per tutte le email duplicate trovate
+                studentsData.forEach((student, index) => {
                     if (results.duplicates.includes(student.email?.trim().toLowerCase())) {
                         results.errors.push({
-                            row: index + 2,
+                            row: index + 2, // +2 perché Excel parte da 1 e c'è l'header
                             message: 'Email già presente nel sistema',
                             error: 'DUPLICATE_EMAIL',
                             data: {
@@ -161,19 +139,85 @@ class StudentBulkImportRepository extends BaseRepository {
                                 lastName: student.lastName
                             }
                         });
+                    }
+                });
+                
+                // Se tutte le email sono duplicate, restituisci subito il risultato
+                if (results.duplicates.length === studentsData.length) {
+                    logger.warn('All emails in import are duplicates, skipping import');
+                    await session.abortTransaction();
+                    session.endSession();
+                    
+                    return {
+                        imported: 0,
+                        failed: studentsData.length,
+                        errors: results.errors,
+                        duplicates: results.duplicates
+                    };
+                }
+            }
+
+            // Raccogli tutti gli ID delle classi dal file
+            const classIds = [...new Set(
+                studentsData
+                    .filter(s => s.classId)
+                    .map(s => s.classId)
+            )];
+
+            logger.debug('Class IDs found in import data:', { classIds });
+
+            // Carica tutte le classi necessarie in una sola query
+            let classesMap = new Map();
+            if (classIds.length > 0) {
+                const classes = await Class.find(
+                    { _id: { $in: classIds }, schoolId: schoolId },
+                    null,
+                    { session }
+                ).populate('mainTeacher teachers');
+
+                classesMap = new Map(classes.map(c => [c._id.toString(), c]));
+                
+                logger.debug('Classes loaded:', {
+                    requested: classIds.length,
+                    found: classes.length,
+                    classes: classes.map(c => ({
+                        id: c._id,
+                        year: c.year,
+                        section: c.section
+                    }))
+                });
+            }
+
+            // Prepara tutti i dati degli studenti
+            const preparedStudents = studentsData.map((student, index) => {
+                try {
+                    // Salta gli studenti con email duplicate
+                    if (results.duplicates.includes(student.email?.trim().toLowerCase())) {
                         return null;
                     }
-                    
-                    // Prepara dati di base
-                    const preparedData = this._prepareStudentData(student, schoolId);
-                    
-                    // Se c'è un ID classe, verifica che esista
+
+                    // Dati di base dello studente
+                    const preparedData = {
+                        firstName: student.firstName?.trim(),
+                        lastName: student.lastName?.trim(),
+                        email: student.email?.trim().toLowerCase(),
+                        parentEmail: student.parentEmail?.trim().toLowerCase() || null,
+                        fiscalCode: student.fiscalCode?.trim().toUpperCase() || null,
+                        gender: student.gender,
+                        dateOfBirth: student.dateOfBirth,
+                        schoolId: schoolId,
+                        specialNeeds: student.specialNeeds === true || student.specialNeeds === 'true' || student.specialNeeds === '1',
+                        status: 'pending',
+                        isActive: true
+                    };
+
+                    // Se c'è un ID classe, verifica che esista e aggiungi i dati relativi
                     if (student.classId) {
-                        const classObj = classes.find(c => c._id.toString() === student.classId);
-                        if (!classObj) {
+                        const classDoc = classesMap.get(student.classId.toString());
+                        if (!classDoc) {
                             results.errors.push({
                                 row: index + 2,
-                                message: 'Classe non trovata',
+                                message: 'Classe non trovata o non valida',
                                 error: 'CLASS_NOT_FOUND',
                                 data: {
                                     classId: student.classId,
@@ -182,15 +226,17 @@ class StudentBulkImportRepository extends BaseRepository {
                             });
                             return null;
                         }
-                        
-                        // Assegna mainTeacher e teachers dalla classe
-                        preparedData.mainTeacher = classObj.mainTeacher;
-                        preparedData.teachers = classObj.teachers;
-                    }
-                    
-                    // Validazione aggiuntiva dei dati preparati
-                    if (!this._validatePreparedData(preparedData)) {
-                        throw new Error('Dati preparati non validi');
+
+                        preparedData.classId = classDoc._id;
+                        preparedData.currentYear = classDoc.year;
+                        preparedData.section = classDoc.section;
+                        preparedData.status = 'active';
+                        preparedData.needsClassAssignment = false;
+                        preparedData.mainTeacher = classDoc.mainTeacher?._id;
+                        preparedData.teachers = classDoc.teachers?.map(t => t._id) || [];
+                        preparedData.lastClassChangeDate = new Date();
+                    } else {
+                        preparedData.needsClassAssignment = true;
                     }
 
                     return preparedData;
@@ -205,48 +251,56 @@ class StudentBulkImportRepository extends BaseRepository {
                 }
             }).filter(Boolean);
 
+            // Log dei dati preparati per debug
+            logger.debug('Prepared students data:', {
+                total: studentsData.length,
+                prepared: preparedStudents.length,
+                withClass: preparedStudents.filter(s => s.classId).length,
+                sampleStudent: preparedStudents[0]
+            });
+
             if (preparedStudents.length === 0) {
-                throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
-                    'Nessun dato valido da importare',
-                    { details: results.errors }
-                );
+                // Invece di lanciare un errore, restituiamo un risultato con zero studenti importati
+                logger.warn('No valid data to import after filtering duplicates and invalid entries');
+                await session.abortTransaction();
+                session.endSession();
+                
+                return {
+                    imported: 0,
+                    failed: studentsData.length,
+                    errors: results.errors,
+                    duplicates: results.duplicates
+                };
             }
 
-            // Eseguiamo l'inserimento massivo
+            // Esegui l'inserimento massivo
             const insertedStudents = await this.model.insertMany(preparedStudents, {
                 session,
-                ordered: false // Continua anche se alcuni inserimenti falliscono
+                ordered: false
             });
+
+            // Aggiorna le classi con i nuovi studenti
+            for (const [classId, classDoc] of classesMap) {
+                const studentsForClass = insertedStudents.filter(
+                    s => s.classId && s.classId.toString() === classId
+                );
+
+                if (studentsForClass.length > 0) {
+                    classDoc.students.push(...studentsForClass.map(student => ({
+                        studentId: student._id,
+                        status: 'active',
+                        joinedAt: new Date()
+                    })));
+                    await classDoc.save({ session });
+                }
+            }
 
             results.imported = insertedStudents.length;
             results.failed = studentsData.length - insertedStudents.length;
 
-            // Aggiorna le classi con i nuovi studenti
-            for (const classObj of classes) {
-                // Trova gli studenti inseriti per questa classe
-                const studentsForClass = insertedStudents.filter(
-                    s => s.classId && s.classId.toString() === classObj._id.toString()
-                );
-                
-                if (studentsForClass.length > 0) {
-                    // Aggiungi gli studenti alla classe
-                    const newStudentRecords = studentsForClass.map(student => ({
-                        studentId: student._id,
-                        status: 'active',
-                        joinedAt: new Date()
-                    }));
-                    
-                    classObj.students.push(...newStudentRecords);
-                    await classObj.save({ session });
-                    
-                    logger.debug(`Added ${studentsForClass.length} students to class ${classObj.year}${classObj.section}`);
-                }
-            }
-
             await session.commitTransaction();
             
-            logger.info('Bulk import with class completed successfully', {
+            logger.info('Bulk import completed successfully', {
                 imported: results.imported,
                 failed: results.failed,
                 errors: results.errors.length,
@@ -259,14 +313,13 @@ class StudentBulkImportRepository extends BaseRepository {
         } catch (error) {
             await session.abortTransaction();
             
-            logger.error('Error in bulk import with class:', { 
+            logger.error('Error in bulk import:', { 
                 error: error.message,
                 code: error.code,
                 stack: error.stack,
                 timestamp: new Date().toISOString()
             });
 
-            // Gestione specifica per errori di duplicate key (email)
             if (error.code === 11000) {
                 throw createError(
                     ErrorTypes.VALIDATION.ALREADY_EXISTS,
@@ -278,18 +331,7 @@ class StudentBulkImportRepository extends BaseRepository {
                 );
             }
 
-            // Se è un errore di validazione, lo propaghiamo
-            if (error.code === ErrorTypes.VALIDATION.BAD_REQUEST.code) {
-                throw error;
-            }
-
-            // Altri errori vengono convertiti in errori interni
-            throw createError(
-                ErrorTypes.SYSTEM.INTERNAL_ERROR,
-                'Errore durante l\'importazione degli studenti',
-                { originalError: error.message }
-            );
-
+            throw error;
         } finally {
             session.endSession();
         }

@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { axiosInstance } from '../services/axiosConfig';
 import { useNotification } from './NotificationContext';
+import { useNavigate } from 'react-router-dom';
 
 const SchoolContext = createContext();
 
@@ -12,6 +13,8 @@ export const SchoolProvider = ({ children }) => {
     const [totalSchools, setTotalSchools] = useState(0);
     const { showNotification } = useNotification();
     const [selectedSchool, setSelectedSchool] = useState(null);
+    const [currentSchool, setCurrentSchool] = useState(null);
+    const navigate = useNavigate();
 
     const validateSchoolData = (schoolData, isPartialUpdate = true) => {
         const errors = {};
@@ -191,9 +194,13 @@ export const SchoolProvider = ({ children }) => {
             console.log('API response:', response);
             
             if (response.data.status === 'success') {
-                setSchools(prev => [...prev, response.data.data.school]);
-                showNotification('Scuola creata con successo', 'success');
-                return response.data.data.school;
+                const newSchool = response.data.data.school;
+                setSchools(prev => [...prev, newSchool]);
+                showNotification(
+                    `Scuola "${newSchool.name}" creata con successo! Configurazione iniziale in corso...`,
+                    'success'
+                );
+                return newSchool;
             } else {
                 console.log('Unexpected response format:', response);
                 throw new Error('Risposta API non valida');
@@ -1005,7 +1012,9 @@ const executeYearTransition = async (schoolId, transitionData) => {
             archiveAcademicYear,
             getClassesByAcademicYear,
             getTransitionPreview,
-            executeYearTransition
+            executeYearTransition,
+            currentSchool,
+            setCurrentSchool
         }}>
             {children}
         </SchoolContext.Provider>

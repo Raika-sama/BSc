@@ -91,6 +91,12 @@ const createUserRouter = ({ authMiddleware, userController }) => {
         asyncHandler(userController.getSchoolTeachers.bind(userController))
     );
 
+    // Route per lo storico delle modifiche di un utente
+    router.get('/:id/history',
+        restrictTo('admin', 'developer'),
+        asyncHandler(userController.getUserHistory.bind(userController))
+    );
+
     // Route CRUD per gestione utenti
     router.route('/:id')
         .get(
@@ -226,6 +232,7 @@ module.exports = createUserRouter;
  * POST   /users/:id/permissions - Aggiorna permessi utente
  * POST   /users/:id/resources   - Assegna risorse a utente (scuola, classi, studenti)
  * PUT    /users/:id/status      - Cambia stato utente (attivo/inattivo/sospeso)
+ * GET    /users/:id/history     - Ottiene lo storico delle modifiche di un utente
  * 
  * Route Manager:
  * GET    /users                 - Lista utenti (filtrata per propria scuola)

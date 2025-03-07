@@ -107,6 +107,15 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
     );
 
     /**
+     * @route PUT /api/schools/:id/academic-years/:yearId
+     * @desc Modifica un anno accademico esistente
+     * @access Private - Admin e manager della scuola
+     */
+    router.put('/:id/academic-years/:yearId',
+        asyncHandler(schoolController.updateAcademicYear.bind(schoolController))
+    );
+
+    /**
      * @route POST /api/schools/:id/academic-years/:yearId/activate
      * @desc Attiva un anno accademico specifico
      * @access Private - Admin e manager della scuola
@@ -122,6 +131,15 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      */
     router.post('/:id/academic-years/:yearId/archive',
         asyncHandler(schoolController.archiveAcademicYear.bind(schoolController))
+    );
+
+    /**
+     * @route POST /api/schools/:id/academic-years/:yearId/reactivate
+     * @desc Riattiva un anno accademico archiviato
+     * @access Private - Admin e manager della scuola
+     */
+    router.post('/:id/academic-years/:yearId/reactivate',
+        asyncHandler(schoolController.reactivateAcademicYear.bind(schoolController))
     );
 
     /**
@@ -357,8 +375,10 @@ module.exports = createSchoolRouter;
  * GET    /schools/type/:type             - Ottiene scuole per tipo
  * GET    /schools/:id/academic-years     - Ottiene anni accademici di una scuola
  * POST   /schools/:id/academic-years     - Crea nuovo anno accademico
+ * PUT    /schools/:id/academic-years/:yearId - Modifica un anno accademico esistente
  * POST   /schools/:id/academic-years/:yearId/activate - Attiva un anno accademico
  * POST   /schools/:id/academic-years/:yearId/archive - Archivia un anno accademico
+ * POST   /schools/:id/academic-years/:yearId/reactivate - Riattiva un anno archiviato
  * GET    /schools/:id/classes            - Ottiene classi per anno accademico
  * 
  * Route Admin:

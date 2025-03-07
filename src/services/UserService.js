@@ -2,6 +2,7 @@
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 
 class UserService {
     constructor(userRepository, authService, sessionService, permissionService) {
@@ -609,6 +610,81 @@ async deleteUser(userId) {
         } = userData;
         
         return safeUser;
+    }
+
+    /**
+     * Registra un evento di audit per l'utente
+     * @param {string} userId - ID dell'utente 
+     * @param {string} action - Tipo di azione (created, updated, deleted, password_changed, role_changed, login, logout)
+     * @param {Object} changes - Cambiamenti effettuati (opzionale)
+     * @param {Object} metadata - Metadati aggiuntivi (opzionale)
+     * @param {string} performedBy - ID dell'utente che ha eseguito l'azione (se diverso dall'utente stesso)
+     */
+    async logUserAction(userId, action, changes = {}, metadata = {}, performedBy = null) {
+        try {
+            const UserAudit = mongoose.model('UserAudit');
+            
+            // Se performedBy non è specificato, assumiamo sia lo stesso utente
+            if (!performedBy) {
+                performedBy = userId;
+            }
+            
+            const auditData = {
+                userId,
+                action,
+                performedBy,
+                changes,
+                ...metadata
+            };
+            
+            logger.debug('Creating user audit record', { userId, action });
+            await UserAudit.create(auditData);
+            
+            logger.info('User audit record created', { userId, action });
+            return true;
+        } catch (error) {
+            logger.error('Error creating user audit record', { error, userId, action });
+            // Non lanciamo l'errore per non interrompere il flusso principale
+            return false;
+        }
+    }
+
+    /**
+     * Ottiene lo storico delle modifiche di un utente
+     * @param {string} userId - ID utente
+     * @returns {Promise<Array>} - Array di eventi dello storico
+     */
+    async getUserHistory(userId) {
+        try {
+            logger.debug('Getting user history', { userId });
+            
+            // Ottieni l'utente
+            const user = await this.userRepository.findById(userId);
+            
+            if (!user) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente non trovato'
+                );
+            }
+            
+            // Usa il modello UserAudit direttamente
+            const UserAudit = mongoose.model('UserAudit');
+            const history = await UserAudit.find({ userId })
+                .sort('-createdAt')
+                .populate('performedBy', 'firstName lastName email')
+                .lean();
+            
+            logger.info('User history retrieved', { 
+                userId, 
+                entriesCount: history.length 
+            });
+            
+            return history;
+        } catch (error) {
+            logger.error('Error retrieving user history', { error, userId });
+            throw error;
+        }
     }
 }
 

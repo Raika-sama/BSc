@@ -1,5 +1,5 @@
 // src/components/school/SchoolManagement.js
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -75,6 +75,14 @@ const SchoolManagement = () => {
         navigate(`/admin/schools/${school._id}`);  // Rimuoviamo /edit dal percorso
     };
 
+    const handleRowClick = (params) => {
+        navigate(`/admin/schools/${params.row._id}`);
+    };
+
+    const toggleFilters = useCallback(() => {
+        setIsFilterOpen(prev => !prev);
+    }, []);
+
     // Definizione delle colonne per il DataGrid
     const columns = useMemo(() => [
         {
@@ -133,7 +141,7 @@ const SchoolManagement = () => {
         // Nuova colonna per il numero di classi attive
         {
             field: 'sections',
-            headerName: 'Classi Attive',
+            headerName: 'Sezioni Attive',
             width: 120,
             valueGetter: (params) => {
                 const sections = params.value || [];
@@ -243,7 +251,7 @@ const SchoolManagement = () => {
                 <Box sx={{ display: 'flex', gap: 2 }}>
                     <Tooltip title="Filtri">
                         <IconButton 
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            onClick={toggleFilters}
                             color="primary"
                         >
                             <FilterListIcon />
@@ -262,6 +270,7 @@ const SchoolManagement = () => {
             <ListLayout
                 statsCards={statsCards}
                 isFilterOpen={isFilterOpen}
+                onToggleFilters={toggleFilters}
                 filterComponent={
                     <SchoolFilters
                         filters={filters}
@@ -278,6 +287,8 @@ const SchoolManagement = () => {
                 getRowId={(row) => row._id}
                 pageSize={pageSize}
                 onPageSizeChange={setPageSize}
+                onRowClick={handleRowClick} // Aggiungiamo l'handler
+
             />
         </ContentLayout>
     );
