@@ -58,7 +58,8 @@ const ListLayout = ({
     error,
     checkboxSelection,
     onSelectionModelChange,
-    selectionModel
+    selectionModel,
+    onRowClick  // Nuova proprietà per gestire il click sulla riga
 }) => {
     const muiTheme = useMuiTheme();
     const [searchValue, setSearchValue] = useState('');
@@ -447,6 +448,7 @@ const ListLayout = ({
                         selectionModel={selectionModel}
                         disableSelectionOnClick
                         autoHeight={false} // Importante: non usiamo autoHeight
+                        onRowClick={onRowClick} // Aggiungiamo l'handler per il click sulla riga
                         components={{
                             LoadingOverlay: () => (
                                 <Box sx={loadingOverlay}>
@@ -525,6 +527,15 @@ const ListLayout = ({
                                     outline: 'none'
                                 }
                             },
+                            // Aggiungiamo lo stile per il cursore quando la riga è cliccabile
+                            ...(onRowClick && {
+                                '& .MuiDataGrid-row': {
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        backgroundColor: theme => alpha(theme.palette.primary.main, 0.08)
+                                    }
+                                }
+                            }),
                             ...standardDataGridStyle
                         }}
                     />
@@ -567,7 +578,8 @@ ListLayout.propTypes = {
     checkboxSelection: PropTypes.bool,
     onSelectionModelChange: PropTypes.func,
     selectionModel: PropTypes.array,
-    sx: PropTypes.object
+    sx: PropTypes.object,
+    onRowClick: PropTypes.func,
 };
 
 export default ListLayout;

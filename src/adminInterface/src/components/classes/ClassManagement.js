@@ -65,6 +65,7 @@ const ClassManagement = () => {
         setIsFilterOpen(prev => !prev);
     };
 
+   
     const handleApplyFilters = () => {
         // La logica dei filtri rimane la stessa
         const filtered = filterClasses(isAdmin ? mainTeacherClasses : 
@@ -136,6 +137,11 @@ const ClassManagement = () => {
     const handleTestManagement = (classData) => {
         navigate(`/admin/classes/${classData.classId}/tests`);
     };
+
+    const handleRowClick = (params) => {
+        navigate(`/admin/classes/${params.row.classId}`);
+    };
+
 
     // Usa useMemo per le colonne
     const columns = useMemo(() => createColumns(
@@ -259,6 +265,8 @@ const ClassManagement = () => {
                     getRowId={(row) => row.classId}
                     pageSize={pageSize}
                     onPageSizeChange={setPageSize}
+                    onRowClick={handleRowClick} // Aggiungiamo l'handler
+
                 />
 
                 {/* Delete Dialog */}

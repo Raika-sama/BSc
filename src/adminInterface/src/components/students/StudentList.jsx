@@ -86,6 +86,10 @@ const StudentList = () => {
     const classFilter = filters.classFilter;
     const statusFilter = filters.status;
     const specialNeedsFilter = filters.specialNeeds;
+    
+    const handleRowClick = (params) => {
+        navigate(`/admin/students/${params.row._id}`);
+    };
 
     // Funzioni setter per i singoli filtri
     const setSearchTerm = (value) => {
@@ -164,6 +168,8 @@ const statsCards = useMemo(() => {
         specialNeedsStudents: students.filter(s => s.specialNeeds).length,
         assignedStudents: students.filter(s => s.classId).length
     };
+
+    
 
 
     return [
@@ -405,6 +411,8 @@ const statsCards = useMemo(() => {
                 page={page}
                 onPageChange={setPage}
                 loading={loading}
+                onRowClick={handleRowClick} // Aggiungiamo l'handler
+
             />
 
             {/* Delete Dialog */}

@@ -217,27 +217,7 @@ const EnginesManagement = () => {
         <ContentLayout
             title="Gestione Test"
             subtitle="Gestisci e configura i test disponibili nella piattaforma"
-            actions={
-                canCreateEngine && (
-                    <MotionButton
-                        whileHover={{ scale: 1.05, boxShadow: 6 }}
-                        whileTap={{ scale: 0.95 }}
-                        variant="contained"
-                        color={themeColor}
-                        startIcon={<AddIcon />}
-                        sx={{
-                            borderRadius: 2,
-                            textTransform: 'none',
-                            boxShadow: 2,
-                            '&:hover': {
-                                boxShadow: 4,
-                            }
-                        }}
-                    >
-                        Nuovo Test
-                    </MotionButton>
-                )
-            }
+            
         >
             <AnimatePresence>
                 <MotionBox

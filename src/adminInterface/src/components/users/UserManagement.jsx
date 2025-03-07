@@ -424,6 +424,10 @@ const handleInactiveToggle = useCallback((value) => {
         />
     );
 
+    const handleRowClick = (params) => {
+        navigate(`/admin/users/${params.row._id}`);
+    };
+
 
     // Configurazione breadcrumbs
     const breadcrumbs = [
@@ -487,6 +491,8 @@ const handleInactiveToggle = useCallback((value) => {
                                 searchPlaceholder="Cerca utenti..."
                                 emptyStateMessage="Nessun utente trovato"
                                 customActions={customActions}
+                                onRowClick={handleRowClick} // Aggiungiamo l'handler
+
                             />
                         } 
                     />

@@ -75,6 +75,10 @@ const SchoolManagement = () => {
         navigate(`/admin/schools/${school._id}`);  // Rimuoviamo /edit dal percorso
     };
 
+    const handleRowClick = (params) => {
+        navigate(`/admin/schools/${params.row._id}`);
+    };
+
     const toggleFilters = useCallback(() => {
         setIsFilterOpen(prev => !prev);
     }, []);
@@ -283,6 +287,8 @@ const SchoolManagement = () => {
                 getRowId={(row) => row._id}
                 pageSize={pageSize}
                 onPageSizeChange={setPageSize}
+                onRowClick={handleRowClick} // Aggiungiamo l'handler
+
             />
         </ContentLayout>
     );
