@@ -14,3 +14,7 @@
 {"error":{"code":"AUTH_002","message":"Token scaduto","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-06T18:49:45.249Z"}
 {"error":{"code":"AUTH_002","message":"Token scaduto","metadata":{},"status":401},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-03-06T18:49:45.273Z"}
 {"error":{"code":"AUTH_002","message":"Token scaduto","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-03-06T18:49:45.274Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-03-06T20:44:48.836Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-03-06T20:44:48.851Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-06T20:44:48.853Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-06T20:44:48.854Z","userId":"677bfe44f6789c907c9f3766"}

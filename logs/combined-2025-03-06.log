@@ -195,3 +195,37 @@
 {"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T19:41:05.748Z"}
 {"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T19:46:05.931Z"}
 {"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T19:47:47.129Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout error","timestamp":"2025-03-06T20:44:48.836Z"}
+{"error":{"message":"Token non più valido","metadata":{}},"level":"error","message":"Logout failed","timestamp":"2025-03-06T20:44:48.851Z"}
+{"error":{},"level":"error","message":"Auth Route Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-06T20:44:48.853Z"}
+{"error":{},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/logout","timestamp":"2025-03-06T20:44:48.854Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"86ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741293888773_8hwpreevp","responseSize":"401 Bytes","statusCode":500,"timestamp":"2025-03-06T20:44:48.859Z","url":"/api/v1/auth/logout","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"}
+{"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"},"timestamp":"2025-03-06T20:45:05.923Z","userId":"67c0296a250c5746c3d96444"}
+{"action":"login","level":"info","message":"User audit record created","timestamp":"2025-03-06T20:45:05.972Z","userId":"67c0296a250c5746c3d96444"}
+{"entriesCount":1,"level":"info","message":"User history retrieved","timestamp":"2025-03-06T20:46:12.951Z","userId":"67c0296a250c5746c3d96444"}
+{"entriesCount":1,"level":"info","message":"User history retrieved","timestamp":"2025-03-06T20:46:12.952Z","userId":"67c0296a250c5746c3d96444"}
+{"academicYear":"2025/2026","count":5,"level":"info","message":"Created classes for new academic year:","sectionsUsed":["G"],"timestamp":"2025-03-06T20:48:03.924Z"}
+{"level":"info","message":"Anno accademico creato con successo","schoolId":"67c236a42373b42426264bf6","timestamp":"2025-03-06T20:48:03.967Z","year":"2025/2026"}
+{"level":"info","message":"Aggiornamento anno accademico 67ca0a03ce4bd1c954512530 per scuola 67c236a42373b42426264bf6","selectedSections":1,"timestamp":"2025-03-06T20:48:49.811Z","updateData":{"description":"","endDate":"2026-06-30","startDate":"2025-09-01","year":"2025/2026"}}
+{"classId":"679fdad474255ebc8afab6a4","level":"info","message":"Class tests revoked:","modifiedCount":3,"testType":"CSI","timestamp":"2025-03-06T20:51:59.946Z"}
+{"classId":"679fdad474255ebc8afab6a4","level":"info","message":"Class tests revoked successfully:","modifiedCount":3,"timestamp":"2025-03-06T20:51:59.946Z","userId":"67c0296a250c5746c3d96444"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T20:54:47.038Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T20:54:47.038Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T20:55:52.710Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T20:55:52.710Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T20:57:05.223Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T20:57:05.224Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T20:57:37.135Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T20:57:37.136Z"}
+{"assignedBy":"67c0296a250c5746c3d96444","csiConfigId":"67a65a423218fb8ab7bbc040","level":"info","message":"Test assigned to student:","studentId":"67b20991d8fdac4600a0def6","testId":"67ca0cedce4bd1c954512847","testType":"CSI","timestamp":"2025-03-06T21:00:29.920Z"}
+{"assignedBy":"67c0296a250c5746c3d96444","level":"info","message":"Test assigned successfully:","studentId":"67b20991d8fdac4600a0def6","testId":"67ca0cedce4bd1c954512847","timestamp":"2025-03-06T21:00:29.921Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T21:04:32.832Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T21:04:32.833Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T21:05:55.632Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T21:05:55.632Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T21:15:36.995Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T21:15:36.998Z"}
+{"count":1,"emails":["mario.rossi@email.com"],"level":"warn","message":"Found duplicate emails in database","timestamp":"2025-03-06T21:16:13.046Z"}
+{"level":"warn","message":"All emails in import are duplicates, skipping import","timestamp":"2025-03-06T21:16:13.046Z"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T21:26:41.304Z"}
+{"duplicates":0,"errors":0,"failed":0,"imported":1,"level":"info","message":"Bulk import completed successfully","timestamp":"2025-03-06T21:34:43.922Z"}

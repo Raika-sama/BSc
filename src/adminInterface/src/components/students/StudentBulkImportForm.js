@@ -56,6 +56,7 @@ const StudentBulkImportForm = ({ open, onClose }) => {
    const [activeStep, setActiveStep] = useState(0);
    const [duplicateEmails, setDuplicateEmails] = useState([]);
    const [existingEmails, setExistingEmails] = useState([]);
+   const [updatedEmails, setUpdatedEmails] = useState({});  // Track updated emails
 
    // Steps per il processo di import
    const steps = ['Selezione File', 'Revisione Dati', 'Risultato Import'];
@@ -122,12 +123,24 @@ const StudentBulkImportForm = ({ open, onClose }) => {
     // Gestisce il cambio di email di uno studente
     const handleEmailChange = (oldEmail, newEmail) => {
         // Rimuovi la vecchia email dall'elenco delle email duplicate
-        setExistingEmails(prev => prev.filter(email => email !== oldEmail));
+        setExistingEmails(prev => prev.filter(email => email.toLowerCase() !== oldEmail.toLowerCase()));
         
         // Aggiorna anche l'array duplicateEmails se necessario
-        setDuplicateEmails(prev => prev.filter(item => item.email !== oldEmail));
+        setDuplicateEmails(prev => prev.filter(item => item.email.toLowerCase() !== oldEmail.toLowerCase()));
+        
+        // Tieni traccia delle email cambiate
+        setUpdatedEmails(prev => ({
+            ...prev,
+            [oldEmail.toLowerCase()]: newEmail.toLowerCase()
+        }));
+        
+        console.log(`Email changed from ${oldEmail} to ${newEmail}`);
+        console.log(`Remaining existing emails: ${existingEmails.filter(email => email.toLowerCase() !== oldEmail.toLowerCase()).join(', ')}`);
+        console.log(`Updated emails map:`, JSON.stringify({
+            ...updatedEmails,
+            [oldEmail.toLowerCase()]: newEmail.toLowerCase()
+        }));
     };
-
 
    // Gestisce il cambio di scuola
    const handleSchoolChange = (e) => {
@@ -151,6 +164,9 @@ const StudentBulkImportForm = ({ open, onClose }) => {
            }
            setFile(selectedFile);
            setError(null);
+           
+           // Reset stato
+           setUpdatedEmails({});
            
            // Parse del file Excel
            parseExcelFile(selectedFile);
@@ -303,8 +319,8 @@ const StudentBulkImportForm = ({ open, onClose }) => {
            const response = await axiosInstance.post('/students/bulk-import-with-class', importData);
     
             // Estrai correttamente il risultato considerando la struttura anniddata
-            // La struttura è response.data.data.data
-            const resultData = response.data.data?.data || {};
+            // La struttura è response.data.data o response.data.data.data a seconda dell'implementazione
+            const resultData = response.data.data?.data || response.data.data || {};
             
             console.log('CORRECTLY EXTRACTED RESULT:', resultData);
             
@@ -410,6 +426,7 @@ const StudentBulkImportForm = ({ open, onClose }) => {
        setActiveStep(0);
        setParsedData([]);
        setExistingEmails([]);
+       setUpdatedEmails({});
    };
 
    // Gestisce la navigazione tra gli step
@@ -430,7 +447,14 @@ const StudentBulkImportForm = ({ open, onClose }) => {
        setActiveStep(0);
        setExistingEmails([]);
        setDuplicateEmails([]);
+       setUpdatedEmails({});
        onClose();
+   };
+
+   // Aggiornamento dei dati dopo la preview
+   const handleUpdatePreviewData = (updatedData) => {
+       // Aggiorna i dati da inviare con le email corrette
+       setParsedData(updatedData);
    };
 
    // Renderizza il contenuto in base allo step corrente
@@ -517,7 +541,7 @@ const StudentBulkImportForm = ({ open, onClose }) => {
                                    )}
                                </List>
                                <Typography variant="body2" mt={1}>
-                                   Gli studenti con email duplicate non verranno importati.
+                                   Gli studenti con email duplicate non verranno importati a meno che non modifichi l'email.
                                </Typography>
                            </Alert>
                        )}
@@ -529,6 +553,7 @@ const StudentBulkImportForm = ({ open, onClose }) => {
                             availableClasses={availableClasses}
                             existingEmails={existingEmails}
                             onEmailChange={handleEmailChange}
+                            onDataUpdate={handleUpdatePreviewData}
                         />
                    </Box>
                );

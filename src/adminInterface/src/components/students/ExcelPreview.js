@@ -1,6 +1,6 @@
 // src/components/students/ExcelPreview.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Box,
     Paper,
@@ -37,7 +37,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 /**
  * Componente per la visualizzazione e modifica dei dati Excel prima dell'import
  */
-const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [], existingEmails = [], onEmailChange }) => {
+const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [], existingEmails = [], onEmailChange, onDataUpdate }) => {
     const [previewData, setPreviewData] = useState([]);
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [editOpen, setEditOpen] = useState(false);
@@ -46,6 +46,8 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [], existi
         section: ''
     });
     const [errors, setErrors] = useState({});
+    const isInitialRender = useRef(true);
+    const hasDataUpdated = useRef(false);
 
     // Anni scolastici disponibili (1-5)
     const years = [1, 2, 3, 4, 5];
@@ -81,8 +83,19 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [], existi
             });
             
             setPreviewData(validatedData);
+            isInitialRender.current = false;
         }
     }, [data, availableClasses, existingEmails]);
+
+    // Effetto per notificare il parent dei cambiamenti significativi nei dati
+    useEffect(() => {
+        // Evita di inviare aggiornamenti durante il rendering iniziale o quando non ci sono dati
+        if (!isInitialRender.current && previewData.length > 0 && onDataUpdate && hasDataUpdated.current) {
+            console.log('Notifying parent of data update');
+            onDataUpdate(previewData);
+            hasDataUpdated.current = false; // Reset il flag dopo l'aggiornamento
+        }
+    }, [previewData, onDataUpdate]);
 
     // Funzione per validare un singolo studente
     const validateStudent = (student) => {
@@ -150,6 +163,7 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [], existi
         const classId = findClassId(bulkClassAssignment.year, bulkClassAssignment.section);
         console.log(`Bulk assign: year=${bulkClassAssignment.year}, section=${bulkClassAssignment.section}, foundClassId=${classId}`);
 
+        hasDataUpdated.current = true; // Segnala che ci sarà un aggiornamento significativo
         setPreviewData(prevData => prevData.map(student => {
             const updated = {
                 ...student,
@@ -169,7 +183,6 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [], existi
     };
     
     // Salva le modifiche allo studente
-    // Salva le modifiche allo studente
     const handleSaveEdit = () => {
         if (!selectedStudent) return;
         
@@ -184,18 +197,28 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [], existi
             updatedStudent.classId = null;
         }
 
-        // Controlla se l'email è stata modificata e rimuovila dall'elenco delle email duplicate
+        // Controlla se l'email è stata modificata 
         const oldEmail = previewData.find(s => s.id === updatedStudent.id)?.email;
-        if (oldEmail && oldEmail !== updatedStudent.email && existingEmails.includes(oldEmail)) {
+        const emailChanged = oldEmail && oldEmail !== updatedStudent.email;
+        
+        if (emailChanged) {
             // Informa il componente parent della modifica dell'email
-            if (onEmailChange) {  // Usa onEmailChange direttamente, non props.onEmailChange
+            if (onEmailChange) {
                 onEmailChange(oldEmail, updatedStudent.email);
+                
+                // Debug log
+                console.log(`Email changed in handleSaveEdit: ${oldEmail} -> ${updatedStudent.email}`);
             }
         }
 
         // Valida lo studente aggiornato
         const validated = validateStudent(updatedStudent);
         updatedStudent.validated = validated;
+        
+        // Se l'email è cambiata o la validazione è cambiata, segnala che ci sono modifiche importanti
+        if (emailChanged || (previewData.find(s => s.id === updatedStudent.id)?.validated !== validated)) {
+            hasDataUpdated.current = true;
+        }
         
         // Aggiorna i dati
         setPreviewData(prevData => 
@@ -209,6 +232,7 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [], existi
     
     // Gestisce la rimozione di uno studente
     const handleRemove = (studentId) => {
+        hasDataUpdated.current = true; // Segnala che ci sarà un aggiornamento significativo
         setPreviewData(prevData => prevData.filter(student => student.id !== studentId));
     };
     
@@ -237,6 +261,9 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [], existi
                 
                 return cleanedStudent;
             });
+        
+        // Debug log prima di inviare
+        console.log('Final data before sending to parent:', finalData);
         
         // Invia i dati validati al componente parent
         onConfirm(finalData);
@@ -380,11 +407,8 @@ const ExcelPreview = ({ data, onConfirm, onCancel, availableClasses = [], existi
                     </TableHead>
                     <TableBody>
                         {previewData.map((student) => {
-                            // Verifica se l'email è duplicata
                             const isDuplicate = hasEmailDuplicate(student);
-                            // Determina se lo studente ha errori non legati alla duplicazione
-                            const hasOtherErrors = student.validated !== true && 
-                                                  !student.validated._isDuplicate;
+                            const hasOtherErrors = student.validated !== true && !student.validated._isDuplicate;
                             
                             return (
                                 <TableRow 
