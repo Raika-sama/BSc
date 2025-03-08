@@ -2,6 +2,9 @@
 const express = require('express');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
+const StudentAuthController = require('../controllers/StudentAuthController');
+const authMiddleware = require('../middleware/authMiddleware');
+const asyncHandler = require('../middleware/asyncHandler');
 
 const createStudentAuthRouter = ({ 
     authMiddleware, 
@@ -49,6 +52,10 @@ const createStudentAuthRouter = ({
     // Route protette per studenti
     router.use('/student', protectStudent);
     
+    router.get('/student/profile',
+        asyncHandler(studentAuthController.getProfile.bind(studentAuthController))
+    );
+
     router.post('/student/first-access/:studentId',
         asyncHandler(studentAuthController.handleFirstAccess.bind(studentAuthController))
     );

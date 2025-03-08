@@ -1,295 +1,367 @@
 // src/controllers/StudentAuthController.js
 const BaseController = require('./baseController');
-const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
+const StudentAuthService = require('../services/StudentAuthService');
 const logger = require('../utils/errors/logger/logger');
+const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 
+/**
+ * Controller che gestisce le operazioni di autenticazione degli studenti
+ */
 class StudentAuthController extends BaseController {
-    constructor(studentAuthService, studentService) {
-        super();
-        this.studentAuthService = studentAuthService;
-        this.studentService = studentService;
-    }
-
     /**
-     * Genera e invia credenziali per uno studente
+     * Effettua il login dello studente
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     * @param {Function} next - Next middleware function
      */
-    generateCredentials = async (req, res) => {
-        try {
-            const { studentId } = req.params;
-            const result = await this.studentAuthService.generateCredentials(studentId);
-            
-            // Modifica il formato della risposta per allinearlo alle aspettative del frontend
-            return res.status(200).json({
-                status: 'success',
-                data: {
-                    credentials: {
-                        username: result.username,
-                        temporaryPassword: result.temporaryPassword
-                    }
-                }
-            });
-        } catch (error) {
-            logger.error('Error generating credentials:', error);
-            return this.sendError(res, error);
-        }
-    };
-
-    /**
-     * Genera e invia credenziali per una lista di studenti
-     */
-    generateBatchCredentials = async (req, res) => {
-        try {
-            const { studentIds } = req.body;
-            
-            if (!Array.isArray(studentIds) || studentIds.length === 0) {
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_DATA,
-                    'Lista studenti non valida'
-                );
-            }
-
-            logger.debug('Generating batch credentials', { 
-                studentCount: studentIds.length,
-                requestedBy: req.user.id 
-            });
-
-            const results = await this.studentAuthService.generateBatchCredentials(studentIds);
-
-            logger.info('Batch credentials generation completed', {
-                success: results.success.length,
-                failed: results.failed.length
-            });
-
-            return this.sendResponse(res, {
-                status: 'success',
-                data: results
-            });
-        } catch (error) {
-            logger.error('Error in batch credentials generation', { error });
-            return this.sendError(res, error);
-        }
-    };
-
-    /**
-     * Genera e invia credenziali per tutti gli studenti di una classe
-     */
-    generateClassCredentials = async (req, res) => {
-        try {
-            const { classId } = req.params;
-
-            logger.debug('Generating credentials for class', { 
-                classId,
-                requestedBy: req.user.id 
-            });
-
-            const results = await this.studentAuthService.generateCredentialsForClass(classId);
-
-            logger.info('Class credentials generation completed', {
-                classId,
-                success: results.success.length,
-                failed: results.failed.length
-            });
-
-            return this.sendResponse(res, {
-                status: 'success',
-                data: results
-            });
-        } catch (error) {
-            logger.error('Error generating class credentials', { error });
-            return this.sendError(res, error);
-        }
-    };
-
-    /**
-     * Login studente
-     */
-    login = async (req, res) => {
+    async login(req, res, next) {
         try {
             const { username, password } = req.body;
-
+            
             if (!username || !password) {
-                throw createError(
-                    ErrorTypes.VALIDATION.MISSING_FIELDS,
-                    'Username e password richiesti'
-                );
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'Username e password sono richiesti',
+                    code: 'MISSING_CREDENTIALS'
+                });
             }
-
-            logger.debug('Student login attempt', { username });
-
-            const result = await this.studentAuthService.login(
-                username, 
-                password,
-                {
-                    ipAddress: req.ip,
-                    userAgent: req.headers['user-agent']
-                }
-            );
-
-            // Se è il primo accesso, restituisci flag specifico
+            
+            logger.info('Richiesta login studente', { username });
+            
+            const result = await StudentAuthService.authenticate(username, password);
+            
+            // Per il primo accesso, invia solo le informazioni necessarie per il cambio password
             if (result.isFirstAccess) {
                 return this.sendResponse(res, {
                     status: 'success',
                     data: {
                         isFirstAccess: true,
-                        message: 'Cambio password richiesto'
+                        studentId: result.studentId,
+                        message: result.message
                     }
                 });
             }
-
-            // Imposta il cookie del token
-            res.cookie('student-token', result.token, {
+            
+            // Imposta il cookie del token JWT
+            const cookieOptions = {
+                expires: new Date(Date.now() + config.jwt.cookieExpiresIn * 24 * 60 * 60 * 1000),
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 24 * 60 * 60 * 1000 // 24 ore
-            });
-
-            logger.info('Student logged in successfully', { 
-                studentId: result.student._id 
-            });
-
-            return this.sendResponse(res, {
+                sameSite: 'strict'
+            };
+            
+            res.cookie('student-token', result.token, cookieOptions);
+            
+            // Invia la risposta
+            this.sendResponse(res, {
                 status: 'success',
                 data: {
                     student: result.student
                 }
             });
         } catch (error) {
-            logger.error('Student login error', { error });
-            return this.sendError(res, error);
+            logger.error('Errore durante il login dello studente', {
+                error: error.message,
+                stack: error.stack
+            });
+            
+            next(error);
         }
-    };
-
+    }
+    
     /**
-     * Gestisce il primo accesso e cambio password
+     * Gestisce il primo accesso e il cambio password dello studente
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     * @param {Function} next - Next middleware function
      */
-    handleFirstAccess = async (req, res) => {
-        try {
-            const { temporaryPassword, newPassword } = req.body;
-            const studentId = req.params.studentId;
-
-            if (!temporaryPassword || !newPassword) {
-                throw createError(
-                    ErrorTypes.VALIDATION.MISSING_FIELDS,
-                    'Password temporanea e nuova password richieste'
-                );
-            }
-
-            logger.debug('Processing first access', { studentId });
-
-            await this.studentAuthService.handleFirstAccess(
-                studentId,
-                temporaryPassword,
-                newPassword
-            );
-
-            logger.info('First access completed successfully', { studentId });
-
-            return this.sendResponse(res, {
-                status: 'success',
-                message: 'Password aggiornata con successo. Effettua il login con la nuova password.'
-            });
-        } catch (error) {
-            logger.error('First access error', { error });
-            return this.sendError(res, error);
-        }
-    };
-
-    /**
-     * Logout studente
-     */
-    logout = async (req, res) => {
-        try {
-            // Rimuovi il cookie del token
-            res.clearCookie('student-token', {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
-                path: '/'
-            });
-
-            // Invalida la sessione se c'è un utente autenticato
-            const token = req.cookies['student-token'];
-            if (token) {
-                try {
-                    const decoded = jwt.verify(token, config.jwt.secret);
-                    if (decoded.id) {
-                        await this.studentAuthService.invalidateSession(decoded.id);
-                    }
-                } catch (err) {
-                    // Ignora errori di token invalido
-                    logger.debug('Token invalido durante il logout:', err.message);
-                }
-            }
-
-            logger.info('Student logged out', {
-                studentId: req.student?.id || 'unknown'
-            });
-
-            return this.sendResponse(res, {
-                status: 'success',
-                message: 'Logout effettuato con successo'
-            });
-        } catch (error) {
-            logger.error('Logout error', { error });
-            // In caso di errore, comunque conferma il logout
-            return this.sendResponse(res, {
-                status: 'success',
-                message: 'Logout effettuato con successo'
-            });
-        }
-    };
-
-    /**
-     * Reset password studente
-     */
-    // In StudentAuthController.js
-    resetPassword = async (req, res) => {
+    async handleFirstAccess(req, res, next) {
         try {
             const { studentId } = req.params;
+            const { temporaryPassword, newPassword } = req.body;
             
-            logger.debug('Reset password controller request:', { 
-                studentId,
-                userId: req.user?.id 
-            });
-            
-            const result = await this.studentAuthService.resetPassword(studentId);
-            
-            // Log dettagliato del risultato
-            logger.debug('Reset password service result:', {
-                result,
-                hasUsername: !!result?.username,
-                hasPassword: !!result?.temporaryPassword
-            });
-            
-            if (!result?.username || !result?.temporaryPassword) {
-                logger.error('Invalid service response:', { result });
-                throw createError(
-                    ErrorTypes.SYSTEM.OPERATION_FAILED,
-                    'Risposta non valida dal servizio'
-                );
+            if (!studentId || !temporaryPassword || !newPassword) {
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'StudentId, password temporanea e nuova password sono richiesti',
+                    code: 'MISSING_REQUIRED_FIELDS'
+                });
             }
             
-            // Struttura della risposta semplificata
-            const response = {
-                success: true,
-                username: result.username,
-                temporaryPassword: result.temporaryPassword
-            };
-
-            logger.debug('Sending response:', response);
+            logger.info('Richiesta primo accesso studente', { studentId });
             
-            return res.status(200).json(response);
-        } catch (error) {
-            logger.error('Password reset controller error:', { 
-                error, 
-                studentId: req.params.studentId 
+            const result = await StudentAuthService.handleFirstAccess(studentId, temporaryPassword, newPassword);
+            
+            // Imposta il cookie del token JWT
+            const cookieOptions = {
+                expires: new Date(Date.now() + config.jwt.cookieExpiresIn * 24 * 60 * 60 * 1000),
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict'
+            };
+            
+            res.cookie('student-token', result.token, cookieOptions);
+            
+            // Invia la risposta
+            this.sendResponse(res, {
+                status: 'success',
+                message: result.message,
+                data: {
+                    student: result.student
+                }
             });
-            return this.sendError(res, error);
+        } catch (error) {
+            logger.error('Errore durante la gestione del primo accesso', {
+                error: error.message,
+                stack: error.stack
+            });
+            
+            next(error);
         }
-    };
+    }
+    
+    /**
+     * Effettua il logout dello studente
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     */
+    async logout(req, res) {
+        try {
+            logger.info('Richiesta logout studente');
+            
+            // Cancella il cookie del token JWT
+            res.cookie('student-token', 'loggedout', {
+                expires: new Date(Date.now() + 10 * 1000), // Scade tra 10 secondi
+                httpOnly: true
+            });
+            
+            this.sendResponse(res, {
+                status: 'success',
+                data: null
+            });
+        } catch (error) {
+            logger.error('Errore durante il logout dello studente', {
+                error: error.message,
+                stack: error.stack
+            });
+            
+            this.sendError(res, {
+                statusCode: 500,
+                message: 'Errore durante il logout',
+                code: 'LOGOUT_ERROR'
+            });
+        }
+    }
+    
+    /**
+     * Recupera il profilo dello studente autenticato
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     * @param {Function} next - Next middleware function
+     */
+    async getProfile(req, res, next) {
+        try {
+            // Check authorization token from multiple sources
+            const token = req.cookies['student-token'] || 
+                         (req.headers.authorization && req.headers.authorization.startsWith('Bearer') 
+                          ? req.headers.authorization.split(' ')[1] 
+                          : null);
+
+            if (!token) {
+                return this.sendError(res, {
+                    statusCode: 401,
+                    message: 'Non autenticato - token mancante',
+                    code: 'NOT_AUTHENTICATED'
+                });
+            }
+
+            // Verifica il token JWT
+            let decoded;
+            try {
+                decoded = jwt.verify(token, config.jwt.secret);
+            } catch (err) {
+                return this.sendError(res, {
+                    statusCode: 401,
+                    message: 'Sessione scaduta o token non valido',
+                    code: 'INVALID_TOKEN'
+                });
+            }
+
+            // Get studentId from token or request student
+            const studentId = decoded.id || req.student?.id || req.params.studentId;
+            
+            if (!studentId) {
+                return this.sendError(res, {
+                    statusCode: 401,
+                    message: 'ID studente non disponibile',
+                    code: 'STUDENT_ID_MISSING'
+                });
+            }
+                
+            logger.info('Richiesta profilo studente', { studentId });
+                
+            const profileData = await StudentAuthService.getStudentProfile(studentId);
+                
+            this.sendResponse(res, {
+                status: 'success',
+                data: profileData
+            });
+        } catch (error) {
+            logger.error('Errore durante il recupero del profilo studente', {
+                error: error.message,
+                stack: error.stack
+            });
+                
+            next(error);
+        }
+    }
+
+    /**
+     * Genera le credenziali per uno studente
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     * @param {Function} next - Next middleware function
+     */
+    async generateCredentials(req, res, next) {
+        try {
+            const { studentId } = req.params;
+
+            if (!studentId) {
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'StudentId è richiesto',
+                    code: 'MISSING_REQUIRED_FIELDS'
+                });
+            }
+
+            logger.info('Richiesta generazione credenziali studente', { studentId });
+
+            const result = await StudentAuthService.generateCredentials(studentId);
+
+            this.sendResponse(res, {
+                status: 'success',
+                data: result
+            });
+        } catch (error) {
+            logger.error('Errore durante la generazione delle credenziali', {
+                error: error.message,
+                stack: error.stack
+            });
+
+            next(error);
+        }
+    }
+
+    /**
+     * Genera credenziali batch per studenti
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     * @param {Function} next - Next middleware function
+     */
+    async generateBatchCredentials(req, res, next) {
+        try {
+            const { students } = req.body;
+
+            if (!students || !Array.isArray(students)) {
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'Lista di studenti è richiesta',
+                    code: 'MISSING_REQUIRED_FIELDS'
+                });
+            }
+
+            logger.info('Richiesta generazione credenziali batch', { count: students.length });
+
+            const result = await StudentAuthService.generateBatchCredentials(students);
+
+            this.sendResponse(res, {
+                status: 'success',
+                data: result
+            });
+        } catch (error) {
+            logger.error('Errore durante la generazione delle credenziali batch', {
+                error: error.message,
+                stack: error.stack
+            });
+
+            next(error);
+        }
+    }
+
+    /**
+     * Genera credenziali per una classe di studenti
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     * @param {Function} next - Next middleware function
+     */
+    async generateClassCredentials(req, res, next) {
+        try {
+            const { classId } = req.params;
+
+            if (!classId) {
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'ClassId è richiesto',
+                    code: 'MISSING_REQUIRED_FIELDS'
+                });
+            }
+
+            logger.info('Richiesta generazione credenziali per classe', { classId });
+
+            const result = await StudentAuthService.generateClassCredentials(classId);
+
+            this.sendResponse(res, {
+                status: 'success',
+                data: result
+            });
+        } catch (error) {
+            logger.error('Errore durante la generazione delle credenziali per classe', {
+                error: error.message,
+                stack: error.stack
+            });
+
+            next(error);
+        }
+    }
+
+    /**
+     * Resetta la password di uno studente
+     * @param {Request} req - Express request object
+     * @param {Response} res - Express response object
+     * @param {Function} next - Next middleware function
+     */
+    async resetPassword(req, res, next) {
+        try {
+            const { studentId } = req.params;
+            const { newPassword } = req.body;
+
+            if (!studentId || !newPassword) {
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'StudentId e nuova password sono richiesti',
+                    code: 'MISSING_REQUIRED_FIELDS'
+                });
+            }
+
+            logger.info('Richiesta reset password studente', { studentId });
+
+            const result = await StudentAuthService.resetPassword(studentId, newPassword);
+
+            this.sendResponse(res, {
+                status: 'success',
+                data: result
+            });
+        } catch (error) {
+            logger.error('Errore durante il reset della password', {
+                error: error.message,
+                stack: error.stack
+            });
+
+            next(error);
+        }
+    }
 }
 
-module.exports = StudentAuthController;
+module.exports = new StudentAuthController();

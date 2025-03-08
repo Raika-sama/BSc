@@ -1,512 +1,283 @@
 // src/services/StudentAuthService.js
-const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
-const logger = require('../utils/errors/logger/logger');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
+const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
+const logger = require('../utils/errors/logger/logger');
+const Student = require('../models/Student');
+const StudentAuth = require('../models/StudentAuth');
 
+/**
+ * Servizio che gestisce l'autenticazione degli studenti e le operazioni correlate
+ */
 class StudentAuthService {
-    constructor(studentAuthRepository, studentRepository, sessionService) {
-        this.studentAuthRepository = studentAuthRepository;
-        this.studentRepository = studentRepository;
-        this.sessionService = sessionService;
-    }
-
     /**
-     * Effettua il login dello studente
-     * @param {string} username Email/username dello studente
-     * @param {string} password Password dello studente
-     * @param {Object} deviceInfo Informazioni sul dispositivo
-     * @returns {Object} Dati utente e token
+     * Autentica uno studente e restituisce un token JWT
+     * @param {string} username - Username dello studente
+     * @param {string} password - Password dello studente
+     * @returns {Object} Token JWT e dati dello studente
      */
-    async login(username, password, deviceInfo = {}) {
+    async authenticate(username, password) {
         try {
-            logger.debug('Tentativo di login studente', { username });
-            
-            // Verifica che username e password siano presenti
-            if (!username || !password) {
-                logger.debug('Login fallito: credenziali mancanti', { username });
-                throw createError(
-                    ErrorTypes.VALIDATION.MISSING_FIELDS,
-                    'Username e password richiesti'
-                );
-            }
+            logger.info('Tentativo di autenticazione studente', { username });
 
-            // Trova il record di autenticazione
-            const auth = await this.studentAuthRepository.findByUsername(username);
-            
-            if (!auth) {
-                logger.debug('Login fallito: utente non trovato', { username });
+            // Cerca le credenziali di autenticazione
+            const studentAuth = await StudentAuth.findOne({ username })
+                .select('+password +isFirstAccess +temporaryPassword');
+
+            if (!studentAuth) {
+                logger.warn('Autenticazione fallita: username non trovato', { username });
                 throw createError(
                     ErrorTypes.AUTH.INVALID_CREDENTIALS,
                     'Credenziali non valide'
                 );
             }
 
-            logger.debug('Record autenticazione trovato', { 
-                studentId: auth.studentId,
-                isFirstAccess: auth.isFirstAccess,
-                hasTemporaryPassword: !!auth.temporaryPassword
-            });
-
-            // Verifica se l'account è attivo
-            if (!auth.isActive) {
-                logger.debug('Login fallito: account non attivo', { username });
-                throw createError(
-                    ErrorTypes.AUTH.ACCOUNT_DISABLED,
-                    'Account non attivo'
-                );
-            }
-
-            // Verifica se l'account è bloccato
-            if (auth.isLocked && auth.isLocked()) {
-                logger.debug('Login fallito: account bloccato', { username });
-                throw createError(
-                    ErrorTypes.AUTH.ACCOUNT_LOCKED,
-                    'Troppi tentativi di login. Account bloccato temporaneamente.'
-                );
-            }
-
-            // Verifica la password
-            let isPasswordCorrect;
-            try {
-                isPasswordCorrect = await auth.comparePassword(password);
-                logger.debug('Verifica password', { 
-                    isCorrect: isPasswordCorrect,
-                    studentId: auth.studentId
-                });
-            } catch (error) {
-                logger.error('Errore nella verifica password', {
-                    error: error.message,
-                    stack: error.stack
-                });
-                throw createError(
-                    ErrorTypes.SYSTEM.INTERNAL_ERROR,
-                    'Errore durante la verifica della password'
-                );
-            }
-
-            if (!isPasswordCorrect) {
-                // Incrementa il contatore di tentativi falliti
-                logger.debug('Password errata', { username });
-                await this._handleFailedLogin(auth);
-                throw createError(
-                    ErrorTypes.AUTH.INVALID_CREDENTIALS,
-                    'Credenziali non valide'
-                );
-            }
-
-            // Se è il primo accesso, restituisci flag speciale
-            if (auth.isFirstAccess) {
-                logger.debug('Primo accesso rilevato', { username });
+            // Se è il primo accesso e viene usata la password temporanea
+            if (studentAuth.isFirstAccess) {
+                logger.info('Primo accesso rilevato', { username, studentId: studentAuth.studentId });
+                
+                // Verifica se la password fornita corrisponde alla password temporanea
+                const isMatch = await bcrypt.compare(password, studentAuth.temporaryPassword);
+                
+                if (!isMatch) {
+                    logger.warn('Password temporanea non valida al primo accesso', { username });
+                    throw createError(
+                        ErrorTypes.AUTH.INVALID_CREDENTIALS,
+                        'Password temporanea non valida'
+                    );
+                }
+                
+                // Restituisci le info per il primo accesso
                 return {
                     isFirstAccess: true,
-                    studentId: auth.studentId
+                    studentId: studentAuth.studentId.toString(),
+                    message: 'Password temporanea corretta. Richiesto cambio password.'
                 };
             }
 
-            // Carica i dati completi dello studente
-            const student = await this.studentRepository.findById(auth.studentId);
+            // Verifica la password per accessi normali
+            const isMatch = await bcrypt.compare(password, studentAuth.password);
+            
+            if (!isMatch) {
+                logger.warn('Autenticazione fallita: password non valida', { username });
+                throw createError(
+                    ErrorTypes.AUTH.INVALID_CREDENTIALS,
+                    'Credenziali non valide'
+                );
+            }
+
+            // Recupera informazioni complete dello studente
+            const student = await Student.findById(studentAuth.studentId)
+                .select('-__v')
+                .populate('schoolId', 'name code city address type')
+                .populate('classId', 'name section year');
+
             if (!student) {
-                logger.error('Record studente mancante per auth record', {
-                    authId: auth._id, 
-                    studentId: auth.studentId
+                logger.error('Account studente trovato, ma dati studente mancanti', { 
+                    username, 
+                    studentAuthId: studentAuth._id
                 });
                 throw createError(
-                    ErrorTypes.SYSTEM.ENTITY_NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Dati studente non trovati'
                 );
             }
 
-            // Genera il token
-            const token = this._generateToken(auth.studentId);
+            // Genera il token JWT
+            const token = jwt.sign(
+                { id: student._id, role: 'student' },
+                config.jwt.secret,
+                { expiresIn: config.jwt.expiresIn }
+            );
 
-            // Aggiorna il record della sessione
-            const sessionExpiry = new Date();
-            sessionExpiry.setDate(sessionExpiry.getDate() + 1); // 24 ore
+            // Registra l'ultimo accesso
+            studentAuth.lastLogin = new Date();
+            await studentAuth.save();
 
-            await this.studentAuthRepository.updateSession(auth.studentId, {
-                token,
-                expiresAt: sessionExpiry,
-                deviceInfo
-            });
-
-            logger.info('Login studente completato con successo', {
+            logger.info('Studente autenticato con successo', { 
+                username,
                 studentId: student._id
             });
 
+            // Restituisci il token e i dati dello studente
             return {
+                token,
                 student: {
-                    _id: student._id,
-                    firstName: student.firstName,
-                    lastName: student.lastName,
-                    email: student.email
-                },
-                token
+                    ...student.toJSON(),
+                    username: studentAuth.username, // Aggiungi username ai dati dello studente
+                    lastLogin: studentAuth.lastLogin
+                }
             };
         } catch (error) {
-            logger.error('Login error', { error });
-            if (!error.code) {
-                // Se non è un errore gestito, crea un errore standard
-                error = createError(
-                    ErrorTypes.SYSTEM.INTERNAL_ERROR,
-                    'Errore durante il login',
-                    {
-                        originalError: error.message,
-                        stack: error.stack
-                    }
-                );
-            }
+            logger.error('Errore durante l\'autenticazione dello studente', {
+                username,
+                error: error.message,
+                stack: error.stack
+            });
             throw error;
         }
     }
 
     /**
-     * Genera un token JWT
-     * @private
-     * @param {string} studentId ID dello studente
-     * @returns {string} Token JWT
-     */
-    _generateToken(studentId) {
-        try {
-            return jwt.sign(
-                { id: studentId, type: 'student' },
-                config.jwt.secret,
-                { expiresIn: '24h' }
-            );
-        } catch (error) {
-            logger.error('Errore nella generazione del token', {
-                error,
-                studentId
-            });
-            throw createError(
-                ErrorTypes.SYSTEM.INTERNAL_ERROR,
-                'Errore nella generazione del token di accesso'
-            );
-        }
-    }
-
-    /**
-     * Gestisce un tentativo di login fallito
-     * @private
-     * @param {Object} auth Record di autenticazione
-     */
-    async _handleFailedLogin(auth) {
-        try {
-            const maxAttempts = 5;
-            const lockTime = 15 * 60 * 1000; // 15 minuti
-            
-            auth.loginAttempts = (auth.loginAttempts || 0) + 1;
-            
-            if (auth.loginAttempts >= maxAttempts) {
-                await this.studentAuthRepository.lockAccount(auth.studentId, lockTime);
-                logger.warn('Account bloccato per troppi tentativi', {
-                    studentId: auth.studentId,
-                    attempts: auth.loginAttempts
-                });
-            } else {
-                await this.studentAuthRepository.model.updateOne(
-                    { _id: auth._id },
-                    { $inc: { loginAttempts: 1 } }
-                );
-                logger.debug('Incrementati tentativi di login falliti', {
-                    studentId: auth.studentId,
-                    attempts: auth.loginAttempts
-                });
-            }
-        } catch (error) {
-            logger.error('Errore durante la gestione del login fallito', {
-                error,
-                studentId: auth.studentId
-            });
-            // Non lanciare l'errore per non bloccare il flusso
-        }
-    }
-
-    // ... altri metodi della classe ...
-
-    /**
-     * Verifica un token JWT
-     * @param {string} token Token da verificare
-     * @returns {Object} Payload decodificato
-     */
-    verifyToken(token) {
-        try {
-            const decoded = jwt.verify(token, config.jwt.secret);
-            
-            // Verifica che sia un token di studente
-            if (!decoded.id || decoded.type !== 'student') {
-                throw createError(
-                    ErrorTypes.AUTH.INVALID_TOKEN,
-                    'Token non valido'
-                );
-            }
-            
-            return decoded;
-        } catch (error) {
-            if (error.name === 'TokenExpiredError') {
-                throw createError(
-                    ErrorTypes.AUTH.TOKEN_EXPIRED,
-                    'Token scaduto'
-                );
-            } else if (error.name === 'JsonWebTokenError') {
-                throw createError(
-                    ErrorTypes.AUTH.INVALID_TOKEN,
-                    'Token non valido'
-                );
-            }
-            
-            throw error;
-        }
-    }
-
-    /**
-     * Invalida la sessione corrente
-     * @param {string} studentId ID dello studente
-     */
-    async invalidateSession(studentId) {
-        try {
-            await this.studentAuthRepository.invalidateSession(studentId);
-        } catch (error) {
-            logger.error('Errore durante l\'invalidazione della sessione', { error, studentId });
-            throw createError(
-                ErrorTypes.SYSTEM.OPERATION_FAILED,
-                'Impossibile invalidare la sessione'
-            );
-        }
-    }
-
-    /**
-     * Gestisce il primo accesso e cambio password
-     * @param {string} studentId ID dello studente
-     * @param {string} temporaryPassword Password temporanea
-     * @param {string} newPassword Nuova password
+     * Gestisce il primo accesso e cambio password per uno studente
+     * @param {string} studentId - ID dello studente
+     * @param {string} temporaryPassword - Password temporanea
+     * @param {string} newPassword - Nuova password
+     * @returns {Object} Risultato dell'operazione e token JWT
      */
     async handleFirstAccess(studentId, temporaryPassword, newPassword) {
         try {
-            logger.debug('Gestione primo accesso', { studentId });
-            
-            // Verifica che tutti i campi siano presenti
-            if (!studentId || !temporaryPassword || !newPassword) {
+            logger.info('Gestione primo accesso studente', { studentId });
+
+            // Verifica che la password temporanea sia corretta
+            const studentAuth = await StudentAuth.findOne({ studentId })
+                .select('+temporaryPassword +isFirstAccess');
+
+            if (!studentAuth) {
+                logger.warn('Primo accesso fallito: account non trovato', { studentId });
                 throw createError(
-                    ErrorTypes.VALIDATION.MISSING_FIELDS,
-                    'Tutti i campi sono richiesti'
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Account studente non trovato'
                 );
             }
-            
-            // Trova il record di autenticazione
-            const auth = await this.studentAuthRepository.findByStudentId(studentId);
-            if (!auth) {
+
+            if (!studentAuth.isFirstAccess) {
+                logger.warn('Richiesta primo accesso per account già attivato', { studentId });
                 throw createError(
-                    ErrorTypes.SYSTEM.ENTITY_NOT_FOUND,
-                    'Record di autenticazione non trovato'
+                    ErrorTypes.AUTH.BAD_REQUEST,
+                    'L\'account è già stato attivato'
                 );
             }
-            
-            // Verifica che sia effettivamente il primo accesso
-            if (!auth.isFirstAccess) {
-                throw createError(
-                    ErrorTypes.SYSTEM.INVALID_OPERATION,
-                    'Non è il primo accesso'
-                );
-            }
-            
+
             // Verifica la password temporanea
-            const isPasswordCorrect = await auth.comparePassword(temporaryPassword);
-            if (!isPasswordCorrect) {
+            const isMatch = await bcrypt.compare(temporaryPassword, studentAuth.temporaryPassword);
+            if (!isMatch) {
+                logger.warn('Password temporanea non valida', { studentId });
                 throw createError(
                     ErrorTypes.AUTH.INVALID_CREDENTIALS,
                     'Password temporanea non valida'
                 );
             }
+
+            // Validazione della nuova password
+            if (!newPassword || newPassword.length < 8) {
+                throw createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'La nuova password deve essere di almeno 8 caratteri'
+                );
+            }
+
+            // Aggiorna la password e imposta isFirstAccess a false
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+            studentAuth.password = hashedPassword;
+            studentAuth.isFirstAccess = false;
+            studentAuth.temporaryPassword = undefined; // Rimuovi la password temporanea
+            studentAuth.lastLogin = new Date();
             
-            // Aggiorna con la nuova password
-            await this.studentAuthRepository.model.findOneAndUpdate(
-                { _id: auth._id },
-                {
-                    $set: {
-                        password: await bcrypt.hash(newPassword, 10),
-                        isFirstAccess: false,
-                        loginAttempts: 0,
-                        lockUntil: null,
-                        temporaryPassword: null,
-                        temporaryPasswordExpires: null,
-                        updatedAt: new Date()
-                    }
-                }
+            await studentAuth.save();
+
+            // Recupera informazioni complete dello studente
+            const student = await Student.findById(studentId)
+                .select('-__v')
+                .populate('schoolId', 'name code city address type')
+                .populate('classId', 'name section year');
+
+            if (!student) {
+                logger.error('Account studente trovato, ma dati studente mancanti', { 
+                    studentId, 
+                    studentAuthId: studentAuth._id
+                });
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Dati studente non trovati'
+                );
+            }
+
+            // Genera il token JWT
+            const token = jwt.sign(
+                { id: student._id, role: 'student' },
+                config.jwt.secret,
+                { expiresIn: config.jwt.expiresIn }
             );
-            
+
             logger.info('Primo accesso completato con successo', { studentId });
-            
-            return { success: true };
+
+            // Restituisci il token e i dati dello studente
+            return {
+                token,
+                message: 'Password aggiornata con successo',
+                student: {
+                    ...student.toJSON(),
+                    username: studentAuth.username,
+                    lastLogin: studentAuth.lastLogin
+                }
+            };
         } catch (error) {
-            logger.error('Errore durante il primo accesso', {
-                error,
-                studentId
+            logger.error('Errore durante la gestione del primo accesso', {
+                studentId,
+                error: error.message,
+                stack: error.stack
             });
             throw error;
         }
     }
 
     /**
-     * Reset password studente
-     * @param {string} studentId ID dello studente
-     * @returns {Object} Nuove credenziali
+     * Recupera il profilo completo di uno studente con tutti i dati collegati
+     * @param {string} studentId - ID dello studente
+     * @returns {Object} Dati completi dello studente
      */
-    async resetPassword(studentId) {
+    async getStudentProfile(studentId) {
         try {
-            // Verifica studentId
-            if (!studentId) {
-                throw createError(
-                    ErrorTypes.VALIDATION.MISSING_FIELDS,
-                    'ID studente richiesto'
-                );
-            }
+            logger.info('Recupero profilo studente', { studentId });
 
-            // Verifica che lo studente esista
-            const student = await this.studentRepository.findById(studentId);
+            // Recupera lo studente con tutte le relazioni
+            const student = await Student.findById(studentId)
+                .select('-__v')
+                .populate('schoolId', 'name code city address type schoolType')
+                .populate('classId', 'name section year academicYear')
+                .lean();
+
             if (!student) {
+                logger.warn('Profilo studente non trovato', { studentId });
                 throw createError(
-                    ErrorTypes.SYSTEM.ENTITY_NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Studente non trovato'
                 );
             }
 
-            // Trova o crea il record di autenticazione
-            let auth = await this.studentAuthRepository.findByStudentId(studentId);
-            
-            // Genera una nuova password temporanea
-            const temporaryPassword = this._generateTemporaryPassword();
-            
-            if (auth) {
-                // Aggiorna il record esistente
-                auth = await this.studentAuthRepository.model.findOneAndUpdate(
-                    { studentId },
-                    {
-                        $set: {
-                            temporaryPassword: await bcrypt.hash(temporaryPassword, 10),
-                            temporaryPasswordExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 ore
-                            isFirstAccess: true,
-                            loginAttempts: 0,
-                            lockUntil: null,
-                            updatedAt: new Date()
-                        }
-                    },
-                    { new: true }
-                );
-            } else {
-                // Crea un nuovo record di autenticazione
-                const username = student.email;
-                auth = await this.studentAuthRepository.create({
-                    studentId,
-                    username,
-                    password: await bcrypt.hash(temporaryPassword, 10),
-                    temporaryPassword: await bcrypt.hash(temporaryPassword, 10),
-                    temporaryPasswordExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-                    isFirstAccess: true
-                });
-            }
+            // Recupera anche i dati di autenticazione (senza password)
+            const studentAuth = await StudentAuth.findOne({ studentId })
+                .select('username lastLogin createdAt')
+                .lean();
 
-            // Aggiorna il flag hasCredentials nello studente
-            await this.studentRepository.update(studentId, {
-                hasCredentials: true,
-                credentialsSentAt: new Date()
-            });
+            // Combina i dati
+            const profileData = {
+                ...student,
+                username: studentAuth?.username,
+                lastLogin: studentAuth?.lastLogin,
+                accountCreatedAt: studentAuth?.createdAt
+            };
 
-            logger.info('Reset password completato', { studentId });
+            logger.info('Profilo studente recuperato con successo', { studentId });
 
             return {
-                username: student.email,
-                temporaryPassword
+                student: profileData,
+                class: student.classId,
+                school: student.schoolId
             };
         } catch (error) {
-            logger.error('Errore durante il reset della password', {
-                error,
-                studentId
+            logger.error('Errore durante il recupero del profilo studente', {
+                studentId,
+                error: error.message,
+                stack: error.stack
             });
             throw error;
         }
-    }
-
-    /**
-     * Genera credenziali per uno studente
-     * @param {string} studentId ID dello studente
-     */
-    async generateCredentials(studentId) {
-        try {
-            // Utilizza resetPassword per generare credenziali
-            return await this.resetPassword(studentId);
-        } catch (error) {
-            logger.error('Errore nella generazione credenziali', { error, studentId });
-            throw error;
-        }
-    }
-
-    /**
-     * Genera credenziali per multiple studenti
-     * @param {Array} studentIds Lista di ID studenti
-     */
-    async generateBatchCredentials(studentIds) {
-        const results = {
-            success: [],
-            failed: []
-        };
-
-        for (const studentId of studentIds) {
-            try {
-                const credentials = await this.generateCredentials(studentId);
-                results.success.push({ studentId, credentials });
-            } catch (error) {
-                results.failed.push({
-                    studentId,
-                    error: error.message || 'Errore sconosciuto'
-                });
-            }
-        }
-
-        return results;
-    }
-
-    /**
-     * Genera credenziali per tutti gli studenti di una classe
-     * @param {string} classId ID della classe
-     */
-    async generateCredentialsForClass(classId) {
-        try {
-            // Trova tutti gli studenti nella classe
-            const students = await this.studentRepository.findByClassId(classId);
-            
-            if (!students || students.length === 0) {
-                throw createError(
-                    ErrorTypes.SYSTEM.ENTITY_NOT_FOUND,
-                    'Nessuno studente trovato nella classe'
-                );
-            }
-            
-            // Estrai gli ID degli studenti
-            const studentIds = students.map(student => student._id);
-            
-            // Genera credenziali in batch
-            return await this.generateBatchCredentials(studentIds);
-        } catch (error) {
-            logger.error('Errore nella generazione credenziali per classe', { error, classId });
-            throw error;
-        }
-    }
-
-    /**
-     * Genera una password temporanea casuale
-     * @private
-     * @returns {string} Password temporanea
-     */
-    _generateTemporaryPassword() {
-        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let password = '';
-        for (let i = 0; i < 8; i++) {
-            password += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return password;
     }
 }
 
-module.exports = StudentAuthService;
+module.exports = new StudentAuthService();

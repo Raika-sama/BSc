@@ -14,6 +14,7 @@ const createTestRouter = require('./routes/testRoutes');
 const createQuestionRoutes = require('./engines/CSI/routes/csi.question.routes');
 const YearTransitionController = require('./controllers/yearTransitionController');
 const testSystemController = require('./controllers/testSystemController'); // Importo il controller per i test di sistema
+const createStudentAuthRouter = require('./routes/studentAuthRoutes'); // Added import statement
 
 // Importa e registra i modelli CSI
 let models;
@@ -48,7 +49,7 @@ const StudentAuthRepository = require('./repositories/StudentAuthRepository');
 const SessionService = require('./services/SessionService');
 const AuthService = require('./services/AuthService');
 const UserService = require('./services/UserService');
-const StudentAuthService = require('./services/StudentAuthService');
+const StudentAuthService = require('./services/StudentAuthService'); // Import the singleton service
 const PermissionService = require('./services/PermissionService');
 
 // Import Controllers
@@ -60,7 +61,7 @@ const ClassController = require('./controllers/classController');
 const StudentController = require('./controllers/studentController');
 const TestController = require('./controllers/testController');
 const StudentBulkImportController = require('./controllers/studentBulkImportController');
-const StudentAuthController = require('./controllers/StudentAuthController');
+const StudentAuthController = require('./controllers/StudentAuthController'); // Already instantiated singleton
 
 // Import Routes
 const routes = require('./routes');
@@ -102,19 +103,17 @@ const sessionService = new SessionService(userRepository);
 const authService = new AuthService(authRepository, sessionService, userRepository);
 const permissionService = new PermissionService(userRepository);
 const userService = new UserService(userRepository, authService, sessionService, permissionService);
-const studentAuthService = new StudentAuthService(
-    studentAuthRepository,
-    studentRepository,
-    sessionService
-);
 
-studentRepository.setStudentAuthService(studentAuthService);
+// StudentAuthService è già esportato come singleton istanziato, lo usiamo direttamente
+// Non va inizializzato con new
+const studentAuthService = StudentAuthService; // Add this line to define studentAuthService
+studentRepository.setStudentAuthService(StudentAuthService);
 
 // Inizializza il middleware di autenticazione
 const { protect, restrictTo, loginLimiter, protectStudent } = createAuthMiddleware(
     authService, 
     sessionService,
-    studentAuthService
+    StudentAuthService  // Usa l'istanza importata direttamente
 );
 const authMiddleware = { protect, restrictTo, loginLimiter, protectStudent };
 const bulkImportValidation = new BulkImportValidation();
@@ -130,10 +129,14 @@ const studentBulkImportController = new StudentBulkImportController(
     studentBulkImportRepository,
     bulkImportValidation
 );
-const studentAuthController = new StudentAuthController(
-    studentAuthService,
-    studentRepository
-);
+// StudentAuthController is already instantiated as singleton, no need to create new instance
+
+// Setup Student Auth Router with proper dependencies
+const studentAuthRouter = createStudentAuthRouter({
+    authMiddleware,
+    studentAuthController: StudentAuthController // Use directly, already instantiated
+});
+
 // Debug middleware in development
 if (config.env === 'development') {
     app.use((req, res, next) => {
@@ -242,7 +245,7 @@ const startServer = async () => {
             schoolController,
             classController,
             studentController,
-            studentAuthController,  // aggiungi qui
+            studentAuthController: StudentAuthController, // Changed: use the singleton instance directly
             studentBulkImportController,
             testController,
             csiController,
@@ -302,6 +305,7 @@ const startServer = async () => {
         app.use('/api/v1/tests', testRouter);
 
         // Altre routes con dipendenze iniettate
+        app.use('/api/v1/student-auth', studentAuthRouter);
         app.use('/api/v1', routes(dependencies));
 
         // Gestione errori
