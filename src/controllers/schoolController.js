@@ -746,11 +746,11 @@ class SchoolController extends BaseController {
             }
 
             // Verifica che il ruolo sia valido
-            const validRoles = ['teacher', 'admin'];
+            const validRoles = ['admin', 'developer', 'manager', 'pcto', 'teacher', 'tutor', 'researcher', 'health'];
             if (!validRoles.includes(role)) {
                 throw createError(
                     ErrorTypes.VALIDATION.BAD_REQUEST,
-                    'Ruolo non valido. Valori accettati: teacher, admin'
+                    'Ruolo non valido. Valori accettati: ' + validRoles.join(', ')
                 );
             }
 

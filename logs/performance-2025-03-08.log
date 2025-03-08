@@ -1,0 +1,9 @@
+{"level":"warn","message":"Mongoose not connected when initializing models","service":"school-testing-platform","timestamp":"2025-03-08T16:40:37.795Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","service":"school-testing-platform","timestamp":"2025-03-08T16:40:37.800Z"}
+{"level":"info","message":"Model validation successful - all required models registered","service":"school-testing-platform","timestamp":"2025-03-08T16:40:37.837Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","service":"school-testing-platform","timestamp":"2025-03-08T16:40:38.663Z"}
+{"level":"info","message":"Database connesso con successo","service":"school-testing-platform","timestamp":"2025-03-08T16:40:38.664Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","service":"school-testing-platform","timestamp":"2025-03-08T16:40:38.666Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"service":"school-testing-platform","timestamp":"2025-03-08T16:40:38.952Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","service":"school-testing-platform","timestamp":"2025-03-08T16:40:38.956Z"}
+{"level":"info","message":"Ambiente: development","service":"school-testing-platform","timestamp":"2025-03-08T16:40:38.957Z"}

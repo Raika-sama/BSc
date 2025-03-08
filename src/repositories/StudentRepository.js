@@ -5,6 +5,7 @@ const { Student, School, Class } = require('../models');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const mongoose = require('mongoose');
+const handleRepositoryError = require('../utils/errors/repositoryErrorHandler');
 
 /**
  * Repository per la gestione delle operazioni relative agli studenti
@@ -99,8 +100,7 @@ class StudentRepository extends BaseRepository {
                         classId: { $arrayElemAt: ['$classDetails', 0] }
                     }
                 },
-                // Proiezione ottimizzata - CORRETTA
-                // Modifica solo la parte della proiezione nel metodo findWithDetails
+                // Proiezione ottimizzata
                 {
                     $project: {
                         _id: 1,
@@ -154,13 +154,12 @@ class StudentRepository extends BaseRepository {
 
             return students;
         } catch (error) {
-                logger.error('Error in findWithDetails:', {
-                error: error.message,
-                stack: error.stack,
-                filters,
-                options
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'findWithDetails',
+                { filters, options },
+                'StudentRepository'
+            );
         }
     }
 
@@ -179,7 +178,10 @@ class StudentRepository extends BaseRepository {
             });
     
             if (!mongoose.Types.ObjectId.isValid(schoolId)) {
-                throw new Error(`SchoolId non valido: ${schoolId}`);
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_FORMAT,
+                    `SchoolId non valido: ${schoolId}`
+                );
             }
     
             // Query principale
@@ -253,12 +255,12 @@ class StudentRepository extends BaseRepository {
             return students;
     
         } catch (error) {
-            logger.error('Errore in findUnassignedStudents:', {
-                error: error.message,
-                schoolId,
-                stack: error.stack
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'findUnassignedStudents',
+                { schoolId, options },
+                'StudentRepository'
+            );
         }
     }
 
@@ -268,8 +270,6 @@ async findUnassignedToSchoolStudents() {
     try {
         logger.debug('Cercando studenti senza scuola...');
         
-        
-
         const query = {
             $or: [
                 { schoolId: null },
@@ -295,11 +295,12 @@ async findUnassignedToSchoolStudents() {
         
         return students;
     } catch (error) {
-        logger.error('Error in findUnassignedToSchoolStudents:', {
-            error: error.message,
-            stack: error.stack
-        });
-        throw error;
+        return handleRepositoryError(
+            error,
+            'findUnassignedToSchoolStudents',
+            {},
+            'StudentRepository'
+        );
     }
 }
     
@@ -316,7 +317,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
 
         if (!classDoc) {
             throw createError(
-                ErrorTypes.VALIDATION.NOT_FOUND,
+                ErrorTypes.RESOURCE.NOT_FOUND,
                 'Classe non trovata'
             );
         }
@@ -338,7 +339,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
         const currentStudentsCount = classDoc.students?.length || 0;
         if (currentStudentsCount + students.length > classDoc.capacity) {
             throw createError(
-                ErrorTypes.VALIDATION.BAD_REQUEST,
+                ErrorTypes.BUSINESS.CLASS_FULL,
                 `Capacità classe superata`
             );
         }
@@ -361,8 +362,8 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                     needsClassAssignment: false,
                     currentYear: classDoc.year,
                     section: classDoc.section,
-                    mainTeacher: mainTeacherId,        // Usiamo l'ID validato
-                    teachers: teacherIds,              // Usiamo gli ID validati
+                    mainTeacher: mainTeacherId,
+                    teachers: teacherIds,
                     lastClassChangeDate: new Date()
                 },
                 $push: {
@@ -376,8 +377,8 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                         date: new Date(),
                         academicYear: academicYear,
                         reason: 'Assegnazione a nuova classe',
-                        mainTeacher: mainTeacherId,    // Usiamo l'ID validato
-                        teachers: teacherIds           // Usiamo gli ID validati
+                        mainTeacher: mainTeacherId,
+                        teachers: teacherIds
                     }
                 }
             },
@@ -389,7 +390,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             studentId: studentId,
             status: 'active',
             joinedAt: new Date(),
-            mainTeacher: mainTeacherId    // Usiamo l'ID validato
+            mainTeacher: mainTeacherId
         }));
 
         classDoc.students.push(...newStudentRecords);
@@ -412,35 +413,25 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
 
     } catch (error) {
         await session.abortTransaction();
-        logger.error('Error in batchAssignToClass:', {
+        return handleRepositoryError(
             error,
-            studentIds,
-            classId,
-            academicYear
-        });
-        throw error;
+            'batchAssignToClass',
+            { studentIds, classId, academicYear },
+            'StudentRepository'
+        );
     } finally {
         session.endSession();
     }
 }
 
-    // Aggiungi questo nuovo metodo alla classe StudentRepository
-
     async batchAssignToSchool(studentIds, schoolId) {
-        
-        console.log('Debug - School model:', {
-            isSchoolDefined: !!School,
-            modelName: School?.modelName,
-            isMongooseModel: School?.prototype?.constructor?.name === 'model'
-        });
         const session = await mongoose.startSession();
         session.startTransaction();
 
         try {
             logger.debug('Starting batch school assignment:', {
                 studentCount: studentIds.length,
-                schoolId,
-                schoolModelExists: !!School  // Debug log
+                schoolId
             });
 
             // 1. Verifica che la scuola esista
@@ -448,7 +439,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             
             if (!school) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Scuola non trovata'
                 );
             }
@@ -507,13 +498,12 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             };
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Error in batch assigning students to school:', {
-                error: error.message,
-                studentIds,
-                schoolId,
-                user: this.userId
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'batchAssignToSchool',
+                { studentIds, schoolId },
+                'StudentRepository'
+            );
         } finally {
             session.endSession();
         }
@@ -551,12 +541,12 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                 sort: { lastName: 1, firstName: 1 }
             });
         } catch (error) {
-            logger.error('Error in findByClass:', {
+            return handleRepositoryError(
                 error,
-                classId,
-                teacherId
-            });
-            throw error;
+                'findByClass',
+                { classId, teacherId },
+                'StudentRepository'
+            );
         }
     }
 
@@ -578,11 +568,12 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
 
             return await this.findWithDetails(query, options);
         } catch (error) {
-            logger.error('Error in findByTeacher:', {
+            return handleRepositoryError(
                 error,
-                teacherId
-            });
-            throw error;
+                'findByTeacher',
+                { teacherId, options },
+                'StudentRepository'
+            );
         }
     }
 
@@ -610,12 +601,12 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                 sort: { lastName: 1, firstName: 1 }
             });
         } catch (error) {
-            logger.error('Error in searchByName:', {
+            return handleRepositoryError(
                 error,
-                searchTerm,
-                schoolId
-            });
-            throw error;
+                'searchByName',
+                { searchTerm, schoolId },
+                'StudentRepository'
+            );
         }
     }
 
@@ -638,7 +629,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
 
             if (exists) {
                 throw createError(
-                    ErrorTypes.VALIDATION.ALREADY_EXISTS,
+                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
                     'Email già registrata'
                 );
             }
@@ -648,7 +639,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                 const classDoc = await Class.findById(studentData.classId);
                 if (!classDoc) {
                     throw createError(
-                        ErrorTypes.VALIDATION.NOT_FOUND,
+                        ErrorTypes.RESOURCE.NOT_FOUND,
                         'Classe non trovata'
                     );
                 }
@@ -657,7 +648,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                 const canBeAssigned = await student.canBeAssignedToClass(studentData.classId);
                 if (!canBeAssigned) {
                     throw createError(
-                        ErrorTypes.VALIDATION.BAD_REQUEST,
+                        ErrorTypes.BUSINESS.INVALID_OPERATION,
                         'Non è possibile assegnare lo studente a questa classe'
                     );
                 }
@@ -669,11 +660,12 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             return newStudent[0];
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Error in create student:', {
+            return handleRepositoryError(
                 error,
-                studentData
-            });
-            throw error;
+                'create',
+                { studentData },
+                'StudentRepository'
+            );
         } finally {
             session.endSession();
         }
@@ -692,7 +684,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
 
             if (exists) {
                 throw createError(
-                    ErrorTypes.VALIDATION.ALREADY_EXISTS,
+                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
                     'Email già registrata'
                 );
             }
@@ -705,7 +697,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                 
             if (!classDoc) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Classe non trovata'
                 );
             }
@@ -713,7 +705,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             // 3. Verifica capacità classe
             if (classDoc.students.length >= classDoc.capacity) {
                 throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    ErrorTypes.BUSINESS.CLASS_FULL,
                     'La classe ha raggiunto la capacità massima'
                 );
             }
@@ -773,16 +765,16 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             return newStudent[0];
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Error in createWithClass:', {
+            return handleRepositoryError(
                 error,
-                studentData
-            });
-            throw error;
+                'createWithClass',
+                { studentData },
+                'StudentRepository'
+            );
         } finally {
             session.endSession();
         }
     }
-
 
     /**
      * Assegna uno studente a una classe
@@ -798,7 +790,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             const student = await this.model.findById(studentId);
             if (!student) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Studente non trovato'
                 );
             }
@@ -809,7 +801,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
 
             if (!classDoc) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Classe non trovata'
                 );
             }
@@ -817,7 +809,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             const canBeAssigned = await student.canBeAssignedToClass(classId);
             if (!canBeAssigned) {
                 throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
                     'Non è possibile assegnare lo studente a questa classe'
                 );
             }
@@ -852,12 +844,12 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             return student;
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Error in assignToClass:', {
+            return handleRepositoryError(
                 error,
-                studentId,
-                classId
-            });
-            throw error;
+                'assignToClass',
+                { studentId, classId },
+                'StudentRepository'
+            );
         } finally {
             session.endSession();
         }
@@ -877,7 +869,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             const student = await this.model.findById(studentId).session(session);
             if (!student) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Studente non trovato'
                 );
             }
@@ -924,11 +916,12 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
     
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Error in removeFromClass:', {
+            return handleRepositoryError(
                 error,
-                studentId
-            });
-            throw error;
+                'removeFromClass',
+                { studentId, reason },
+                'StudentRepository'
+            );
         } finally {
             session.endSession();
         }
@@ -948,7 +941,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             const student = await this.findById(studentId);
             if (!student) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Studente non trovato'
                 );
             }
@@ -994,12 +987,12 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             return { success: true, message: 'Studente eliminato con successo' };
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Error in delete student:', {
+            return handleRepositoryError(
                 error,
-                studentId,
-                cascade
-            });
-            throw error;
+                'delete',
+                { studentId, cascade },
+                'StudentRepository'
+            );
         } finally {
             session.endSession();
         }
@@ -1025,7 +1018,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
 
                 if (exists) {
                     throw createError(
-                        ErrorTypes.VALIDATION.ALREADY_EXISTS,
+                        ErrorTypes.RESOURCE.ALREADY_EXISTS,
                         'Email o codice fiscale già registrati'
                     );
                 }
@@ -1042,23 +1035,21 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
 
             if (!student) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Studente non trovato'
                 );
             }
 
             return student;
         } catch (error) {
-            logger.error('Error in update student:', {
+            return handleRepositoryError(
                 error,
-                studentId,
-                updateData
-            });
-            throw error;
+                'update',
+                { studentId, updateData },
+                'StudentRepository'
+            );
         }
     }
-
-    // Aggiungi questo metodo alla classe StudentRepository
 
     async updateStudentsForDeactivatedSection(schoolId, sectionName) {
         const session = await mongoose.startSession();
@@ -1126,220 +1117,178 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             return { modifiedCount: result.modifiedCount };
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Errore nell\'aggiornamento degli studenti:', {
+            return handleRepositoryError(
                 error,
-                schoolId,
-                sectionName
-            });
-            throw error;
+                'updateStudentsForDeactivatedSection',
+                { schoolId, sectionName },
+                'StudentRepository'
+            );
         } finally {
             session.endSession();
         }
     }
 
-    // In StudentRepository.js, aggiungi questo nuovo metodo:
+    async findWithTestCount(filters = {}) {
+        try {
+            logger.debug('Finding students with test count:', { filters });
 
-async findWithTestCount(filters = {}) {
-    try {
-        logger.debug('Finding students with test count:', { filters });
+            // Verifichiamo prima se esistono dei test nel database
+            const Result = mongoose.model('Result');
+            const testCount = await Result.countDocuments({ completato: true });
+            logger.debug('Total completed tests in database:', { testCount });
 
-        // Verifichiamo prima se esistono dei test nel database
-        const Result = mongoose.model('Result');
-        const testCount = await Result.countDocuments({ completato: true });
-        logger.debug('Total completed tests in database:', { testCount });
-
-        // Log delle collezioni disponibili
-        const collections = await mongoose.connection.db.collections();
-        logger.debug('Available collections:', {
-            collections: collections.map(c => c.collectionName)
-        });
-
-        // Verifichiamo i test per uno studente specifico
-        if (testCount > 0) {
-            const sampleTest = await Result.findOne({ completato: true });
-            logger.debug('Sample test found:', {
-                testId: sampleTest._id,
-                studentId: sampleTest.studentId,
-                completato: sampleTest.completato
+            // Log delle collezioni disponibili
+            const collections = await mongoose.connection.db.collections();
+            logger.debug('Available collections:', {
+                collections: collections.map(c => c.collectionName)
             });
-        }
 
-        const pipeline = [
-            { $match: filters },
-            {
-                $lookup: {
-                    from: 'results',
-                    let: { studentId: '$_id' },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$studentId', '$$studentId'] },
-                                        { $eq: ['$completato', true] }
-                                    ]
+            // Verifichiamo i test per uno studente specifico
+            if (testCount > 0) {
+                const sampleTest = await Result.findOne({ completato: true });
+                logger.debug('Sample test found:', {
+                    testId: sampleTest._id,
+                    studentId: sampleTest.studentId,
+                    completato: sampleTest.completato
+                });
+            }
+
+            const pipeline = [
+                { $match: filters },
+                {
+                    $lookup: {
+                        from: 'results',
+                        let: { studentId: '$_id' },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            { $eq: ['$studentId', '$$studentId'] },
+                                            { $eq: ['$completato', true] }
+                                        ]
+                                    }
                                 }
                             }
-                        }
-                    ],
-                    as: 'tests'
+                        ],
+                        as: 'tests'
+                    }
+                },
+                {
+                    $addFields: {
+                        testCount: { $size: '$tests' }
+                    }
                 }
-            },
-            {
-                $addFields: {
-                    testCount: { $size: '$tests' }
-                }
+            ];
+
+            // Log del pipeline
+            logger.debug('Aggregation pipeline:', JSON.stringify(pipeline, null, 2));
+
+
+            const students = await this.model.aggregate(pipeline);
+             // Log dettagliato dei risultati
+             logger.debug('Aggregation results:', {
+                totalStudents: students.length,
+                studentsWithTests: students.filter(s => s.testCount > 0).length,
+                sampleStudents: students.slice(0,3).map(s => ({
+                    studentId: s._id,
+                    name: `${s.firstName} ${s.lastName}`,
+                    testCount: s.testCount,
+                    testsArray: s.tests
+                }))
+            });
+            
+            return students;
+        } catch (error) {
+            return handleRepositoryError(
+                error,
+                'findWithTestCount',
+                { filters },
+                'StudentRepository'
+            );
+        }
+    }
+
+    /**
+     * Conta il numero di studenti attivi in classi specifiche
+     * @param {Array<string>} classIds - Array di ID delle classi
+     * @returns {Promise<number>} - Numero di studenti trovati
+     */
+    async countByClasses(classIds) {
+        try {
+            logger.debug('Conteggio studenti per classi:', { classIds });
+            
+            // Validazione input
+            if (!Array.isArray(classIds) || classIds.length === 0) {
+                return 0;
             }
-        ];
-
-        // Log del pipeline
-        logger.debug('Aggregation pipeline:', JSON.stringify(pipeline, null, 2));
-
-
-        const students = await this.model.aggregate(pipeline);
-         // Log dettagliato dei risultati
-         logger.debug('Aggregation results:', {
-            totalStudents: students.length,
-            studentsWithTests: students.filter(s => s.testCount > 0).length,
-            sampleStudents: students.slice(0,3).map(s => ({
-                studentId: s._id,
-                name: `${s.firstName} ${s.lastName}`,
-                testCount: s.testCount,
-                testsArray: s.tests
-            }))
-        });
-        
-        return students;
-    } catch (error) {
-        logger.error('Error in findWithTestCount:', {
-            error: error.message,
-            stack: error.stack
-        });
-        throw Error;
-       }
-    
-    }
-
-
-/**
- * Conta il numero di studenti attivi in classi specifiche
- * @param {Array<string>} classIds - Array di ID delle classi
- * @returns {Promise<number>} - Numero di studenti trovati
- */
-async countByClasses(classIds) {
-    try {
-        logger.debug('Conteggio studenti per classi:', { classIds });
-        
-        // Validazione input
-        if (!Array.isArray(classIds) || classIds.length === 0) {
-            return 0;
+            
+            // Converte le stringhe in ObjectId se necessario
+            const objectIds = classIds.map(id => 
+                typeof id === 'string' ? new mongoose.Types.ObjectId(id) : id
+            );
+            
+            // Conta gli studenti attivi nelle classi specificate
+            const count = await this.model.countDocuments({
+                classId: { $in: objectIds },
+                status: 'active'
+            });
+            
+            logger.debug('Risultato conteggio studenti:', { count, classIds });
+            return count;
+        } catch (error) {
+            return handleRepositoryError(
+                error,
+                'countByClasses',
+                { classIds },
+                'StudentRepository'
+            );
         }
-        
-        // Converte le stringhe in ObjectId se necessario
-        const objectIds = classIds.map(id => 
-            typeof id === 'string' ? new mongoose.Types.ObjectId(id) : id
-        );
-        
-        // Conta gli studenti attivi nelle classi specificate
-        const count = await this.model.countDocuments({
-            classId: { $in: objectIds },
-            status: 'active'
-        });
-        
-        logger.debug('Risultato conteggio studenti:', { count, classIds });
-        return count;
-    } catch (error) {
-        logger.error('Errore nel conteggio studenti per classi:', {
-            error: error.message,
-            classIds
-        });
-        throw createError(
-            ErrorTypes.DATABASE.QUERY_FAILED,
-            'Errore nel conteggio degli studenti',
-            { originalError: error.message }
-        );
     }
-}
 
-/**
- * Trova studenti per email
- * @param {Array<string>} emails - Array di email da cercare
- * @returns {Promise<Array>} Lista degli studenti trovati
- */
-async findByEmails(emails) {
-    try {
-        if (!emails || !Array.isArray(emails) || emails.length === 0) {
-            return [];
+    /**
+     * Trova studenti per email
+     * @param {Array<string>} emails - Array di email da cercare
+     * @returns {Promise<Array>} Lista degli studenti trovati
+     */
+    async findByEmails(emails) {
+        try {
+            if (!emails || !Array.isArray(emails) || emails.length === 0) {
+                return [];
+            }
+            
+            // Normalizza le email (converti in minuscolo e rimuovi spazi)
+            const normalizedEmails = emails.map(email => 
+                email.toString().trim().toLowerCase()
+            );
+            
+            logger.debug('Searching for students by emails:', { 
+                emailCount: normalizedEmails.length,
+                sampleEmails: normalizedEmails.slice(0, 3)
+            });
+            
+            // Cerca gli studenti con le email specificate
+            const students = await this.model.find({
+                email: { $in: normalizedEmails }
+            });
+            
+            logger.debug('Found students by emails:', {
+                searchedCount: normalizedEmails.length,
+                foundCount: students.length
+            });
+            
+            return students;
+        } catch (error) {
+            return handleRepositoryError(
+                error,
+                'findByEmails',
+                { emailsCount: emails?.length },
+                'StudentRepository'
+            );
         }
-        
-        // Normalizza le email (converti in minuscolo e rimuovi spazi)
-        const normalizedEmails = emails.map(email => 
-            email.toString().trim().toLowerCase()
-        );
-        
-        logger.debug('Searching for students by emails:', { 
-            emailCount: normalizedEmails.length,
-            sampleEmails: normalizedEmails.slice(0, 3)
-        });
-        
-        // Cerca gli studenti con le email specificate
-        const students = await this.model.find({
-            email: { $in: normalizedEmails }
-        });
-        
-        logger.debug('Found students by emails:', {
-            searchedCount: normalizedEmails.length,
-            foundCount: students.length
-        });
-        
-        return students;
-    } catch (error) {
-        logger.error('Error in findByEmails:', {
-            error: error.message,
-            stack: error.stack
-        });
-        throw error;
     }
-}
 
 
 }
 
 module.exports = StudentRepository;
-
-
-// Operazioni CRUD Base:
-
-// Create con validazioni avanzate
-// Read con supporto per filtri e popolamento relazioni
-// Update con verifica unicità
-// Delete con gestione transazioni
-
-
-// Query Specifiche:
-
-// findWithDetails: recupera studenti con tutte le relazioni popolate
-// findByClass: trova studenti di una classe specifica
-// findByTeacher: trova studenti associati a un docente
-// searchByName: ricerca fuzzy per nome/cognome
-
-
-// Gestione Classe:
-
-// assignToClass: assegna studente a una classe con storico
-// removeFromClass: rimuove studente da una classe
-// Validazioni per capacità classe e permessi
-
-
-// Sicurezza e Validazione:
-
-// Controllo permessi per accesso dati
-// Validazioni di unicità email/codice fiscale
-// Gestione transazioni per operazioni critiche
-
-
-// Logging e Gestione Errori:
-
-// Logging dettagliato di tutte le operazioni
-// Gestione errori consistente
-// Messaggi di errore chiari e specifici

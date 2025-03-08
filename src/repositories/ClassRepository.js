@@ -1,17 +1,15 @@
 // src/repositories/ClassRepository.js
-const mongoose = require('mongoose');  // Aggiungi questo import
+const mongoose = require('mongoose');
 const BaseRepository = require('./base/BaseRepository');
 const { Class, User, School } = require('../models');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
-
-
-
-
+const handleRepositoryError = require('../utils/errors/repositoryErrorHandler');
 
 class ClassRepository extends BaseRepository {
     constructor() {
         super(Class);
+        this.repositoryName = 'ClassRepository';
     }
 
 
@@ -42,16 +40,12 @@ class ClassRepository extends BaseRepository {
 
             return !!existingClass;
         } catch (error) {
-            logger.error('Errore nella verifica esistenza classe:', {
-                error: error.message,
-                stack: error.stack,
-                criteria
-            });
-            
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella verifica esistenza classe',
-                { originalError: error.message }
+            if (error.code) throw error;
+            throw handleRepositoryError(
+                error,
+                'exists',
+                { criteria },
+                this.repositoryName
             );
         }
     }
@@ -92,23 +86,22 @@ class ClassRepository extends BaseRepository {
             return savedClass;
 
         } catch (error) {
-            logger.error('Errore creazione classe:', {
-                message: error.message,
-                stack: error.stack,
-                validationErrors: error.errors,
-                data: data
-            });
-
+            if (error.code) throw error;
+            
+            // Gestione specifica per errori di validazione
             if (error.name === 'ValidationError') {
                 throw createError(
                     ErrorTypes.VALIDATION.BAD_REQUEST,
-                    'Errore di validazione: ' + error.message
+                    'Errore di validazione: ' + error.message,
+                    { validationErrors: error.errors }
                 );
             }
-
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella creazione della classe: ' + error.message
+            
+            throw handleRepositoryError(
+                error,
+                'create',
+                { data },
+                this.repositoryName
             );
         }
     }
@@ -117,43 +110,46 @@ class ClassRepository extends BaseRepository {
         try {
             return await User.findById(userId).populate('schoolId');
         } catch (error) {
-            logger.error('Errore nel recupero dei dettagli utente', { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nel recupero dei dettagli utente',
-                { originalError: error.message }
+            throw handleRepositoryError(
+                error,
+                'findUserWithSchool',
+                { userId },
+                this.repositoryName
             );
         }
     }
 
-   // ClassRepository.js
-async findWithDetails(id) {
-    try {
-        const classData = await this.model.findById(id)
-            .populate({
-                path: 'schoolId',
-                select: 'name schoolType'
-            })
-            .populate({
-                path: 'mainTeacher',
-                select: 'firstName lastName email'
-            })
-            .populate({
-                path: 'teachers',
-                select: 'firstName lastName email'
-            })
-            .populate({
-                path: 'students.studentId',
-                select: 'firstName lastName email'
-            })
-            .lean();
+    async findWithDetails(id) {
+        try {
+            const classData = await this.model.findById(id)
+                .populate({
+                    path: 'schoolId',
+                    select: 'name schoolType'
+                })
+                .populate({
+                    path: 'mainTeacher',
+                    select: 'firstName lastName email'
+                })
+                .populate({
+                    path: 'teachers',
+                    select: 'firstName lastName email'
+                })
+                .populate({
+                    path: 'students.studentId',
+                    select: 'firstName lastName email'
+                })
+                .lean();
 
-        return classData;
-    } catch (error) {
-        logger.error('Error fetching class details:', error);
-        throw error;
+            return classData;
+        } catch (error) {
+            throw handleRepositoryError(
+                error,
+                'findWithDetails',
+                { id },
+                this.repositoryName
+            );
+        }
     }
-}
 
     async findBySchool(schoolId, academicYear) {
         try {
@@ -183,19 +179,14 @@ async findWithDetails(id) {
             return classes;
     
         } catch (error) {
-            logger.error('Error in findBySchool:', { 
-                error: error.message,
-                schoolId: schoolId 
-            });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella ricerca delle classi della scuola',
-                { originalError: error.message }
+            throw handleRepositoryError(
+                error,
+                'findBySchool',
+                { schoolId, academicYear },
+                this.repositoryName
             );
         }
     }
-
-
 
     async addStudent(classId, studentId) {
         try {
@@ -215,16 +206,14 @@ async findWithDetails(id) {
             return classData;
         } catch (error) {
             if (error.code) throw error;
-            logger.error('Errore nell\'aggiunta dello studente alla classe', { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nell\'aggiunta dello studente alla classe',
-                { originalError: error.message }
+            throw handleRepositoryError(
+                error,
+                'addStudent',
+                { classId, studentId },
+                this.repositoryName
             );
         }
     }
-
-
 
     async removeStudent(classId, studentId) {
         try {
@@ -237,15 +226,14 @@ async findWithDetails(id) {
             await classData.save();
             return classData;
         } catch (error) {
-            logger.error('Errore nella rimozione dello studente dalla classe', { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella rimozione dello studente dalla classe',
-                { originalError: error.message }
+            throw handleRepositoryError(
+                error,
+                'removeStudent',
+                { classId, studentId },
+                this.repositoryName
             );
         }
     }
-
 
     async findByTeacher(teacherId, academicYear) {
         try {
@@ -269,26 +257,25 @@ async findWithDetails(id) {
                 }
             });
         } catch (error) {
-            logger.error('Errore nella ricerca delle classi per insegnante', { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella ricerca delle classi per insegnante',
-                { originalError: error.message }
+            throw handleRepositoryError(
+                error,
+                'findByTeacher',
+                { teacherId, academicYear },
+                this.repositoryName
             );
         }
     }
-
 
     async createInitialClasses(schoolId, academicYear, sections) {
         const session = await mongoose.startSession();
         session.startTransaction();
             
         if (!schoolId || !academicYear || !sections || !Array.isArray(sections)) {
-                throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
-                    'Parametri mancanti o non validi'
-                );
-            }
+            throw createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'Parametri mancanti o non validi'
+            );
+        }
 
         try {
             logger.debug('Starting createInitialClasses', {
@@ -363,553 +350,470 @@ async findWithDetails(id) {
             return newClasses;
     
         } catch (error) {
-            logger.error('Error in createInitialClasses:', {
-                error: error.message,
-                stack: error.stack
-            });
-            
             await session.abortTransaction();
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella creazione classi iniziali',
-                { originalError: error.message }
+            if (error.code) throw error;
+            throw handleRepositoryError(
+                error,
+                'createInitialClasses',
+                { schoolId, academicYear, sections },
+                this.repositoryName
             );
         } finally {
             session.endSession();
         }
     }
 
-        async promoteStudents(fromYear, toYear) {
-            const session = await mongoose.startSession();
-            session.startTransaction();
-        
-            try {
-                logger.debug('Starting promoteStudents transaction', { fromYear, toYear });
-        
-                // 1. Prima trova tutte le classi attive dell'anno precedente
-                const oldClasses = await this.model.find({ 
-                    academicYear: fromYear,
-                    status: 'active'
-                }).populate('schoolId').session(session);
-        
-                logger.debug('Found old classes', { 
-                    count: oldClasses.length,
-                    classes: oldClasses.map(c => ({
-                        id: c._id,
-                        year: c.year,
-                        section: c.section,
-                        academicYear: c.academicYear
-                    }))
-                });
-        
-                // 2. Archivia le vecchie classi
-                const archiveResult = await this.model.updateMany(
-                    { academicYear: fromYear, status: 'active' },
-                    { 
-                        $set: { 
-                            status: 'archived',
-                            'students.$[].status': 'transferred',
-                            'students.$[].leftAt': new Date()
-                        }
-                    },
-                    { session }
-                );
-        
-                logger.debug('Archive result', { archiveResult });
-        
-                // 3. Prepara le nuove classi
-                const newClassesData = oldClasses
-                    .filter(oldClass => {
-                        const maxYear = oldClass.schoolId.schoolType === 'middle_school' ? 3 : 5;
-                        return oldClass.year < maxYear;
-                    })
-                    .map(oldClass => ({
-                        schoolId: oldClass.schoolId._id,
-                        year: oldClass.year + 1,
-                        section: oldClass.section,
-                        academicYear: toYear,
-                        status: 'active',
-                        capacity: oldClass.capacity,
-                        mainTeacher: oldClass.mainTeacher,
-                        teachers: oldClass.teachers,
-                        isActive: true
-                    }));
-        
-                logger.debug('Prepared new classes', { 
-                    count: newClassesData.length,
-                    classes: newClassesData
-                });
-        
-                // 4. Inserisci le nuove classi
-                const insertResult = await this.model.insertMany(newClassesData, { session });
-                logger.debug('Insert result', { insertResult });
-        
-                await session.commitTransaction();
-                return true;
-        
-            } catch (error) {
-                logger.error('Error in promoteStudents:', {
-                    error: error.message,
-                    stack: error.stack,
-                    fromYear,
-                    toYear
-                });
-                
-                await session.abortTransaction();
-                throw error;
-            } finally {
-                session.endSession();
-            }
+    async promoteStudents(fromYear, toYear) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+    
+        try {
+            logger.debug('Starting promoteStudents transaction', { fromYear, toYear });
+    
+            // 1. Prima trova tutte le classi attive dell'anno precedente
+            const oldClasses = await this.model.find({ 
+                academicYear: fromYear,
+                status: 'active'
+            }).populate('schoolId').session(session);
+    
+            logger.debug('Found old classes', { 
+                count: oldClasses.length,
+                classes: oldClasses.map(c => ({
+                    id: c._id,
+                    year: c.year,
+                    section: c.section,
+                    academicYear: c.academicYear
+                }))
+            });
+    
+            // 2. Archivia le vecchie classi
+            const archiveResult = await this.model.updateMany(
+                { academicYear: fromYear, status: 'active' },
+                { 
+                    $set: { 
+                        status: 'archived',
+                        'students.$[].status': 'transferred',
+                        'students.$[].leftAt': new Date()
+                    }
+                },
+                { session }
+            );
+    
+            logger.debug('Archive result', { archiveResult });
+    
+            // 3. Prepara le nuove classi
+            const newClassesData = oldClasses
+                .filter(oldClass => {
+                    const maxYear = oldClass.schoolId.schoolType === 'middle_school' ? 3 : 5;
+                    return oldClass.year < maxYear;
+                })
+                .map(oldClass => ({
+                    schoolId: oldClass.schoolId._id,
+                    year: oldClass.year + 1,
+                    section: oldClass.section,
+                    academicYear: toYear,
+                    status: 'active',
+                    capacity: oldClass.capacity,
+                    mainTeacher: oldClass.mainTeacher,
+                    teachers: oldClass.teachers,
+                    isActive: true
+                }));
+    
+            logger.debug('Prepared new classes', { 
+                count: newClassesData.length,
+                classes: newClassesData
+            });
+    
+            // 4. Inserisci le nuove classi
+            const insertResult = await this.model.insertMany(newClassesData, { session });
+            logger.debug('Insert result', { insertResult });
+    
+            await session.commitTransaction();
+            return true;
+    
+        } catch (error) {
+            await session.abortTransaction();
+            throw handleRepositoryError(
+                error,
+                'promoteStudents',
+                { fromYear, toYear },
+                this.repositoryName
+            );
+        } finally {
+            session.endSession();
         }
+    }
 
+    async getMyClasses(userId) {
+        try {
+            logger.debug('Getting classes for user:', { userId });
 
-// In ClassRepository.js
-async getMyClasses(userId) {
-    try {
-        logger.debug('Getting classes for user:', { userId });
-
-        // Prima otteniamo l'utente con i suoi dettagli
-        const user = await mongoose.model('User').findById(userId)
-            .select('role schoolId')
-            .lean();
+            // Prima otteniamo l'utente con i suoi dettagli
+            const user = await mongoose.model('User').findById(userId)
+                .select('role schoolId')
+                .lean();
 
             logger.debug('ClassRepository: Utente trovato', { 
                 role: user?.role, 
                 schoolId: user?.schoolId 
             });
 
-        if (!user) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Utente non trovato'
+            if (!user) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente non trovato'
+                );
+            }
+
+            logger.debug('User details:', { 
+                role: user.role, 
+                schoolId: user.schoolId 
+            });
+
+            let pipeline = [];
+
+            // Pipeline diversa in base al ruolo
+            switch (user.role) {
+                case 'admin':
+                    // Admin vede tutte le classi
+                    pipeline = [
+                        {
+                            $lookup: {
+                                from: 'schools',
+                                localField: 'schoolId',
+                                foreignField: '_id',
+                                as: 'school'
+                            }
+                        },
+                        {
+                            $unwind: '$school'
+                        },
+                        {
+                            $match: {
+                                isActive: true
+                            }
+                        },
+                        {
+                            $project: {
+                                schoolId: 1,
+                                schoolName: '$school.name',
+                                classId: '$_id',
+                                year: 1,
+                                section: 1,
+                                academicYear: 1,
+                                students: 1,
+                                mainTeacher: 1,
+                                teachers: 1
+                            }
+                        },
+                        {
+                            $sort: { 
+                                'school.name': 1, 
+                                year: 1, 
+                                section: 1 
+                            }
+                        }
+                    ];
+                    break;
+
+                case 'manager':
+                    // Manager vede solo le classi della sua scuola
+                    pipeline = [
+                        {
+                            $match: {
+                                schoolId: user.schoolId,
+                                isActive: true
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: 'schools',
+                                localField: 'schoolId',
+                                foreignField: '_id',
+                                as: 'school'
+                            }
+                        },
+                        {
+                            $unwind: '$school'
+                        },
+                        {
+                            $project: {
+                                schoolId: 1,
+                                schoolName: '$school.name',
+                                classId: '$_id',
+                                year: 1,
+                                section: 1,
+                                academicYear: 1,
+                                students: 1,
+                                mainTeacher: 1,
+                                teachers: 1
+                            }
+                        },
+                        {
+                            $sort: { 
+                                year: 1, 
+                                section: 1 
+                            }
+                        }
+                    ];
+                    break;
+
+                case 'teacher':
+                    // Teacher vede le classi dove è mainTeacher o nell'array teachers
+                    pipeline = [
+                        {
+                            $match: {
+                                isActive: true,
+                                $or: [
+                                    { mainTeacher: new mongoose.Types.ObjectId(userId) },
+                                    { teachers: new mongoose.Types.ObjectId(userId) }
+                                ]
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: 'schools',
+                                localField: 'schoolId',
+                                foreignField: '_id',
+                                as: 'school'
+                            }
+                        },
+                        {
+                            $unwind: '$school'
+                        },
+                        {
+                            $project: {
+                                schoolId: 1,
+                                schoolName: '$school.name',
+                                classId: '$_id',
+                                year: 1,
+                                section: 1,
+                                academicYear: 1,
+                                students: 1,
+                                mainTeacher: 1,
+                                teachers: 1,
+                                isMainTeacher: {
+                                    $eq: ['$mainTeacher', new mongoose.Types.ObjectId(userId)]
+                                }
+                            }
+                        },
+                        {
+                            $sort: { 
+                                isMainTeacher: -1,
+                                year: 1, 
+                                section: 1 
+                            }
+                        },
+                        {
+                            $facet: {
+                                mainTeacherClasses: [
+                                    {
+                                        $match: {
+                                            isMainTeacher: true
+                                        }
+                                    }
+                                ],
+                                coTeacherClasses: [
+                                    {
+                                        $match: {
+                                            isMainTeacher: false
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ];
+                    break;
+
+                default:
+                    throw createError(
+                        ErrorTypes.AUTH.INVALID_ROLE,
+                        'Ruolo utente non valido'
+                    );
+            }
+
+            const result = await this.model.aggregate(pipeline);
+            logger.debug('ClassRepository: Query completata', {
+                resultLength: result.length
+            });
+            // Per admin e manager, formatta il risultato nello stesso formato usato per i teacher
+            if (user.role === 'admin' || user.role === 'manager') {
+                return {
+                    mainTeacherClasses: result,
+                    coTeacherClasses: []
+                };
+            }
+
+            // Per teacher, il risultato è già nel formato corretto dalla facet
+            return result[0];
+
+        } catch (error) {
+            if (error.code) throw error;
+            throw handleRepositoryError(
+                error,
+                'getMyClasses',
+                { userId },
+                this.repositoryName
             );
         }
-
-        logger.debug('User details:', { 
-            role: user.role, 
-            schoolId: user.schoolId 
-        });
-
-        let pipeline = [];
-
-        // Pipeline diversa in base al ruolo
-        switch (user.role) {
-            case 'admin':
-                // Admin vede tutte le classi
-                pipeline = [
-                    {
-                        $lookup: {
-                            from: 'schools',
-                            localField: 'schoolId',
-                            foreignField: '_id',
-                            as: 'school'
-                        }
-                    },
-                    {
-                        $unwind: '$school'
-                    },
-                    {
-                        $match: {
-                            isActive: true
-                        }
-                    },
-                    {
-                        $project: {
-                            schoolId: 1,
-                            schoolName: '$school.name',
-                            classId: '$_id',
-                            year: 1,
-                            section: 1,
-                            academicYear: 1,
-                            students: 1,
-                            mainTeacher: 1,
-                            teachers: 1
-                        }
-                    },
-                    {
-                        $sort: { 
-                            'school.name': 1, 
-                            year: 1, 
-                            section: 1 
-                        }
-                    }
-                ];
-                break;
-
-            case 'manager':
-                // Manager vede solo le classi della sua scuola
-                pipeline = [
-                    {
-                        $match: {
-                            schoolId: user.schoolId,
-                            isActive: true
-                        }
-                    },
-                    {
-                        $lookup: {
-                            from: 'schools',
-                            localField: 'schoolId',
-                            foreignField: '_id',
-                            as: 'school'
-                        }
-                    },
-                    {
-                        $unwind: '$school'
-                    },
-                    {
-                        $project: {
-                            schoolId: 1,
-                            schoolName: '$school.name',
-                            classId: '$_id',
-                            year: 1,
-                            section: 1,
-                            academicYear: 1,
-                            students: 1,
-                            mainTeacher: 1,
-                            teachers: 1
-                        }
-                    },
-                    {
-                        $sort: { 
-                            year: 1, 
-                            section: 1 
-                        }
-                    }
-                ];
-                break;
-
-            case 'teacher':
-                // Teacher vede le classi dove è mainTeacher o nell'array teachers
-                pipeline = [
-                    {
-                        $match: {
-                            isActive: true,
-                            $or: [
-                                { mainTeacher: new mongoose.Types.ObjectId(userId) },
-                                { teachers: new mongoose.Types.ObjectId(userId) }
-                            ]
-                        }
-                    },
-                    {
-                        $lookup: {
-                            from: 'schools',
-                            localField: 'schoolId',
-                            foreignField: '_id',
-                            as: 'school'
-                        }
-                    },
-                    {
-                        $unwind: '$school'
-                    },
-                    {
-                        $project: {
-                            schoolId: 1,
-                            schoolName: '$school.name',
-                            classId: '$_id',
-                            year: 1,
-                            section: 1,
-                            academicYear: 1,
-                            students: 1,
-                            mainTeacher: 1,
-                            teachers: 1,
-                            isMainTeacher: {
-                                $eq: ['$mainTeacher', new mongoose.Types.ObjectId(userId)]
-                            }
-                        }
-                    },
-                    {
-                        $sort: { 
-                            isMainTeacher: -1,
-                            year: 1, 
-                            section: 1 
-                        }
-                    },
-                    {
-                        $facet: {
-                            mainTeacherClasses: [
-                                {
-                                    $match: {
-                                        isMainTeacher: true
-                                    }
-                                }
-                            ],
-                            coTeacherClasses: [
-                                {
-                                    $match: {
-                                        isMainTeacher: false
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                ];
-                break;
-
-            default:
-                throw createError(
-                    ErrorTypes.AUTH.INVALID_ROLE,
-                    'Ruolo utente non valido'
-                );
-        }
-
-        const result = await this.model.aggregate(pipeline);
-        logger.debug('ClassRepository: Query completata', {
-            resultLength: result.length
-        });
-        // Per admin e manager, formatta il risultato nello stesso formato usato per i teacher
-        if (user.role === 'admin' || user.role === 'manager') {
-            return {
-                mainTeacherClasses: result,
-                coTeacherClasses: []
-            };
-        }
-
-        // Per teacher, il risultato è già nel formato corretto dalla facet
-        return result[0];
-
-    } catch (error) {
-        logger.error('ClassRepository: Errore in getMyClasses', { 
-            error: error.message,
-            userId 
-        });        
-        throw createError(
-            ErrorTypes.DATABASE.QUERY_FAILED,
-            'Errore nel recupero delle classi',
-            { originalError: error.message }
-        );
     }
-}
 
-        async deactivateClassesBySection(schoolId, sectionName, session) {
-            try {
-                logger.debug('Inizio deactivateClassesBySection', {
-                    schoolId,
-                    sectionName,
-                    session: !!session
-                });
-        
-                // 1. Trova tutte le classi della sezione
-                const classes = await this.model.find({
-                    schoolId,
-                    section: sectionName,
-                    isActive: true
-                }).session(session);
-        
-                logger.debug('Classi trovate da disattivare:', {
-                    count: classes.length,
-                    classi: classes.map(c => ({
-                        id: c._id,
-                        section: c.section,
-                        isActive: c.isActive
-                    }))
-                });
-        
-                // 2. Aggiorna lo stato delle classi
-                for (const classDoc of classes) {
-                    classDoc.previousMainTeacher = classDoc.mainTeacher;
-                    // Resetta tutti i campi
-                    classDoc.isActive = false;
-                    classDoc.status = 'archived';
-                    classDoc.deactivatedAt = new Date();
-                    classDoc.mainTeacher = null;
-                    classDoc.teachers = [];
-                    classDoc.students = [];
-                    classDoc.updatedAt = new Date();
-                    
-                    await classDoc.save({ session });
-                }
-        
-                return classes;
-            } catch (error) {
-                logger.error('Errore nella disattivazione delle classi:', {
-                    error,
-                    schoolId,
-                    sectionName
-                });
-                throw error;
-            }
-        }
-
-        async removeStudentsFromClass(classId, studentIds) {
-            const session = await mongoose.startSession();
-            session.startTransaction();
-        
-            try {
-                // Aggiorna la classe rimuovendo gli studenti
-                const classDoc = await this.model.findByIdAndUpdate(
-                    classId,
-                    {
-                        $pull: {
-                            students: {
-                                studentId: { $in: studentIds }
-                            }
-                        }
-                    },
-                    { session, new: true }
-                );
-        
-                // Aggiorna gli studenti
-                await mongoose.model('Student').updateMany(
-                    { _id: { $in: studentIds } },
-                    {
-                        $set: {
-                            classId: null,
-                            section: null,
-                            status: 'inactive',
-                            mainTeacher: null,
-                            teachers: [],
-                            needsClassAssignment: true
-                        }
-                    },
-                    { session }
-                );
-        
-                await session.commitTransaction();
-                return classDoc;
-            } catch (error) {
-                await session.abortTransaction();
-                throw error;
-            } finally {
-                session.endSession();
-            }
-        }
-
-        async updateMainTeacher(classId, teacherId) {
-            const session = await mongoose.startSession();
-            session.startTransaction();
-        
-            try {
-                // 1. Trova la classe
-                const classDoc = await this.model.findById(classId).session(session);
-                if (!classDoc) {
-                    throw createError(
-                        ErrorTypes.RESOURCE.NOT_FOUND,
-                        'Classe non trovata'
-                    );
-                }
-        
-                // Salva il vecchio mainTeacher se presente
-                const oldMainTeacher = classDoc.mainTeacher;
-                
-                // 2. Aggiorna la classe
-                classDoc.mainTeacher = teacherId;
-                classDoc.mainTeacherIsTemporary = false;
-                classDoc.previousMainTeacher = undefined;
-                await classDoc.save({ session });
-        
-                // 3. Aggiorna gli studenti della classe
-                await mongoose.model('Student').updateMany(
-                    { classId: classId },
-                    { 
-                        $set: { mainTeacher: teacherId },
-                        $addToSet: { teachers: teacherId } 
-                    },
-                    { session }
-                );
-        
-                // 4. Aggiorna l'utente docente (aggiungi la classe e gli studenti)
-                const students = await mongoose.model('Student').find(
-                    { classId: classId },
-                    { _id: 1 }
-                ).session(session);
-                
-                const studentIds = students.map(s => s._id);
-                
-                await mongoose.model('User').findByIdAndUpdate(
-                    teacherId,
-                    { 
-                        $addToSet: { 
-                            assignedClassIds: classId,
-                            assignedStudentIds: { $each: studentIds }
-                        } 
-                    },
-                    { session }
-                );
-        
-                // 5. Se c'era un docente principale precedente, rimuovi i riferimenti
-                if (oldMainTeacher && oldMainTeacher.toString() !== teacherId.toString()) {
-                    // Rimuovi la classe e gli studenti dal vecchio mainTeacher
-                    await mongoose.model('User').findByIdAndUpdate(
-                        oldMainTeacher,
-                        { 
-                            $pull: { 
-                                assignedClassIds: classId,
-                                assignedStudentIds: { $in: studentIds }
-                            } 
-                        },
-                        { session }
-                    );
-                }
-        
-                await session.commitTransaction();
-                return classDoc;
-        
-            } catch (error) {
-                await session.abortTransaction();
-                throw createError(
-                    ErrorTypes.DATABASE.QUERY_FAILED,
-                    'Errore nell\'aggiornamento del docente principale',
-                    { originalError: error.message }
-                );
-            } finally {
-                session.endSession();
-            }
-        }
-        
-
-        async removeMainTeacher(classId) {
-            const session = await mongoose.startSession();
-            session.startTransaction();
-        
-            try {
-                // 1. Trova la classe e verifica che esista
-                const classDoc = await this.model.findById(classId).session(session);
-                if (!classDoc) {
-                    throw createError(
-                        ErrorTypes.RESOURCE.NOT_FOUND,
-                        'Classe non trovata'
-                    );
-                }
-        
-                // 2. Verifica che ci sia un mainTeacher da rimuovere
-                if (!classDoc.mainTeacher) {
-                    throw createError(
-                        ErrorTypes.BUSINESS.INVALID_OPERATION,
-                        'Nessun docente principale assegnato'
-                    );
-                }
-        
-                const previousTeacherId = classDoc.mainTeacher;
-        
-                // 3. Aggiorna la classe
-                classDoc.previousMainTeacher = previousTeacherId;
+    async deactivateClassesBySection(schoolId, sectionName, session) {
+        try {
+            logger.debug('Inizio deactivateClassesBySection', {
+                schoolId,
+                sectionName,
+                session: !!session
+            });
+    
+            // 1. Trova tutte le classi della sezione
+            const classes = await this.model.find({
+                schoolId,
+                section: sectionName,
+                isActive: true
+            }).session(session);
+    
+            logger.debug('Classi trovate da disattivare:', {
+                count: classes.length,
+                classi: classes.map(c => ({
+                    id: c._id,
+                    section: c.section,
+                    isActive: c.isActive
+                }))
+            });
+    
+            // 2. Aggiorna lo stato delle classi
+            for (const classDoc of classes) {
+                classDoc.previousMainTeacher = classDoc.mainTeacher;
+                // Resetta tutti i campi
+                classDoc.isActive = false;
+                classDoc.status = 'archived';
+                classDoc.deactivatedAt = new Date();
                 classDoc.mainTeacher = null;
-                classDoc.mainTeacherIsTemporary = true;
+                classDoc.teachers = [];
+                classDoc.students = [];
+                classDoc.updatedAt = new Date();
+                
                 await classDoc.save({ session });
-        
-                // 4. Aggiorna gli studenti
-                await mongoose.model('Student').updateMany(
-                    { 
-                        classId: classId,
-                        mainTeacher: previousTeacherId
-                    },
-                    { 
-                        $set: { mainTeacher: null },
-                        $pull: { teachers: previousTeacherId }
-                    },
-                    { session }
+            }
+    
+            return classes;
+        } catch (error) {
+            throw handleRepositoryError(
+                error,
+                'deactivateClassesBySection',
+                { schoolId, sectionName },
+                this.repositoryName
+            );
+        }
+    }
+
+    async removeStudentsFromClass(classId, studentIds) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+    
+        try {
+            // Aggiorna la classe rimuovendo gli studenti
+            const classDoc = await this.model.findByIdAndUpdate(
+                classId,
+                {
+                    $pull: {
+                        students: {
+                            studentId: { $in: studentIds }
+                        }
+                    }
+                },
+                { session, new: true }
+            );
+    
+            // Aggiorna gli studenti
+            await mongoose.model('Student').updateMany(
+                { _id: { $in: studentIds } },
+                {
+                    $set: {
+                        classId: null,
+                        section: null,
+                        status: 'inactive',
+                        mainTeacher: null,
+                        teachers: [],
+                        needsClassAssignment: true
+                    }
+                },
+                { session }
+            );
+    
+            await session.commitTransaction();
+            return classDoc;
+        } catch (error) {
+            await session.abortTransaction();
+            throw handleRepositoryError(
+                error,
+                'removeStudentsFromClass',
+                { classId, studentIds },
+                this.repositoryName
+            );
+        } finally {
+            session.endSession();
+        }
+    }
+
+    async updateMainTeacher(classId, teacherId) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+    
+        try {
+            // 1. Trova la classe
+            const classDoc = await this.model.findById(classId).session(session);
+            if (!classDoc) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Classe non trovata'
                 );
-        
-                // 5. Aggiorna l'utente docente (rimuovi la classe e gli studenti)
-                const students = await mongoose.model('Student').find(
-                    { classId: classId },
-                    { _id: 1 }
-                ).session(session);
-                
-                const studentIds = students.map(s => s._id);
-                
+            }
+    
+            // Salva il vecchio mainTeacher se presente
+            const oldMainTeacher = classDoc.mainTeacher;
+            
+            // 2. Aggiorna la classe
+            classDoc.mainTeacher = teacherId;
+            classDoc.mainTeacherIsTemporary = false;
+            classDoc.previousMainTeacher = undefined;
+            await classDoc.save({ session });
+    
+            // 3. Aggiorna gli studenti della classe
+            await mongoose.model('Student').updateMany(
+                { classId: classId },
+                { 
+                    $set: { mainTeacher: teacherId },
+                    $addToSet: { teachers: teacherId } 
+                },
+                { session }
+            );
+    
+            // 4. Aggiorna l'utente docente (aggiungi la classe e gli studenti)
+            const students = await mongoose.model('Student').find(
+                { classId: classId },
+                { _id: 1 }
+            ).session(session);
+            
+            const studentIds = students.map(s => s._id);
+            
+            await mongoose.model('User').findByIdAndUpdate(
+                teacherId,
+                { 
+                    $addToSet: { 
+                        assignedClassIds: classId,
+                        assignedStudentIds: { $each: studentIds }
+                    } 
+                },
+                { session }
+            );
+    
+            // 5. Se c'era un docente principale precedente, rimuovi i riferimenti
+            if (oldMainTeacher && oldMainTeacher.toString() !== teacherId.toString()) {
+                // Rimuovi la classe e gli studenti dal vecchio mainTeacher
                 await mongoose.model('User').findByIdAndUpdate(
-                    previousTeacherId,
+                    oldMainTeacher,
                     { 
                         $pull: { 
                             assignedClassIds: classId,
@@ -918,175 +822,256 @@ async getMyClasses(userId) {
                     },
                     { session }
                 );
-        
-                await session.commitTransaction();
-                
-                return classDoc;
-        
-            } catch (error) {
-                await session.abortTransaction();
-                logger.error('Error removing main teacher:', error);
-                throw createError(
-                    ErrorTypes.DATABASE.QUERY_FAILED,
-                    'Errore nella rimozione del docente principale',
-                    { originalError: error.message }
-                );
-            } finally {
-                session.endSession();
             }
+    
+            await session.commitTransaction();
+            return classDoc;
+    
+        } catch (error) {
+            await session.abortTransaction();
+            if (error.code) throw error;
+            throw handleRepositoryError(
+                error,
+                'updateMainTeacher',
+                { classId, teacherId },
+                this.repositoryName
+            );
+        } finally {
+            session.endSession();
         }
+    }
 
-
-        async addTeacher(classId, teacherId) {
-            const session = await mongoose.startSession();
-            session.startTransaction();
-
-            try {
-                // 1. Trova la classe
-                const classDoc = await this.model.findById(classId).session(session);
-                if (!classDoc) {
-                    throw createError(
-                        ErrorTypes.RESOURCE.NOT_FOUND,
-                        'Classe non trovata'
-                    );
-                }
-
-                // 2. Verifica che il docente non sia già presente
-                if (classDoc.teachers.includes(teacherId)) {
-                    throw createError(
-                        ErrorTypes.RESOURCE.ALREADY_EXISTS,
-                        'Docente già assegnato alla classe'
-                    );
-                }
-
-                // 3. Aggiorna la classe
-                classDoc.teachers.push(teacherId);
-                await classDoc.save({ session });
-
-                // 4. Aggiorna gli studenti della classe
-                await mongoose.model('Student').updateMany(
-                    { classId: classId },
-                    { 
-                        $addToSet: { teachers: teacherId } 
-                    },
-                    { session }
-                );
-
-                // 5. Aggiorna l'utente docente (aggiungi la classe e gli studenti)
-                const students = await mongoose.model('Student').find(
-                    { classId: classId },
-                    { _id: 1 }
-                ).session(session);
-                
-                const studentIds = students.map(s => s._id);
-                
-                await mongoose.model('User').findByIdAndUpdate(
-                    teacherId,
-                    { 
-                        $addToSet: { 
-                            assignedClassIds: classId,
-                            assignedStudentIds: { $each: studentIds }
-                        } 
-                    },
-                    { session }
-                );
-
-                await session.commitTransaction();
-                return classDoc;
-
-            } catch (error) {
-                await session.abortTransaction();
+    async removeMainTeacher(classId) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+    
+        try {
+            // 1. Trova la classe e verifica che esista
+            const classDoc = await this.model.findById(classId).session(session);
+            if (!classDoc) {
                 throw createError(
-                    ErrorTypes.DATABASE.QUERY_FAILED,
-                    'Errore nell\'aggiunta del docente',
-                    { originalError: error.message }
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Classe non trovata'
                 );
-            } finally {
-                session.endSession();
             }
-        }
-
-        async removeTeacher(classId, teacherId) {
-            const session = await mongoose.startSession();
-            session.startTransaction();
-        
-            try {
-                // 1. Trova la classe
-                const classDoc = await this.model.findById(classId).session(session);
-                if (!classDoc) {
-                    throw createError(
-                        ErrorTypes.RESOURCE.NOT_FOUND,
-                        'Classe non trovata'
-                    );
-                }
-        
-                // 2. Verifica che il docente non sia mainTeacher
-                if (classDoc.mainTeacher && classDoc.mainTeacher.toString() === teacherId.toString()) {
-                    throw createError(
-                        ErrorTypes.BUSINESS.INVALID_OPERATION,
-                        'Non è possibile rimuovere il docente principale. Usare removeMainTeacher invece.'
-                    );
-                }
-        
-                // 3. Verifica che il docente sia presente nell'array
-                if (!classDoc.teachers.some(t => t.toString() === teacherId.toString())) {
-                    throw createError(
-                        ErrorTypes.RESOURCE.NOT_FOUND,
-                        'Docente non trovato nella classe'
-                    );
-                }
-        
-                // 4. Aggiorna la classe
-                classDoc.teachers = classDoc.teachers.filter(
-                    t => t.toString() !== teacherId.toString()
-                );
-                await classDoc.save({ session });
-        
-                // 5. Aggiorna gli studenti della classe
-                await mongoose.model('Student').updateMany(
-                    { classId: classId },
-                    { 
-                        $pull: { teachers: teacherId } 
-                    },
-                    { session }
-                );
-        
-                // 6. Aggiorna l'utente docente (rimuovi la classe e gli studenti)
-                const students = await mongoose.model('Student').find(
-                    { classId: classId },
-                    { _id: 1 }
-                ).session(session);
-                
-                const studentIds = students.map(s => s._id);
-                
-                await mongoose.model('User').findByIdAndUpdate(
-                    teacherId,
-                    { 
-                        $pull: { 
-                            assignedClassIds: classId,
-                            assignedStudentIds: { $in: studentIds }
-                        } 
-                    },
-                    { session }
-                );
-        
-                await session.commitTransaction();
-                return classDoc;
-        
-            } catch (error) {
-                await session.abortTransaction();
+    
+            // 2. Verifica che ci sia un mainTeacher da rimuovere
+            if (!classDoc.mainTeacher) {
                 throw createError(
-                    ErrorTypes.DATABASE.QUERY_FAILED,
-                    'Errore nella rimozione del docente',
-                    { originalError: error.message }
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
+                    'Nessun docente principale assegnato'
                 );
-            } finally {
-                session.endSession();
             }
+    
+            const previousTeacherId = classDoc.mainTeacher;
+    
+            // 3. Aggiorna la classe
+            classDoc.previousMainTeacher = previousTeacherId;
+            classDoc.mainTeacher = null;
+            classDoc.mainTeacherIsTemporary = true;
+            await classDoc.save({ session });
+    
+            // 4. Aggiorna gli studenti
+            await mongoose.model('Student').updateMany(
+                { 
+                    classId: classId,
+                    mainTeacher: previousTeacherId
+                },
+                { 
+                    $set: { mainTeacher: null },
+                    $pull: { teachers: previousTeacherId }
+                },
+                { session }
+            );
+    
+            // 5. Aggiorna l'utente docente (rimuovi la classe e gli studenti)
+            const students = await mongoose.model('Student').find(
+                { classId: classId },
+                { _id: 1 }
+            ).session(session);
+            
+            const studentIds = students.map(s => s._id);
+            
+            await mongoose.model('User').findByIdAndUpdate(
+                previousTeacherId,
+                { 
+                    $pull: { 
+                        assignedClassIds: classId,
+                        assignedStudentIds: { $in: studentIds }
+                    } 
+                },
+                { session }
+            );
+    
+            await session.commitTransaction();
+            
+            return classDoc;
+    
+        } catch (error) {
+            await session.abortTransaction();
+            if (error.code) throw error;
+            throw handleRepositoryError(
+                error,
+                'removeMainTeacher',
+                { classId },
+                this.repositoryName
+            );
+        } finally {
+            session.endSession();
         }
-        
+    }
 
+    async addTeacher(classId, teacherId) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
+        try {
+            // 1. Trova la classe
+            const classDoc = await this.model.findById(classId).session(session);
+            if (!classDoc) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Classe non trovata'
+                );
+            }
+
+            // 2. Verifica che il docente non sia già presente
+            if (classDoc.teachers.includes(teacherId)) {
+                throw createError(
+                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
+                    'Docente già assegnato alla classe'
+                );
+            }
+
+            // 3. Aggiorna la classe
+            classDoc.teachers.push(teacherId);
+            await classDoc.save({ session });
+
+            // 4. Aggiorna gli studenti della classe
+            await mongoose.model('Student').updateMany(
+                { classId: classId },
+                { 
+                    $addToSet: { teachers: teacherId } 
+                },
+                { session }
+            );
+
+            // 5. Aggiorna l'utente docente (aggiungi la classe e gli studenti)
+            const students = await mongoose.model('Student').find(
+                { classId: classId },
+                { _id: 1 }
+            ).session(session);
+            
+            const studentIds = students.map(s => s._id);
+            
+            await mongoose.model('User').findByIdAndUpdate(
+                teacherId,
+                { 
+                    $addToSet: { 
+                        assignedClassIds: classId,
+                        assignedStudentIds: { $each: studentIds }
+                    } 
+                },
+                { session }
+            );
+
+            await session.commitTransaction();
+            return classDoc;
+
+        } catch (error) {
+            await session.abortTransaction();
+            if (error.code) throw error;
+            throw handleRepositoryError(
+                error,
+                'addTeacher',
+                { classId, teacherId },
+                this.repositoryName
+            );
+        } finally {
+            session.endSession();
+        }
+    }
+
+    async removeTeacher(classId, teacherId) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+    
+        try {
+            // 1. Trova la classe
+            const classDoc = await this.model.findById(classId).session(session);
+            if (!classDoc) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Classe non trovata'
+                );
+            }
+    
+            // 2. Verifica che il docente non sia mainTeacher
+            if (classDoc.mainTeacher && classDoc.mainTeacher.toString() === teacherId.toString()) {
+                throw createError(
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
+                    'Non è possibile rimuovere il docente principale. Usare removeMainTeacher invece.'
+                );
+            }
+    
+            // 3. Verifica che il docente sia presente nell'array
+            if (!classDoc.teachers.some(t => t.toString() === teacherId.toString())) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Docente non trovato nella classe'
+                );
+            }
+    
+            // 4. Aggiorna la classe
+            classDoc.teachers = classDoc.teachers.filter(
+                t => t.toString() !== teacherId.toString()
+            );
+            await classDoc.save({ session });
+    
+            // 5. Aggiorna gli studenti della classe
+            await mongoose.model('Student').updateMany(
+                { classId: classId },
+                { 
+                    $pull: { teachers: teacherId } 
+                },
+                { session }
+            );
+    
+            // 6. Aggiorna l'utente docente (rimuovi la classe e gli studenti)
+            const students = await mongoose.model('Student').find(
+                { classId: classId },
+                { _id: 1 }
+            ).session(session);
+            
+            const studentIds = students.map(s => s._id);
+            
+            await mongoose.model('User').findByIdAndUpdate(
+                teacherId,
+                { 
+                    $pull: { 
+                        assignedClassIds: classId,
+                        assignedStudentIds: { $in: studentIds }
+                    } 
+                },
+                { session }
+            );
+    
+            await session.commitTransaction();
+            return classDoc;
+    
+        } catch (error) {
+            await session.abortTransaction();
+            if (error.code) throw error;
+            throw handleRepositoryError(
+                error,
+                'removeTeacher',
+                { classId, teacherId },
+                this.repositoryName
+            );
+        } finally {
+            session.endSession();
+        }
+    }
 }
 
 module.exports = ClassRepository;

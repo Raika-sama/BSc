@@ -1,5 +1,6 @@
 // src/repositories/UserRepository.js
 const BaseRepository = require('./base/BaseRepository');
+const handleRepositoryError = require('../utils/errors/repositoryErrorHandler');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const mongoose = require('mongoose');
@@ -8,6 +9,7 @@ class UserRepository extends BaseRepository {
     constructor(userModel, sessionService) {
         super(userModel);
         this.sessionService = sessionService; // Store the session service
+        this.repositoryName = 'UserRepository';
     }
 
     /**
@@ -23,10 +25,11 @@ class UserRepository extends BaseRepository {
             }
             return await query;
         } catch (error) {
-            logger.error('Error finding user by email', { error, email });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella ricerca utente'
+            throw handleRepositoryError(
+                error,
+                'findByEmail',
+                { email, includePassword },
+                this.repositoryName
             );
         }
     }
@@ -34,7 +37,16 @@ class UserRepository extends BaseRepository {
     // Nel Repository
     async findById(id) {
         try {
-            console.log('UserRepository: Finding user by ID:', id);
+            logger.debug('UserRepository: Finding user by ID:', id);
+            
+            // Verifica che l'ID sia valido
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_FORMAT,
+                    `Formato ID non valido: ${id}`,
+                    { value: id }
+                );
+            }
             
             const user = await this.model.findById(id)
                 .select('-password -passwordHistory -passwordResetToken -passwordResetExpires');
@@ -42,20 +54,26 @@ class UserRepository extends BaseRepository {
             if (!user) {
                 throw createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Utente non trovato'
+                    'Utente non trovato',
+                    { id }
                 );
             }
     
             return user;
         } catch (error) {
-            console.error('UserRepository: Error finding user by ID:', error);
-            if (error.name === 'CastError') {
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_ID,
-                    'ID utente non valido'
-                );
+            // Se l'errore ha già un codice e uno status, è già stato formattato correttamente,
+            // quindi lo restituiamo direttamente
+            if (error.code && error.status) {
+                throw error;
             }
-            throw error;
+            
+            // Altrimenti, gestiamo l'errore con il gestore standard
+            throw handleRepositoryError(
+                error,
+                'findById',
+                { id },
+                this.repositoryName
+            );
         }
     }
     
@@ -74,16 +92,11 @@ class UserRepository extends BaseRepository {
             logger.info('User created', { userId: user._id });
             return user;
         } catch (error) {
-            logger.error('Error creating user', { error });
-            if (error.code === 11000) {
-                throw createError(
-                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
-                    'Email già registrata'
-                );
-            }
-            throw createError(
-                ErrorTypes.DATABASE.CREATION_FAILED,
-                'Errore nella creazione utente'
+            throw handleRepositoryError(
+                error,
+                'create',
+                { userData: { ...userData, password: '[REDACTED]' } },
+                this.repositoryName
             );
         }
     }
@@ -93,10 +106,9 @@ class UserRepository extends BaseRepository {
      * @param {string} userId - ID utente
      * @param {Object} updateData - Dati da aggiornare
      */
-
     async update(userId, updateData) {
         try {
-            console.log(`UserRepository: Aggiornamento utente ${userId} con dati:`, {
+            logger.debug(`UserRepository: Aggiornamento utente ${userId} con dati:`, {
                 ...updateData,
                 fields: Object.keys(updateData)
             });
@@ -104,8 +116,9 @@ class UserRepository extends BaseRepository {
             // Assicurati che l'ID sia valido
             if (!mongoose.Types.ObjectId.isValid(userId)) {
                 throw createError(
-                    ErrorTypes.VALIDATION.INVALID_ID,
-                    'ID utente non valido'
+                    ErrorTypes.VALIDATION.INVALID_FORMAT,
+                    `Formato ID non valido: ${userId}`,
+                    { value: userId }
                 );
             }
     
@@ -124,162 +137,180 @@ class UserRepository extends BaseRepository {
             if (!user) {
                 throw createError(
                     ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Utente non trovato'
+                    'Utente non trovato',
+                    { id: userId }
                 );
             }
     
-            console.log(`UserRepository: Utente aggiornato:`, {
+            logger.debug(`UserRepository: Utente aggiornato:`, {
                 id: user._id,
                 testAccessLevel: user.testAccessLevel
             });
     
             return user;
         } catch (error) {
-            console.error('UserRepository - Error updating user:', error);
-            throw error;
+            // Se l'errore ha già un codice e uno status, è già stato formattato correttamente,
+            // quindi lo restituiamo direttamente lanciandolo nuovamente
+            if (error.code && error.status) {
+                throw error;
+            }
+            
+            // Altrimenti, gestiamo l'errore con il gestore standard
+            throw handleRepositoryError(
+                error,
+                'update',
+                { userId, updateData },
+                this.repositoryName
+            );
         }
     }
 
     
-/**
- * Elimina un utente e aggiorna tutte le relazioni
- * @param {string} userId - ID utente da eliminare
- * @returns {Promise<boolean>} - True se l'eliminazione è avvenuta con successo
- */
-async deleteUser(userId) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    /**
+     * Elimina un utente e aggiorna tutte le relazioni
+     * @param {string} userId - ID utente da eliminare
+     * @returns {Promise<boolean>} - True se l'eliminazione è avvenuta con successo
+     */
+    async deleteUser(userId) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
-    try {
-        console.log(`UserRepository: Starting deletion for user ${userId}`);
+        try {
+            logger.debug(`UserRepository: Starting deletion for user ${userId}`);
 
-        // 1. Trova l'utente completo
-        const user = await this.model.findById(userId).session(session);
-        if (!user) {
-            throw new Error('Utente non trovato');
-        }
+            // 1. Trova l'utente completo
+            const user = await this.model.findById(userId).session(session);
+            if (!user) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente non trovato'
+                );
+            }
 
-        // 2. Aggiorna le scuole in cui l'utente è manager
-        const School = mongoose.model('School');
-        const userObjectId = new mongoose.Types.ObjectId(userId);
-        
-        console.log(`UserRepository: Looking for schools where user ${userId} is manager`);
-        
-        // Trova scuole dove l'utente è manager
-        const schoolsAsManager = await School.find({ 
-            manager: { $eq: userObjectId } 
-        }).session(session);
-        
-        console.log(`UserRepository: Found ${schoolsAsManager.length} schools where user is manager`);
-        
-        // *** MANTIENI SOLO QUESTO CICLO CON _skipManagerValidation ***
-        // Nel deleteUser, aggiungi il FLAG 'SKIPMANAGERVALIDATION' presente nel modello school 
-       // prima di salvare altrimenti darebbe errore perché non può non esserci un manager della scuola (ma se un admin vuole toglierlo può farlo)
-        for (const school of schoolsAsManager) {
-            console.log(`UserRepository: Removing user as manager from school ${school._id}`);
-            school.manager = null;
-            school.notes = `${school.notes || ''}\n[AVVISO] Il manager precedente (${user.firstName} ${user.lastName}) è stato rimosso il ${new Date().toLocaleString()}. Assegnare un nuovo manager.`;
+            // 2. Aggiorna le scuole in cui l'utente è manager
+            const School = mongoose.model('School');
+            const userObjectId = new mongoose.Types.ObjectId(userId);
             
-            // Aggiungi la flag per saltare la validazione
-            school._skipManagerValidation = true;
+            logger.debug(`UserRepository: Looking for schools where user ${userId} is manager`);
             
-            await school.save({ session });
-            console.log(`UserRepository: School ${school._id} updated, manager is now null`);
+            // Trova scuole dove l'utente è manager
+            const schoolsAsManager = await School.find({ 
+                manager: { $eq: userObjectId } 
+            }).session(session);
+            
+            logger.debug(`UserRepository: Found ${schoolsAsManager.length} schools where user is manager`);
+            
+            // *** MANTIENI SOLO QUESTO CICLO CON _skipManagerValidation ***
+            // Nel deleteUser, aggiungi il FLAG 'SKIPMANAGERVALIDATION' presente nel modello school 
+           // prima di salvare altrimenti darebbe errore perché non può non esserci un manager della scuola (ma se un admin vuole toglierlo può farlo)
+            for (const school of schoolsAsManager) {
+                logger.debug(`UserRepository: Removing user as manager from school ${school._id}`);
+                school.manager = null;
+                school.notes = `${school.notes || ''}\n[AVVISO] Il manager precedente (${user.firstName} ${user.lastName}) è stato rimosso il ${new Date().toLocaleString()}. Assegnare un nuovo manager.`;
+                
+                // Aggiungi la flag per saltare la validazione
+                school._skipManagerValidation = true;
+                
+                await school.save({ session });
+                logger.debug(`UserRepository: School ${school._id} updated, manager is now null`);
+            }
+
+            // 3. Rimuovi l'utente dagli utenti della scuola
+            logger.debug(`UserRepository: Removing user from schools' users arrays`);
+            
+            const schoolsWithUserResult = await School.updateMany(
+                { 'users.user': { $eq: userObjectId } },
+                { $pull: { users: { user: { $eq: userObjectId } } } },
+                { session }
+            );
+            
+            logger.debug(`UserRepository: Updated ${schoolsWithUserResult.matchedCount} schools, modified ${schoolsWithUserResult.modifiedCount}`);
+
+
+            // 4. Aggiorna le classi in cui l'utente è mainTeacher
+            const Class = mongoose.model('Class');
+            const classesAsMainTeacher = await Class.find({ mainTeacher: userId }).session(session);
+            
+            for (const cls of classesAsMainTeacher) {
+                logger.debug(`UserRepository: User is main teacher of class ${cls._id}`);
+                // Imposta un messaggio di avviso sulla classe
+                cls.notes = `${cls.notes || ''}\n[AVVISO] Il docente principale precedente (${user.firstName} ${user.lastName}) è stato rimosso il ${new Date().toLocaleString()}. Assegnare un nuovo docente principale.`;
+                // Segna il docente come temporaneamente rimosso
+                cls.mainTeacherIsTemporary = true;
+                cls.previousMainTeacher = userId;
+                cls.mainTeacher = null;
+                await cls.save({ session });
+            }
+
+            // 5. Rimuovi l'utente dalla lista insegnanti delle classi
+            await Class.updateMany(
+                { teachers: userId },
+                { $pull: { teachers: userId } },
+                { session }
+            );
+
+            // 6. Aggiorna gli studenti in cui l'utente è mainTeacher
+            const Student = mongoose.model('Student');
+            const studentsAsMainTeacher = await Student.find({ mainTeacher: userId }).session(session);
+            
+            for (const student of studentsAsMainTeacher) {
+                logger.debug(`UserRepository: User is main teacher of student ${student._id}`);
+                student.mainTeacher = null;
+                await student.save({ session });
+            }
+
+            // 7. Rimuovi l'utente dalla lista insegnanti degli studenti
+            await Student.updateMany(
+                { teachers: userId },
+                { $pull: { teachers: userId } },
+                { session }
+            );
+
+            // 8. Soft delete dell'utente
+            user.isDeleted = true;
+            user.deletedAt = new Date();
+            user.status = 'inactive';
+            user.email = `deleted_${Date.now()}_${user.email}`; // Modifica email per evitare conflitti futuri
+            
+            // Pulizia dei campi di assegnazione - AGGIUNTA
+            user.assignedSchoolIds = [];
+            user.assignedClassIds = [];
+            user.assignedStudentIds = [];
+
+            /* Commento perché i campi nel modello user sono cambiati
+            user.schoolId = null;
+            user.assignedSchoolId = null; // Per retrocompatibilità con il vecchio campo
+            */
+
+            // Clear session tokens directly on the user object instead of using sessionService
+            if (user.sessionTokens && Array.isArray(user.sessionTokens)) {
+                user.sessionTokens = [];
+            }
+
+            await user.save({ session });
+
+            // Removed the problematic line that was causing the error:
+            // await this.sessionService.removeAllSessions(userId);
+
+            // Commit della transazione
+            await session.commitTransaction();
+            logger.debug(`UserRepository: User ${userId} successfully deleted`);
+            return true;
+        } catch (error) {
+            // Rollback in caso di errore
+            await session.abortTransaction();
+            logger.error('UserRepository - Error deleting user:', error);
+            throw handleRepositoryError(
+                error,
+                'deleteUser',
+                { userId },
+                this.repositoryName
+            );
+        } finally {
+            // Fine della sessione
+            session.endSession();
         }
-
-        // 3. Rimuovi l'utente dagli utenti della scuola
-        console.log(`UserRepository: Removing user from schools' users arrays`);
-        
-        const schoolsWithUserResult = await School.updateMany(
-            { 'users.user': { $eq: userObjectId } },
-            { $pull: { users: { user: { $eq: userObjectId } } } },
-            { session }
-        );
-        
-        console.log(`UserRepository: Updated ${schoolsWithUserResult.matchedCount} schools, modified ${schoolsWithUserResult.modifiedCount}`);
-
-
-        // 4. Aggiorna le classi in cui l'utente è mainTeacher
-        const Class = mongoose.model('Class');
-        const classesAsMainTeacher = await Class.find({ mainTeacher: userId }).session(session);
-        
-        for (const cls of classesAsMainTeacher) {
-            console.log(`UserRepository: User is main teacher of class ${cls._id}`);
-            // Imposta un messaggio di avviso sulla classe
-            cls.notes = `${cls.notes || ''}\n[AVVISO] Il docente principale precedente (${user.firstName} ${user.lastName}) è stato rimosso il ${new Date().toLocaleString()}. Assegnare un nuovo docente principale.`;
-            // Segna il docente come temporaneamente rimosso
-            cls.mainTeacherIsTemporary = true;
-            cls.previousMainTeacher = userId;
-            cls.mainTeacher = null;
-            await cls.save({ session });
-        }
-
-        // 5. Rimuovi l'utente dalla lista insegnanti delle classi
-        await Class.updateMany(
-            { teachers: userId },
-            { $pull: { teachers: userId } },
-            { session }
-        );
-
-        // 6. Aggiorna gli studenti in cui l'utente è mainTeacher
-        const Student = mongoose.model('Student');
-        const studentsAsMainTeacher = await Student.find({ mainTeacher: userId }).session(session);
-        
-        for (const student of studentsAsMainTeacher) {
-            console.log(`UserRepository: User is main teacher of student ${student._id}`);
-            student.mainTeacher = null;
-            await student.save({ session });
-        }
-
-        // 7. Rimuovi l'utente dalla lista insegnanti degli studenti
-        await Student.updateMany(
-            { teachers: userId },
-            { $pull: { teachers: userId } },
-            { session }
-        );
-
-        // 8. Soft delete dell'utente
-        user.isDeleted = true;
-        user.deletedAt = new Date();
-        user.status = 'inactive';
-        user.email = `deleted_${Date.now()}_${user.email}`; // Modifica email per evitare conflitti futuri
-        
-        // Pulizia dei campi di assegnazione - AGGIUNTA
-        user.assignedSchoolIds = [];
-        user.assignedClassIds = [];
-        user.assignedStudentIds = [];
-
-        /* Commento perché i campi nel modello user sono cambiati
-        user.schoolId = null;
-        user.assignedSchoolId = null; // Per retrocompatibilità con il vecchio campo
-        */
-
-        // Clear session tokens directly on the user object instead of using sessionService
-        if (user.sessionTokens && Array.isArray(user.sessionTokens)) {
-            user.sessionTokens = [];
-        }
-
-        await user.save({ session });
-
-        // Removed the problematic line that was causing the error:
-        // await this.sessionService.removeAllSessions(userId);
-
-        // Commit della transazione
-        await session.commitTransaction();
-        console.log(`UserRepository: User ${userId} successfully deleted`);
-        return true;
-    } catch (error) {
-        // Rollback in caso di errore
-        await session.abortTransaction();
-        console.error('UserRepository - Error deleting user:', error);
-        throw error;
-    } finally {
-        // Fine della sessione
-        session.endSession();
     }
-}
-
-
 
     /**
      * Trova utenti con filtri e paginazione
@@ -290,7 +321,7 @@ async deleteUser(userId) {
         try {
             let query = {};
             
-            console.log('Repository findWithFilters received:', { filters, options });
+            logger.debug('Repository findWithFilters received:', { filters, options });
     
             // Filtri base
             if (filters.search) {
@@ -311,16 +342,16 @@ async deleteUser(userId) {
     
             // Gestione filtro schoolId
             if (filters.schoolId) {
-                console.log('Applying schoolId filter:', filters.schoolId);
+                logger.debug('Applying schoolId filter:', filters.schoolId);
                 try {
                     const objectId = new mongoose.Types.ObjectId(filters.schoolId);
                     query.schoolId = objectId;
                 } catch (err) {
-                    console.error('Invalid schoolId format:', err);
+                    logger.error('Invalid schoolId format:', err);
                 }
             }
     
-            console.log('Final query:', query);
+            logger.debug('Final query:', query);
     
             const page = parseInt(options.page) || 1;
             const limit = parseInt(options.limit) || 10;
@@ -337,7 +368,7 @@ async deleteUser(userId) {
                 this.model.countDocuments(query)
             ]);
     
-            console.log('Query results:', {
+            logger.debug('Query results:', {
                 totalFound: total,
                 usersReturned: users.length,
                 query
@@ -350,14 +381,18 @@ async deleteUser(userId) {
                 limit
             };
         } catch (error) {
-            console.error('Repository Error:', error);
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'findWithFilters',
+                { filters, options },
+                this.repositoryName
+            );
         }
     }
 
     async getSchoolTeachers(schoolId) {
         try {
-            console.log('UserRepository: Getting teachers for school:', schoolId);
+            logger.debug('UserRepository: Getting teachers for school:', schoolId);
             
             const school = await mongoose.model('School')
                 .findById(schoolId)
@@ -372,15 +407,19 @@ async deleteUser(userId) {
                 .select('manager users')
                 .lean();
     
-            console.log('UserRepository: School query result:', {
+            logger.debug('UserRepository: School query result:', {
                 hasManager: !!school?.manager,
                 usersCount: school?.users?.length || 0
             });
     
             return school;
         } catch (error) {
-            console.error('UserRepository Error:', error);
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'getSchoolTeachers',
+                { schoolId },
+                this.repositoryName
+            );
         }
     }
 }

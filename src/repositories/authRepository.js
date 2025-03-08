@@ -1,4 +1,5 @@
 // src/repositories/AuthRepository.js
+const handleRepositoryError = require('../utils/errors/repositoryErrorHandler');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const crypto = require('crypto');
@@ -8,6 +9,7 @@ class AuthRepository {
     constructor(userModel) {
         this.model = userModel;
         this.RESET_TOKEN_EXPIRES = 36000000; // 10 ora in millisecondi
+        this.repositoryName = 'AuthRepository';
     }
 
     /**
@@ -17,39 +19,43 @@ class AuthRepository {
         try {
             return await this.model.findById(userId).lean();
         } catch (error) {
-            logger.error('Error finding user by id', { error, userId });
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'findById',
+                { userId },
+                this.repositoryName
+            );
         }
     }
 
-  /**
+    /**
      * Trova un utente per email
      */
-  async findByEmail(email) {
-    try {
-        const user = await this.model.findOne({ email })
-            .select('+password +sessionTokens')
-            .exec();
-        
-        logger.debug('User lookup result:', {
-            found: !!user,
-            hasPassword: !!user?.password,
-            passwordLength: user?.password?.length, // Aggiungi questa riga
-            email: email
-        });
+    async findByEmail(email) {
+        try {
+            const user = await this.model.findOne({ email })
+                .select('+password +sessionTokens')
+                .exec();
+            
+            logger.debug('User lookup result:', {
+                found: !!user,
+                hasPassword: !!user?.password,
+                passwordLength: user?.password?.length, // Aggiungi questa riga
+                email: email
+            });
 
-        return user;
-    } catch (error) {
-        logger.error('Error finding user by email:', {
-            error: error.message,
-            email,
-            stack: error.stack
-        });
-        throw error;
+            return user;
+        } catch (error) {
+            throw handleRepositoryError(
+                error,
+                'findByEmail',
+                { email },
+                this.repositoryName
+            );
+        }
     }
-}
 
-   /**
+    /**
      * Aggiorna le informazioni di login
      */
     async updateLoginInfo(userId) {
@@ -62,11 +68,14 @@ class AuthRepository {
                 }
             }, { new: true });
         } catch (error) {
-            logger.error('Error updating login info', { error, userId });
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'updateLoginInfo',
+                { userId },
+                this.repositoryName
+            );
         }
     }
-
 
     /**
      * Incrementa i tentativi di login falliti
@@ -84,11 +93,14 @@ class AuthRepository {
 
             return await user.save();
         } catch (error) {
-            logger.error('Error incrementing login attempts', { error, userId });
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'incrementLoginAttempts',
+                { userId, maxAttempts, lockTime },
+                this.repositoryName
+            );
         }
     }
-
 
     /**
      * Aggiorna la password di un utente
@@ -124,68 +136,69 @@ class AuthRepository {
             logger.info('Password updated successfully', { userId });
             return user;
         } catch (error) {
-            logger.error('Error updating password', { error, userId });
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'updatePassword',
+                { userId },
+                this.repositoryName
+            );
         }
     }
 
-/**
- * Ottiene i dati dell'utente autenticato
- */
-async getMe(req, res) {
-    try {
-        logger.debug('Getting authenticated user data', { 
-            userId: req.user?.id 
-        });
+    /**
+     * Ottiene i dati dell'utente autenticato
+     */
+    async getMe(req, res) {
+        try {
+            logger.debug('Getting authenticated user data', { 
+                userId: req.user?.id 
+            });
 
-        if (!req.user) {
-            throw createError(
-                ErrorTypes.AUTH.UNAUTHORIZED,
-                'Utente non autenticato'
-            );
-        }
-
-        // Recupera i dati aggiornati dell'utente con le sessioni attive
-        const [user, activeSessions] = await Promise.all([
-            this.userService.getUserById(req.user.id),
-            this.sessionService.getActiveSessions(req.user.id)
-        ]);
-
-        if (!user) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Utente non trovato'
-            );
-        }
-
-        logger.debug('User data retrieved successfully', { 
-            userId: user._id,
-            sessionCount: activeSessions.length
-        });
-
-        this.sendResponse(res, {
-            status: 'success',
-            data: {
-                user,
-                sessions: {
-                    active: activeSessions.length,
-                    current: req.sessionId
-                }
+            if (!req.user) {
+                throw createError(
+                    ErrorTypes.AUTH.UNAUTHORIZED,
+                    'Utente non autenticato'
+                );
             }
-        });
-    } catch (error) {
-        logger.error('Error getting user data', { error });
-        this.handleError(res, error);
+
+            // Recupera i dati aggiornati dell'utente con le sessioni attive
+            const [user, activeSessions] = await Promise.all([
+                this.userService.getUserById(req.user.id),
+                this.sessionService.getActiveSessions(req.user.id)
+            ]);
+
+            if (!user) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente non trovato'
+                );
+            }
+
+            logger.debug('User data retrieved successfully', { 
+                userId: user._id,
+                sessionCount: activeSessions.length
+            });
+
+            this.sendResponse(res, {
+                status: 'success',
+                data: {
+                    user,
+                    sessions: {
+                        active: activeSessions.length,
+                        current: req.sessionId
+                    }
+                }
+            });
+        } catch (error) {
+            logger.error('Error getting user data', { error });
+            this.handleError(res, error);
+        }
     }
-}
 
     /**
      * Verifica credenziali utente
      * @param {string} email - Email utente
      * @param {string} password - Password da verificare
-     */
-    /**
-     * Verifica le credenziali dell'utente
      */
     async verifyCredentials(email, password) {
         try {
@@ -210,42 +223,49 @@ async getMe(req, res) {
 
             return user;
         } catch (error) {
-            logger.error('Error verifying credentials', { error, email });
-            throw error;
+            if (error.code) return error; // Se è già un errore formattato, restituiscilo direttamente
+            throw handleRepositoryError(
+                error,
+                'verifyCredentials',
+                { email },
+                this.repositoryName
+            );
         }
     }
-
 
     /**
      * Crea token per reset password
      * @param {string} email - Email utente
      */
-async createPasswordResetToken(email) {
-    try {
-        const user = await this.model.findOne({ email });
-        if (!user) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Utente non trovato'
+    async createPasswordResetToken(email) {
+        try {
+            const user = await this.model.findOne({ email });
+            if (!user) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente non trovato'
+                );
+            }
+
+            const resetToken = crypto.randomBytes(32).toString('hex');
+            user.passwordResetToken = crypto
+                .createHash('sha256')
+                .update(resetToken)
+                .digest('hex');
+            
+            user.passwordResetExpires = Date.now() + this.RESET_TOKEN_EXPIRES;
+            await user.save({ validateBeforeSave: false });
+
+            return { user, resetToken };
+        } catch (error) {
+            throw handleRepositoryError(
+                error,
+                'createPasswordResetToken',
+                { email },
+                this.repositoryName
             );
         }
-
-        const resetToken = crypto.randomBytes(32).toString('hex');
-        user.passwordResetToken = crypto
-            .createHash('sha256')
-            .update(resetToken)
-            .digest('hex');
-        
-        user.passwordResetExpires = Date.now() + this.RESET_TOKEN_EXPIRES;
-        await user.save({ validateBeforeSave: false });
-
-        return { user, resetToken };
-    } catch (error) {
-        logger.error('Error creating password reset token', { error });
-        throw error;
     }
-}
-
 
     /**
      * Verifica token di reset password
@@ -272,8 +292,16 @@ async createPasswordResetToken(email) {
 
             return user;
         } catch (error) {
-            logger.error('Error verifying reset token', { error });
-            throw error;
+            // Se è un errore di tipo "token non valido", restituiscilo direttamente
+            if (error.code === ErrorTypes.AUTH.TOKEN_INVALID.code) {
+                return error;
+            }
+            throw handleRepositoryError(
+                error,
+                'verifyResetToken',
+                { token: '***' }, // Nascondiamo il token per sicurezza
+                this.repositoryName
+            );
         }
     }
 
@@ -285,6 +313,8 @@ async createPasswordResetToken(email) {
     async resetPassword(token, newPassword) {
         try {
             const user = await this.verifyResetToken(token);
+            // Se è un errore di token, restituiscilo
+            if (user.code && user.status) return user;
 
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(newPassword, salt);
@@ -310,8 +340,12 @@ async createPasswordResetToken(email) {
 
             return user;
         } catch (error) {
-            logger.error('Error resetting password', { error });
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'resetPassword',
+                { token: '***' }, // Nascondiamo il token per sicurezza
+                this.repositoryName
+            );
         }
     }
 
@@ -326,8 +360,12 @@ async createPasswordResetToken(email) {
             });
             logger.debug('Last login updated', { userId });
         } catch (error) {
-            logger.error('Error updating last login', { error });
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'updateLastLogin',
+                { userId },
+                this.repositoryName
+            );
         }
     }
 
@@ -343,8 +381,12 @@ async createPasswordResetToken(email) {
             });
             logger.info('Reset tokens invalidated', { userId });
         } catch (error) {
-            logger.error('Error invalidating reset tokens', { error });
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'invalidateResetTokens',
+                { userId },
+                this.repositoryName
+            );
         }
     }
 }

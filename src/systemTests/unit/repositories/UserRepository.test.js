@@ -4,6 +4,7 @@ const UserRepository = require('@/repositories/UserRepository');
 const User = require('@/models/User');
 const SessionService = require('@/services/SessionService');
 const { v4: uuidv4 } = require('uuid');
+const { ErrorTypes } = require('@/utils/errors/errorTypes');
 
 let mongoServer;
 
@@ -113,10 +114,12 @@ describe('UserRepository', () => {
                 // Se arriviamo qui, il test fallisce perché non è stata lanciata un'eccezione
                 fail('Expected exception was not thrown');
             } catch (error) {
-                // Verifichiamo che l'errore sia definito
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
-                // Possiamo anche verificare proprietà specifiche dell'errore
-                expect(error.message).toBeDefined();
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
+                // Verifichiamo che sia del tipo di errore corretto
+                expect(error.code).toContain('VAL_'); // codice errore di validazione
             }
         });
 
@@ -128,10 +131,13 @@ describe('UserRepository', () => {
                 // Se arriviamo qui, il test fallisce perché non è stata lanciata un'eccezione
                 fail('Expected exception was not thrown');
             } catch (error) {
-                // Verifichiamo che l'errore sia definito
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
-                // Possiamo anche verificare proprietà specifiche dell'errore se necessario
-                expect(error.message).toBeDefined();
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
+                // Verifichiamo che sia del tipo NOT_FOUND
+                expect(error.code).toBe(ErrorTypes.RESOURCE.NOT_FOUND.code);
+                expect(error.status).toBe(404);
             }
         });
     });
@@ -179,10 +185,12 @@ describe('UserRepository', () => {
                 // Se arriviamo qui, il test fallisce perché non è stata lanciata un'eccezione
                 fail('Expected exception was not thrown');
             } catch (error) {
-                // Verifichiamo che l'errore sia definito
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
-                // Possiamo anche verificare proprietà specifiche dell'errore
-                expect(error.message).toContain('Email già registrata');
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
+                expect(error.code).toBe(ErrorTypes.RESOURCE.ALREADY_EXISTS.code);
+                expect(error.status).toBe(409);
             }
         });
     });
@@ -215,10 +223,11 @@ describe('UserRepository', () => {
                 // Se arriviamo qui, il test fallisce perché non è stata lanciata un'eccezione
                 fail('Expected exception was not thrown');
             } catch (error) {
-                // Verifichiamo che l'errore sia definito
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
-                // Possiamo anche verificare proprietà specifiche dell'errore
-                expect(error.message).toBeDefined();
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
+                expect(error.code).toContain('VAL_'); // Codice errore di validazione
             }
         });
 
@@ -231,10 +240,12 @@ describe('UserRepository', () => {
                 // Se arriviamo qui, il test fallisce perché non è stata lanciata un'eccezione
                 fail('Expected exception was not thrown');
             } catch (error) {
-                // Verifichiamo che l'errore sia definito
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
-                // Possiamo anche verificare proprietà specifiche dell'errore
-                expect(error.message).toBeDefined();
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
+                expect(error.code).toBe(ErrorTypes.RESOURCE.NOT_FOUND.code);
+                expect(error.status).toBe(404);
             }
         });
     });

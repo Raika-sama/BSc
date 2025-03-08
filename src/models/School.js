@@ -134,7 +134,7 @@ const schoolSchema = new mongoose.Schema({
         },
         role: {
             type: String,
-            enum: ['teacher', 'admin']
+            enum: ['admin', 'developer', 'manager', 'pcto', 'teacher', 'tutor', 'researcher', 'health']
         }
     }],
     

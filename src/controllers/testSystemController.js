@@ -24,13 +24,10 @@ class TestSystemController extends BaseController {
         this._scanTestFiles = this._scanTestFiles.bind(this);
         this._saveTestResults = this._saveTestResults.bind(this);
         this._parseTestResults = this._parseTestResults.bind(this);
+        this._extractJestSummary = this._extractJestSummary.bind(this);
+        this._parseJestJsonOutput = this._parseJestJsonOutput.bind(this);
     }
 
-    /**
-     * Esegue i test unitari e restituisce i risultati
-     * @param {Object} req - Request
-     * @param {Object} res - Response
-     */
 /**
  * Esegue i test unitari e restituisce i risultati
  * @param {Object} req - Request
@@ -49,23 +46,16 @@ async runUnitTests(req, res) {
             const normalizedTestFile = testFile.replace(/\\/g, '/');
             console.log(`[TestSystemController] File di test richiesto: ${normalizedTestFile}`);
             
-            // Se il file è UserRepository.test.js, usa un pattern più specifico
-            if (normalizedTestFile.includes('UserRepository.test.js')) {
-                testPath = 'src/systemTests/unit/repositories/UserRepository.test.js';
-                
-                // Usa il parametro --testPathPattern con il percorso esatto
-                commandArgs = [`--testPathPattern=${testPath}`];
-                console.log(`[TestSystemController] Pattern specificato per UserRepository: ${testPath}`);
+            // Per tutti i file, usa il pattern standard
+            if (!normalizedTestFile.includes('src/systemTests/')) {
+                // Se il percorso non contiene già src/systemTests, aggiungilo
+                testPath = `src/systemTests/unit/${normalizedTestFile}`;
             } else {
-                // Per altri file, usa il pattern standard
-                if (!normalizedTestFile.includes('src/systemTests/')) {
-                    testPath = `src/systemTests/unit/${normalizedTestFile}`;
-                } else {
-                    testPath = normalizedTestFile;
-                }
-                
-                commandArgs = [`--testPathPattern=${testPath}`];
+                // Altrimenti usa il percorso così com'è
+                testPath = normalizedTestFile;
             }
+            
+            commandArgs = [`--testPathPattern=${testPath}`];
         } else {
             // Se non è specificato un file, esegui tutti i test unitari
             testPath = 'src/systemTests/unit';
@@ -75,9 +65,11 @@ async runUnitTests(req, res) {
         console.log(`[TestSystemController] Esecuzione test con pattern: ${testPath}`);
         console.log(`[TestSystemController] Directory di lavoro: ${process.cwd()}`);
         
-        // Aggiungi flag per ottenere un output più dettagliato e strutturato
-        commandArgs.push('--verbose');
-        commandArgs.push('--colors');
+        // Configurazione per output più dettagliato
+        commandArgs.push('--verbose'); // Output dettagliato
+        commandArgs.push('--colors'); // Colora l'output
+        commandArgs.push('--json'); // Output in formato JSON per parsing preciso
+        commandArgs.push('--testNamePattern=".+"'); // Forza l'inclusione dei nomi dei test nell'output
         
         // Aggiungi --runInBand per eseguire i test in serie (evita problemi con MongoDB)
         commandArgs.push('--runInBand');
@@ -91,190 +83,79 @@ async runUnitTests(req, res) {
         
         const startTime = new Date();
         
-        // Esegui Jest in modo sincrono per debug
         try {
             console.log(`[TestSystemController] Avvio esecuzione di Jest...`);
             const output = execSync(command, { 
                 stdio: 'pipe',
                 encoding: 'utf8',
                 timeout: 60000, // 1 minuto di timeout
-                shell: true // Importante per gestire correttamente le virgolette e i caratteri speciali
+                shell: true,
+                maxBuffer: 10 * 1024 * 1024 // Aumenta il buffer massimo a 10MB
             });
             
             console.log(`[TestSystemController] Esecuzione Jest completata!`);
+            console.log(`[TestSystemController] Output di Jest (primi 200 caratteri): ${output.substring(0, 200)}...`);
             
-<<<<<<< Updated upstream
             const endTime = new Date();
             const executionTime = (endTime - startTime) / 1000; // in secondi
-=======
-            // Aggiungi flag per ottenere un output più dettagliato e strutturato
-            commandArgs.push('--verbose');
-            commandArgs.push('--colors');
             
-            // Aggiungi --runInBand per eseguire i test in serie (evita problemi con MongoDB)
-            commandArgs.push('--runInBand');
->>>>>>> Stashed changes
-            
-            // Analizza i risultati dall'output di Jest
-            const userRepoTestFile = 'UserRepository.test.js';
-            
-<<<<<<< Updated upstream
-            // Se stiamo eseguendo il test specifico UserRepository.test.js, conta manualmente i test
-            // basandoci sul file test stesso
-            let manualTestCount = 0;
-            let manualPassCount = 0;
-            if (testPath.includes(userRepoTestFile)) {
-                console.log(`[TestSystemController] Analisi manuale per ${userRepoTestFile}`);
-                
-                // Dal file UserRepository.test.js sappiamo che ci sono questi test specifici
-                const expectedTests = [
-                    'should find a user by email',
-                    'should return null for non-existent email',
-                    'should include password when specified',
-                    'should find a user by ID',
-                    'should throw error for invalid ID',
-                    'should throw error for non-existent ID',
-                    'should create a new user',
-                    'should throw error for duplicate email',
-                    'should update an existing user',
-                    'should throw error for invalid ID',
-                    'should throw error for non-existent ID',
-                    'should find users with search filter',
-                    'should find users with role filter',
-                    'should find users with status filter',
-                    'should find users with combined filters',
-                    'should support pagination'
-                ];
-                
-                manualTestCount = expectedTests.length;
-                
-                // Contiamo quanti di questi test sembrano essere passati
-                // Assumiamo che i test siano passati se non ci sono errori specifici nel loro output
-                // o se c'è una menzione esplicita di successo
-                const passedTests = expectedTests.filter(test => {
-                    // Cerca pattern che indicano il fallimento di questo test specifico
-                    const failPattern = new RegExp(`${test}.*?(fail|error|throw)`, 'i');
-                    return !failPattern.test(output) || output.includes(`✓ ${test}`);
-                });
-                
-                manualPassCount = passedTests.length;
-                
-                console.log(`[TestSystemController] Conteggio manuale: ${manualPassCount} passati su ${manualTestCount} totali`);
-=======
-            // Costruisci il comando
-            const command = `npx jest --config=jest.config.js ${commandArgs.join(' ')} --no-cache`;
-            console.log(`[TestSystemController] Comando completo: ${command}`);
-            
-            const startTime = new Date();
-            
-            // Esegui Jest in modo sincrono per debug
+            // Prova a estrarre i risultati dal formato JSON
             try {
-                console.log(`[TestSystemController] Avvio esecuzione di Jest...`);
-                const output = execSync(command, { 
-                    stdio: 'pipe',
-                    encoding: 'utf8',
-                    timeout: 60000, // 1 minuto di timeout
-                    shell: true // Importante per gestire correttamente le virgolette e i caratteri speciali
-                });
+                // Estrai l'oggetto JSON completo dall'output
+                const jsonResults = this._parseJestJsonOutput(output);
                 
-                console.log(`[TestSystemController] Esecuzione Jest completata!`);
-                
-                const endTime = new Date();
-                const executionTime = (endTime - startTime) / 1000; // in secondi
-                
-                // Analizza i risultati dall'output di Jest
-                const userRepoTestFile = 'UserRepository.test.js';
-                
-                // Se stiamo eseguendo il test specifico UserRepository.test.js, conta manualmente i test
-                // basandoci sul file test stesso
-                let manualTestCount = 0;
-                let manualPassCount = 0;
-                if (testPath.includes(userRepoTestFile)) {
-                    console.log(`[TestSystemController] Analisi manuale per ${userRepoTestFile}`);
+                if (jsonResults) {
+                    console.log("[TestSystemController] Risultati JSON analizzati correttamente");
+                    // Crea l'oggetto risultati finale usando il parser JSON migliorato
+                    const results = {
+                        success: jsonResults.success,
+                        testResults: jsonResults.testResults || [],
+                        rawOutput: output.length > 65000 ? output.substring(0, 65000) : output,
+                        passedTests: jsonResults.numPassedTests,
+                        failedTests: jsonResults.numFailedTests,
+                        totalTests: jsonResults.numTotalTests,
+                        duration: jsonResults.testResults?.[0]?.perfStats?.runtime / 1000 || executionTime
+                    };
                     
-                    // Dal file UserRepository.test.js sappiamo che ci sono questi test specifici
-                    const expectedTests = [
-                        'should find a user by email',
-                        'should return null for non-existent email',
-                        'should include password when specified',
-                        'should find a user by ID',
-                        'should throw error for invalid ID',
-                        'should throw error for non-existent ID',
-                        'should create a new user',
-                        'should throw error for duplicate email',
-                        'should update an existing user',
-                        'should throw error for invalid ID',
-                        'should throw error for non-existent ID',
-                        'should find users with search filter',
-                        'should find users with role filter',
-                        'should find users with status filter',
-                        'should find users with combined filters',
-                        'should support pagination'
-                    ];
-                    
-                    manualTestCount = expectedTests.length;
-                    
-                    // Contiamo quanti di questi test sembrano essere passati
-                    // Assumiamo che i test siano passati se non ci sono errori specifici nel loro output
-                    // o se c'è una menzione esplicita di successo
-                    const passedTests = expectedTests.filter(test => {
-                        // Cerca pattern che indicano il fallimento di questo test specifico
-                        const failPattern = new RegExp(`${test}.*?(fail|error|throw)`, 'i');
-                        return !failPattern.test(output) || output.includes(`✓ ${test}`);
+                    console.log(`[TestSystemController] Risultati finali da JSON:`, {
+                        success: results.success,
+                        passedTests: results.passedTests,
+                        failedTests: results.failedTests,
+                        totalTests: results.totalTests,
+                        detailedResultsCount: results.testResults.length
                     });
                     
-                    manualPassCount = passedTests.length;
+                    // Salva i risultati nel database
+                    await this._saveTestResults('unit', results, testFile || testPath);
                     
-                    console.log(`[TestSystemController] Conteggio manuale: ${manualPassCount} passati su ${manualTestCount} totali`);
+                    console.log(`[TestSystemController] Invio risposta al client...`);
+                    
+                    return this.sendResponse(res, results);
+                } else {
+                    console.log("[TestSystemController] Analisi JSON fallita, utilizzando il parser standard");
+                    throw new Error("JSON non valido nell'output");
                 }
+            } catch (jsonError) {
+                console.error(`[TestSystemController] Errore nell'analisi del JSON:`, jsonError.message);
                 
-                // Analizza i risultati usando il parser migliorato
-                console.log(`[TestSystemController] Analisi output Jest mediante parser...`);
-                const parsedResults = this._parseTestResults(output, testPath);
-                
-                // Usa i conteggi manuali se disponibili e più precisi
-                if (manualTestCount > 0 && manualTestCount > parsedResults.totalTests) {
-                    console.log(`[TestSystemController] Utilizzo conteggi manuali: ${manualPassCount}/${manualTestCount}`);
-                    parsedResults.totalTests = manualTestCount;
-                    parsedResults.passedTests = manualPassCount;
-                    parsedResults.failedTests = manualTestCount - manualPassCount;
-                }
-                
-                // Se parliamo ancora di zero test, ma sappiamo che ci sono test nel file,
-                // impostiamo almeno 1 test passato (o fallito, in base all'output)
-                if (parsedResults.totalTests === 0) {
-                    const hasErrors = output.includes('Error:') || output.includes('FAIL') || output.includes('fail');
-                    
-                    console.log(`[TestSystemController] Impostiamo risultati minimi (hasErrors: ${hasErrors})`);
-                    
-                    parsedResults.totalTests = 1;
-                    parsedResults.passedTests = hasErrors ? 0 : 1;
-                    parsedResults.failedTests = hasErrors ? 1 : 0;
-                    
-                    // Crea un risultato generico
-                    parsedResults.detailedResults = [{
-                        name: testPath,
-                        status: hasErrors ? 'failed' : 'passed',
-                        message: hasErrors ? 'Test contenente errori' : 'Test completato con successo',
-                        file: testPath
-                    }];
-                }
-                
-                // Determina il successo in base ai test falliti
-                const isSuccess = parsedResults.failedTests === 0;
-                
-                // Crea un oggetto risultato
+                // Estrai direttamente il riepilogo dei risultati dal formato standard di Jest
+                const jestSummary = this._extractJestSummary(output);
+
+                // Usa i risultati estratti da Jest o estrai manualmente dall'output in caso di fallimento
+                const parsedResults = jestSummary || this._parseTestResults(output, testPath);
+
+                // Crea l'oggetto risultati finale
                 const results = {
-                    success: isSuccess,
+                    success: parsedResults.success,
                     testResults: parsedResults.detailedResults,
-                    rawOutput: output,
+                    rawOutput: output.length > 65000 ? output.substring(0, 65000) : output,
                     passedTests: parsedResults.passedTests,
                     failedTests: parsedResults.failedTests,
                     totalTests: parsedResults.totalTests,
                     duration: parsedResults.duration || executionTime
                 };
                 
-                console.log(`[TestSystemController] Risultati finali:`, {
+                console.log(`[TestSystemController] Risultati finali (fallback):`, {
                     success: results.success,
                     passedTests: results.passedTests,
                     failedTests: results.failedTests,
@@ -288,155 +169,60 @@ async runUnitTests(req, res) {
                 console.log(`[TestSystemController] Invio risposta al client...`);
                 
                 return this.sendResponse(res, results);
-            } catch (execError) {
-                console.error(`[TestSystemController] Errore nell'esecuzione di Jest:`);
-                console.error(execError.message);
-                if (execError.stdout) console.log(`[TestSystemController] stdout: ${execError.stdout}`);
-                if (execError.stderr) console.log(`[TestSystemController] stderr: ${execError.stderr}`);
-                
-                const endTime = new Date();
-                const executionTime = (endTime - startTime) / 1000; // in secondi
-                
-                // Analizza anche i risultati falliti
-                const output = execError.stdout || execError.stderr || 'No output';
-                const parsedResults = this._parseTestResults(output, testPath);
-                
-                // Se parliamo di zero test, ma sappiamo che ci sono test nel file,
-                // impostiamo almeno 1 test fallito
-                if (parsedResults.totalTests === 0) {
-                    parsedResults.totalTests = 1;
-                    parsedResults.passedTests = 0;
-                    parsedResults.failedTests = 1;
-                    
-                    // Crea un risultato generico
-                    parsedResults.detailedResults = [{
-                        name: testPath,
-                        status: 'failed',
-                        message: execError.message,
-                        file: testPath
-                    }];
-                }
-                
-                // Crea un risultato di errore per la risposta
-                const errorResults = {
-                    success: false,
-                    testResults: parsedResults.detailedResults,
-                    rawOutput: output,
-                    passedTests: parsedResults.passedTests,
-                    failedTests: parsedResults.failedTests,
-                    totalTests: parsedResults.totalTests,
-                    duration: parsedResults.duration || executionTime
-                };
-                
-                console.log(`[TestSystemController] Risultati falliti finali:`, {
-                    success: errorResults.success,
-                    passedTests: errorResults.passedTests,
-                    failedTests: errorResults.failedTests,
-                    totalTests: errorResults.totalTests,
-                    detailedResultsCount: errorResults.testResults.length
-                });
-                
-                // Salva anche i risultati falliti nel database
-                await this._saveTestResults('unit', errorResults, testFile || testPath);
-                
-                return this.sendResponse(res, errorResults);
->>>>>>> Stashed changes
             }
-            
-            // Analizza i risultati usando il parser migliorato
-            console.log(`[TestSystemController] Analisi output Jest mediante parser...`);
-            const parsedResults = this._parseTestResults(output, testPath);
-            
-            // Usa i conteggi manuali se disponibili e più precisi
-            if (manualTestCount > 0 && manualTestCount > parsedResults.totalTests) {
-                console.log(`[TestSystemController] Utilizzo conteggi manuali: ${manualPassCount}/${manualTestCount}`);
-                parsedResults.totalTests = manualTestCount;
-                parsedResults.passedTests = manualPassCount;
-                parsedResults.failedTests = manualTestCount - manualPassCount;
-            }
-            
-            // Se parliamo ancora di zero test, ma sappiamo che ci sono test nel file,
-            // impostiamo almeno 1 test passato (o fallito, in base all'output)
-            if (parsedResults.totalTests === 0) {
-                const hasErrors = output.includes('Error:') || output.includes('FAIL') || output.includes('fail');
-                
-                console.log(`[TestSystemController] Impostiamo risultati minimi (hasErrors: ${hasErrors})`);
-                
-                parsedResults.totalTests = 1;
-                parsedResults.passedTests = hasErrors ? 0 : 1;
-                parsedResults.failedTests = hasErrors ? 1 : 0;
-                
-                // Crea un risultato generico
-                parsedResults.detailedResults = [{
-                    name: testPath,
-                    status: hasErrors ? 'failed' : 'passed',
-                    message: hasErrors ? 'Test contenente errori' : 'Test completato con successo',
-                    file: testPath
-                }];
-            }
-            
-            // Determina il successo in base ai test falliti
-            const isSuccess = parsedResults.failedTests === 0;
-            
-            // Crea un oggetto risultato
-            const results = {
-                success: isSuccess,
-                testResults: parsedResults.detailedResults,
-                rawOutput: output,
-                passedTests: parsedResults.passedTests,
-                failedTests: parsedResults.failedTests,
-                totalTests: parsedResults.totalTests,
-                duration: parsedResults.duration || executionTime
-            };
-            
-            console.log(`[TestSystemController] Risultati finali:`, {
-                success: results.success,
-                passedTests: results.passedTests,
-                failedTests: results.failedTests,
-                totalTests: results.totalTests,
-                detailedResultsCount: results.testResults.length
-            });
-            
-            // Salva i risultati nel database
-            await this._saveTestResults('unit', results, testFile || testPath);
-            
-            console.log(`[TestSystemController] Invio risposta al client...`);
-            
-            return this.sendResponse(res, results);
         } catch (execError) {
             console.error(`[TestSystemController] Errore nell'esecuzione di Jest:`);
             console.error(execError.message);
-            if (execError.stdout) console.log(`[TestSystemController] stdout: ${execError.stdout}`);
-            if (execError.stderr) console.log(`[TestSystemController] stderr: ${execError.stderr}`);
+            if (execError.stdout) console.error(`[TestSystemController] stdout (primi 200 caratteri): ${execError.stdout.substring(0, 200)}...`);
+            if (execError.stderr) console.error(`[TestSystemController] stderr (primi 200 caratteri): ${execError.stderr.substring(0, 200)}...`);
             
             const endTime = new Date();
             const executionTime = (endTime - startTime) / 1000; // in secondi
             
-            // Analizza anche i risultati falliti
+            // Anche in caso di errore, proviamo a estrarre il riepilogo dei test
             const output = execError.stdout || execError.stderr || 'No output';
-            const parsedResults = this._parseTestResults(output, testPath);
             
-            // Se parliamo di zero test, ma sappiamo che ci sono test nel file,
-            // impostiamo almeno 1 test fallito
-            if (parsedResults.totalTests === 0) {
-                parsedResults.totalTests = 1;
-                parsedResults.passedTests = 0;
-                parsedResults.failedTests = 1;
-                
-                // Crea un risultato generico
-                parsedResults.detailedResults = [{
-                    name: testPath,
-                    status: 'failed',
-                    message: execError.message,
-                    file: testPath
-                }];
+            // Verifica se abbiamo un output JSON anche nell'errore
+            try {
+                const jsonResults = this._parseJestJsonOutput(output);
+                if (jsonResults) {
+                    console.log("[TestSystemController] Risultati JSON trovati nell'errore");
+                    // Crea l'oggetto risultati finale
+                    const errorResults = {
+                        success: false, // In caso di errore di esecuzione, consideriamo il test fallito
+                        testResults: jsonResults.testResults || [],
+                        rawOutput: output.length > 65000 ? output.substring(0, 65000) : output,
+                        passedTests: jsonResults.numPassedTests || 0,
+                        failedTests: jsonResults.numFailedTests || 0,
+                        totalTests: jsonResults.numTotalTests || 0,
+                        duration: jsonResults.testResults?.[0]?.perfStats?.runtime / 1000 || executionTime
+                    };
+                    
+                    console.log(`[TestSystemController] Risultati falliti finali (da JSON):`, {
+                        success: errorResults.success,
+                        passedTests: errorResults.passedTests,
+                        failedTests: errorResults.failedTests,
+                        totalTests: errorResults.totalTests,
+                        detailedResultsCount: errorResults.testResults.length
+                    });
+                    
+                    // Salva anche i risultati falliti nel database
+                    await this._saveTestResults('unit', errorResults, testFile || testPath);
+                    
+                    return this.sendResponse(res, errorResults);
+                }
+            } catch (jsonError) {
+                console.log("[TestSystemController] Nessun JSON valido nell'output di errore, utilizzo metodo fallback");
             }
+            
+            const jestSummary = this._extractJestSummary(output);
+            const parsedResults = jestSummary || this._parseTestResults(output, testPath);
             
             // Crea un risultato di errore per la risposta
             const errorResults = {
-                success: false,
+                success: false, // In caso di errore di esecuzione, consideriamo il test fallito
                 testResults: parsedResults.detailedResults,
-                rawOutput: output,
+                rawOutput: output.length > 65000 ? output.substring(0, 65000) : output,
                 passedTests: parsedResults.passedTests,
                 failedTests: parsedResults.failedTests,
                 totalTests: parsedResults.totalTests,
@@ -486,7 +272,6 @@ async runUnitTests(req, res) {
     async runIntegrationTests(req, res) {
         try {
             console.log("[TestSystemController] runIntegrationTests chiamato");
-            const { testFile } = req.query;
             
             // Costruisci gli argomenti per Jest
             let testPath = 'src/systemTests/integration';
@@ -791,7 +576,392 @@ async runUnitTests(req, res) {
     }
 
 /**
- * Analizza l'output di Jest e estrae informazioni dettagliate sul test
+ * Analizza l'output JSON di Jest per estrarre i risultati dettagliati
+ * @param {String} output - Output grezzo del test
+ * @returns {Object|null} - Risultati analizzati o null se non è stato possibile analizzare
+ * @private
+ */
+_parseJestJsonOutput(output) {
+    if (!output) return null;
+    
+    try {
+        console.log(`[TestSystemController] Tentativo di parsing JSON dell'output Jest`);
+        
+        // 1. Cerca l'inizio del JSON nell'output
+        let jsonStart = output.indexOf('{');
+        if (jsonStart === -1) return null;
+        
+        // 2. Estrai la stringa JSON completa
+        // Dobbiamo assicurarci di includere le parentesi graffe bilanciate
+        let depth = 0;
+        let jsonEnd = jsonStart;
+        let inString = false;
+        let escape = false;
+        
+        for (let i = jsonStart; i < output.length; i++) {
+            const char = output[i];
+            
+            if (escape) {
+                escape = false;
+                continue;
+            }
+            
+            if (char === '\\' && inString) {
+                escape = true;
+                continue;
+            }
+            
+            if (char === '"' && !escape) {
+                inString = !inString;
+                continue;
+            }
+            
+            if (!inString) {
+                if (char === '{') {
+                    depth++;
+                } else if (char === '}') {
+                    depth--;
+                    if (depth === 0) {
+                        jsonEnd = i + 1;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (depth !== 0) {
+            console.log(`[TestSystemController] JSON non bilanciato nell'output`);
+            return null;
+        }
+        
+        // 3. Estrai la stringa JSON e analizzala
+        const jsonString = output.substring(jsonStart, jsonEnd);
+        const jsonData = JSON.parse(jsonString);
+        
+        // 4. Estrai i dettagli dei test
+        const detailedResults = [];
+        
+        if (jsonData.testResults && Array.isArray(jsonData.testResults)) {
+            for (const testResult of jsonData.testResults) {
+                const testFilePath = testResult.name || '';
+                const testFileName = testFilePath.split('/').pop() || testFilePath;
+                
+                if (testResult.assertionResults && Array.isArray(testResult.assertionResults)) {
+                    for (const assertion of testResult.assertionResults) {
+                        // Crea un risultato dettagliato per ogni test
+                        detailedResults.push({
+                            name: assertion.fullName || assertion.title || 'Test senza nome',
+                            status: assertion.status === 'passed' ? 'passed' : 'failed',
+                            duration: assertion.duration || null,
+                            message: assertion.failureMessages ? assertion.failureMessages.join('\n') : null,
+                            suite: testFileName || 'Test Suite',
+                            group: assertion.ancestorTitles?.join(' › ') || '',
+                            description: assertion.title || ''
+                        });
+                    }
+                }
+            }
+        }
+        
+        console.log(`[TestSystemController] Estratti ${detailedResults.length} risultati dettagliati dal JSON`);
+        
+        // 5. Restituisci i risultati completi, includendo i dettagli estratti
+        return {
+            ...jsonData,
+            testResults: detailedResults
+        };
+    } catch (error) {
+        console.error(`[TestSystemController] Errore nel parsing JSON:`, error);
+        return null;
+    }
+}
+
+/**
+ * Estrae il riepilogo dei test direttamente dall'output di Jest
+ * @param {String} output - Output grezzo del test
+ * @returns {Object|null} - Riepilogo estratto o null se non trovato
+ * @private
+ */
+_extractJestSummary(output) {
+    if (!output) return null;
+    
+    try {
+        // Prima estrai i dettagli dei test individuali, perché sono la fonte più attendibile
+        const detailedResults = this._extractDetailedResults(output);
+        
+        // 1. Cerca il pattern standard del riepilogo di Jest
+        const summaryMatch = output.match(/Test Suites:[ \t]*(\d+)[ \t]*failed,[ \t]*(\d+)[ \t]*passed,[ \t]*(\d+)[ \t]*total\s+Tests:[ \t]*(\d+)[ \t]*failed,[ \t]*(\d+)[ \t]*passed,[ \t]*(\d+)[ \t]*total/i);
+        if (summaryMatch) {
+            const failedSuites = parseInt(summaryMatch[1], 10);
+            const passedSuites = parseInt(summaryMatch[2], 10);
+            const totalSuites = parseInt(summaryMatch[3], 10);
+            const failedTests = parseInt(summaryMatch[4], 10);
+            const passedTests = parseInt(summaryMatch[5], 10);
+            const totalTests = parseInt(summaryMatch[6], 10);
+            
+            console.log(`[TestSystemController] Estratto riepilogo Jest: ${passedTests} passati, ${failedTests} falliti, ${totalTests} totali`);
+            
+            return {
+                success: failedTests === 0,
+                passedTests,
+                failedTests,
+                totalTests,
+                failedSuites,
+                passedSuites,
+                totalSuites,
+                detailedResults,
+                duration: this._extractDuration(output)
+            };
+        }
+        
+        // 2. Pattern alternativo per il riepilogo dei test (solo i conteggi dei test, senza suites)
+        const altSummaryMatch = output.match(/Tests:[ \t]*(\d+)[ \t]*failed,[ \t]*(\d+)[ \t]*passed,[ \t]*(\d+)[ \t]*total/i);
+        if (altSummaryMatch) {
+            const failedTests = parseInt(altSummaryMatch[1], 10);
+            const passedTests = parseInt(altSummaryMatch[2], 10);
+            const totalTests = parseInt(altSummaryMatch[3], 10);
+            
+            console.log(`[TestSystemController] Estratto riepilogo alternativo: ${passedTests} passati, ${failedTests} falliti, ${totalTests} totali`);
+            
+            return {
+                success: failedTests === 0,
+                passedTests,
+                failedTests,
+                totalTests,
+                detailedResults,
+                duration: this._extractDuration(output)
+            };
+        }
+        
+        // 3. Se abbiamo trovato risultati dettagliati, ma nessun riepilogo, usa quelli per i conteggi
+        if (detailedResults.length > 0) {
+            const passedTests = detailedResults.filter(r => r.status === 'passed').length;
+            const failedTests = detailedResults.filter(r => r.status === 'failed').length;
+            const totalTests = detailedResults.length;
+            
+            console.log(`[TestSystemController] Conteggio dai risultati dettagliati: ${passedTests} passati, ${failedTests} falliti, totale: ${totalTests}`);
+            
+            return {
+                success: failedTests === 0,
+                passedTests,
+                failedTests,
+                totalTests,
+                detailedResults,
+                duration: this._extractDuration(output)
+            };
+        }
+        
+        // 4. Se non troviamo nessun pattern di riepilogo, proviamo con i conteggi dei simboli
+        const passedCount = (output.match(/✓/g) || []).length;
+        const failedCount = (output.match(/✕/g) || []).length;
+        
+        if (passedCount > 0 || failedCount > 0) {
+            const totalCount = passedCount + failedCount;
+            
+            console.log(`[TestSystemController] Conteggio dai simboli: ${passedCount} passati (✓), ${failedCount} falliti (✕), totale: ${totalCount}`);
+            
+            return {
+                success: failedCount === 0,
+                passedTests: passedCount,
+                failedTests: failedCount,
+                totalTests: totalCount,
+                detailedResults,
+                duration: this._extractDuration(output)
+            };
+        }
+        
+        // 5. Come ultima risorsa, cerca i messaggi di successo/errore
+        if (output.toLowerCase().includes('pass')) {
+            return {
+                success: true,
+                passedTests: 1,
+                failedTests: 0,
+                totalTests: 1,
+                detailedResults,
+                duration: this._extractDuration(output)
+            };
+        } else if (output.toLowerCase().includes('fail')) {
+            return {
+                success: false,
+                passedTests: 0,
+                failedTests: 1,
+                totalTests: 1,
+                detailedResults,
+                duration: this._extractDuration(output)
+            };
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('[TestSystemController] Errore nell\'estrazione del riepilogo Jest:', error);
+        return null;
+    }
+}
+
+/**
+ * Estrae i dettagli dei risultati dei test individuali dall'output
+ * @param {String} output - Output grezzo del test
+ * @returns {Array} - Lista di risultati dettagliati
+ * @private
+ */
+_extractDetailedResults(output) {
+    if (!output) return [];
+    
+    const results = [];
+    const lines = output.split('\n');
+    
+    console.log(`[TestSystemController] Analisi dell'output per estrazione dettagli (${lines.length} linee)`);
+    
+    // Primo miglioramento: estrazione più accurata dei test con gruppi
+    // Cerca pattern come "UserRepository › findById › should find a user by ID"
+    const testNamePattern = /([^ ]+) › ([^ ]+) › ([^(]+)/;
+    
+    // 1. Prima cerca i risultati dei test in formato PASS/FAIL con nome completo
+    const passFailRegex = /^(PASS|FAIL)\s+(.*?)(?:\s+\((\d+)\s*ms\))?$/i;
+    const testLineRegex = /^\s*(✓|✕)\s+(.*?)(?:\s+\((\d+)\s*ms\))?$/i;
+    
+    // Monitoriamo l'ultimo gruppo di test trovato
+    let currentSuite = '';
+    let currentDescribe = '';
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Identifica il blocco della suite di test
+        if (line.startsWith('UserRepository') || line.startsWith('SchoolRepository')) {
+            currentSuite = line.split(' ')[0];
+            continue;
+        }
+        
+        // Identifica i blocchi describe (gruppi di test)
+        if (line.startsWith('findById') || line.startsWith('findByEmail') || 
+            line.startsWith('create') || line.startsWith('update') || 
+            line.startsWith('findWithFilters') || line.startsWith('findOne') ||
+            line.startsWith('addUser') || line.startsWith('removeUser') ||
+            line.startsWith('deactivateSection') || line.startsWith('setupAcademicYear')) {
+            currentDescribe = line.split(' ')[0];
+            continue;
+        }
+        
+        // Cerca risultati in formato "PASS UserRepository › findById › should find a user by ID"
+        const passFailMatch = line.match(passFailRegex);
+        if (passFailMatch) {
+            const status = passFailMatch[1].toUpperCase() === 'PASS' ? 'passed' : 'failed';
+            const fullName = passFailMatch[2].trim();
+            const duration = passFailMatch[3] ? parseInt(passFailMatch[3], 10) : null;
+            
+            // Verifica se il nome contiene informazioni strutturate (suite › group › test)
+            const patternMatch = fullName.match(testNamePattern);
+            if (patternMatch) {
+                results.push({
+                    name: fullName,
+                    suite: patternMatch[1],
+                    group: patternMatch[2],
+                    description: patternMatch[3],
+                    status,
+                    duration
+                });
+                continue;
+            }
+            
+            // Se non ha la struttura completa, aggiungi comunque il risultato
+            results.push({
+                name: fullName,
+                status,
+                duration
+            });
+            continue;
+        }
+        
+        // Cerca risultati in formato "  ✓ should find a user by ID (125 ms)"
+        const testLineMatch = line.match(testLineRegex);
+        if (testLineMatch) {
+            const status = testLineMatch[1] === '✓' ? 'passed' : 'failed';
+            const testName = testLineMatch[2].trim();
+            const duration = testLineMatch[3] ? parseInt(testLineMatch[3], 10) : null;
+            
+            // Se abbiamo informazioni sul contesto attuale, costruisci un nome completo
+            const fullName = currentSuite && currentDescribe 
+                ? `${currentSuite} › ${currentDescribe} › ${testName}`
+                : testName;
+            
+            results.push({
+                name: fullName,
+                suite: currentSuite || undefined,
+                group: currentDescribe || undefined,
+                description: testName,
+                status,
+                duration
+            });
+            
+            // Se il test è fallito, cerca il messaggio di errore nelle righe successive
+            if (status === 'failed') {
+                let j = i + 1;
+                let errorMessage = '';
+                while (j < lines.length && j < i + 15) { // Cerca fino a 15 righe dopo
+                    const errorLine = lines[j];
+                    if (errorLine.includes('Error:')) {
+                        errorMessage = errorLine.trim();
+                        break;
+                    }
+                    j++;
+                }
+                
+                if (errorMessage) {
+                    results[results.length - 1].message = errorMessage;
+                }
+            }
+        }
+    }
+    
+    console.log(`[TestSystemController] Estratti ${results.length} risultati dettagliati`);
+    
+    // Se non abbiamo trovato risultati dettagliati, cerchiamo altre informazioni nell'output
+    if (results.length === 0) {
+        // Verifica se ci sono pattern di risultati commentati
+        for (const line of lines) {
+            if (line.includes('should find a user by ID') || 
+                line.includes('should throw error for invalid ID') ||
+                line.includes('should return null for non-existent email') ||
+                line.includes('should create a new user') ||
+                line.includes('should add a user to the school') ||
+                line.includes('should update an existing user')) {
+                
+                const isPassed = !line.includes('✕') && !line.includes('FAIL');
+                
+                results.push({
+                    name: line.trim().replace(/^[^a-zA-Z]+/, ''), // Rimuovi caratteri non alfanumerici all'inizio
+                    status: isPassed ? 'passed' : 'failed',
+                    suite: line.includes('UserRepository') ? 'UserRepository' : 
+                           line.includes('SchoolRepository') ? 'SchoolRepository' : 'unknown',
+                    group: line.includes('findById') ? 'findById' :
+                           line.includes('findByEmail') ? 'findByEmail' :
+                           line.includes('create') ? 'create' :
+                           line.includes('addUser') ? 'addUser' :
+                           line.includes('update') ? 'update' : 'unknown'
+                });
+            }
+        }
+    }
+    
+    return results;
+}
+
+/**
+ * Estrae la durata dell'esecuzione del test dall'output
+ * @param {String} output - Output grezzo del test
+ * @returns {Number} - Durata in secondi
+ * @private
+ */
+_extractDuration(output) {
+    if (!output) return 0;
+    
+    const timeMatch = output.match(/Time:[ \t]*([0-9.]+)[ \t]*s/i);
+    return timeMatch ? parseFloat(timeMatch[1]) : 0;
+}
+
+/**
+ * Analizza l'output di Jest come fallback quando il riepilogo standard non è disponibile
  * @param {String} output - Output grezzo del test
  * @param {String} testPath - Percorso del test eseguito
  * @returns {Object} - Informazioni analizzate dai risultati del test
@@ -799,380 +969,145 @@ async runUnitTests(req, res) {
  */
 _parseTestResults(output, testPath) {
     try {
-        console.log(`[TestSystemController] Analisi risultati per il test ${testPath}`);
+        console.log(`[TestSystemController] Analisi fallback dei risultati per: ${testPath}`);
+        
+        // Prima prova a usare il metodo avanzato di estrazione del riepilogo
+        const jestSummary = this._extractJestSummary(output);
+        if (jestSummary) {
+            console.log(`[TestSystemController] Usato estrattore avanzato: ${jestSummary.passedTests} passati, ${jestSummary.failedTests} falliti`);
+            return jestSummary;
+        }
         
         const results = {
             passedTests: 0,
             failedTests: 0,
             totalTests: 0,
             duration: 0,
-            detailedResults: []
+            detailedResults: [],
+            success: false
         };
         
-        // Se non c'è output, restituisci risultati minimi
         if (!output) {
             console.log(`[TestSystemController] Nessun output da analizzare`);
-            return {
-                ...results,
-                totalTests: 1,
-                passedTests: 1
-            };
+            return results;
         }
         
         const lines = output.split('\n');
         
-        // Tracciamo tutti i pattern rilevati per debug
-        const patterns = {
-            testSummaryFound: false,
-            timeDurationFound: false,
-            individualTestsFound: 0,
-            passCountsFound: false,
-            failCountsFound: false,
-            testDescribeFound: 0
-        };
-        
-        // 1. Estrai i dati di riepilogo dal formato standard di Jest
-        for (const line of lines) {
-            // Estrai il numero di test e la durata dall'output di Jest
-            // Pattern più comune: "Tests: X passed, Y failed, Z total"
-            const testSummaryMatch = line.match(/Tests:[ \t]*(\d+)[ \t]*passed,[ \t]*(\d+)[ \t]*failed,[ \t]*(\d+)[ \t]*total/i);
-            if (testSummaryMatch) {
-                results.passedTests = parseInt(testSummaryMatch[1]);
-                results.failedTests = parseInt(testSummaryMatch[2]);
-                results.totalTests = parseInt(testSummaryMatch[3]);
-                patterns.testSummaryFound = true;
-                patterns.passCountsFound = true;
-                patterns.failCountsFound = true;
-                console.log(`[TestSystemController] Trovato riepilogo test: ${results.passedTests} passati, ${results.failedTests} falliti, ${results.totalTests} totali`);
-            }
-            
-            // Pattern alternativo: "X passing, Y failing, Z pending"
-            const alternativeSummaryMatch = line.match(/(\d+)[ \t]*passing,[ \t]*(\d+)[ \t]*failing/i);
-            if (alternativeSummaryMatch && !patterns.testSummaryFound) {
-                results.passedTests = parseInt(alternativeSummaryMatch[1]);
-                results.failedTests = parseInt(alternativeSummaryMatch[2]);
-                results.totalTests = results.passedTests + results.failedTests;
-                patterns.passCountsFound = true;
-                patterns.failCountsFound = true;
-                console.log(`[TestSystemController] Trovato riepilogo alternativo: ${results.passedTests} passati, ${results.failedTests} falliti`);
-            }
-            
-            // Estrai la durata totale dall'output (formato "Time: X.XXs")
-            const timeMatch = line.match(/Time:[ \t]*([0-9.]+)s/i);
-            if (timeMatch) {
-                results.duration = parseFloat(timeMatch[1]);
-                patterns.timeDurationFound = true;
-                console.log(`[TestSystemController] Trovata durata: ${results.duration}s`);
-            }
-            
-            // Cerca blocchi "describe" che indicano gruppi di test
-            if (line.includes('describe(') || line.match(/describe\s+['"`]/)) {
-                patterns.testDescribeFound++;
-            }
-        }
-        
-        // 2. Cerca PASS/FAIL per file
-        if (!patterns.passCountsFound || !patterns.failCountsFound) {
-            // Conta le occorrenze di PASS e FAIL
-            const passLines = lines.filter(line => line.trim().startsWith('PASS'));
-            const failLines = lines.filter(line => line.trim().startsWith('FAIL'));
-            
-            // Se abbiamo trovato almeno una linea PASS/FAIL
-            if (passLines.length > 0 || failLines.length > 0) {
-                if (!patterns.passCountsFound) {
-                    results.passedTests = passLines.length;
-                    console.log(`[TestSystemController] Contate ${results.passedTests} righe PASS`);
-                }
-                
-                if (!patterns.failCountsFound) {
-                    results.failedTests = failLines.length;
-                    console.log(`[TestSystemController] Contate ${results.failedTests} righe FAIL`);
-                }
-                
-                // Aggiorna il totale
-                if (!patterns.testSummaryFound) {
-                    results.totalTests = results.passedTests + results.failedTests;
-                }
-            }
-        }
-        
-        // 3. Cerca singoli test con ✓ e ✕
+        // 1. Cerca il numero di test passati/falliti simboli ✓ e ✕
         const passedTestLines = lines.filter(line => line.includes(' ✓ '));
         const failedTestLines = lines.filter(line => line.includes(' ✕ '));
         
         if (passedTestLines.length > 0 || failedTestLines.length > 0) {
-            patterns.individualTestsFound = passedTestLines.length + failedTestLines.length;
+            results.passedTests = passedTestLines.length;
+            results.failedTests = failedTestLines.length;
+            results.totalTests = passedTestLines.length + failedTestLines.length;
+            results.success = failedTestLines.length === 0;
+            console.log(`[TestSystemController] Test da simboli: ${results.passedTests} ✓, ${results.failedTests} ✕`);
             
-            // Se non abbiamo già dei conteggi o se questi sembrano più accurati
-            if (!patterns.passCountsFound && !patterns.failCountsFound) {
-                results.passedTests = passedTestLines.length;
-                results.failedTests = failedTestLines.length;
-                results.totalTests = results.passedTests + results.failedTests;
-                console.log(`[TestSystemController] Contati dai simboli: ${results.passedTests} ✓, ${results.failedTests} ✕`);
-            }
+            // Estrai i dettagli dei test dai simboli
+            results.detailedResults = this._extractTestsFromSymbols(output);
         }
         
-        // 4. Cerca test "it" nell'output
-        const itTestCount = lines.filter(line => 
-            line.includes('it(') || 
-            line.match(/it\s+['"`]/) || 
-            line.includes('test(') ||
-            line.match(/test\s+['"`]/)
-        ).length;
-        
-        if (itTestCount > 0) {
-            console.log(`[TestSystemController] Trovati ${itTestCount} blocchi 'it' o 'test'`);
-            if (itTestCount > results.totalTests) {
-                console.log(`[TestSystemController] Utilizzo conteggio 'it/test' (${itTestCount}) invece di totalTests (${results.totalTests})`);
+        // 2. Cerca blocchi PASS/FAIL per file se non abbiamo già test dettagliati
+        if (results.detailedResults.length === 0) {
+            const passLines = lines.filter(line => line.trim().startsWith('PASS'));
+            const failLines = lines.filter(line => line.trim().startsWith('FAIL'));
+            
+            if ((passLines.length > 0 || failLines.length > 0) && results.totalTests === 0) {
+                results.passedTests = passLines.length;
+                results.failedTests = failLines.length;
+                results.totalTests = passLines.length + failLines.length;
+                results.success = failLines.length === 0;
+                console.log(`[TestSystemController] Test da PASS/FAIL: ${results.passedTests} passati, ${results.failedTests} falliti`);
                 
-                // Assumiamo che la maggior parte dei test sia passata se non ci sono evidenze contrarie
-                if (results.failedTests === 0) {
-                    results.passedTests = itTestCount;
-                } else {
-                    // Mantieni i test falliti, aggiusta quelli passati
-                    results.passedTests = itTestCount - results.failedTests;
+                // Aggiungi dettagli dai file
+                for (const line of passLines) {
+                    const match = line.match(/PASS[ \t]+(.+?)$/);
+                    if (match) {
+                        results.detailedResults.push({
+                            name: match[1].trim(),
+                            status: 'passed',
+                            isTestFile: true
+                        });
+                    }
                 }
                 
-                results.totalTests = itTestCount;
-            }
-        }
-        
-        // 5. Se il file del test contiene "UserRepository", usiamo una conoscenza specifica
-        if (testPath.includes('UserRepository')) {
-            // Sappiamo che questo file ha 16 test
-            const expectedTests = 16;
-            
-            // Se non abbiamo trovato un numero plausibile di test
-            if (results.totalTests === 0 || results.totalTests < expectedTests) {
-                console.log(`[TestSystemController] Usando conteggio hardcoded per UserRepository: ${expectedTests} test`);
-                
-                // Analizziamo l'output per determinare quanti sembrano essere passati
-                // Cerchiamo pattern di errori o fallimenti
-                const hasErrors = output.includes('Error:') || 
-                                 output.includes('FAIL') || 
-                                 output.includes('fail') ||
-                                 output.includes('EXPECTED') ||
-                                 output.includes('RECEIVED');
-                
-                // Se ci sono errori, assumiamo che almeno uno sia fallito
-                if (hasErrors) {
-                    // Conta pattern che sembrano indicare test falliti
-                    const errorOccurrences = (output.match(/Error:/g) || []).length +
-                                           (output.match(/FAIL/g) || []).length +
-                                           (output.match(/fail/g) || []).length +
-                                           (output.match(/EXPECTED/g) || []).length;
-                    
-                    // Stima il numero di test falliti (massimo expectedTests)
-                    const estimatedFailures = Math.min(Math.max(1, errorOccurrences), expectedTests);
-                    
-                    results.failedTests = estimatedFailures;
-                    results.passedTests = expectedTests - estimatedFailures;
-                } else {
-                    // Se non ci sono errori, assumiamo che tutti siano passati
-                    results.passedTests = expectedTests;
-                    results.failedTests = 0;
+                for (const line of failLines) {
+                    const match = line.match(/FAIL[ \t]+(.+?)$/);
+                    if (match) {
+                        results.detailedResults.push({
+                            name: match[1].trim(),
+                            status: 'failed',
+                            isTestFile: true
+                        });
+                    }
                 }
-                
-                results.totalTests = expectedTests;
-                
-                console.log(`[TestSystemController] Stima per UserRepository: ${results.passedTests} passati, ${results.failedTests} falliti`);
             }
         }
         
-        // 6. Estrai risultati dettagliati
-        // Trova blocchi di test con simboli ✓ o ✕
-        let testResults = [];
+        // 3. Estrai la durata del test
+        results.duration = this._extractDuration(output);
         
-        // Cerca linee che rappresentano test individuali
-        for (const line of lines) {
-            // Pattern: spazi + ✓/✕ + nome test + (opzionale: durata)
-            const testLineMatch = line.match(/^[ \t]*(✓|✕)[ \t]*(.+?)(?:\((\d+)[ \t]*ms\))?$/);
-            if (testLineMatch) {
-                const status = testLineMatch[1] === '✓' ? 'passed' : 'failed';
-                const name = testLineMatch[2].trim();
-                let duration = null;
-                
-                // Estrai durata se presente
-                if (testLineMatch[3]) {
-                    duration = parseInt(testLineMatch[3], 10);
-                }
-                
-                // Aggiungi test ai risultati
-                testResults.push({
-                    name: name,
-                    status: status,
-                    duration: duration,
-                    file: testPath
-                });
+        // 4. Se ancora non abbiamo dettagli ma sappiamo che ci sono test, estrai dai pattern describe/it
+        if (results.detailedResults.length === 0 && results.totalTests === 0) {
+            results.detailedResults = this._extractDetailedResults(output);
+            
+            // Aggiorna i conteggi basati sui dettagli trovati
+            if (results.detailedResults.length > 0) {
+                results.passedTests = results.detailedResults.filter(t => t.status === 'passed').length;
+                results.failedTests = results.detailedResults.filter(t => t.status === 'failed').length;
+                results.totalTests = results.detailedResults.length;
+                results.success = results.failedTests === 0;
             }
         }
         
-        // 7. Estrai anche linee di blocco PASS/FAIL per file
-        const suiteResults = [];
-        for (const line of lines) {
-            // Cerca linee che rappresentano suite di test
-            // Pattern: PASS/FAIL + percorso file
-            const suiteMatch = line.match(/^(PASS|FAIL)[ \t]+(.+?)$/);
-            if (suiteMatch) {
-                const status = suiteMatch[1].toLowerCase() === 'pass' ? 'passed' : 'failed';
-                const filePath = suiteMatch[2].trim();
-                
-                // Trova l'output relativo a questa suite
-                const suiteIndex = lines.indexOf(line);
-                let message = '';
-                
-                // Raccogli le linee successive fino alla prossima suite o alla fine
-                for (let i = suiteIndex + 1; i < lines.length; i++) {
-                    const nextLine = lines[i];
-                    // Termina se troviamo un'altra suite
-                    if (nextLine.match(/^(PASS|FAIL)[ \t]+/)) break;
-                    message += nextLine + '\n';
-                }
-                
-                suiteResults.push({
-                    name: filePath,
-                    status: status,
-                    message: message.trim(),
-                    file: filePath
-                });
-            }
-        }
-        
-        // 8. Combina i risultati dettagliati
-        // Se abbiamo trovato test individuali, usali
-        if (testResults.length > 0) {
-            results.detailedResults = testResults;
-            console.log(`[TestSystemController] Trovati ${testResults.length} test individuali`);
-        } 
-        // Altrimenti, usa i risultati delle suite se disponibili
-        else if (suiteResults.length > 0) {
-            results.detailedResults = suiteResults;
-            console.log(`[TestSystemController] Trovate ${suiteResults.length} suite di test`);
-        } 
-        // Fallback: crea un risultato generico
-        else {
-            // Cerca eventuali errori o output significativi
-            const errorLines = lines.filter(line => 
-                line.includes('Error:') || 
-                line.includes('Exception:') ||
-                line.includes('fail') ||
-                line.includes('FAIL')
-            );
-            
-            const hasErrors = errorLines.length > 0;
-            
-            // Crea un messaggio significativo
-            let message;
-            if (hasErrors) {
-                message = errorLines.join('\n');
-            } else if (results.totalTests > 0) {
-                message = `Eseguiti ${results.totalTests} test: ${results.passedTests} passati, ${results.failedTests} falliti`;
-            } else {
-                message = 'Esecuzione test completata senza informazioni dettagliate';
-            }
-            
-            // Crea un risultato generico
-            results.detailedResults = [{
+        // 5. Se non abbiamo trovato dettagli ma abbiamo un conteggio, crea un risultato generico
+        if (results.detailedResults.length === 0 && results.totalTests > 0) {
+            results.detailedResults.push({
                 name: testPath,
-                status: results.failedTests > 0 ? 'failed' : 'passed',
-                message: message,
-                file: testPath
-            }];
-            
-            console.log(`[TestSystemController] Creato risultato generico per ${testPath}`);
-        }
-        
-        // 9. Assicurati che i conteggi siano coerenti
-        // Se non abbiamo conteggi ma abbiamo dettagli, contali
-        if (results.totalTests === 0 && results.detailedResults.length > 0) {
-            results.totalTests = results.detailedResults.length;
-            results.passedTests = results.detailedResults.filter(r => r.status === 'passed').length;
-            results.failedTests = results.detailedResults.filter(r => r.status === 'failed').length;
-        }
-        
-        // Se il test include "UserRepository" ma non abbiamo trovato dettagli specifici,
-        // crea dettagli basati sui metodi del repository
-        if (testPath.includes('UserRepository') && results.detailedResults.length <= 1) {
-            // Lista dei metodi del UserRepository che sappiamo essere testati
-            const methods = [
-                'findByEmail', 
-                'findById', 
-                'create', 
-                'update', 
-                'findWithFilters'
-            ];
-            
-            console.log(`[TestSystemController] Creando dettagli per i metodi di UserRepository`);
-            
-            // Stima lo stato di ciascun metodo in base all'output
-            const methodResults = methods.map(method => {
-                // Verifica se ci sono errori specifici per questo metodo
-                const methodOutput = lines.filter(line => line.includes(method)).join('\n');
-                const hasMethodErrors = methodOutput.includes('Error:') || 
-                                       methodOutput.includes('fail') || 
-                                       methodOutput.includes('FAIL');
-                
-                return {
-                    name: `Test per ${method}`,
-                    status: hasMethodErrors ? 'failed' : 'passed',
-                    message: methodOutput || `Test per il metodo ${method}`,
-                    file: testPath
-                };
+                status: results.success ? 'passed' : 'failed',
+                message: `${results.passedTests} passati, ${results.failedTests} falliti su ${results.totalTests} totali`
             });
-            
-            // Aggiorna i risultati dettagliati
-            if (methodResults.length > 0) {
-                results.detailedResults = methodResults;
-                
-                // Aggiorna i conteggi in base ai dettagli
-                results.passedTests = methodResults.filter(r => r.status === 'passed').length;
-                results.failedTests = methodResults.filter(r => r.status === 'failed').length;
-                results.totalTests = methodResults.length;
-                
-                console.log(`[TestSystemController] Creati ${methodResults.length} dettagli per i metodi`);
+        }
+        
+        // 6. Se ancora non abbiamo nulla, prova a determinare lo stato dai messaggi generali
+        if (results.totalTests === 0 && results.detailedResults.length === 0) {
+            if (output.toLowerCase().includes('pass') && !output.toLowerCase().includes('fail')) {
+                results.passedTests = 1;
+                results.totalTests = 1;
+                results.success = true;
+                results.detailedResults.push({
+                    name: testPath,
+                    status: 'passed',
+                    message: 'Test completato con successo'
+                });
+            } else if (output.toLowerCase().includes('fail') || output.toLowerCase().includes('error')) {
+                results.failedTests = 1;
+                results.totalTests = 1;
+                results.success = false;
+                results.detailedResults.push({
+                    name: testPath,
+                    status: 'failed',
+                    message: 'Test fallito con errori'
+                });
+            } else {
+                console.log(`[TestSystemController] Nessun risultato di test trovato nell'output`);
+                // Lascia i risultati vuoti
             }
         }
-        
-        // Garantisci valori minimi per i conteggi
-        if (results.totalTests === 0) {
-            // Determina se il test è passato o fallito in base all'output
-            const hasErrors = output.includes('Error:') || 
-                             output.includes('FAIL') || 
-                             output.includes('fail') ||
-                             output.includes('expected') && output.includes('received');
-            
-            results.totalTests = 1;
-            results.passedTests = hasErrors ? 0 : 1;
-            results.failedTests = hasErrors ? 1 : 0;
-            
-            console.log(`[TestSystemController] Impostati conteggi minimi: ${results.passedTests} passati, ${results.failedTests} falliti, ${results.totalTests} totali`);
-        }
-        
-        // Assicurati che il totale sia uguale alla somma di passati e falliti
-        if (results.totalTests !== (results.passedTests + results.failedTests)) {
-            results.totalTests = results.passedTests + results.failedTests;
-            console.log(`[TestSystemController] Corretto totalTests a ${results.totalTests}`);
-        }
-        
-        // Stampa riepilogo dei pattern trovati
-        console.log(`[TestSystemController] Riepilogo analisi:`, patterns);
-        console.log(`[TestSystemController] Risultati finali: ${results.passedTests} passati, ${results.failedTests} falliti, ${results.totalTests} totali, ${results.detailedResults.length} dettagli`);
         
         return results;
     } catch (error) {
-        console.error('[TestSystemController] Errore durante il parsing dei risultati dei test:', error);
+        console.error('[TestSystemController] Errore durante il parsing dei risultati:', error);
         
-        // Restituisci almeno una struttura base in caso di errore
         return {
             passedTests: 0,
-            failedTests: 1,
-            totalTests: 1,
+            failedTests: 0,
+            totalTests: 0,
             duration: 0,
-            detailedResults: [{
-                name: testPath,
-                status: 'failed',
-                message: `Errore nell'analisi dei risultati: ${error.message}`
-            }]
+            success: false,
+            detailedResults: []
         };
     }
 }

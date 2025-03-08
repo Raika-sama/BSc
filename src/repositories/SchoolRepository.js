@@ -6,6 +6,7 @@ const BaseRepository = require('./base/BaseRepository');
 const { School } = require('../models');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
+const handleRepositoryError = require('../utils/errors/repositoryErrorHandler');
 
 /**
  * Repository per la gestione delle operazioni specifiche delle scuole
@@ -33,15 +34,11 @@ class SchoolRepository extends BaseRepository {
             const result = await query.exec();
             return result;
         } catch (error) {
-            logger.error('Error in SchoolRepository.findOne:', {
-                error: error.message,
-                criteria,
-                options
-            });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella ricerca della scuola',
-                { originalError: error.message }
+            return handleRepositoryError(
+                error,
+                'findOne',
+                { criteria, options },
+                'SchoolRepository'
             );
         }
     }
@@ -86,14 +83,11 @@ class SchoolRepository extends BaseRepository {
     
             return school;
         } catch (error) {
-            logger.error('Errore nel recupero della scuola con utenti', { 
-                error, 
-                schoolId: id 
-            });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nel recupero della scuola con utenti',
-                { originalError: error.message }
+            return handleRepositoryError(
+                error,
+                'findWithUsers',
+                { schoolId: id },
+                'SchoolRepository'
             );
         }
     }
@@ -106,11 +100,11 @@ class SchoolRepository extends BaseRepository {
     
             return schools;
         } catch (error) {
-            logger.error('Errore nel recupero delle scuole', { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nel recupero delle scuole',
-                { originalError: error.message }
+            return handleRepositoryError(
+                error,
+                'findAll',
+                {},
+                'SchoolRepository'
             );
         }
     }
@@ -127,6 +121,14 @@ class SchoolRepository extends BaseRepository {
                 throw createError(
                     ErrorTypes.VALIDATION.BAD_REQUEST,
                     'ID scuola non valido'
+                );
+            }
+    
+            // Verifica che l'ID sia un ObjectId valido prima di fare la query
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_FORMAT,
+                    'Formato ID scuola non valido'
                 );
             }
     
@@ -153,12 +155,18 @@ class SchoolRepository extends BaseRepository {
     
             return school;
         } catch (error) {
-            logger.error('Error in SchoolRepository.findById:', {
-                error: error.message,
-                schoolId: id,
-                type: typeof id
-            });
-            throw error;
+            // Modificato: se l'errore è già formattato secondo il nostro standard, lo lanciamo direttamente
+            if (error.code) {
+                throw error;
+            }
+            // Altrimenti, usiamo handleRepositoryError per formattarlo
+            const formattedError = handleRepositoryError(
+                error,
+                'findById',
+                { schoolId: id, options },
+                'SchoolRepository'
+            );
+            throw formattedError;
         }
     }
 
@@ -174,13 +182,36 @@ class SchoolRepository extends BaseRepository {
         session.startTransaction();
         
         try {
-            const school = await this.findById(schoolId).session(session);
-    
-            // Verifica se l'utente è già presente
+            logger.debug('Inizio aggiunta utente alla scuola', { 
+                schoolId, 
+                userId,
+                role
+            });
+
+            // 1. Verifica esistenza scuola e recupera dati
+            const school = await this.model.findById(schoolId).session(session);
+            if (!school) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Scuola non trovata'
+                );
+            }
+
+            // 2. Verifica che l'utente esista nel sistema
+            const User = mongoose.model('User');
+            const user = await User.findById(userId).session(session);
+            if (!user) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Utente non trovato'
+                );
+            }
+
+            // 3. Verifica se l'utente è già presente nella scuola
             const existingUser = school.users.find(
-                u => u.user.toString() === userId
+                u => u.user && u.user.toString() === userId
             );
-    
+
             if (existingUser) {
                 logger.warn('Tentativo di aggiungere un utente già presente nella scuola', { 
                     schoolId, 
@@ -191,34 +222,74 @@ class SchoolRepository extends BaseRepository {
                     'Utente già associato alla scuola'
                 );
             }
-    
-            // Aggiungi il nuovo utente alla scuola
-            school.users.push({ user: userId, role });
-            await school.save({ session });
-            
-            // Aggiorna l'utente aggiungendo la scuola all'array assignedSchoolIds
-            // Modificato per usare assignedSchoolIds con $addToSet per evitare duplicati
-            const User = mongoose.model('User');
-            await User.findByIdAndUpdate(
+
+            // 4. Aggiungi il nuovo utente alla scuola
+            school.users.push({ 
+                user: userId, 
+                role,
+                addedAt: new Date()
+            });
+
+            const savedSchool = await school.save({ session });
+            logger.debug('Scuola aggiornata con nuovo utente', {
+                schoolId,
                 userId,
-                { $addToSet: { assignedSchoolIds: schoolId } },
-                { session }
+                usersCount: savedSchool.users.length
+            });
+                
+            // 5. Aggiorna l'utente aggiungendo la scuola all'array assignedSchoolIds
+            const updatedUser = await User.findByIdAndUpdate(
+                userId,
+                { 
+                    $addToSet: { 
+                        assignedSchoolIds: schoolId 
+                    }
+                },
+                { 
+                    session, 
+                    new: true,
+                    runValidators: true
+                }
             );
-            
+
+            if (!updatedUser) {
+                throw createError(
+                    ErrorTypes.DATABASE.UPDATE_FAILED,
+                    'Errore nell\'aggiornamento dell\'utente'
+                );
+            }
+
+            logger.debug('Utente aggiornato con nuova scuola', {
+                userId,
+                schoolsCount: updatedUser.assignedSchoolIds?.length
+            });
+                
             await session.commitTransaction();
-            return school;
+            logger.info('Utente aggiunto con successo alla scuola', {
+                schoolId,
+                userId,
+                role
+            });
+
+            // Return both school and user update info
+            return {
+                school: savedSchool,
+                user: updatedUser,
+                role
+            };
         } catch (error) {
             await session.abortTransaction();
-            if (error.code) throw error;
-            logger.error('Errore nell\'aggiunta dell\'utente alla scuola', { 
-                error, 
-                schoolId, 
-                userId 
+            logger.error('Errore durante l\'aggiunta utente alla scuola', {
+                error: error.message,
+                schoolId,
+                userId
             });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nell\'aggiunta dell\'utente alla scuola',
-                { originalError: error.message }
+            if (error.code) throw error;
+            return handleRepositoryError(
+                error,
+                'addUser',
+                { schoolId, userId, role },
+                'SchoolRepository'
             );
         } finally {
             session.endSession();
@@ -341,12 +412,12 @@ class SchoolRepository extends BaseRepository {
 
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Errore nella rimozione dell\'utente dalla scuola:', {
-                error: error.message,
-                schoolId,
-                userId
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'removeUser',
+                { schoolId, userId },
+                'SchoolRepository'
+            );
         } finally {
             session.endSession();
         }
@@ -364,14 +435,11 @@ class SchoolRepository extends BaseRepository {
                 { sort: { name: 1 } }
             );
         } catch (error) {
-            logger.error('Errore nella ricerca delle scuole per regione', { 
-                error, 
-                region 
-            });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella ricerca delle scuole per regione',
-                { originalError: error.message }
+            return handleRepositoryError(
+                error,
+                'findByRegion',
+                { region },
+                'SchoolRepository'
             );
         }
     }
@@ -562,19 +630,18 @@ class SchoolRepository extends BaseRepository {
             
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Error in setupAcademicYear:', {
-                error: error.message,
-                stack: error.stack,
-                schoolId,
-                yearData
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'setupAcademicYear',
+                { schoolId, yearData, createClasses },
+                'SchoolRepository'
+            );
         } finally {
             session.endSession();
         }
     }
       
-      async configureSections(schoolId, sectionsData) {
+    async configureSections(schoolId, sectionsData) {
         // Valida il formato delle sezioni
         const sectionFormat = /^[A-Z]$/;
         const invalidSections = sectionsData.some(section => !sectionFormat.test(section.name));
@@ -611,10 +678,11 @@ class SchoolRepository extends BaseRepository {
                 }))
             };
         } catch (error) {
-            logger.error('Error in configureSections:', error);
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella configurazione sezioni'
+            return handleRepositoryError(
+                error,
+                'configureSections',
+                { schoolId, sectionsCount: sectionsData?.length },
+                'SchoolRepository'
             );
         }
     }
@@ -638,10 +706,11 @@ class SchoolRepository extends BaseRepository {
             { new: true }
           );
         } catch (error) {
-          logger.error('Error in updateSectionStatus:', error);
-          throw createError(
-            ErrorTypes.DATABASE.QUERY_FAILED,
-            'Errore nell\'aggiornamento stato sezione'
+          return handleRepositoryError(
+            error,
+            'updateSectionStatus',
+            { schoolId, sectionName, yearData },
+            'SchoolRepository'
           );
         }
       }
@@ -682,9 +751,13 @@ class SchoolRepository extends BaseRepository {
             };
     
         } catch (error) {
-            logger.error('Error in deleteWithClasses:', error);
             await session.abortTransaction();
-            throw error;
+            return handleRepositoryError(
+                error,
+                'deleteWithClasses',
+                { schoolId: id },
+                'SchoolRepository'
+            );
         } finally {
             await session.endSession();
         }
@@ -970,12 +1043,12 @@ async deactivateSection(schoolId, sectionName) {
 
             return students;
         } catch (error) {
-            logger.error('Errore nel recupero studenti per sezione:', {
+            return handleRepositoryError(
                 error,
-                schoolId,
-                sectionName
-            });
-            throw error;
+                'getStudentsBySection',
+                { schoolId, sectionName },
+                'SchoolRepository'
+            );
         }
     }
 
@@ -1021,8 +1094,12 @@ async deactivateSection(schoolId, sectionName) {
     
             return sectionsWithCounts;
         } catch (error) {
-            logger.error('Error in getSectionsWithStudentCount:', error);
-            throw error;
+            return handleRepositoryError(
+                error,
+                'getSectionsWithStudentCount',
+                { schoolId },
+                'SchoolRepository'
+            );
         }
     }
 
@@ -1116,14 +1193,11 @@ async deactivateSection(schoolId, sectionName) {
     
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Errore nella rimozione del manager:', {
-                error: error.message,
-                schoolId
-            });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nella rimozione del manager',
-                { originalError: error.message }
+            return handleRepositoryError(
+                error,
+                'removeManagerFromSchool',
+                { schoolId },
+                'SchoolRepository'
             );
         } finally {
             session.endSession();
@@ -1196,15 +1270,11 @@ async deactivateSection(schoolId, sectionName) {
     
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Errore nell\'aggiunta del manager:', {
-                error: error.message,
-                schoolId,
-                userId
-            });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                'Errore nell\'aggiunta del manager',
-                { originalError: error.message }
+            return handleRepositoryError(
+                error,
+                'addManagerToSchool',
+                { schoolId, userId },
+                'SchoolRepository'
             );
         } finally {
             session.endSession();
@@ -1284,11 +1354,12 @@ async syncAssignedSchoolIds() {
 
     } catch (error) {
         await session.abortTransaction();
-        logger.error('Errore nella sincronizzazione assignedSchoolIds:', {
-            error: error.message,
-            stack: error.stack
-        });
-        throw error;
+        return handleRepositoryError(
+            error,
+            'syncAssignedSchoolIds',
+            { totalSchools: await this.model.countDocuments() },
+            'SchoolRepository'
+        );
     } finally {
         session.endSession();
     }
@@ -1588,11 +1659,12 @@ async changeSchoolType(schoolId, { schoolType, institutionType }) {
     } catch (error) {
         // Rollback in caso di errore
         await session.abortTransaction();
-        logger.error('Errore nel cambio tipo scuola:', {
-            error: error.message,
-            stack: error.stack
-        });
-        throw error;
+        return handleRepositoryError(
+            error,
+            'changeSchoolType',
+            { schoolId, schoolType, institutionType },
+            'SchoolRepository'
+        );
     } finally {
         // Chiudi la sessione in ogni caso
         session.endSession();
@@ -1668,12 +1740,12 @@ async activateAcademicYear(schoolId, yearId) {
         return school;
     } catch (error) {
         await session.abortTransaction();
-        logger.error('Errore nell\'attivazione dell\'anno accademico', {
-            error: error.message,
-            schoolId,
-            yearId
-        });
-        throw error;
+        return handleRepositoryError(
+            error,
+            'activateAcademicYear',
+            { schoolId, yearId },
+            'SchoolRepository'
+        );
     } finally {
         session.endSession();
     }
@@ -1802,13 +1874,12 @@ async archiveAcademicYear(schoolId, yearId) {
         return school;
     } catch (error) {
         await session.abortTransaction();
-        logger.error('Errore nell\'archiviazione dell\'anno accademico', {
-            error: error.message,
-            stack: error.stack,
-            schoolId,
-            yearId
-        });
-        throw error;
+        return handleRepositoryError(
+            error,
+            'archiveAcademicYear',
+            { schoolId, yearId },
+            'SchoolRepository'
+        );
     } finally {
         session.endSession();
     }
@@ -1844,12 +1915,12 @@ async getClassesByAcademicYear(schoolId, academicYear) {
 
         return classes;
     } catch (error) {
-        logger.error('Errore nel recupero delle classi per anno accademico', {
-            error: error.message,
-            schoolId,
-            academicYear
-        });
-        throw error;
+        return handleRepositoryError(
+            error,
+            'getClassesByAcademicYear',
+            { schoolId, academicYear },
+            'SchoolRepository'
+        );
     }
 }
 
@@ -1941,13 +2012,12 @@ async reactivateAcademicYear(schoolId, yearId) {
         return school;
     } catch (error) {
         await session.abortTransaction();
-        logger.error('Errore nella riattivazione dell\'anno accademico', {
-            error: error.message,
-            stack: error.stack,
-            schoolId,
-            yearId
-        });
-        throw error;
+        return handleRepositoryError(
+            error,
+            'reactivateAcademicYear',
+            { schoolId, yearId },
+            'SchoolRepository'
+        );
     } finally {
         session.endSession();
     }
@@ -2186,11 +2256,12 @@ async reactivateAcademicYear(schoolId, yearId) {
             
             return students;
         } catch (error) {
-            logger.error('Error in findByEmails:', {
-                error: error.message,
-                stack: error.stack
-            });
-            throw error;
+            return handleRepositoryError(
+                error, 
+                'findByEmails', 
+                { emailsCount: emails?.length }, 
+                'SchoolRepository'
+            );
         }
     }
 

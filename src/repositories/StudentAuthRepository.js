@@ -1,4 +1,5 @@
 // src/repositories/StudentAuthRepository.js
+const handleRepositoryError = require('../utils/errors/repositoryErrorHandler');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
 const BaseRepository = require('./base/BaseRepository');
@@ -7,6 +8,7 @@ const bcrypt = require('bcryptjs');
 class StudentAuthRepository extends BaseRepository {
     constructor(studentAuthModel) {
         super(studentAuthModel);
+        this.repositoryName = 'StudentAuthRepository';
     }
 
     /**
@@ -19,8 +21,12 @@ class StudentAuthRepository extends BaseRepository {
                 .select('+password +temporaryPassword')
                 .exec();
         } catch (error) {
-            logger.error('Error finding auth by student ID', { error, studentId });
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'findByStudentId',
+                { studentId },
+                this.repositoryName
+            );
         }
     }
 
@@ -35,8 +41,12 @@ class StudentAuthRepository extends BaseRepository {
                 .populate('student', 'firstName lastName email')
                 .exec();
         } catch (error) {
-            logger.error('Error finding auth by username', { error, username });
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'findByUsername',
+                { username },
+                this.repositoryName
+            );
         }
     }
 
@@ -57,16 +67,12 @@ class StudentAuthRepository extends BaseRepository {
 
             return auth;
         } catch (error) {
-            logger.error('Error creating student auth', { error });
-            
-            if (error.code === 11000) {
-                throw createError(
-                    ErrorTypes.RESOURCE.ALREADY_EXISTS,
-                    'Credenziali già esistenti per questo studente'
-                );
-            }
-            
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'create',
+                { authData },
+                this.repositoryName
+            );
         }
     }
 
@@ -105,8 +111,12 @@ class StudentAuthRepository extends BaseRepository {
             
             return auth;
         } catch (error) {
-            logger.error('Error updating password in repository:', { error, studentId });
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'updatePassword',
+                { studentId },
+                this.repositoryName
+            );
         }
     }
 
@@ -144,8 +154,12 @@ class StudentAuthRepository extends BaseRepository {
             
             return auth;
         } catch (error) {
-            logger.error('Error updating session', { error, studentId });
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'updateSession',
+                { studentId },
+                this.repositoryName
+            );
         }
     }
 
@@ -166,8 +180,12 @@ class StudentAuthRepository extends BaseRepository {
 
             logger.info('Session invalidated', { studentId });
         } catch (error) {
-            logger.error('Error invalidating session', { error, studentId });
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'invalidateSession',
+                { studentId },
+                this.repositoryName
+            );
         }
     }
 
@@ -190,8 +208,12 @@ class StudentAuthRepository extends BaseRepository {
 
             logger.warn('Account locked', { studentId, lockTime });
         } catch (error) {
-            logger.error('Error locking account', { error, studentId });
-            throw error;
+            throw handleRepositoryError(
+                error,
+                'lockAccount',
+                { studentId, lockTime },
+                this.repositoryName
+            );
         }
     }
 }

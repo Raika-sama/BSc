@@ -1,5 +1,5 @@
 // src/repositories/base/BaseRepository.js
-const { ErrorTypes, createError } = require('../../utils/errors/errorTypes');
+const handleRepositoryError = require('../../utils/errors/repositoryErrorHandler');
 const logger = require('../../utils/errors/logger/logger');
 
 class BaseRepository {
@@ -10,6 +10,7 @@ class BaseRepository {
             });
         }
         this.model = model;
+        this.repositoryName = this.constructor.name;
     }
 
     async create(data) {
@@ -22,8 +23,12 @@ class BaseRepository {
             const doc = await this.model.create(data);
             return doc;
         } catch (error) {
-            logger.error(`Errore nella creazione di ${this.model.modelName}`, { error });
-            throw error; // Passa l'errore originale invece di crearne uno nuovo
+            throw handleRepositoryError(
+                error, 
+                'create', 
+                { data }, 
+                this.repositoryName
+            );
         }
     }
 
@@ -41,22 +46,22 @@ class BaseRepository {
                 query = query.populate(options.populate);
             }
 
-            const doc = await query.exec(); // Aggiungi exec()
+            const doc = await query.exec();
             
             if (!doc) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    `${this.model.modelName} non trovato`
-                );
+                // Utilizziamo l'helper per generare un errore standard
+                const error = new Error(`${this.model.modelName} non trovato`);
+                error.name = 'DocumentNotFoundError';
+                throw error;
             }
+            
             return doc;
         } catch (error) {
-            if (error.code) throw error; // Se è già un errore formattato
-            logger.error(`Errore nel recupero di ${this.model.modelName}`, { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                `Errore nel recupero di ${this.model.modelName}`,
-                { originalError: error.message }
+            throw handleRepositoryError(
+                error, 
+                'findById', 
+                { id, options }, 
+                this.repositoryName
             );
         }
     }
@@ -70,100 +75,103 @@ class BaseRepository {
                 query = query.select(options.select);
             }
             
-            const doc = await query.exec();  // Aggiungi .exec()
+            const doc = await query.exec();
             return doc;
         } catch (error) {
-            logger.error(`Errore nella ricerca di ${this.model.modelName}`, { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                `Errore nella ricerca di ${this.model.modelName}`,
-                { originalError: error.message }
+            throw handleRepositoryError(
+                error, 
+                'findOne', 
+                { filter, options }, 
+                this.repositoryName
             );
         }
     }
 
-    async find(filter = {}) {
+    async find(filter = {}, options = {}) {
         try {
-            const docs = await this.model.find(filter);
+            let query = this.model.find(filter);
+            
+            // Applica opzioni come sort, limit, skip
+            if (options.sort) query = query.sort(options.sort);
+            if (options.limit) query = query.limit(options.limit);
+            if (options.skip) query = query.skip(options.skip);
+            if (options.select) query = query.select(options.select);
+            if (options.populate) query = query.populate(options.populate);
+            
+            const docs = await query.exec();
             return docs;
         } catch (error) {
-            logger.error(`Errore nel recupero di ${this.model.modelName}`, { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                `Errore nel recupero di ${this.model.modelName}`,
-                { originalError: error.message }
+            throw handleRepositoryError(
+                error, 
+                'find', 
+                { filter, options }, 
+                this.repositoryName
             );
         }
     }
 
     async update(id, data) {
-    try {
-        const doc = await this.model.findByIdAndUpdate(
-            id, 
-            data, 
-            {
-                new: true,
-                runValidators: true,
-                context: 'query'  // Aggiunta questa opzione
+        try {
+            const doc = await this.model.findByIdAndUpdate(
+                id, 
+                data, 
+                {
+                    new: true,
+                    runValidators: true,
+                    context: 'query'
+                }
+            );
+            
+            if (!doc) {
+                const error = new Error(`${this.model.modelName} non trovato`);
+                error.name = 'DocumentNotFoundError';
+                throw error;
             }
-        );
-        if (!doc) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                `${this.model.modelName} non trovato`
+            
+            return doc;
+        } catch (error) {
+            throw handleRepositoryError(
+                error, 
+                'update', 
+                { id, data }, 
+                this.repositoryName
             );
         }
-        return doc;
-    } catch (error) {
-        if (error.code) throw error;
-        logger.error(`Errore nell'aggiornamento di ${this.model.modelName}`, { error });
-        throw createError(
-            ErrorTypes.DATABASE.QUERY_FAILED,
-            `Errore nell'aggiornamento di ${this.model.modelName}`,
-            { originalError: error.message }
-        );
     }
-}
 
     async delete(id) {
         try {
             const doc = await this.model.findByIdAndDelete(id);
+            
             if (!doc) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    `${this.model.modelName} non trovato`
-                );
+                const error = new Error(`${this.model.modelName} non trovato`);
+                error.name = 'DocumentNotFoundError';
+                throw error;
             }
+            
             return doc;
         } catch (error) {
-            if (error.code) throw error; // Se è già un errore formattato
-            logger.error(`Errore nella cancellazione di ${this.model.modelName}`, { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                `Errore nella cancellazione di ${this.model.modelName}`,
-                { originalError: error.message }
+            throw handleRepositoryError(
+                error, 
+                'delete', 
+                { id }, 
+                this.repositoryName
             );
         }
     }
 
-    /**
-     * Elimina più documenti in base al filtro
-     */
     async deleteMany(filter = {}) {
         try {
             return await this.model.deleteMany(filter);
         } catch (error) {
-            logger.error(`Errore nell'eliminazione multipla di ${this.model.modelName}`, { error });
-            throw createError(
-                ErrorTypes.DATABASE.QUERY_FAILED,
-                `Errore nell'eliminazione multipla di ${this.model.modelName}`,
-                { originalError: error.message }
+            throw handleRepositoryError(
+                error, 
+                'deleteMany', 
+                { filter }, 
+                this.repositoryName
             );
         }
     }
-
-
-
 }
 
 module.exports = BaseRepository;

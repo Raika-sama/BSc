@@ -6,6 +6,7 @@ const Student = require('../models/Student');
 const { getModels } = require('../models/Result');
 const logger = require('../utils/errors/logger/logger');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
+const handleRepositoryError = require('../utils/errors/repositoryErrorHandler');
 
 class TestRepository {
     constructor() {
@@ -23,11 +24,12 @@ class TestRepository {
             const test = await Test.findById(id);
             return test;
         } catch (error) {
-            logger.error('Error finding test by ID:', {
-                error: error.message,
-                testId: id
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'findById',
+                { testId: id },
+                'TestRepository'
+            );
         }
     }
 
@@ -41,11 +43,12 @@ class TestRepository {
             const tests = await Test.find(filters);
             return tests;
         } catch (error) {
-            logger.error('Error finding tests:', {
-                error: error.message,
-                filters
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'find',
+                { filters },
+                'TestRepository'
+            );
         }
     }
 
@@ -62,7 +65,7 @@ class TestRepository {
             const student = await Student.findById(studentId);
             if (!student) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Studente non trovato'
                 );
             }
@@ -70,7 +73,7 @@ class TestRepository {
             // Verifica tipo di test supportato
             if (testData.tipo !== 'CSI') {
                 throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    ErrorTypes.VALIDATION.INVALID_INPUT,
                     'Tipo di test non supportato'
                 );
             }
@@ -128,13 +131,12 @@ class TestRepository {
 
             return test;
         } catch (error) {
-            logger.error('Error assigning test to student:', {
-                error: error.message,
-                studentId,
-                assignedBy,
-                testType: testData.tipo
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'assignTestToStudent',
+                { testData, studentId, assignedBy },
+                'TestRepository'
+            );
         }
     }
 
@@ -157,7 +159,7 @@ class TestRepository {
             
             if (!classDoc) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Classe non trovata'
                 );
             }
@@ -171,7 +173,7 @@ class TestRepository {
             
             if (!students.length) {
                 throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    ErrorTypes.VALIDATION.INVALID_INPUT,
                     'Nessuno studente attivo trovato nella classe'
                 );
             }
@@ -184,7 +186,7 @@ class TestRepository {
             // 3. Verifica tipo di test supportato
             if (testData.tipo !== 'CSI') {
                 throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    ErrorTypes.VALIDATION.INVALID_INPUT,
                     'Tipo di test non supportato'
                 );
             }
@@ -259,12 +261,12 @@ class TestRepository {
             };
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Error assigning tests to class:', {
-                error: error.message,
-                classId,
-                assignedBy
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'assignTestToClass',
+                { testData, classId, assignedBy },
+                'TestRepository'
+            );
         } finally {
             session.endSession();
         }
@@ -331,13 +333,12 @@ class TestRepository {
 
             return tests;
         } catch (error) {
-            logger.error('Error getting assigned tests:', {
-                error: error.message,
-                stack: error.stack,
-                studentId,
-                assignedBy
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'getAssignedTests',
+                { studentId, assignedBy },
+                'TestRepository'
+            );
         }
     }
 
@@ -419,12 +420,12 @@ class TestRepository {
             
             return result;
         } catch (error) {
-            logger.error('Error getting tests by class:', {
-                error: error.message,
-                classId,
-                assignedBy
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'getAssignedTestsByClass',
+                { classId, assignedBy },
+                'TestRepository'
+            );
         }
     }
 
@@ -439,7 +440,7 @@ class TestRepository {
             const test = await Test.findById(testId);
             if (!test) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Test non trovato'
                 );
             }
@@ -447,7 +448,7 @@ class TestRepository {
             // Controlla se il test è già completato
             if (test.status === 'completed') {
                 throw createError(
-                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    ErrorTypes.BUSINESS.INVALID_OPERATION,
                     'Impossibile revocare un test già completato'
                 );
             }
@@ -472,11 +473,12 @@ class TestRepository {
                 modifiedCount: result.modifiedCount
             };
         } catch (error) {
-            logger.error('Error revoking test:', {
-                error: error.message,
-                testId
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'revokeTest',
+                { testId },
+                'TestRepository'
+            );
         }
     }
 
@@ -500,7 +502,7 @@ class TestRepository {
             
             if (!students.length) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Nessuno studente trovato nella classe'
                 );
             }
@@ -545,12 +547,12 @@ class TestRepository {
             };
         } catch (error) {
             await session.abortTransaction();
-            logger.error('Error revoking class tests:', {
-                error: error.message,
-                classId,
-                testType
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'revokeClassTests',
+                { classId, testType },
+                'TestRepository'
+            );
         } finally {
             session.endSession();
         }
@@ -579,12 +581,12 @@ class TestRepository {
 
             return tests;
         } catch (error) {
-            logger.error('Error getting student tests:', {
-                error: error.message,
-                studentId,
-                status
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'getStudentTests',
+                { studentId, status },
+                'TestRepository'
+            );
         }
     }
 
@@ -643,12 +645,12 @@ class TestRepository {
                 available: true
             };
         } catch (error) {
-            logger.error('Error checking test availability:', {
-                error: error.message,
-                studentId,
-                testType
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'checkTestAvailability',
+                { studentId, testType },
+                'TestRepository'
+            );
         }
     }
 
@@ -674,19 +676,19 @@ class TestRepository {
 
             if (!test) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Test non trovato'
                 );
             }
 
             return test;
         } catch (error) {
-            logger.error('Error updating test status:', {
-                error: error.message,
-                testId,
-                status
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'updateTestStatus',
+                { testId, status, additionalData },
+                'TestRepository'
+            );
         }
     }
 
@@ -702,7 +704,7 @@ class TestRepository {
             const test = await Test.findById(testId);
             if (!test) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Test non trovato'
                 );
             }
@@ -719,11 +721,12 @@ class TestRepository {
             // Per ora, restituiamo solo il test aggiornato
             return test;
         } catch (error) {
-            logger.error('Error saving test result:', {
-                error: error.message,
-                testId
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'saveTestResult',
+                { testId, resultData },
+                'TestRepository'
+            );
         }
     }
 
@@ -737,7 +740,7 @@ class TestRepository {
             const test = await Test.findById(testId);
             if (!test) {
                 throw createError(
-                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    ErrorTypes.RESOURCE.NOT_FOUND,
                     'Test non trovato'
                 );
             }
@@ -759,11 +762,12 @@ class TestRepository {
                 testType: test.tipo
             };
         } catch (error) {
-            logger.error('Error getting test results:', {
-                error: error.message,
-                testId
-            });
-            throw error;
+            return handleRepositoryError(
+                error,
+                'getBaseResults',
+                { testId },
+                'TestRepository'
+            );
         }
     }
 }

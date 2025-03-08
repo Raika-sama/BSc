@@ -3,12 +3,15 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const SchoolRepository = require('@/repositories/SchoolRepository');
 const { School, User } = require('@/models');
 const { v4: uuidv4 } = require('uuid');
+const { ErrorTypes } = require('@/utils/errors/errorTypes');
 
 let mongoServer;
 
 // Funzione helper per creare una scuola di test con dati essenziali
 const createTestSchool = async (schoolData) => {
-    return await School.create(schoolData);
+    return await School.create({
+        ...schoolData
+    });
 };
 
 describe('SchoolRepository', () => {
@@ -20,10 +23,16 @@ describe('SchoolRepository', () => {
     let testTeacher;
 
     beforeAll(async () => {
-        // Configura un database MongoDB in memoria per i test
-        mongoServer = await MongoMemoryServer.create();
+        // Configura un database MongoDB in memoria per i test con supporto per le transazioni
+        mongoServer = await MongoMemoryServer.create({
+            instance: {
+                storageEngine: 'wiredTiger'  // Necessario per le transazioni
+            }
+        });
         const uri = mongoServer.getUri();
-        await mongoose.connect(uri);
+        await mongoose.connect(uri, {
+            directConnection: true  // Necessario per le transazioni
+        });
     });
 
     afterAll(async () => {
@@ -53,7 +62,15 @@ describe('SchoolRepository', () => {
             email: 'manager@example.com',
             password: 'password123',
             role: 'admin',
-            status: 'active'
+            status: 'active',
+            sessionTokens: [{
+                token: `test-token-manager-${Date.now()}`,
+                createdAt: new Date(),
+                lastUsedAt: new Date(),
+                expiresAt: new Date(Date.now() + 86400000), // 24 ore
+                ipAddress: '127.0.0.1',
+                userAgent: 'Mozilla/5.0 (Test)'
+            }]
         });
         
         testTeacher = await User.create({
@@ -62,7 +79,15 @@ describe('SchoolRepository', () => {
             email: 'teacher@example.com',
             password: 'password123',
             role: 'teacher',
-            status: 'active'
+            status: 'active',
+            sessionTokens: [{
+                token: `test-token-teacher-${Date.now()}`,
+                createdAt: new Date(),
+                lastUsedAt: new Date(),
+                expiresAt: new Date(Date.now() + 86400000), // 24 ore
+                ipAddress: '127.0.0.1',
+                userAgent: 'Mozilla/5.0 (Test)'
+            }]
         });
 
         // Crea mock per i repository dipendenti
@@ -165,13 +190,14 @@ describe('SchoolRepository', () => {
             // Test findById con ID invalido
             try {
                 await schoolRepository.findById('invalidid');
-                // Se arriviamo qui, il test fallisce perché non è stata lanciata un'eccezione
                 fail('Expected exception was not thrown');
             } catch (error) {
-                // Verifichiamo che l'errore sia definito
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
-                // Possiamo anche verificare proprietà specifiche dell'errore
-                expect(error.message).toBeDefined();
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
+                // Verifichiamo che sia del tipo di errore corretto
+                expect(error.code).toContain('VAL_'); // codice errore di validazione
             }
         });
 
@@ -183,10 +209,13 @@ describe('SchoolRepository', () => {
                 // Se arriviamo qui, il test fallisce perché non è stata lanciata un'eccezione
                 fail('Expected exception was not thrown');
             } catch (error) {
-                // Verifichiamo che l'errore sia definito
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
-                // Possiamo anche verificare proprietà specifiche dell'errore
-                expect(error.message).toBeDefined();
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
+                // Verifichiamo che sia del tipo NOT_FOUND
+                expect(error.code).toBe(ErrorTypes.RESOURCE.NOT_FOUND.code);
+                expect(error.status).toBe(404);
             }
         });
     });
@@ -238,10 +267,12 @@ describe('SchoolRepository', () => {
                 // Se arriviamo qui, il test fallisce perché non è stata lanciata un'eccezione
                 fail('Expected exception was not thrown');
             } catch (error) {
-                // Verifichiamo che l'errore sia definito
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
-                // L'errore dovrebbe essere relativo al duplicato
-                expect(error.code).toBe(11000); // MongoDB duplicate key error code
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
+                expect(error.code).toBe(ErrorTypes.RESOURCE.ALREADY_EXISTS.code);
+                expect(error.status).toBe(409);
             }
         });
     });
@@ -271,13 +302,13 @@ describe('SchoolRepository', () => {
             const updateData = { name: 'Updated Name' };
             try {
                 await schoolRepository.update('invalidid', updateData);
-                // Se arriviamo qui, il test fallisce perché non è stata lanciata un'eccezione
                 fail('Expected exception was not thrown');
             } catch (error) {
-                // Verifichiamo che l'errore sia definito
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
-                // Possiamo anche verificare proprietà specifiche dell'errore
-                expect(error.message).toBeDefined();
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
+                expect(error.code).toContain('VAL_'); // Codice errore di validazione
             }
         });
 
@@ -290,62 +321,123 @@ describe('SchoolRepository', () => {
                 // Se arriviamo qui, il test fallisce perché non è stata lanciata un'eccezione
                 fail('Expected exception was not thrown');
             } catch (error) {
-                // Verifichiamo che l'errore sia definito
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
-                // Possiamo anche verificare proprietà specifiche dell'errore
-                expect(error.message).toBeDefined();
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
+                expect(error.code).toBe(ErrorTypes.RESOURCE.NOT_FOUND.code);
+                expect(error.status).toBe(404);
             }
         });
     });
 
     describe('addUser', () => {
-        it('should add a user to the school', async () => {
-            // Crea un nuovo utente
+        it('should add a new user to school', async () => {
             const newUser = await User.create({
-                firstName: 'New',
-                lastName: 'User',
+                firstName: 'User',
+                lastName: 'One',
                 email: 'newuser@example.com',
                 password: 'password123',
                 role: 'teacher',
-                status: 'active'
+                status: 'active',
+                sessionTokens: [{
+                    token: `test-token-user1-${Date.now()}`,
+                    createdAt: new Date(),
+                    lastUsedAt: new Date(),
+                    expiresAt: new Date(Date.now() + 86400000),
+                    ipAddress: '127.0.0.1',
+                    userAgent: 'Mozilla/5.0 (Test)'
+                }]
             });
 
-            // Aggiungi l'utente alla scuola
-            const updatedSchool = await schoolRepository.addUser(
+            // Test aggiunta utente con ruolo teacher
+            const result = await schoolRepository.addUser(
                 testSchool._id,
                 newUser._id,
                 'teacher'
             );
 
-            // Verifica che l'utente sia stato aggiunto
-            expect(updatedSchool.users).toHaveLength(2); // Il manager più il nuovo utente
-            const addedUser = updatedSchool.users.find(
-                u => u.user.toString() === newUser._id.toString()
-            );
+            // Verify response format
+            expect(result).toBeDefined();
+            expect(result.school).toBeDefined();
+            expect(result.user).toBeDefined();
+            expect(result.role).toBe('teacher');
+
+            // Get fresh data from database
+            const savedSchool = await School.findById(testSchool._id);
+            const updatedUser = await User.findById(newUser._id);
+
+            // Verify school was updated
+            expect(savedSchool.users).toBeDefined();
+            const addedUser = savedSchool.users.find(u => u.user.toString() === newUser._id.toString());
             expect(addedUser).toBeDefined();
             expect(addedUser.role).toBe('teacher');
 
-            // Verifica che l'utente sia stato aggiornato con la scuola
-            const updatedUser = await User.findById(newUser._id);
+            // Verify user was updated
+            expect(updatedUser.assignedSchoolIds).toBeDefined();
             expect(updatedUser.assignedSchoolIds).toContainEqual(testSchool._id);
         });
 
-        it('should throw error for already added user', async () => {
-            // Ottieni il manager esistente
-            const manager = await User.findOne({ email: 'manager@example.com' });
+        // Test per i vari ruoli validi
+        it('should add users with different valid roles', async () => {
+            const validRoles = ['admin', 'developer', 'manager', 'pcto', 'teacher', 'tutor', 'researcher', 'health'];
+            
+            for (const role of validRoles) {
+                const newUser = await User.create({
+                    firstName: `${role}`,
+                    lastName: 'User',
+                    email: `${role}@example.com`,
+                    password: 'password123',
+                    role: role,
+                    status: 'active'
+                });
 
-            // Tenta di aggiungere lo stesso utente di nuovo
+                const result = await schoolRepository.addUser(
+                    testSchool._id,
+                    newUser._id,
+                    role
+                );
+
+                expect(result).toBeDefined();
+                expect(result.school).toBeDefined();
+                expect(result.user).toBeDefined();
+                expect(result.role).toBe(role);
+
+                // Verify in database
+                const schoolCheck = await School.findById(testSchool._id);
+                const userInSchool = schoolCheck.users.find(u => u.user.toString() === newUser._id.toString());
+                expect(userInSchool).toBeDefined();
+                expect(userInSchool.role).toBe(role);
+            }
+        });
+
+        it('should throw error for already added user', async () => {
+            // First add the user
+            await schoolRepository.addUser(
+                testSchool._id,
+                testTeacher._id,
+                'teacher'
+            );
+
+            // Try to add the same user again
             try {
                 await schoolRepository.addUser(
                     testSchool._id,
-                    manager._id,
+                    testTeacher._id,
                     'teacher'
                 );
                 fail('Expected exception was not thrown');
             } catch (error) {
                 expect(error).toBeDefined();
+                expect(error.code).toBe(ErrorTypes.RESOURCE.ALREADY_EXISTS.code);
+                expect(error.status).toBe(409);
                 expect(error.message).toContain('Utente già associato alla scuola');
             }
+
+            // Verify the user wasn't added twice
+            const school = await School.findById(testSchool._id);
+            const userCount = school.users.filter(u => u.user.toString() === testTeacher._id.toString()).length;
+            expect(userCount).toBe(1);
         });
     });
 
@@ -424,8 +516,12 @@ describe('SchoolRepository', () => {
                 );
                 fail('Expected exception was not thrown');
             } catch (error) {
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
                 expect(error.message).toContain('Anno accademico già presente');
+                expect(error.code).toBe(ErrorTypes.RESOURCE.ALREADY_EXISTS.code);
             }
         });
 
@@ -447,8 +543,12 @@ describe('SchoolRepository', () => {
                 );
                 fail('Expected exception was not thrown');
             } catch (error) {
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
                 expect(error.message).toContain('Anno accademico deve essere nel formato YYYY/YYYY');
+                expect(error.code).toBe(ErrorTypes.VALIDATION.INVALID_FORMAT.code);
             }
         });
     });
@@ -488,8 +588,12 @@ describe('SchoolRepository', () => {
                 await schoolRepository.removeUser(testSchool._id, testManager._id);
                 fail('Expected exception was not thrown');
             } catch (error) {
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
                 expect(error.message).toContain('Impossibile rimuovere l\'ultimo admin della scuola');
+                expect(error.code).toBe(ErrorTypes.VALIDATION.OPERATION_NOT_ALLOWED.code);
             }
         });
         
@@ -499,8 +603,12 @@ describe('SchoolRepository', () => {
                 await schoolRepository.removeUser(testSchool._id, testSchool.manager);
                 fail('Expected exception was not thrown');
             } catch (error) {
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
                 expect(error.message).toContain('Non è possibile rimuovere il manager della scuola');
+                expect(error.code).toBe(ErrorTypes.VALIDATION.OPERATION_NOT_ALLOWED.code);
             }
         });
     });
@@ -537,8 +645,11 @@ describe('SchoolRepository', () => {
                 await schoolRepository.deactivateSection(testSchool._id, 'Z');
                 fail('Expected exception was not thrown');
             } catch (error) {
+                // Verifichiamo che l'errore sia nel nuovo formato standardizzato
                 expect(error).toBeDefined();
-                // Il messaggio dipende dall'implementazione specifica
+                expect(error.code).toBeDefined();
+                expect(error.status).toBeDefined();
+                expect(error.code).toBe(ErrorTypes.RESOURCE.NOT_FOUND.code);
             }
         });
     });
@@ -608,31 +719,66 @@ describe('SchoolRepository', () => {
     describe('activateAcademicYear', () => {
         it('should activate an academic year and archive the current active one', async () => {
             // Crea un nuovo anno accademico pianificato
-            const updatedSchool = await schoolRepository.setupAcademicYear(
+            const result = await schoolRepository.setupAcademicYear(
                 testSchool._id,
                 {
                     year: '2024/2025',
                     status: 'planned',
                     startDate: new Date('2024-09-01'),
                     endDate: new Date('2025-06-15'),
-                    createdBy: testSchool.manager
+                    createdBy: testManager._id
                 },
                 false
             );
             
-            // Prendi l'ID del nuovo anno
-            const newYearId = updatedSchool.academicYears.find(y => y.year === '2024/2025')._id;
+            // Verifica che il nuovo anno sia stato creato
+            expect(result.academicYears).toHaveLength(2); // L'anno esistente + quello nuovo
+            const newYear = result.academicYears.find(y => y.year === '2024/2025');
+            expect(newYear).toBeDefined();
+            expect(newYear.status).toBe('planned');
             
             // Attiva il nuovo anno
-            const result = await schoolRepository.activateAcademicYear(testSchool._id, newYearId);
+            const activatedResult = await schoolRepository.activateAcademicYear(testSchool._id, newYear._id);
             
             // Verifica che il nuovo anno sia attivo
-            const activeYear = result.academicYears.find(y => y.status === 'active');
-            expect(activeYear.year).toBe('2024/2025');
+            const activeYear = activatedResult.academicYears.find(y => y.year === '2024/2025');
+            expect(activeYear).toBeDefined();
+            expect(activeYear.status).toBe('active');
             
             // Verifica che il vecchio anno attivo sia stato archiviato
-            const oldActiveYear = result.academicYears.find(y => y.year === '2023/2024');
+            const oldActiveYear = activatedResult.academicYears.find(y => y.year === '2023/2024');
+            expect(oldActiveYear).toBeDefined();
             expect(oldActiveYear.status).toBe('archived');
+        });
+    });
+
+    describe('archiveAcademicYear', () => {
+        it('should archive an academic year', async () => {
+            // Ottieni la scuola aggiornata per avere l'ID corretto dell'anno accademico
+            const school = await School.findById(testSchool._id);
+            const activeYear = school.academicYears.find(y => y.status === 'active');
+            expect(activeYear).toBeDefined();
+            
+            // Archivia l'anno
+            const result = await schoolRepository.archiveAcademicYear(testSchool._id, activeYear._id);
+            
+            // Verifica che l'anno sia stato archiviato
+            const archivedYear = result.academicYears.find(y => y._id.toString() === activeYear._id.toString());
+            expect(archivedYear).toBeDefined();
+            expect(archivedYear.status).toBe('archived');
+        });
+
+        it('should throw error when trying to archive non-existent year', async () => {
+            const nonExistentYearId = new mongoose.Types.ObjectId();
+            
+            try {
+                await schoolRepository.archiveAcademicYear(testSchool._id, nonExistentYearId);
+                fail('Expected exception was not thrown');
+            } catch (error) {
+                expect(error).toBeDefined();
+                expect(error.code).toBe(ErrorTypes.RESOURCE.NOT_FOUND.code);
+                expect(error.message).toContain('Anno accademico non trovato');
+            }
         });
     });
     
@@ -706,6 +852,501 @@ describe('SchoolRepository', () => {
                 expect(error).toBeDefined();
                 expect(error.message).toContain('Le scuole medie devono avere tipo istituto impostato come "nessuno"');
             }
+        });
+    });
+
+    describe('removeManagerFromSchool', () => {
+        it('should remove the manager from a school', async () => {
+            // Verifica che la scuola abbia un manager
+            expect(testSchool.manager).toBeDefined();
+            
+            // Mock per le operazioni su Class e Student
+            const ClassModel = mongoose.model('Class') || { updateMany: jest.fn() };
+            const StudentModel = mongoose.model('Student') || { updateMany: jest.fn() };
+            
+            const originalClassUpdateMany = ClassModel.updateMany;
+            const originalStudentUpdateMany = StudentModel.updateMany;
+            
+            ClassModel.updateMany = jest.fn().mockResolvedValue({ modifiedCount: 2 });
+            StudentModel.updateMany = jest.fn().mockResolvedValue({ modifiedCount: 3 });
+            
+            // Rimuovi il manager
+            const result = await schoolRepository.removeManagerFromSchool(testSchool._id);
+            
+            // Verifica che il manager sia stato rimosso
+            expect(result.school).toBeDefined();
+            expect(result.school.manager).toBeNull();
+            expect(result.oldManagerId).toEqual(testSchool.manager);
+            
+            // Verifica che le classi e gli studenti siano stati aggiornati
+            expect(ClassModel.updateMany).toHaveBeenCalled();
+            expect(StudentModel.updateMany).toHaveBeenCalled();
+            
+            // Verifica che assignedSchoolIds dell'utente sia stato aggiornato
+            const updatedUser = await User.findById(testManager._id);
+            const hasSchool = updatedUser.assignedSchoolIds ? 
+                updatedUser.assignedSchoolIds.includes(testSchool._id) : false;
+            expect(hasSchool).toBe(false);
+            
+            // Ripristina i metodi originali
+            if (originalClassUpdateMany) ClassModel.updateMany = originalClassUpdateMany;
+            if (originalStudentUpdateMany) StudentModel.updateMany = originalStudentUpdateMany;
+        });
+        
+        it('should throw error when school has no manager', async () => {
+            // Prima rimuovi il manager
+            await schoolRepository.removeManagerFromSchool(testSchool._id);
+            
+            // Poi prova a rimuoverlo di nuovo
+            try {
+                await schoolRepository.removeManagerFromSchool(testSchool._id);
+                fail('Expected exception was not thrown');
+            } catch (error) {
+                expect(error).toBeDefined();
+                expect(error.message).toContain('La scuola non ha un manager da rimuovere');
+            }
+        });
+        
+        // Test transazionale per verificare il rollback in caso di errore
+        it('should rollback all changes if an error occurs during manager removal', async () => {
+            // Mock per simulare un errore durante l'aggiornamento degli studenti
+            const StudentModel = mongoose.model('Student') || { updateMany: jest.fn() };
+            const originalStudentUpdateMany = StudentModel.updateMany;
+            
+            StudentModel.updateMany = jest.fn().mockRejectedValue(new Error('Test error'));
+            
+            // Salva lo stato iniziale
+            const initialSchool = await School.findById(testSchool._id);
+            const initialManagerId = initialSchool.manager;
+            
+            // Prova a rimuovere il manager, dovrebbe fallire
+            try {
+                await schoolRepository.removeManagerFromSchool(testSchool._id);
+                fail('Expected exception was not thrown');
+            } catch (error) {
+                expect(error).toBeDefined();
+                
+                // Verifica che la scuola non sia stata modificata (rollback)
+                const finalSchool = await School.findById(testSchool._id);
+                expect(finalSchool.manager.toString()).toBe(initialManagerId.toString());
+                
+                // Verifica che l'utente non sia stato modificato
+                const manager = await User.findById(testManager._id);
+                const hasSchool = manager.assignedSchoolIds ? 
+                    manager.assignedSchoolIds.some(id => id.toString() === testSchool._id.toString()) : 
+                    false;
+                // Questo test dipende dall'implementazione iniziale - se all'inizio assignedSchoolIds include la scuola
+                // Potrebbe essere necessario adattarlo
+            }
+            
+            // Ripristina il metodo originale
+            if (originalStudentUpdateMany) StudentModel.updateMany = originalStudentUpdateMany;
+        });
+    });
+    
+    describe('addManagerToSchool', () => {
+        it('should add a manager to a school without manager', async () => {
+            // Prima rimuovi il manager esistente
+            await schoolRepository.removeManagerFromSchool(testSchool._id);
+            
+            // Poi aggiungi un nuovo manager
+            const result = await schoolRepository.addManagerToSchool(testSchool._id, testTeacher._id);
+            
+            // Verifica che il manager sia stato assegnato
+            expect(result.school).toBeDefined();
+            expect(result.school.manager.toString()).toBe(testTeacher._id.toString());
+            expect(result.newManagerId.toString()).toBe(testTeacher._id.toString());
+            
+            // Verifica che assignedSchoolIds dell'utente sia stato aggiornato
+            const updatedUser = await User.findById(testTeacher._id);
+            const hasSchool = updatedUser.assignedSchoolIds ? 
+                updatedUser.assignedSchoolIds.some(id => id.toString() === testSchool._id.toString()) : 
+                false;
+            expect(hasSchool).toBe(true);
+        });
+        
+        it('should throw error when school already has a manager', async () => {
+            // Prova ad aggiungere un manager a una scuola che ne ha già uno
+            try {
+                await schoolRepository.addManagerToSchool(testSchool._id, testTeacher._id);
+                fail('Expected exception was not thrown');
+            } catch (error) {
+                expect(error).toBeDefined();
+                expect(error.message).toContain('La scuola ha già un manager');
+            }
+        });
+        
+        // Test transazionale per verificare il rollback in caso di errore
+        it('should rollback all changes if an error occurs during manager addition', async () => {
+            // Prima rimuovi il manager esistente
+            await schoolRepository.removeManagerFromSchool(testSchool._id);
+            
+            // Mock per simulare un errore durante l'aggiornamento dell'utente
+            const UserModel = mongoose.model('User');
+            const originalFindByIdAndUpdate = UserModel.findByIdAndUpdate;
+            
+            UserModel.findByIdAndUpdate = jest.fn().mockRejectedValue(new Error('Test error'));
+            
+            // Prova ad aggiungere un manager, dovrebbe fallire
+            try {
+                await schoolRepository.addManagerToSchool(testSchool._id, testTeacher._id);
+                fail('Expected exception was not thrown');
+            } catch (error) {
+                expect(error).toBeDefined();
+                
+                // Verifica che la scuola non abbia un manager (rollback)
+                const finalSchool = await School.findById(testSchool._id);
+                expect(finalSchool.manager).toBeNull();
+            }
+            
+            // Ripristina il metodo originale
+            UserModel.findByIdAndUpdate = originalFindByIdAndUpdate;
+        });
+    });
+    
+    describe('getSectionStudents', () => {
+        it('should get students for a section', async () => {
+            // Mock per Student.find
+            const mockStudents = [
+                { _id: 'student1', firstName: 'Student', lastName: 'One' },
+                { _id: 'student2', firstName: 'Student', lastName: 'Two' }
+            ];
+            
+            // Mock per Class.find
+            const ClassModel = mongoose.model('Class') || { find: jest.fn() };
+            const StudentModel = mongoose.model('Student') || { find: jest.fn() };
+            
+            const originalClassFind = ClassModel.find;
+            const originalStudentFind = StudentModel.find;
+            
+            ClassModel.find = jest.fn().mockResolvedValue([
+                { _id: 'class1' },
+                { _id: 'class2' }
+            ]);
+            
+            StudentModel.find = jest.fn().mockResolvedValue(mockStudents);
+            
+            // Chiamata al metodo
+            const students = await schoolRepository.getStudentsBySection(testSchool._id, 'A');
+            
+            // Verifica che gli studenti siano stati restituiti
+            expect(students).toEqual(mockStudents);
+            
+            // Verifica che i metodi siano stati chiamati con i parametri corretti
+            expect(ClassModel.find).toHaveBeenCalledWith({
+                schoolId: testSchool._id,
+                section: 'A',
+                isActive: true
+            });
+            
+            expect(StudentModel.find).toHaveBeenCalled();
+            
+            // Ripristina i metodi originali
+            if (originalClassFind) ClassModel.find = originalClassFind;
+            if (originalStudentFind) StudentModel.find = originalStudentFind;
+        });
+    });
+    
+    describe('reactivateAcademicYear', () => {
+        it('should reactivate an archived academic year', async () => {
+            // Prima archivia l'anno attivo
+            const activeYearId = testSchool.academicYears.find(y => y.status === 'active')._id;
+            await schoolRepository.archiveAcademicYear(testSchool._id, activeYearId);
+            
+            // Poi riattivalo
+            const result = await schoolRepository.reactivateAcademicYear(testSchool._id, activeYearId);
+            
+            // Verifica che l'anno sia stato riattivato a 'planned'
+            const reactivatedYear = result.academicYears.find(y => y._id.toString() === activeYearId.toString());
+            expect(reactivatedYear.status).toBe('planned');
+        });
+        
+        it('should throw error when trying to reactivate a non-archived year', async () => {
+            // Crea un nuovo anno in stato 'planned'
+            const updatedSchool = await schoolRepository.setupAcademicYear(
+                testSchool._id,
+                {
+                    year: '2024/2025',
+                    status: 'planned',
+                    startDate: new Date('2024-09-01'),
+                    endDate: new Date('2025-06-15'),
+                    createdBy: testSchool.manager
+                },
+                false
+            );
+            
+            // Prendi l'ID del nuovo anno
+            const newYearId = updatedSchool.academicYears.find(y => y.year === '2024/2025')._id;
+            
+            // Tenta di riattivare un anno che non è archiviato
+            try {
+                await schoolRepository.reactivateAcademicYear(testSchool._id, newYearId);
+                fail('Expected exception was not thrown');
+            } catch (error) {
+                expect(error).toBeDefined();
+                expect(error.message).toContain('Solo gli anni accademici archiviati possono essere riattivati');
+            }
+        });
+        
+        // Test transazionale per verificare il rollback in caso di errore
+        it('should rollback all changes if an error occurs during year reactivation', async () => {
+            // Prima archivia l'anno attivo
+            const activeYearId = testSchool.academicYears.find(y => y.status === 'active')._id;
+            await schoolRepository.archiveAcademicYear(testSchool._id, activeYearId);
+            
+            // Mock per simulare un errore durante l'aggiornamento delle classi
+            const ClassModel = mongoose.model('Class') || { find: jest.fn() };
+            const originalClassFind = ClassModel.find;
+            
+            ClassModel.find = jest.fn().mockRejectedValue(new Error('Test error'));
+            
+            // Tenta di riattivare l'anno, dovrebbe fallire
+            try {
+                await schoolRepository.reactivateAcademicYear(testSchool._id, activeYearId);
+                fail('Expected exception was not thrown');
+            } catch (error) {
+                expect(error).toBeDefined();
+                
+                // Verifica che l'anno sia ancora archiviato (rollback)
+                const school = await School.findById(testSchool._id);
+                const year = school.academicYears.find(y => y._id.toString() === activeYearId.toString());
+                expect(year.status).toBe('archived');
+            }
+            
+            // Ripristina il metodo originale
+            if (originalClassFind) ClassModel.find = originalClassFind;
+        });
+    });
+    
+    describe('updateAcademicYear', () => {
+        it('should update an academic year', async () => {
+            // Prendi l'ID dell'anno attivo
+            const activeYearId = testSchool.academicYears.find(y => y.status === 'active')._id;
+            
+            // Dati per l'aggiornamento
+            const updateData = {
+                startDate: new Date('2023-09-15'),
+                endDate: new Date('2024-06-30'),
+                description: 'Updated year description'
+            };
+            
+            // Aggiorna l'anno
+            const result = await schoolRepository.updateAcademicYear(
+                testSchool._id, 
+                activeYearId, 
+                updateData
+            );
+            
+            // Verifica che l'anno sia stato aggiornato
+            const updatedYear = result.academicYears.id(activeYearId);
+            expect(updatedYear.startDate).toEqual(updateData.startDate);
+            expect(updatedYear.endDate).toEqual(updateData.endDate);
+            expect(updatedYear.description).toBe(updateData.description);
+        });
+        
+        it('should update academic year with sections', async () => {
+            // Prendi l'ID dell'anno attivo
+            const activeYearId = testSchool.academicYears.find(y => y.status === 'active')._id;
+            
+            // Dati per l'aggiornamento
+            const updateData = {
+                description: 'Year with updated sections'
+            };
+            
+            // Sezioni selezionate
+            const sections = ['A'];
+            
+            // Mock per Class.findOne e Class.save
+            const ClassModel = mongoose.model('Class') || { findOne: jest.fn() };
+            const originalFindOne = ClassModel.findOne;
+            
+            ClassModel.findOne = jest.fn().mockResolvedValue(null);
+            
+            // Aggiorna l'anno con le sezioni
+            const result = await schoolRepository.updateAcademicYear(
+                testSchool._id, 
+                activeYearId, 
+                updateData,
+                sections
+            );
+            
+            // Ripristina il metodo originale
+            if (originalFindOne) ClassModel.findOne = originalFindOne;
+        });
+        
+        it('should throw error for invalid dates', async () => {
+            // Prendi l'ID dell'anno attivo
+            const activeYearId = testSchool.academicYears.find(y => y.status === 'active')._id;
+            
+            // Dati per l'aggiornamento con date invalide (fine prima dell'inizio)
+            const invalidUpdateData = {
+                startDate: new Date('2024-01-01'),
+                endDate: new Date('2023-12-31')
+            };
+            
+            // Prova ad aggiornare l'anno con date invalide
+            try {
+                await schoolRepository.updateAcademicYear(
+                    testSchool._id, 
+                    activeYearId, 
+                    invalidUpdateData
+                );
+                fail('Expected exception was not thrown');
+            } catch (error) {
+                expect(error).toBeDefined();
+                // Il messaggio dipende dall'implementazione specifica
+            }
+        });
+    });
+    
+    describe('deleteWithClasses', () => {
+        it('should delete a school and all its classes', async () => {
+            // Mock per Class.deleteMany
+            const ClassModel = mongoose.model('Class') || { deleteMany: jest.fn() };
+            const originalDeleteMany = ClassModel.deleteMany;
+            
+            ClassModel.deleteMany = jest.fn().mockResolvedValue({ deletedCount: 5 });
+            
+            // Elimina la scuola
+            const result = await schoolRepository.deleteWithClasses(testSchool._id);
+            
+            // Verifica che la scuola sia stata eliminata e le classi siano state eliminate
+            expect(result.school).toBeDefined();
+            expect(result.deletedClassesCount).toBe(5);
+            
+            // Verifica che la scuola sia stata effettivamente eliminata
+            const school = await School.findById(testSchool._id);
+            expect(school).toBeNull();
+            
+            // Ripristina il metodo originale
+            if (originalDeleteMany) ClassModel.deleteMany = originalDeleteMany;
+        });
+        
+        // Test transazionale per verificare il rollback in caso di errore
+        it('should rollback if an error occurs during school deletion', async () => {
+            // Mock per simulare un errore durante l'eliminazione delle classi
+            const ClassModel = mongoose.model('Class') || { deleteMany: jest.fn() };
+            const originalDeleteMany = ClassModel.deleteMany;
+            
+            ClassModel.deleteMany = jest.fn().mockRejectedValue(new Error('Test error'));
+            
+            // Tenta di eliminare la scuola, dovrebbe fallire
+            try {
+                await schoolRepository.deleteWithClasses(testSchool._id);
+                fail('Expected exception was not thrown');
+            } catch (error) {
+                expect(error).toBeDefined();
+                
+                // Verifica che la scuola non sia stata eliminata (rollback)
+                const school = await School.findById(testSchool._id);
+                expect(school).not.toBeNull();
+            }
+            
+            // Ripristina il metodo originale
+            if (originalDeleteMany) ClassModel.deleteMany = originalDeleteMany;
+        });
+    });
+    
+    describe('findAll', () => {
+        it('should find all schools with populated managers', async () => {
+            // Crea un'altra scuola
+            await createTestSchool({
+                name: 'Another Test School',
+                schoolType: 'middle_school',
+                institutionType: 'none',
+                region: 'Lazio',
+                province: 'Roma',
+                address: 'Via Roma 456',
+                manager: testTeacher._id,
+                defaultMaxStudentsPerClass: 20
+            });
+            
+            // Trova tutte le scuole
+            const schools = await schoolRepository.findAll();
+            
+            // Verifica che tutte le scuole siano state trovate
+            expect(schools).toHaveLength(2);
+            
+            // Verifica che i manager siano popolati
+            expect(schools[0].manager).toBeDefined();
+            expect(schools[1].manager).toBeDefined();
+        });
+    });
+    
+    describe('syncAssignedSchoolIds', () => {
+        it('should synchronize assignedSchoolIds for all users', async () => {
+            // Crea alcuni utenti e scuole per il test
+            const user1 = await User.create({
+                firstName: 'User',
+                lastName: 'One',
+                email: 'user1@example.com',
+                password: 'password123',
+                role: 'teacher',
+                assignedSchoolId: testSchool._id, // vecchio formato singolo
+                sessionTokens: [{
+                    token: `test-token-user1-${Date.now()}`,
+                    createdAt: new Date(),
+                    lastUsedAt: new Date(),
+                    expiresAt: new Date(Date.now() + 86400000), // 24 ore
+                    ipAddress: '127.0.0.1',
+                    userAgent: 'Mozilla/5.0 (Test)'
+                }]
+            });
+            
+            const user2 = await User.create({
+                firstName: 'User',
+                lastName: 'Two',
+                email: 'user2@example.com',
+                password: 'password123',
+                role: 'teacher',
+                sessionTokens: [{
+                    token: `test-token-user2-${Date.now()}`,
+                    createdAt: new Date(),
+                    lastUsedAt: new Date(),
+                    expiresAt: new Date(Date.now() + 86400000), // 24 ore
+                    ipAddress: '127.0.0.1',
+                    userAgent: 'Mozilla/5.0 (Test)'
+                }]
+            });
+            
+            // Crea un'altra scuola e assegna user2 come manager
+            const anotherSchool = await createTestSchool({
+                name: 'School For Sync Test',
+                schoolType: 'middle_school',
+                institutionType: 'none',
+                region: 'Veneto',
+                province: 'Venezia',
+                address: 'Via Venezia 789',
+                manager: user2._id,
+                defaultMaxStudentsPerClass: 22
+            });
+            
+            // Esegui la sincronizzazione
+            const result = await schoolRepository.syncAssignedSchoolIds();
+            
+            // Verifica che il conteggio sia corretto
+            expect(result.totalUpdated).toBeGreaterThan(0);
+            
+            // Verifica che gli utenti siano stati aggiornati
+            const updatedUser1 = await User.findById(user1._id);
+            const updatedUser2 = await User.findById(user2._id);
+            
+            // user1 dovrebbe avere testSchool in assignedSchoolIds
+            expect(updatedUser1.assignedSchoolIds).toBeDefined();
+            const hasTestSchool = updatedUser1.assignedSchoolIds.some(
+                id => id.toString() === testSchool._id.toString()
+            );
+            expect(hasTestSchool).toBe(true);
+            
+            // user2 dovrebbe avere anotherSchool in assignedSchoolIds
+            expect(updatedUser2.assignedSchoolIds).toBeDefined();
+            const hasAnotherSchool = updatedUser2.assignedSchoolIds.some(
+                id => id.toString() === anotherSchool._id.toString()
+            );
+            expect(hasAnotherSchool).toBe(true);
+            
+            // assignedSchoolId dovrebbe essere rimosso
+            expect(updatedUser1.assignedSchoolId).toBeUndefined();
         });
     });
 });
