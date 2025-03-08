@@ -153,12 +153,30 @@ class AuthMiddleware {
                 path: req.path
             });
 
-            // Aggiungi student al request
+            // Recupera dati completi dello studente per avere accesso a schoolId
+            const student = await req.studentRepository.findById(decoded.id);
+            
+            if (!student) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Dati studente non trovati'
+                );
+            }
+
+            // Aggiungi student al request con schoolId
             req.student = {
                 id: decoded.id,
                 type: 'student',
+                _id: decoded.id, // Aggiungiamo anche _id per compatibilità con il formato usato nei controlli di permesso
+                schoolId: student.schoolId,
                 testAccessLevel: 8 // Studente ha sempre livello 8
             };
+
+            logger.debug('Student authenticated:', {
+                studentId: decoded.id,
+                schoolId: student.schoolId,
+                path: req.path
+            });
 
             next();
         } catch (error) {
@@ -204,7 +222,7 @@ class AuthMiddleware {
             next();
         };
     };
-
+    
     /**
      * Middleware per verificare i permessi
      * @param {string} resource - Risorsa richiesta
@@ -223,11 +241,41 @@ class AuthMiddleware {
                 
                 // Per gli studenti, controllo semplificato
                 if (req.student) {
-                    // Gli studenti possono solo leggere scuole e test assegnati a loro
+                    // Costruisci il contesto per il controllo dei permessi
+                    const context = {};
+                    
+                    // Aggiungi studentId al contesto
+                    if (req.params.studentId) {
+                        context.studentId = req.params.studentId;
+                    } else if (req.params.id && resource === 'students') {
+                        // Molte volte l'ID dello studente potrebbe essere passato come 'id' generico
+                        context.studentId = req.params.id;
+                    }
+                    
+                    // Aggiungi schoolId al contesto
+                    if (req.params.schoolId) {
+                        context.schoolId = req.params.schoolId;
+                    }
+                    
+                    logger.debug('Student permission check:', {
+                        studentId: req.student.id,
+                        resource,
+                        action,
+                        context
+                    });
+                    
+                    // Permetti sempre allo studente di leggere il proprio profilo
+                    if (resource === 'students' && action === 'read' && 
+                        (context.studentId === req.student.id || !context.studentId)) {
+                        return next();
+                    }
+                    
+                    // Permetti sempre allo studente di leggere la propria scuola
                     if (resource === 'schools' && action === 'read') {
                         return next();
                     }
                     
+                    // Permetti sempre allo studente di leggere i test a lui assegnati
                     if (resource === 'tests' && action === 'read') {
                         return next();
                     }

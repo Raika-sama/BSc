@@ -19,7 +19,8 @@ import {
     Person as PersonIcon,
     Assessment as AssessmentIcon,
     School as SchoolIcon,
-    History as HistoryIcon
+    History as HistoryIcon,
+    VpnKey as VpnKeyIcon
 } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
 import { useStudent } from '../../../../context/StudentContext';
@@ -30,6 +31,7 @@ import InfoTab from '../tabs/InfoTab';
 import TestsTab from '../tabs/TestsTab';
 import SchoolTab from '../tabs/SchoolTab';
 import HistoryTab from '../tabs/HistoryTab';
+import PermissionsTab from '../tabs/PermissionsTab';
 
 // Componente TabPanel per gestire il contenuto delle tab
 const TabPanel = ({ children, value, index, ...other }) => (
@@ -73,7 +75,8 @@ const StudentIndex = ({ initialTab = 'info' }) => {
             'info': 0,
             'tests': 1,
             'school': 2,
-            'history': 3
+            'history': 3,
+            'permissions': 4
         };
         return tabMapping[initialTab] || 0;
     });
@@ -315,6 +318,11 @@ const StudentIndex = ({ initialTab = 'info' }) => {
                         label="Storico" 
                         iconPosition="start"
                     />
+                    <Tab 
+                        icon={<VpnKeyIcon />} 
+                        label="Permessi" 
+                        iconPosition="start"
+                    />
                 </Tabs>
 
                 {/* Tab Panels */}
@@ -330,6 +338,9 @@ const StudentIndex = ({ initialTab = 'info' }) => {
                     </TabPanel>
                     <TabPanel value={activeTab} index={3}>
                         <HistoryTab student={student} />
+                    </TabPanel>
+                    <TabPanel value={activeTab} index={4}>
+                        <PermissionsTab student={student} />
                     </TabPanel>
                 </Box>
             </Paper>

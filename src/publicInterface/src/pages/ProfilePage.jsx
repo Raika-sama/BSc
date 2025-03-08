@@ -126,6 +126,9 @@ const ProfilePage = () => {
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const iconColor = useColorModeValue('brand.600', 'brand.300');
 
+ 
+
+  
   // Carica i dati del profilo dello studente
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -338,6 +341,8 @@ const ProfilePage = () => {
   const studentData = profileData?.student || student || {};
   const schoolData = profileData?.school || {};
   const classData = profileData?.class || {};
+
+ 
 
   return (
     <Container maxW="container.lg" py={8}>

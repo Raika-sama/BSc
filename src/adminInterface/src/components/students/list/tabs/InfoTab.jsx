@@ -116,10 +116,35 @@ const InfoTab = ({ student, setStudent }) => {
 const handleResetPassword = async () => {
     try {
         console.log('Starting password reset for student:', student.id);
+        
+        // Log pre-richiesta
+        console.log('Sending request to:', `/student-auth/admin/reset-password/${student.id}`);
+        
+        // Esegui la richiesta
         const result = await resetPassword(student.id);
         
-        console.log('Reset password result:', result);
+        // Log del risultato completo
+        console.log('Reset password raw result:', result);
+        console.log('Result type:', typeof result);
+        console.log('Result structure:', Object.keys(result));
         
+        // Analisi dettagliata della risposta
+        if (result) {
+            console.log('Detailed analysis of result:');
+            console.log('- Has username?', !!result.username);
+            console.log('- Has temporaryPassword?', !!result.temporaryPassword);
+            
+            // Se è un oggetto, esplora le proprietà interne
+            if (typeof result === 'object') {
+                Object.keys(result).forEach(key => {
+                    console.log(`- Property "${key}":`, result[key]);
+                });
+            }
+        } else {
+            console.error('Result is falsy or undefined');
+        }
+        
+        // Verifica delle credenziali
         if (!result?.username || !result?.temporaryPassword) {
             console.error('Invalid credentials format received:', result);
             throw new Error('Credenziali non valide ricevute dal server');
@@ -133,21 +158,41 @@ const handleResetPassword = async () => {
         };
         
         console.log('Setting new credentials:', newCredentials);
+        
+        // Debug prima di settare lo state
+        console.log('Current lastCredentials state:', lastCredentials);
         setLastCredentials(newCredentials);
+        console.log('LastCredentials state should be updated to:', newCredentials);
         
         // Aggiorniamo anche lo student object
-        setStudent(prev => ({
-            ...prev,
-            hasCredentials: true,
-            credentialsSentAt: new Date().toISOString()
-        }));
+        setStudent(prev => {
+            const updated = {
+                ...prev,
+                hasCredentials: true,
+                credentialsSentAt: new Date().toISOString()
+            };
+            console.log('Updating student from:', prev);
+            console.log('Updating student to:', updated);
+            return updated;
+        });
 
-        // IMPORTANTE: Prima settiamo le credenziali, poi apriamo il dialog
+        // IMPORTANTE: Prima settiamo le credenziali nel componente di dialog
+        console.log('Setting credentials for dialog:', newCredentials);
+        setCredentials(newCredentials);
+        
+        // Poi apriamo il dialog
+        console.log('Opening credentials dialog');
         setOpenCredentialsDialog(true);
         
         return newCredentials;
     } catch (error) {
         console.error('Error in handleResetPassword:', error);
+        console.error('Error details:', {
+            message: error.message,
+            name: error.name,
+            stack: error.stack
+        });
+        
         showNotification(
             error.message || 'Errore nel reset della password',
             'error'

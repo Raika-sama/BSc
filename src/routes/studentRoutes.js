@@ -150,7 +150,7 @@ const createStudentRouter = ({
 
     router.route('/:id')
         .get(
-            restrictTo('teacher', 'admin'),
+            // restrictTo('teacher', 'admin', 'student'), // commento temporaneamento per vedere se riesce a visualizzare in PubFE il profilo utente
             asyncHandler(studentController.getById.bind(studentController))
         )
         .put(

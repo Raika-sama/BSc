@@ -437,18 +437,38 @@ class PermissionService {
         return context.ownerId && context.ownerId.toString() === user._id.toString();
     }
     
-    _checkStudentPermission(user, resource, action, context) {
-        // Student: lettura scuola e test assegnati
-        if (resource === 'schools' && action === 'read') {
-            return context.schoolId && context.schoolId.toString() === user.schoolId.toString();
-        }
+    // Modifica al metodo _checkStudentPermission nel file PermissionService.js
+
+_checkStudentPermission(user, resource, action, context) {
+    // Student: lettura scuola, propri dati e test assegnati
+    if (resource === 'schools' && action === 'read') {
+        // Gestisci il caso in cui schoolId possa provenire dal modello Student
+        // Permetti l'accesso se non c'è un context.schoolId (visualizzazione generale)
+        // o se il context.schoolId corrisponde allo schoolId dello studente
+        if (!context.schoolId) return true;
         
-        if (resource === 'tests' && action === 'read') {
-            return context.studentId && context.studentId.toString() === user._id.toString();
-        }
-        
-        return false;
+        return user.schoolId && context.schoolId.toString() === user.schoolId.toString();
     }
+    
+    // Aggiungi permesso per visualizzare i propri dati studente
+    if (resource === 'students' && action === 'read') {
+        // Permetti l'accesso se non c'è un context.studentId (visualizzazione generale)
+        // o se il context.studentId corrisponde all'ID dello studente
+        if (!context.studentId) return true;
+        
+        return context.studentId.toString() === user._id.toString();
+    }
+    
+    if (resource === 'tests' && action === 'read') {
+        // Permetti l'accesso se non c'è un context.studentId (visualizzazione generale)
+        // o se il context.studentId corrisponde all'ID dello studente
+        if (!context.studentId) return true;
+        
+        return context.studentId.toString() === user._id.toString();
+    }
+    
+    return false;
+}
     
     // =================== GENERAZIONE PERMESSI PREDEFINITI ===================
     
@@ -531,9 +551,10 @@ class PermissionService {
     }
     
     _generateStudentPermissions() {
-        // Student: lettura scuola e test assegnati
+        // Student: lettura scuola, propri dati e test assegnati
         return [
             { resource: 'schools', actions: ['read'], scope: 'own' },
+            { resource: 'students', actions: ['read'], scope: 'own' },
             { resource: 'tests', actions: ['read'], scope: 'own' }
         ];
     }

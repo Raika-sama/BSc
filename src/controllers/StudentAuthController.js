@@ -5,6 +5,7 @@ const logger = require('../utils/errors/logger/logger');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
+const Student = require('../models/Student'); // Aggiungi questa riga
 
 /**
  * Controller che gestisce le operazioni di autenticazione degli studenti
@@ -227,7 +228,7 @@ class StudentAuthController extends BaseController {
     async generateCredentials(req, res, next) {
         try {
             const { studentId } = req.params;
-
+    
             if (!studentId) {
                 return this.sendError(res, {
                     statusCode: 400,
@@ -235,21 +236,94 @@ class StudentAuthController extends BaseController {
                     code: 'MISSING_REQUIRED_FIELDS'
                 });
             }
-
+    
             logger.info('Richiesta generazione credenziali studente', { studentId });
-
-            const result = await StudentAuthService.generateCredentials(studentId);
-
+    
+            // Generiamo le credenziali
+            const credentials = await StudentAuthService.generateCredentials(studentId);
+    
+            // Aggiorniamo i metadati dello studente separatamente, ma solo i campi necessari
+            try {
+                // Usiamo findByIdAndUpdate che è più sicuro e non attiva validazioni complesse
+                await Student.findByIdAndUpdate(
+                    studentId,
+                    { 
+                        $set: { 
+                            hasCredentials: true,
+                            credentialsSentAt: new Date()
+                        } 
+                    },
+                    { 
+                        new: true,
+                        runValidators: false // Importante: disabilitiamo i validatori qui
+                    }
+                );
+            } catch (updateError) {
+                // Log dell'errore, ma non facciamo fallire l'intera operazione
+                logger.warn('Errore nell\'aggiornamento dei metadati dello studente', {
+                    studentId,
+                    error: updateError.message
+                });
+                // Non propaghiamo questo errore perché le credenziali sono state generate con successo
+            }
+    
             this.sendResponse(res, {
                 status: 'success',
-                data: result
+                data: {
+                    credentials: {
+                        username: credentials.username,
+                        temporaryPassword: credentials.temporaryPassword
+                    }
+                }
             });
         } catch (error) {
             logger.error('Errore durante la generazione delle credenziali', {
                 error: error.message,
                 stack: error.stack
             });
-
+    
+            next(error);
+        }
+    }
+    
+    async resetPassword(req, res, next) {
+        try {
+            const { studentId } = req.params;
+            let { newPassword } = req.body;
+    
+            if (!studentId) {
+                return this.sendError(res, {
+                    statusCode: 400,
+                    message: 'StudentId è richiesto',
+                    code: 'MISSING_REQUIRED_FIELDS'
+                });
+            }
+    
+            // Se non viene fornita una nuova password, effettuiamo una generazione di credenziali completa
+            if (!newPassword) {
+                logger.info('Nessuna password fornita, reindirizzando a generateCredentials');
+                // Invece di chiamare il servizio direttamente, chiamiamo il metodo generateCredentials
+                // di questo stesso controller
+                return this.generateCredentials(req, res, next);
+            }
+    
+            logger.info('Richiesta reset password studente', { studentId });
+    
+            const result = await StudentAuthService.resetPassword(studentId, newPassword);
+    
+            this.sendResponse(res, {
+                status: 'success',
+                data: {
+                    username: result.username || "",
+                    temporaryPassword: result.temporaryPassword || ""
+                }
+            });
+        } catch (error) {
+            logger.error('Errore durante il reset della password', {
+                error: error.message,
+                stack: error.stack
+            });
+    
             next(error);
         }
     }
@@ -335,20 +409,28 @@ class StudentAuthController extends BaseController {
     async resetPassword(req, res, next) {
         try {
             const { studentId } = req.params;
-            const { newPassword } = req.body;
-
-            if (!studentId || !newPassword) {
+            let { newPassword } = req.body;
+    
+            if (!studentId) {
                 return this.sendError(res, {
                     statusCode: 400,
-                    message: 'StudentId e nuova password sono richiesti',
+                    message: 'StudentId è richiesto',
                     code: 'MISSING_REQUIRED_FIELDS'
                 });
             }
-
+    
+            // Se non viene fornita una nuova password, effettuiamo una generazione di credenziali completa
+            if (!newPassword) {
+                logger.info('Nessuna password fornita, reindirizzando a generateCredentials');
+                // Invece di chiamare il servizio direttamente, chiamiamo il metodo generateCredentials
+                // di questo stesso controller
+                return this.generateCredentials(req, res, next);
+            }
+    
             logger.info('Richiesta reset password studente', { studentId });
-
+    
             const result = await StudentAuthService.resetPassword(studentId, newPassword);
-
+    
             this.sendResponse(res, {
                 status: 'success',
                 data: result
@@ -358,7 +440,7 @@ class StudentAuthController extends BaseController {
                 error: error.message,
                 stack: error.stack
             });
-
+    
             next(error);
         }
     }

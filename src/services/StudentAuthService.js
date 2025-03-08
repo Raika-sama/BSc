@@ -278,6 +278,86 @@ class StudentAuthService {
             throw error;
         }
     }
+
+    /**
+     * Genera credenziali per uno studente
+     * @param {string} studentId - ID dello studente
+     * @returns {Object} Credenziali generate
+     */
+    async generateCredentials(studentId) {
+        try {
+            logger.info('Generazione credenziali per studente', { studentId });
+
+            // Recupera i dati dello studente - ma solo le informazioni necessarie
+            const student = await Student.findById(studentId).select('email');
+            if (!student) {
+                logger.warn('Studente non trovato per generazione credenziali', { studentId });
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Studente non trovato'
+                );
+            }
+
+            // Verifica se esiste già un record di autenticazione
+            let studentAuth = await StudentAuth.findOne({ studentId });
+            
+            // Se non esiste, crea un nuovo record
+            if (!studentAuth) {
+                logger.info('Creazione nuovo record di autenticazione', { studentId });
+                
+                // Crea un nuovo documento auth con l'email come username
+                studentAuth = new StudentAuth({
+                    studentId,
+                    username: student.email.toLowerCase(),
+                    password: 'temporary' // Questa verrà hashata dal pre-save hook
+                });
+            }
+            
+            // Usa il metodo del modello per generare la password temporanea
+            // Questo metodo imposta anche isFirstAccess a true e temporaryPasswordExpires
+            const temporaryPassword = studentAuth.generateTemporaryPassword();
+            
+            // Salva il documento auth (i pre-save hooks si occuperanno dell'hashing)
+            await studentAuth.save();
+
+            // NON aggiorniamo lo studente qui, per evitare problemi di validazione
+            // Rimandiamo questa responsabilità al controller o alla funzione chiamante
+
+            logger.info('Credenziali generate con successo', { studentId });
+
+            // Restituisci le credenziali
+            return {
+                studentId,
+                username: studentAuth.username,
+                temporaryPassword, // Password in chiaro per essere mostrata all'utente
+                expiresAt: studentAuth.temporaryPasswordExpires
+            };
+        } catch (error) {
+            logger.error('Errore durante la generazione delle credenziali', {
+                studentId,
+                error: error.message,
+                stack: error.stack
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Genera una password casuale della lunghezza specificata
+     * @param {number} length - Lunghezza della password
+     * @returns {string} Password generata
+     * @private
+     */
+    _generateRandomPassword(length = 8) {
+        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let password = '';
+        for (let i = 0; i < length; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+    }
+
+    
 }
 
 module.exports = new StudentAuthService();

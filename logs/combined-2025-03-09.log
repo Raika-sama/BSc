@@ -1,0 +1,104 @@
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-08T23:00:22.514Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-08T23:00:22.518Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-08T23:00:22.556Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-08T23:00:23.288Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-08T23:00:23.290Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-08T23:00:23.292Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-08T23:00:23.602Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-08T23:00:23.607Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-08T23:00:23.608Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-08T23:00:50.405Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-08T23:00:50.409Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-08T23:00:50.446Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-08T23:00:51.214Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-08T23:00:51.215Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-08T23:00:51.217Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-08T23:00:51.560Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-08T23:00:51.565Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-08T23:00:51.566Z"}
+{"level":"info","message":"Nessuna password fornita, reindirizzando a generateCredentials","timestamp":"2025-03-08T23:00:56.010Z"}
+{"level":"info","message":"Richiesta generazione credenziali studente","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:00:56.011Z"}
+{"level":"info","message":"Generazione credenziali per studente","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:00:56.013Z"}
+{"level":"info","message":"Credenziali generate con successo","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:00:56.185Z"}
+{"error":"Student is not defined","level":"warn","message":"Errore nell'aggiornamento dei metadati dello studente","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:00:56.194Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-08T23:03:20.666Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-08T23:03:20.670Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-08T23:03:20.719Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-08T23:03:21.539Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-08T23:03:21.540Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-08T23:03:21.542Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-08T23:03:21.842Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-08T23:03:21.849Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-08T23:03:21.850Z"}
+{"level":"info","message":"Nessuna password fornita, reindirizzando a generateCredentials","timestamp":"2025-03-08T23:03:30.125Z"}
+{"level":"info","message":"Richiesta generazione credenziali studente","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:03:30.126Z"}
+{"level":"info","message":"Generazione credenziali per studente","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:03:30.127Z"}
+{"level":"info","message":"Credenziali generate con successo","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:03:30.328Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-08T23:05:11.845Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-08T23:05:11.849Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-08T23:05:11.888Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-08T23:05:12.631Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-08T23:05:12.632Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-08T23:05:12.634Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-08T23:05:12.930Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-08T23:05:12.934Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-08T23:05:12.935Z"}
+{"level":"info","message":"Nessuna password fornita, reindirizzando a generateCredentials","timestamp":"2025-03-08T23:05:21.565Z"}
+{"level":"info","message":"Richiesta generazione credenziali studente","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:05:21.566Z"}
+{"level":"info","message":"Generazione credenziali per studente","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:05:21.568Z"}
+{"level":"info","message":"Credenziali generate con successo","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:05:21.766Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-08T23:10:13.107Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-08T23:10:13.115Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-08T23:10:13.189Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-08T23:10:14.470Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-08T23:10:14.473Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-08T23:10:14.476Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-08T23:10:15.018Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-08T23:10:15.030Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-08T23:10:15.032Z"}
+{"level":"info","message":"Nessuna password fornita, reindirizzando a generateCredentials","timestamp":"2025-03-08T23:10:29.850Z"}
+{"level":"info","message":"Richiesta generazione credenziali studente","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:10:29.854Z"}
+{"level":"info","message":"Generazione credenziali per studente","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:10:29.857Z"}
+{"level":"info","message":"Credenziali generate con successo","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:10:30.189Z"}
+{"level":"info","message":"Richiesta login studente","timestamp":"2025-03-08T23:10:44.994Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Tentativo di autenticazione studente","timestamp":"2025-03-08T23:10:44.994Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Primo accesso rilevato","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:10:45.016Z","username":"ciccio@pasticcio.it"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-08T23:25:47.042Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-08T23:25:47.048Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-08T23:25:47.096Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-08T23:25:48.108Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-08T23:25:48.109Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-08T23:25:48.111Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-08T23:25:48.461Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-08T23:25:48.469Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-08T23:25:48.470Z"}
+{"level":"info","message":"Richiesta login studente","timestamp":"2025-03-08T23:26:03.252Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Tentativo di autenticazione studente","timestamp":"2025-03-08T23:26:03.253Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Primo accesso rilevato","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:26:03.276Z","username":"ciccio@pasticcio.it"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-08T23:41:13.273Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-08T23:41:13.278Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-08T23:41:13.325Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-08T23:41:15.339Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-08T23:41:15.341Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-08T23:41:15.343Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-08T23:41:15.702Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-08T23:41:15.707Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-08T23:41:15.708Z"}
+{"level":"info","message":"Richiesta login studente","timestamp":"2025-03-08T23:41:57.193Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Tentativo di autenticazione studente","timestamp":"2025-03-08T23:41:57.194Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Primo accesso rilevato","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:41:57.217Z","username":"ciccio@pasticcio.it"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-08T23:42:16.571Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-08T23:42:16.576Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-08T23:42:16.613Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-08T23:42:17.378Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-08T23:42:17.380Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-08T23:42:17.382Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-08T23:42:17.690Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-08T23:42:17.695Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-08T23:42:17.695Z"}
+{"level":"info","message":"Richiesta login studente","timestamp":"2025-03-08T23:42:30.846Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Tentativo di autenticazione studente","timestamp":"2025-03-08T23:42:30.847Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Primo accesso rilevato","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:42:30.867Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Richiesta login studente","timestamp":"2025-03-08T23:45:51.876Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Tentativo di autenticazione studente","timestamp":"2025-03-08T23:45:51.877Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Primo accesso rilevato","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:45:51.899Z","username":"ciccio@pasticcio.it"}

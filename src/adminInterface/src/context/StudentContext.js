@@ -887,66 +887,124 @@ const batchAssignToSchool = async (studentIds, schoolId) => {
         }
     };
 
-const resetPassword = async (studentId) => {
-    try {
-        console.log('Resetting password - Request:', {
-            studentId,
-            url: `/student-auth/admin/reset-password/${studentId}`
-        });
-
-        const response = await axiosInstance.post(`/student-auth/admin/reset-password/${studentId}`);
-        
-        console.log('Reset password - Full response:', {
-            status: response.status,
-            statusText: response.statusText,
-            data: response.data,
-            headers: response.headers
-        });
-
-        // Verifica più tollerante della risposta
-        let credentials;
-        
-        // Prova diversi percorsi possibili nella risposta
-        if (response.data?.username && response.data?.temporaryPassword) {
-            credentials = response.data;
-        } else if (response.data?.data?.credentials) {
-            credentials = response.data.data.credentials;
-        } else if (response.data?.data) {
-            credentials = response.data.data;
-        }
-
-        console.log('Extracted credentials:', credentials);
-
-        if (!credentials?.username || !credentials?.temporaryPassword) {
-            console.error('Invalid credentials structure:', {
-                responseData: response.data,
-                extractedCredentials: credentials
+    const resetPassword = async (studentId) => {
+        try {
+            console.log('========== RESET PASSWORD DEBUG ==========');
+            console.log('Resetting password - Request:', {
+                studentId,
+                url: `/student-auth/admin/reset-password/${studentId}`
             });
-            throw new Error('Credenziali mancanti o non valide nella risposta');
-        }
-
-        showNotification('Password resettata con successo', 'success');
-        
-        return {
-            username: credentials.username,
-            temporaryPassword: credentials.temporaryPassword
-        };
-    } catch (error) {
-        console.error('Reset password error details:', {
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status,
-            stack: error.stack
-        });
-        
-        const errorMessage = error.response?.data?.error?.message 
-            || error.message 
-            || 'Errore nel reset della password';
+    
+            const response = await axiosInstance.post(`/student-auth/admin/reset-password/${studentId}`);
             
-        showNotification(errorMessage, 'error');
-        throw error;
-    }
-};
+            console.log('Reset password - Raw response:', response);
+            console.log('Response status:', response.status);
+            console.log('Response data type:', typeof response.data);
+            console.log('Response data structure:', Object.keys(response.data));
+            
+            // Converti l'oggetto in JSON per una visualizzazione più pulita
+            const prettyResponse = JSON.stringify(response.data, null, 2);
+            console.log('Response data (formatted JSON):', prettyResponse);
+    
+            // Analizza la struttura dettagliata della risposta
+            console.log('Response data analysis:');
+            if (response.data) {
+                if (response.data.status) console.log('- response.data.status:', response.data.status);
+                if (response.data.data) {
+                    console.log('- response.data.data is present');
+                    if (response.data.data.credentials) {
+                        console.log('- response.data.data.credentials is present');
+                        console.log('- credentials keys:', Object.keys(response.data.data.credentials));
+                        console.log('- username:', response.data.data.credentials.username);
+                        console.log('- temporaryPassword:', response.data.data.credentials.temporaryPassword);
+                    } else {
+                        console.log('- response.data.data.credentials is NOT present');
+                        console.log('- data keys:', Object.keys(response.data.data));
+                    }
+                }
+            }
+    
+            // Meglio estrai i dati con più controlli espliciti
+            let credentials = null;
+            
+            // Verifica ogni percorso possibile, dal più specifico al più generico
+            if (response.data?.data?.credentials?.username && 
+                response.data?.data?.credentials?.temporaryPassword) {
+                console.log('Found credentials in response.data.data.credentials');
+                credentials = response.data.data.credentials;
+            } 
+            else if (response.data?.data?.username && 
+                     response.data?.data?.temporaryPassword) {
+                console.log('Found credentials in response.data.data');
+                credentials = response.data.data;
+            }
+            else if (response.data?.username && 
+                     response.data?.temporaryPassword) {
+                console.log('Found credentials in response.data');
+                credentials = response.data;
+            }
+            // Ultimo tentativo con ricerca ricorsiva
+            else {
+                console.log('Recursive search for credentials');
+                const findCredentials = (obj) => {
+                    if (!obj || typeof obj !== 'object') return null;
+                    
+                    // Verifica se l'oggetto corrente contiene username e temporaryPassword
+                    if (obj.username && obj.temporaryPassword) {
+                        return obj;
+                    }
+                    
+                    // Cerca ricorsivamente in ogni proprietà dell'oggetto
+                    for (const key in obj) {
+                        if (typeof obj[key] === 'object') {
+                            const found = findCredentials(obj[key]);
+                            if (found) return found;
+                        }
+                    }
+                    
+                    return null;
+                };
+                
+                credentials = findCredentials(response.data);
+                if (credentials) {
+                    console.log('Found credentials recursively:', credentials);
+                }
+            }
+    
+            console.log('Final extracted credentials:', credentials);
+    
+            if (!credentials?.username || !credentials?.temporaryPassword) {
+                console.error('Invalid credentials structure:', {
+                    responseData: prettyResponse,
+                    extractedCredentials: credentials
+                });
+                throw new Error('Credenziali mancanti o non valide nella risposta');
+            }
+    
+            showNotification('Password resettata con successo', 'success');
+            
+            console.log('=========================================');
+            
+            return {
+                username: credentials.username,
+                temporaryPassword: credentials.temporaryPassword
+            };
+        } catch (error) {
+            console.error('Reset password error details:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status,
+                stack: error.stack
+            });
+            
+            const errorMessage = error.response?.data?.error?.message 
+                || error.message 
+                || 'Errore nel reset della password';
+                
+            showNotification(errorMessage, 'error');
+            throw error;
+        }
+    };
 
 
     return (

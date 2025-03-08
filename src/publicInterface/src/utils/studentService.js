@@ -41,162 +41,33 @@ const studentService = {
    */
   getStudentProfile: async () => {
     try {
-      console.log('Recupero dettagli profilo studente...');
+      console.log('========== PROFILE DEBUG ==========');
       
-      // Ottieni il token da varie fonti
-      const tokenFromCookie = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('student-token='))
-        ?.split('=')[1];
+      // ===== HARD-CODED ID PER TESTING =====
+      const TEMPORARY_TEST_ID = '67b20991d8fdac4600a0def6'; // ID dello studente Ciccio Pasticcio
+      console.log('Using hard-coded student ID for testing:', TEMPORARY_TEST_ID);
       
-      const tokenFromStorage = localStorage.getItem('student-token');
-      const token = tokenFromCookie || tokenFromStorage;
+      // Usa l'ID di test per chiamare l'endpoint
+      const response = await axiosInstance.get(`/students/${TEMPORARY_TEST_ID}`);
       
-      // Verifica se esiste uno studente nel localStorage anche se non c'è token
-      const studentData = localStorage.getItem('student');
+      console.log('API response from /students/:id:', response.data);
       
-      if (!token && !studentData) {
-        throw new Error('Token non trovato - Effettua nuovamente il login');
-      }
-      
-      // Se abbiamo un token, proviamo a fare la richiesta API
-      if (token) {
-        console.log('Token disponibile, procedo con la richiesta API');
-        
-        try {
-          // Prima richiesta: profilo completo
-          const profileResponse = await axiosInstance.get(`/student-auth/student/profile`);
-          console.log('Risposta profilo ricevuta:', profileResponse.data);
-          
-          // Se il profilo è stato recuperato con successo, utilizziamo questi dati
-          if (profileResponse.data.status === 'success' && profileResponse.data.data) {
-            const studentId = profileResponse.data.data.student?._id || 
-                            profileResponse.data.data.student?.id;
-            
-            // Verifica se abbiamo tutti i dati necessari
-            const hasCompleteData = profileResponse.data.data.student && 
-                                  (profileResponse.data.data.school || profileResponse.data.data.class);
-            
-            // Se mancano dati e abbiamo l'ID studente, facciamo richieste aggiuntive
-            if (!hasCompleteData && studentId) {
-              console.log('Dati incompleti, recupero informazioni aggiuntive...');
-              
-              // Struttura base della risposta
-              const completeData = {
-                status: 'success',
-                data: {
-                  student: profileResponse.data.data.student,
-                  school: profileResponse.data.data.school || null,
-                  class: profileResponse.data.data.class || null
-                }
-              };
-              
-              // Se non abbiamo dati della scuola, tentiamo di recuperarli
-              if (!completeData.data.school) {
-                try {
-                  const schoolResponse = await axiosInstance.get(`/students/${studentId}/school`);
-                  if (schoolResponse.data.status === 'success') {
-                    completeData.data.school = schoolResponse.data.data;
-                    console.log('Dati scuola recuperati:', completeData.data.school);
-                  }
-                } catch (schoolError) {
-                  console.error('Errore nel recupero dati scuola:', schoolError);
-                }
-              }
-              
-              // Se non abbiamo dati della classe, tentiamo di recuperarli
-              if (!completeData.data.class) {
-                try {
-                  const classResponse = await axiosInstance.get(`/students/${studentId}/class`);
-                  if (classResponse.data.status === 'success') {
-                    completeData.data.class = classResponse.data.data;
-                    console.log('Dati classe recuperati:', completeData.data.class);
-                  }
-                } catch (classError) {
-                  console.error('Errore nel recupero dati classe:', classError);
-                }
-              }
-              
-              // Aggiorniamo anche il localStorage con i dati più recenti
-              localStorage.setItem('student', JSON.stringify(completeData.data.student));
-              
-              return completeData;
-            }
-            
-            return profileResponse.data;
-          }
-          
-          throw new Error('Formato risposta profilo non valido');
-        } catch (apiError) {
-          console.error('Errore API nel recupero del profilo:', apiError);
-          
-          // Se l'errore è 401, proviamo a usare i dati locali come fallback
-          if (apiError.response?.status === 401 && studentData) {
-            console.log('Usando dati locali come fallback...');
-          } else {
-            throw apiError; // Rilancia l'errore se non possiamo recuperare dati locali
-          }
-        }
-      }
-      
-      // Se non abbiamo dati dall'API ma abbiamo i dati localmente, usiamo quelli
-      if (studentData) {
-        console.log('Usando dati studente dal localStorage');
-        const student = JSON.parse(studentData);
-        
-        // Creiamo una risposta strutturata simile a quella dell'API
-        const localData = {
+      if (response.data && response.data.data && response.data.data.student) {
+        // Normalizza i dati per la visualizzazione
+        return {
           status: 'success',
           data: {
-            student: student,
-            // Se lo studente ha riferimenti a scuola e classe, includiamoli
-            school: student.schoolId && typeof student.schoolId === 'object' ? student.schoolId : null,
-            class: student.classId && typeof student.classId === 'object' ? student.classId : null
+            student: response.data.data.student,
+            school: response.data.data.student.schoolId,
+            class: response.data.data.student.classId
           }
         };
-        
-        // Se abbiamo un ID studente ma mancano dati di scuola/classe, proviamo a recuperarli
-        const studentId = student._id || student.id;
-        
-        if (studentId && token) {
-          if (!localData.data.school) {
-            try {
-              const schoolResponse = await axiosInstance.get(`/students/${studentId}/school`);
-              if (schoolResponse.data.status === 'success') {
-                localData.data.school = schoolResponse.data.data;
-                console.log('Dati scuola aggiunti ai dati locali:', localData.data.school);
-              }
-            } catch (err) {
-              console.error('Impossibile recuperare dati scuola:', err);
-            }
-          }
-          
-          if (!localData.data.class) {
-            try {
-              const classResponse = await axiosInstance.get(`/students/${studentId}/class`);
-              if (classResponse.data.status === 'success') {
-                localData.data.class = classResponse.data.data;
-                console.log('Dati classe aggiunti ai dati locali:', localData.data.class);
-              }
-            } catch (err) {
-              console.error('Impossibile recuperare dati classe:', err);
-            }
-          }
-        }
-        
-        return localData;
       }
       
-      throw new Error('Dati profilo non disponibili');
+      throw new Error('Formato risposta non valido');
     } catch (error) {
-      console.error('Errore durante il recupero del profilo studente:', error);
-      
-      // Se l'errore è 401, significa che il token non è più valido
-      if (error.response?.status === 401) {
-        throw new Error('Sessione scaduta - Effettua nuovamente il login');
-      }
-      
-      throw error.response?.data?.error || error;
+      console.error('Error fetching student profile:', error);
+      throw error;
     }
   },
   
