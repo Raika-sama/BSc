@@ -102,3 +102,187 @@
 {"level":"info","message":"Richiesta login studente","timestamp":"2025-03-08T23:45:51.876Z","username":"ciccio@pasticcio.it"}
 {"level":"info","message":"Tentativo di autenticazione studente","timestamp":"2025-03-08T23:45:51.877Z","username":"ciccio@pasticcio.it"}
 {"level":"info","message":"Primo accesso rilevato","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-08T23:45:51.899Z","username":"ciccio@pasticcio.it"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T09:35:40.263Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T09:35:40.270Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T09:35:40.317Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-09T09:35:41.256Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T09:35:41.257Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T09:35:41.259Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-09T09:35:41.638Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-09T09:35:41.646Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-09T09:35:41.647Z"}
+{"level":"info","message":"Richiesta login studente","timestamp":"2025-03-09T09:36:11.029Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Tentativo di autenticazione studente","timestamp":"2025-03-09T09:36:11.030Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Primo accesso rilevato","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-09T09:36:11.077Z","username":"ciccio@pasticcio.it"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T18:13:25.907Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T18:13:25.912Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T18:13:25.999Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-09T18:13:27.024Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T18:13:27.025Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T18:13:27.027Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-09T18:13:27.440Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-09T18:13:27.444Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-09T18:13:27.445Z"}
+{"error":{"code":"AUTH_002","message":"Token scaduto","metadata":{},"status":401},"ip":"::1","level":"error","message":"Authentication failed","path":"/verify","timestamp":"2025-03-09T18:13:45.573Z"}
+{"error":{"code":"AUTH_002","message":"Token scaduto","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"GET","path":"/api/v1/auth/verify","timestamp":"2025-03-09T18:13:45.575Z"}
+{"duration":"24ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741544025559_payby5r9v","responseSize":"72 Bytes","statusCode":401,"timestamp":"2025-03-09T18:13:45.584Z","url":"/api/v1/auth/verify","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"error":{"code":"AUTH_002","message":"Token scaduto","metadata":{},"status":401},"ip":"::1","level":"error","message":"Authentication failed","path":"/refresh-token","timestamp":"2025-03-09T18:13:45.627Z"}
+{"error":{"code":"AUTH_002","message":"Token scaduto","metadata":{},"status":401},"ip":"::1","level":"error","message":"Auth Error:","method":"POST","path":"/api/v1/auth/refresh-token","timestamp":"2025-03-09T18:13:45.628Z"}
+{"duration":"8ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741544025622_gmhwiyt8e","responseSize":"72 Bytes","statusCode":401,"timestamp":"2025-03-09T18:13:45.630Z","url":"/api/v1/auth/refresh-token","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"info","message":"Login successful","metadata":{"ipAddress":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"},"timestamp":"2025-03-09T18:14:03.784Z","userId":"677bfe44f6789c907c9f3766"}
+{"action":"login","level":"info","message":"User audit record created","timestamp":"2025-03-09T18:14:03.826Z","userId":"677bfe44f6789c907c9f3766"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T20:30:22.044Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T20:30:22.049Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T20:30:22.103Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-09T20:30:23.002Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T20:30:23.003Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T20:30:23.005Z"}
+{"error":"hasPermission is not a function","level":"error","message":"Errore durante l'avvio del server:","stack":"TypeError: hasPermission is not a function\n    at createStudentRouter (C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:107:9)\n    at createRouter (C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\index.js:46:53)\n    at startServer (C:\\Users\\ricca\\Desktop\\BSc\\src\\app.js:309:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-03-09T20:30:23.456Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T20:36:14.722Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T20:36:14.727Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T20:36:14.765Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-09T20:36:15.516Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T20:36:15.517Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T20:36:15.518Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-09T20:36:15.791Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-09T20:36:15.805Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-09T20:36:15.805Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T20:36:55.895Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T20:36:55.899Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T20:36:55.936Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-09T20:36:56.658Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T20:36:56.659Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T20:36:56.660Z"}
+{"error":"hasPermission is not a function","level":"error","message":"Errore durante l'avvio del server:","stack":"TypeError: hasPermission is not a function\n    at createStudentRouter (C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:107:9)\n    at createRouter (C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\index.js:46:53)\n    at startServer (C:\\Users\\ricca\\Desktop\\BSc\\src\\app.js:309:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-03-09T20:36:56.934Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T20:41:39.988Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T20:41:39.992Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T20:41:40.026Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-09T20:41:40.750Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T20:41:40.751Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T20:41:40.752Z"}
+{"error":"hasPermission is not a function","level":"error","message":"Errore durante l'avvio del server:","stack":"TypeError: hasPermission is not a function\n    at createStudentRouter (C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:107:9)\n    at createRouter (C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\index.js:46:53)\n    at startServer (C:\\Users\\ricca\\Desktop\\BSc\\src\\app.js:310:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-03-09T20:41:41.039Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T20:43:09.144Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T20:43:09.148Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T20:43:09.186Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-09T20:43:09.926Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T20:43:09.927Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T20:43:09.929Z"}
+{"error":"hasPermission is not a function","level":"error","message":"Errore durante l'avvio del server:","stack":"TypeError: hasPermission is not a function\n    at createStudentRouter (C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:107:9)\n    at createRouter (C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\index.js:46:53)\n    at startServer (C:\\Users\\ricca\\Desktop\\BSc\\src\\app.js:311:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-03-09T20:43:10.214Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T20:45:04.782Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T20:45:04.788Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T20:45:04.841Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-09T20:45:05.732Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T20:45:05.734Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T20:45:05.736Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-09T20:45:06.038Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-09T20:45:06.042Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-09T20:45:06.043Z"}
+{"action":"read","error":{},"level":"error","message":"Permission check failed","resource":"students","timestamp":"2025-03-09T20:45:11.276Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":"Cannot read properties of undefined (reading 'findById')","level":"error","message":"Student route error:","method":"GET","path":"/","stack":"TypeError: Cannot read properties of undefined (reading 'findById')\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:297:55\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at AuthMiddleware.protect (C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:119:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-03-09T20:45:11.279Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"172ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741553111118_j1tuhzonz","responseSize":"110 Bytes","statusCode":400,"timestamp":"2025-03-09T20:45:11.291Z","url":"/api/v1/students?page=1&limit=50","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"action":"read","error":{},"level":"error","message":"Permission check failed","resource":"students","timestamp":"2025-03-09T20:45:16.443Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":"Cannot read properties of undefined (reading 'findById')","level":"error","message":"Student route error:","method":"GET","path":"/","stack":"TypeError: Cannot read properties of undefined (reading 'findById')\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:297:55\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at AuthMiddleware.protect (C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:119:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-03-09T20:45:16.445Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"110ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741553116337_g6pp614fi","responseSize":"110 Bytes","statusCode":400,"timestamp":"2025-03-09T20:45:16.447Z","url":"/api/v1/students?page=1&limit=50","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T20:50:29.449Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T20:50:29.457Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T20:50:29.892Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-09T20:50:31.649Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T20:50:31.650Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T20:50:31.652Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-09T20:50:32.024Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-09T20:50:32.032Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-09T20:50:32.033Z"}
+{"error":"userRepository is not defined","level":"error","message":"Student route error:","method":"GET","path":"/","stack":"ReferenceError: userRepository is not defined\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:58:30\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\studentRoutes.js:54:9\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:286:9","timestamp":"2025-03-09T20:50:38.815Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"61ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741553438756_11eqrihp6","responseSize":"83 Bytes","statusCode":400,"timestamp":"2025-03-09T20:50:38.817Z","url":"/api/v1/students?page=1&limit=50","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T20:52:49.045Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T20:52:49.049Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T20:52:49.085Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-09T20:52:49.792Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T20:52:49.793Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T20:52:49.795Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-09T20:52:50.098Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-09T20:52:50.103Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-09T20:52:50.103Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T21:09:35.913Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T21:09:35.917Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T21:09:35.959Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-09T21:09:36.744Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T21:09:36.745Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T21:09:36.747Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-09T21:09:37.090Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-09T21:09:37.095Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-09T21:09:37.096Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T21:13:30.293Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T21:13:30.297Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T21:13:30.341Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-09T21:13:31.074Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T21:13:31.075Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T21:13:31.077Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-09T21:13:31.362Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-09T21:13:31.366Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-09T21:13:31.366Z"}
+{"action":"read","error":{},"level":"error","message":"Permission check failed","resource":"students","timestamp":"2025-03-09T21:13:36.660Z","userId":"677bfe44f6789c907c9f3766"}
+{"error":"Cannot read properties of undefined (reading 'findById')","level":"error","message":"Student route error:","method":"GET","path":"/","stack":"TypeError: Cannot read properties of undefined (reading 'findById')\n    at C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:297:55\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\ricca\\Desktop\\BSc\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at AuthMiddleware.protect (C:\\Users\\ricca\\Desktop\\BSc\\src\\middleware\\authMiddleware.js:119:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-03-09T21:13:36.662Z","userId":"677bfe44f6789c907c9f3766"}
+{"duration":"118ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741554816547_5qlki7j36","responseSize":"110 Bytes","statusCode":400,"timestamp":"2025-03-09T21:13:36.666Z","url":"/api/v1/students?page=1&limit=50","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T21:19:56.817Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T21:19:56.821Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T21:19:56.861Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-09T21:19:57.889Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T21:19:57.906Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T21:19:57.915Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-09T21:19:58.361Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-09T21:19:58.366Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-09T21:19:58.366Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T21:20:49.252Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T21:20:49.256Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T21:20:49.298Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-09T21:20:50.061Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T21:20:50.063Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T21:20:50.065Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-09T21:20:50.348Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-09T21:20:50.352Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-09T21:20:50.352Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T21:22:56.017Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T21:22:56.024Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T21:22:56.093Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-09T21:22:57.141Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T21:22:57.143Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T21:22:57.146Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-09T21:22:57.514Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-09T21:22:57.520Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-09T21:22:57.521Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-09T21:26:20.731Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-09T21:26:20.735Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-09T21:26:20.772Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-09T21:26:21.475Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-09T21:26:21.476Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-09T21:26:21.478Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-09T21:26:21.767Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-09T21:26:21.771Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-09T21:26:21.772Z"}
+{"assignedBy":"677bfe44f6789c907c9f3766","csiConfigId":"67a65a423218fb8ab7bbc040","level":"info","message":"Test assigned to student:","studentId":"67b20991d8fdac4600a0def6","testId":"67ce078b0c7e3c19e55ddd49","testType":"CSI","timestamp":"2025-03-09T21:26:35.501Z"}
+{"assignedBy":"677bfe44f6789c907c9f3766","level":"info","message":"Test assigned successfully:","studentId":"67b20991d8fdac4600a0def6","testId":"67ce078b0c7e3c19e55ddd49","timestamp":"2025-03-09T21:26:35.502Z"}
+{"email":"***","level":"info","message":"Student created successfully:","studentId":"67ce07c30c7e3c19e55dde0d","timestamp":"2025-03-09T21:27:31.648Z"}
+{"level":"info","message":"Richiesta login studente","timestamp":"2025-03-09T21:30:18.347Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Tentativo di autenticazione studente","timestamp":"2025-03-09T21:30:18.348Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Primo accesso rilevato","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-09T21:30:18.368Z","username":"ciccio@pasticcio.it"}
+{"level":"warn","message":"Password temporanea non valida al primo accesso","timestamp":"2025-03-09T21:30:18.474Z","username":"ciccio@pasticcio.it"}
+{"error":"Password temporanea non valida","level":"error","message":"Errore durante l'autenticazione dello studente","timestamp":"2025-03-09T21:30:18.475Z","username":"ciccio@pasticcio.it"}
+{"error":"Password temporanea non valida","level":"error","message":"Errore durante il login dello studente","timestamp":"2025-03-09T21:30:18.476Z"}
+{"error":"Password temporanea non valida","level":"error","message":"StudentAuth error:","method":"POST","path":"/login","timestamp":"2025-03-09T21:30:18.476Z"}
+{"duration":"135ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741555818342_hxonfnpuu","responseSize":"89 Bytes","statusCode":401,"timestamp":"2025-03-09T21:30:18.477Z","url":"/api/v1/student-auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"info","message":"Richiesta login studente","timestamp":"2025-03-09T21:30:26.538Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Tentativo di autenticazione studente","timestamp":"2025-03-09T21:30:26.539Z","username":"ciccio@pasticcio.it"}
+{"level":"info","message":"Primo accesso rilevato","studentId":"67b20991d8fdac4600a0def6","timestamp":"2025-03-09T21:30:26.559Z","username":"ciccio@pasticcio.it"}
+{"level":"warn","message":"Password temporanea non valida al primo accesso","timestamp":"2025-03-09T21:30:26.643Z","username":"ciccio@pasticcio.it"}
+{"error":"Password temporanea non valida","level":"error","message":"Errore durante l'autenticazione dello studente","timestamp":"2025-03-09T21:30:26.643Z","username":"ciccio@pasticcio.it"}
+{"error":"Password temporanea non valida","level":"error","message":"Errore durante il login dello studente","timestamp":"2025-03-09T21:30:26.644Z"}
+{"error":"Password temporanea non valida","level":"error","message":"StudentAuth error:","method":"POST","path":"/login","timestamp":"2025-03-09T21:30:26.644Z"}
+{"duration":"110ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741555826535_6nxmeb25z","responseSize":"89 Bytes","statusCode":401,"timestamp":"2025-03-09T21:30:26.645Z","url":"/api/v1/student-auth/login","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"info","message":"Nessuna password fornita, reindirizzando a generateCredentials","timestamp":"2025-03-09T21:30:36.327Z"}
+{"level":"info","message":"Richiesta generazione credenziali studente","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-09T21:30:36.327Z"}
+{"level":"info","message":"Generazione credenziali per studente","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-09T21:30:36.328Z"}
+{"level":"info","message":"Credenziali generate con successo","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-09T21:30:36.502Z"}
+{"level":"info","message":"Richiesta login studente","timestamp":"2025-03-09T21:30:58.718Z","username":"piero@matest.it"}
+{"level":"info","message":"Tentativo di autenticazione studente","timestamp":"2025-03-09T21:30:58.718Z","username":"piero@matest.it"}
+{"level":"info","message":"Primo accesso rilevato","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-09T21:30:58.737Z","username":"piero@matest.it"}

@@ -15,6 +15,7 @@ const createQuestionRoutes = require('./engines/CSI/routes/csi.question.routes')
 const YearTransitionController = require('./controllers/yearTransitionController');
 const testSystemController = require('./controllers/testSystemController'); // Importo il controller per i test di sistema
 const createStudentAuthRouter = require('./routes/studentAuthRoutes'); // Added import statement
+const repositories = require('./repositories');
 
 // Importa e registra i modelli CSI
 let models;
@@ -88,6 +89,22 @@ app.use(cookieParser());
 // Logging
 app.use(requestLogger);
 
+// Aggiungi middleware per iniettare i repositories in ogni richiesta
+app.use((req, res, next) => {
+    // Aggiungi tutti i repository alla richiesta
+    req.repositories = repositories;
+    
+    // Per compatibilità, aggiungi anche i singoli repository
+    req.userRepository = repositories.userRepository;
+    req.schoolRepository = repositories.schoolRepository;
+    req.classRepository = repositories.classRepository;
+    req.studentRepository = repositories.studentRepository;
+    req.testRepository = repositories.testRepository;
+    req.studentAuthRepository = repositories.studentAuthRepository;
+    
+    next();
+});
+
 // Inizializza Repositories
 const authRepository = new AuthRepository(User);
 const userRepository = new UserRepository(User);
@@ -110,12 +127,32 @@ const studentAuthService = StudentAuthService; // Add this line to define studen
 studentRepository.setStudentAuthService(StudentAuthService);
 
 // Inizializza il middleware di autenticazione
-const { protect, restrictTo, loginLimiter, protectStudent } = createAuthMiddleware(
+const { 
+    protect, 
+    restrictTo, 
+    loginLimiter, 
+    protectStudent, 
+    hasPermission, 
+    hasTestAccess, 
+    requireAdminAccess, 
+    blacklistToken 
+ } = createAuthMiddleware(
     authService, 
     sessionService,
-    StudentAuthService  // Usa l'istanza importata direttamente
+    permissionService,
+    StudentAuthService
+    
 );
-const authMiddleware = { protect, restrictTo, loginLimiter, protectStudent };
+const authMiddleware = { 
+    protect, 
+    restrictTo, 
+    loginLimiter, 
+    protectStudent, 
+    hasPermission, 
+    hasTestAccess, 
+    requireAdminAccess, 
+    blacklistToken 
+};
 const bulkImportValidation = new BulkImportValidation();
 
 // Inizializza Controllers base
@@ -284,6 +321,8 @@ const startServer = async () => {
             hasCsiController: !!dependencies.csiController,
             hasStudentAuthController: !!dependencies.studentAuthController,
             hasStudentAuthService: !!dependencies.studentAuthService,
+            hasPermission: !!dependencies.authMiddleware?.hasPermission,  // Aggiungi questo
+    hasPermissionService: !!dependencies.permissionService,       // Aggiungi questo
             hasProtectStudent: !!dependencies.authMiddleware?.protectStudent
         });
 

@@ -21,7 +21,8 @@ const createStudentRouter = ({
     if (!studentBulkImportController) throw new Error('StudentBulkImportController is required');
 
     const router = express.Router();
-    const { protect, restrictTo } = authMiddleware;
+    // Estrai hasPermission oltre a protect e restrictTo
+    const { protect, restrictTo, hasPermission } = authMiddleware;
 
     // Utility per gestione async
     const asyncHandler = (fn) => (req, res, next) => {
@@ -54,84 +55,84 @@ const createStudentRouter = ({
 
     // 3. Route di ricerca e accesso
     router.get('/search', 
+        hasPermission('students', 'read'),  // Sostituisce restrictTo
         studentValidation.validateSearch,
         asyncHandler(studentController.searchStudents.bind(studentController))
     );
 
+    // In questo caso, potremmo voler mantenere restrictTo per chiarezza
+    // e aggiungere hasPermission per maggiore granularità
     router.get('/my-students', 
         restrictTo('teacher', 'admin'),
+        hasPermission('students', 'read'),  // Verifica il permesso e anche il contesto
         asyncHandler(studentController.getMyStudents.bind(studentController))
     );
 
-    /**
-     * @route GET /api/students/count
-     * @desc Conta studenti nelle classi specificate
-     * @access Private - Richiede autenticazione
-     */
     router.get('/count', 
+        hasPermission('students', 'read'),  // Permesso di lettura studenti
         asyncHandler(studentController.countByClasses.bind(studentController))
     );
     
-    /**
-     * @route POST /api/students/check-emails
-     * @desc Verifica se le email fornite sono già presenti nel database
-     * @access Private - Richiede autenticazione
-     */
     router.post('/check-emails', 
+        hasPermission('students', 'read'),  // Permesso di lettura studenti
         asyncHandler(studentController.checkEmails.bind(studentController))
     );
 
-    // 4. Route di importazione bulk (solo admin)
+    // 4. Route di importazione bulk
     router.get('/template', 
-        restrictTo('admin'),
+        hasPermission('students', 'create'),  // Verifica permesso di creazione
         asyncHandler(studentBulkImportController.generateTemplate.bind(studentBulkImportController))
     );
 
-    // Route originale per import da file
     router.post('/bulk-import', 
-        restrictTo('admin'),
+        hasPermission('students', 'create'),  // Verifica permesso di creazione
         uploadExcel,
         handleMulterError,
         asyncHandler(studentBulkImportController.bulkImport.bind(studentBulkImportController))
     );
     
-    // Nuova route per import con assegnazione classe
     router.post('/bulk-import-with-class', 
-        restrictTo('admin'),
+        hasPermission('students', 'create'),  // Verifica permesso di creazione
+        hasPermission('classes', 'update'),   // E anche permesso di aggiornare classi
         asyncHandler(studentBulkImportController.bulkImportWithClass.bind(studentBulkImportController))
     );
 
     // 5. Route per gestione classi
     router.get('/class/:classId',
-        restrictTo('teacher', 'admin'),
+        hasPermission('students', 'read'),  // Verificherà anche il contesto della classe
         asyncHandler(studentController.getStudentsByClass.bind(studentController))
     );
 
     // 6. Route per studenti non assegnati
     router.get('/unassigned-to-school',
-        restrictTo('admin'),
+        hasPermission('students', 'read'),
+        hasPermission('schools', 'read'),
         asyncHandler(studentController.getUnassignedToSchoolStudents.bind(studentController))
     );
 
     router.get('/unassigned/:schoolId',
-        restrictTo('admin'),
+        hasPermission('students', 'read'),
+        hasPermission('schools', 'read'),
         asyncHandler(studentController.getUnassignedStudents.bind(studentController))
     );
 
     // 7. Route per assegnazioni batch
     router.post('/batch-assign',
-        restrictTo('admin'),
+        hasPermission('students', 'update'),
+        hasPermission('classes', 'update'),
         studentValidation.validateBatchAssignment,
         asyncHandler(studentController.batchAssignToClass.bind(studentController))
     );
 
     router.post('/batch-assign-to-school',
-        restrictTo('admin'),
+        hasPermission('students', 'update'),
+        hasPermission('schools', 'update'),
         asyncHandler(studentController.batchAssignToSchool.bind(studentController))
     );
 
     router.post('/with-class', 
-        restrictTo('admin'),
+        hasPermission('students', 'create'),
+        hasPermission('classes', 'update'),
         studentValidation.validateCreate, 
         asyncHandler(studentController.createStudentWithClass.bind(studentController))
     );
@@ -139,39 +140,41 @@ const createStudentRouter = ({
     // 8. Route CRUD base
     router.route('/')
         .get(
-            restrictTo('teacher', 'admin'),
+            hasPermission('students', 'read'),
             asyncHandler(studentController.getAll.bind(studentController))
         )
         .post(
-            restrictTo('admin'),
+            hasPermission('students', 'create'),
             studentValidation.validateCreate,
             asyncHandler(studentController.create.bind(studentController))
         );
 
     router.route('/:id')
         .get(
-            // restrictTo('teacher', 'admin', 'student'), // commento temporaneamento per vedere se riesce a visualizzare in PubFE il profilo utente
+            hasPermission('students', 'read'),
             asyncHandler(studentController.getById.bind(studentController))
         )
         .put(
-            restrictTo('admin'),
+            hasPermission('students', 'update'),
             studentValidation.validateUpdate,
             asyncHandler(studentController.update.bind(studentController))
         )
         .delete(
-            restrictTo('admin'),
+            hasPermission('students', 'delete'),
             asyncHandler(studentController.delete.bind(studentController))
         );
 
     // 9. Route per gestione classe singola
     router.post('/:studentId/assign-class',
-        restrictTo('admin'),
+        hasPermission('students', 'update'),
+        hasPermission('classes', 'update'),
         studentValidation.validateClassAssignment,
         asyncHandler(studentController.assignToClass.bind(studentController))
     );
 
     router.post('/:studentId/remove-from-class',
-        restrictTo('admin'),
+        hasPermission('students', 'update'),
+        hasPermission('classes', 'update'),
         asyncHandler(studentController.removeFromClass.bind(studentController))
     );
 

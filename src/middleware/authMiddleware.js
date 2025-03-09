@@ -58,6 +58,15 @@ class AuthMiddleware {
         this.permissionService = permissionService;
         this.studentAuthService = studentAuthService;
         this.tokenBlacklist = new Set();
+        
+        // Bind dei metodi per mantenere il contesto corretto
+        this.hasPermission = this.hasPermission.bind(this);
+        this._buildPermissionContext = this._buildPermissionContext.bind(this);
+        this.extractToken = this.extractToken.bind(this);
+        this.extractStudentToken = this.extractStudentToken.bind(this);
+        this.hasTestAccess = this.hasTestAccess.bind(this);
+        this.requireAdminAccess = this.requireAdminAccess.bind(this);
+        this.blacklistToken = this.blacklistToken.bind(this);
     }
     
     /**
@@ -223,16 +232,24 @@ class AuthMiddleware {
         };
     };
     
-    /**
+     /**
      * Middleware per verificare i permessi
      * @param {string} resource - Risorsa richiesta
      * @param {string} action - Azione richiesta (read, create, update, delete, manage)
      */
-    hasPermission = (resource, action) => {
+     hasPermission = (resource, action) => {
         return async (req, res, next) => {
             try {
-                // Se non c'è utente autenticato
+                logger.debug('hasPermission chiamato per:', {
+                    resource,
+                    action,
+                    user: req.user?.id,
+                    student: req.student?.id
+                });
+                
+                // Verifica che ci sia un utente autenticato
                 if (!req.user && !req.student) {
+                    logger.error('Nessun utente autenticato trovato');
                     return next(createError(
                         ErrorTypes.AUTH.NO_USER,
                         'Utente non autenticato'
@@ -286,38 +303,82 @@ class AuthMiddleware {
                     ));
                 }
                 
-                // Per utenti normali, controlla permessi complessi
-                const context = this._buildPermissionContext(req);
-                
-                // Recupera l'utente completo dal database per avere accesso a tutti i dati necessari
-                const user = await req.userRepository.findById(req.user.id);
-                
-                const hasPermission = await this.permissionService.hasPermission(
-                    user,
-                    resource,
-                    action,
-                    context
-                );
-                
-                if (!hasPermission) {
-                    return next(createError(
-                        ErrorTypes.AUTH.FORBIDDEN,
-                        'Permessi insufficienti'
-                    ));
-                }
-                
-                next();
-            } catch (error) {
-                logger.error('Permission check failed', {
-                    error,
-                    resource,
-                    action,
-                    userId: req.user?.id
-                });
-                next(error);
-            }
-        };
-    };
+             // Per utenti normali, controlla permessi complessi
+             const context = this._buildPermissionContext(req);
+             logger.debug('Contesto costruito:', context);
+             
+             // Verifico che userRepository sia disponibile nella richiesta
+             if (!req.userRepository) {
+                 logger.error('UserRepository non trovato nella richiesta');
+                 return next(createError(
+                     ErrorTypes.SYSTEM.INTERNAL_ERROR,
+                     'Repository non trovato nella richiesta'
+                 ));
+             }
+             
+             logger.debug('Chiamata a userRepository.findById con ID:', req.user.id);
+             // Recupera l'utente completo dal database - USA IL REPOSITORY DALLA REQUEST
+             const user = await req.userRepository.findById(req.user.id);
+             
+             if (!user) {
+                 logger.error('Utente non trovato con ID:', req.user.id);
+                 return next(createError(
+                     ErrorTypes.AUTH.USER_NOT_FOUND,
+                     'Utente non trovato'
+                 ));
+             }
+             
+             logger.debug('Utente trovato:', {
+                 userId: user._id,
+                 role: user.role
+             });
+             
+             logger.debug('Chiamata a permissionService.hasPermission con parametri:', {
+                 userId: user._id,
+                 resource,
+                 action,
+                 context
+             });
+             
+             const hasPermission = await this.permissionService.hasPermission(
+                 user,
+                 resource,
+                 action,
+                 context
+             );
+             
+             logger.debug('Risultato permissionService.hasPermission:', hasPermission);
+             
+             if (!hasPermission) {
+                 logger.warn('Permesso negato per utente:', {
+                     userId: user._id,
+                     resource,
+                     action,
+                     context
+                 });
+                 return next(createError(
+                     ErrorTypes.AUTH.FORBIDDEN,
+                     'Permessi insufficienti'
+                 ));
+             }
+             
+             logger.debug('Permessi verificati con successo');
+             next();
+         } catch (error) {
+             logger.error('Permission check failed', {
+                 error: {
+                     message: error.message,
+                     stack: error.stack
+                 },
+                 resource,
+                 action,
+                 userId: req.user?.id
+             });
+             next(error);
+         }
+     };
+ };
+
 
     /**
      * Middleware per verificare accesso a test
