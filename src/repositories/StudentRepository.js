@@ -140,7 +140,9 @@ class StudentRepository extends BaseRepository {
                 pipeline.push({ $limit: options.limit });
             }
     
-            logger.debug('Executing aggregation with pipeline:', JSON.stringify(pipeline, null, 2));
+            // Changed: logging the pipeline object directly instead of using JSON.stringify 
+            // This prevents character by character logging
+            logger.debug('Executing aggregation with pipeline:', { pipeline });
 
             const students = await this.model.aggregate(pipeline);
             logger.debug('Aggregation results:', {

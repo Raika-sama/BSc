@@ -2,6 +2,7 @@
 const rateLimit = require('express-rate-limit');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 const logger = require('../utils/errors/logger/logger');
+const mongoose = require('mongoose');
 
 // Rate Limiter per tentativi di login
 const loginLimiter = rateLimit({
@@ -243,8 +244,8 @@ class AuthMiddleware {
                 logger.debug('hasPermission chiamato per:', {
                     resource,
                     action,
-                    user: req.user?.id,
-                    student: req.student?.id
+                    user: req.user?.id ? req.user.id.toString() : undefined,
+                    student: req.student?.id ? req.student.id.toString() : undefined
                 });
                 
                 // Verifica che ci sia un utente autenticato
@@ -316,12 +317,15 @@ class AuthMiddleware {
                  ));
              }
              
-             logger.debug('Chiamata a userRepository.findById con ID:', req.user.id);
+             // Convert userId to string to avoid character-by-character logging
+             const userId = req.user.id.toString();
+             logger.debug('Chiamata a userRepository.findById con ID:', userId);
+             
              // Recupera l'utente completo dal database - USA IL REPOSITORY DALLA REQUEST
-             const user = await req.userRepository.findById(req.user.id);
+             const user = await req.userRepository.findById(userId);
              
              if (!user) {
-                 logger.error('Utente non trovato con ID:', req.user.id);
+                 logger.error('Utente non trovato con ID:', userId);
                  return next(createError(
                      ErrorTypes.AUTH.USER_NOT_FOUND,
                      'Utente non trovato'
@@ -329,12 +333,12 @@ class AuthMiddleware {
              }
              
              logger.debug('Utente trovato:', {
-                 userId: user._id,
+                 userId: user._id.toString(), // Convert to string
                  role: user.role
              });
              
              logger.debug('Chiamata a permissionService.hasPermission con parametri:', {
-                 userId: user._id,
+                 userId: user._id.toString(), // Convert to string 
                  resource,
                  action,
                  context
@@ -395,16 +399,52 @@ class AuthMiddleware {
                 }
                 
                 // Recupera dati del test
-                const testId = req.params.testId || req.body.testId;
+                // Prova a ottenere l'ID del test da più possibili fonti
+                const testId = req.params.testId || req.params.id || req.body.testId;
+                
                 if (!testId) {
+                    logger.error('ID test mancante nella richiesta', {
+                        params: req.params,
+                        body: req.body,
+                        path: req.path
+                    });
                     return next(createError(
                         ErrorTypes.VALIDATION.MISSING_FIELDS,
                         'ID test mancante'
                     ));
                 }
                 
+                logger.debug('Verifica accesso al test', {
+                    testId,
+                    userId: req.user?.id || (req.student ? 'student:' + req.student.id : 'unknown'),
+                    userRole: req.user?.role || 'student',
+                    path: req.path,
+                    method: req.method
+                });
+                
                 // Recupera il test
                 const test = await req.testRepository.findById(testId);
+                
+                if (!test) {
+                    logger.error('Test non trovato', {
+                        testId,
+                        path: req.path
+                    });
+                    return next(createError(
+                        ErrorTypes.RESOURCE.NOT_FOUND,
+                        'Test non trovato'
+                    ));
+                }
+                
+                // Gli admin hanno sempre accesso a tutti i test
+                if (req.user && req.user.role === 'admin') {
+                    logger.debug('Admin user granted access to test', {
+                        userId: req.user.id,
+                        testId: test._id.toString(),
+                        path: req.path
+                    });
+                    return next();
+                }
                 
                 // Per gli studenti, verifica che il test sia assegnato a loro
                 if (req.student) {
@@ -417,24 +457,90 @@ class AuthMiddleware {
                     ));
                 }
                 
-                // Per utenti normali, controlla in base al livello di accesso
+                // Per insegnanti, verifica che sia stato assegnato da loro
+                if (req.user.role === 'teacher') {
+                    // Caso 1: l'insegnante ha assegnato direttamente il test
+                    if (test.assignedBy && test.assignedBy.toString() === req.user.id.toString()) {
+                        logger.debug('Insegnante ha accesso al test che ha assegnato', {
+                            userId: req.user.id,
+                            testId: test._id.toString(),
+                            assignedBy: test.assignedBy.toString()
+                        });
+                        return next();
+                    }
+                    
+                    // Caso 2: l'insegnante è responsabile della classe dello studente
+                    try {
+                        // Recupera lo studente del test
+                        const Student = mongoose.model('Student');
+                        const studentId = test.studentId;
+                        const student = await Student.findById(studentId).select('classId');
+                        
+                        if (student && student.classId) {
+                            // Recupera la classe dello studente
+                            const Class = mongoose.model('Class');
+                            const classDoc = await Class.findById(student.classId);
+                            
+                            // Verifica se l'insegnante è responsabile della classe
+                            if (classDoc && 
+                                classDoc.teachers && 
+                                classDoc.teachers.includes(req.user.id)) {
+                                logger.debug('Insegnante ha accesso come docente di classe', {
+                                    userId: req.user.id,
+                                    testId: test._id.toString(),
+                                    classId: student.classId.toString(),
+                                    studentId: studentId.toString()
+                                });
+                                return next();
+                            }
+                        }
+                    } catch (err) {
+                        logger.error('Errore nella verifica della relazione classe-insegnante', {
+                            error: err.message,
+                            testId: test._id.toString(),
+                            userId: req.user.id
+                        });
+                        // Fallback ai controlli standard - non interruzione
+                    }
+                }
+                
+                // Per altri utenti o casi non coperti sopra, controllo più complesso tramite permissionService
                 const user = await req.userRepository.findById(req.user.id);
+                
+                logger.debug('Verifico accesso tramite permissionService', {
+                    userId: req.user.id,
+                    testId: test._id.toString(),
+                    userRole: req.user.role
+                });
                 
                 const hasAccess = await this.permissionService.hasTestAccess(user, test);
                 
                 if (!hasAccess) {
+                    logger.error('Accesso al test negato', {
+                        userId: req.user.id,
+                        testId: test._id.toString(),
+                        role: req.user.role
+                    });
                     return next(createError(
                         ErrorTypes.AUTH.FORBIDDEN,
                         'Accesso non consentito a questo test'
                     ));
                 }
                 
+                logger.debug('Accesso al test autorizzato', {
+                    userId: req.user.id,
+                    testId: test._id.toString(),
+                    role: req.user.role
+                });
+                
                 next();
             } catch (error) {
-                logger.error('Test access check failed', {
-                    error,
-                    testId: req.params.testId || req.body.testId,
-                    userId: req.user?.id
+                logger.error('Errore durante la verifica di accesso al test', {
+                    error: error.message,
+                    stack: error.stack,
+                    testId: req.params.testId || req.params.id || req.body.testId,
+                    userId: req.user?.id,
+                    path: req.path
                 });
                 next(error);
             }

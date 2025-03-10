@@ -63,52 +63,57 @@ const AssignTestDialog = ({ open, onClose, studentId, onTestAssigned }) => {
     setError(null);
   };
 
-  // Gestisce l'assegnazione del test
-  const handleAssignTest = async () => {
-    if (!selectedTestType) {
+// Gestisce l'assegnazione del test - migliorata
+const handleAssignTest = async () => {
+  if (!selectedTestType) {
       setError('Seleziona un tipo di test da assegnare.');
       return;
-    }
+  }
 
-    setLoading(true);
-    setError(null);
+  setLoading(true);
+  setError(null);
 
-    try {
+  try {
       const response = await axiosInstance.post('/tests/assign', {
-        testType: selectedTestType,
-        studentId,
-        // Configurazione di default, in futuro potrebbe essere personalizzabile dall'interfaccia
-        config: {
-          tempoLimite: 30, // 30 minuti
-          tentativiMax: 1,
-          randomizzaDomande: true,
-          mostraRisultatiImmediati: false
-        }
+          testType: selectedTestType,
+          studentId,
+          // Configurazione di default, in futuro potrebbe essere personalizzabile dall'interfaccia
+          config: {
+              tempoLimite: 30, // 30 minuti
+              tentativiMax: 1,
+              randomizzaDomande: true,
+              mostraRisultatiImmediati: false
+          }
       });
 
       if (response.data && response.data.status === 'success') {
-        setSuccess(true);
-        
-        // Notifica il componente padre che il test è stato assegnato con successo
-        if (onTestAssigned) {
-          onTestAssigned(response.data.data.test);
-        }
-        
-        // Chiudi il dialogo dopo 1.5 secondi
-        setTimeout(() => {
-          onClose();
-        }, 1500);
+          setSuccess(true);
+          
+          // Notifica il componente padre che il test è stato assegnato con successo
+          if (onTestAssigned && response.data.data && response.data.data.test) {
+              onTestAssigned(response.data.data.test);
+          } else {
+              console.warn('Test assigned but no test data returned or onTestAssigned not provided', {
+                  hasTestData: !!response.data.data?.test,
+                  hasCallback: !!onTestAssigned
+              });
+          }
+          
+          // Chiudi il dialogo dopo 1.5 secondi
+          setTimeout(() => {
+              onClose();
+          }, 1500);
       }
-    } catch (error) {
+  } catch (error) {
       console.error('Errore nell\'assegnazione del test:', error);
       setError(
-        error.response?.data?.error?.message || 
-        'Si è verificato un errore durante l\'assegnazione del test.'
+          error.response?.data?.error?.message || 
+          'Si è verificato un errore durante l\'assegnazione del test.'
       );
-    } finally {
+  } finally {
       setLoading(false);
-    }
-  };
+  }
+};
 
   return (
     <Dialog open={open} onClose={loading ? null : onClose} maxWidth="sm" fullWidth>

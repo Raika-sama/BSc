@@ -28,6 +28,7 @@ class TestController extends BaseController {
 
     /**
      * Recupera tutti i test disponibili
+     * @route GET /tests/all
      */
     async getAll(req, res) {
         try {
@@ -286,7 +287,12 @@ class TestController extends BaseController {
         try {
             const { testId } = req.params;
             
-            logger.debug('Revoking test:', { testId, userId: req.user.id });
+            logger.debug('Revoking test:', { 
+                testId, 
+                userId: req.user.id,
+                path: req.path,
+                method: req.method
+            });
             
             if (!testId) {
                 throw createError(
@@ -305,11 +311,20 @@ class TestController extends BaseController {
                 );
             }
             
-            // Verifica permessi (solo chi ha assegnato il test o un admin può revocarlo)
+            // Gli admin possono revocare qualsiasi test
             const isAdmin = req.user.role === 'admin';
+            
+            // Gli insegnanti possono revocare solo i test che hanno assegnato
             const isAssigner = test.assignedBy && test.assignedBy.toString() === req.user.id;
             
             if (!isAdmin && !isAssigner) {
+                logger.error('Unauthorized test revocation attempt:', {
+                    testId,
+                    userId: req.user.id,
+                    userRole: req.user.role,
+                    assignedBy: test.assignedBy?.toString()
+                });
+                
                 throw createError(
                     ErrorTypes.AUTH.FORBIDDEN,
                     'Non sei autorizzato a revocare questo test'
@@ -321,17 +336,25 @@ class TestController extends BaseController {
             
             logger.info('Test revoked successfully:', {
                 testId,
-                userId: req.user.id
+                userId: req.user.id,
+                userRole: req.user.role
             });
             
             this.sendResponse(res, { 
                 success: true,
-                message: 'Test revocato con successo' 
+                message: 'Test revocato con successo',
+                data: {
+                    testId,
+                    modifiedCount: result.modifiedCount
+                }
             });
         } catch (error) {
             logger.error('Error revoking test:', {
                 error: error.message,
-                testId: req.params.testId
+                stack: error.stack,
+                testId: req.params.testId,
+                userId: req.user?.id,
+                path: req.path
             });
             this.sendError(res, error);
         }

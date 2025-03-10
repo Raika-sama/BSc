@@ -47,43 +47,43 @@ const AssignedTestsList = ({
     });
   };
 
-  // Funzione per ottenere il colore e il testo dello stato del test
-  const getStatusInfo = (status) => {
-    switch (status) {
+  // Funzione per ottenere il colore e il testo dello stato del test - migliorata
+const getStatusInfo = (status) => {
+  switch (status) {
       case 'pending':
-        return { 
-          color: 'warning', 
-          label: 'In attesa', 
-          icon: <PauseCircleOutlineIcon fontSize="small" />,
-          bgColor: alpha(theme.palette.warning.main, 0.15),
-          textColor: theme.palette.warning.main
-        };
+          return { 
+              color: 'warning', 
+              label: 'In attesa', 
+              icon: <PauseCircleOutlineIcon fontSize="small" />,
+              bgColor: alpha(theme.palette.warning.main, 0.15),
+              textColor: theme.palette.warning.main
+          };
       case 'in_progress':
-        return { 
-          color: 'info', 
-          label: 'In corso', 
-          icon: <PlayArrowIcon fontSize="small" />,
-          bgColor: alpha(theme.palette.info.main, 0.15),
-          textColor: theme.palette.info.main
-        };
+          return { 
+              color: 'info', 
+              label: 'In corso', 
+              icon: <PlayArrowIcon fontSize="small" />,
+              bgColor: alpha(theme.palette.info.main, 0.15),
+              textColor: theme.palette.info.main
+          };
       case 'completed':
-        return { 
-          color: 'success', 
-          label: 'Completato', 
-          icon: <AssignmentIcon fontSize="small" />,
-          bgColor: alpha(theme.palette.success.main, 0.15),
-          textColor: theme.palette.success.main
-        };
+          return { 
+              color: 'success', 
+              label: 'Completato', 
+              icon: <AssignmentIcon fontSize="small" />,
+              bgColor: alpha(theme.palette.success.main, 0.15),
+              textColor: theme.palette.success.main
+          };
       default:
-        return { 
-          color: 'default', 
-          label: 'Sconosciuto', 
-          icon: <ErrorOutlineIcon fontSize="small" />,
-          bgColor: alpha(theme.palette.grey[500], 0.15),
-          textColor: theme.palette.text.secondary
-        };
-    }
-  };
+          return { 
+              color: 'default', 
+              label: 'Sconosciuto', 
+              icon: <ErrorOutlineIcon fontSize="small" />,
+              bgColor: alpha(theme.palette.grey[500], 0.15),
+              textColor: theme.palette.text.secondary
+          };
+  }
+};
 
   // Memorizza i test filtrati e ordinati per data più recente in primo piano
   const sortedTests = useMemo(() => {

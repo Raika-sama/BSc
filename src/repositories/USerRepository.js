@@ -37,7 +37,8 @@ class UserRepository extends BaseRepository {
     // Nel Repository
     async findById(id) {
         try {
-            logger.debug('UserRepository: Finding user by ID:', id);
+            // Changed: Output id directly as a single value, not as a complex object that gets serialized
+            logger.debug('UserRepository: Finding user by ID:', id.toString());
             
             // Verifica che l'ID sia valido
             if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -61,17 +62,17 @@ class UserRepository extends BaseRepository {
     
             return user;
         } catch (error) {
-            // Se l'errore ha già un codice e uno status, è già stato formattato correttamente,
-            // quindi lo restituiamo direttamente
+            // If the error already has a code and status, it's already properly formatted,
+            // so we pass it through directly
             if (error.code && error.status) {
                 throw error;
             }
             
-            // Altrimenti, gestiamo l'errore con il gestore standard
+            // Otherwise, we handle the error with our standard handler
             throw handleRepositoryError(
                 error,
                 'findById',
-                { id },
+                { id: id.toString() }, // Changed: Convert id to string to prevent character-by-character logging
                 this.repositoryName
             );
         }

@@ -155,6 +155,7 @@ const createTestRouter = ({ authMiddleware, testController }) => {
     );
 
     // Nuova route per revocare un test
+    // Il middleware hasTestAccess è cruciale qui per garantire che l'utente possa accedere al test
     router.post('/:testId/revoke',
         protect,
         hasPermission('tests', 'update'),
@@ -178,7 +179,7 @@ const createTestRouter = ({ authMiddleware, testController }) => {
         .get(
             protect,
             hasPermission('tests', 'read'),
-            hasTestAccess(),
+            hasTestAccess(), // Questo middleware verifica se l'utente può accedere al test
             asyncHandler(testController.getById.bind(testController))
         );
 

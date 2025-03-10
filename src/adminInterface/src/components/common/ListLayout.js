@@ -322,7 +322,7 @@ const ListLayout = ({
             </Box>
 
             {/* Filters */}
-            <AnimatePresence>
+            <AnimatePresence mode="sync">
                 {isFilterOpen && filterComponent && (
                     <Collapse 
                         in={isFilterOpen}

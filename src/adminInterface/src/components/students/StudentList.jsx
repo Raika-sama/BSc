@@ -114,25 +114,43 @@ const StudentList = () => {
             const queryFilters = {
                 page: page + 1,
                 limit: pageSize,
-                search: appliedFilters.search.trim(),
-                schoolId: appliedFilters.schoolId,
-                status: appliedFilters.status,
             };
+            
+            // Solo aggiungere i filtri se hanno un valore
+            if (appliedFilters.search && appliedFilters.search.trim()) {
+                queryFilters.search = appliedFilters.search.trim();
+            }
+            
+            if (appliedFilters.schoolId) {
+                queryFilters.schoolId = appliedFilters.schoolId;
+            }
+            
+            if (appliedFilters.status) {
+                queryFilters.status = appliedFilters.status;
+            }
 
             if (appliedFilters.specialNeeds !== '') {
                 queryFilters.specialNeeds = appliedFilters.specialNeeds === 'true';
             }
 
             if (appliedFilters.classFilter) {
-                const year = parseInt(appliedFilters.classFilter.match(/^\d+/)[0]);
-                const section = appliedFilters.classFilter.slice(year.toString().length);
-                queryFilters.year = year;
-                queryFilters.section = section;
+                try {
+                    const yearMatch = appliedFilters.classFilter.match(/^\d+/);
+                    if (yearMatch) {
+                        const year = parseInt(yearMatch[0]);
+                        const section = appliedFilters.classFilter.slice(year.toString().length);
+                        queryFilters.year = year;
+                        queryFilters.section = section;
+                    }
+                } catch (error) {
+                    console.error("Errore nel parsing del filtro classe:", error);
+                }
             }
 
             await fetchStudents(queryFilters);
         } catch (error) {
             showNotification('Errore nel caricamento degli studenti', 'error');
+            console.error("Errore nel caricamento degli studenti:", error);
         }
     };
 

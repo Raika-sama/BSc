@@ -278,69 +278,68 @@ class TestRepository {
      * @param {string} assignedBy - Filtra per assegnatore (opzionale)
      * @returns {Promise<Array>} Lista dei test assegnati
      */
-    async getAssignedTests(studentId, assignedBy = null) {
-        try {
-            const filters = {
-                studentId,
-                active: true
-            };
+async getAssignedTests(studentId, assignedBy = null) {
+    try {
+        const filters = {
+            studentId,
+            active: true
+        };
 
-            // Se è specificato l'assegnatore, filtra solo i suoi test
-            if (assignedBy) {
-                filters.assignedBy = assignedBy;
-            }
-
-            logger.debug('Fetching tests with filters:', {
-                filters,
-                modelName: Test.modelName,
-                collectionName: Test.collection.name
-            });
-
-            // Query semplificata che seleziona solo i campi necessari
-            const tests = await Test.find(filters)
-                .select({
-                    tipo: 1,
-                    status: 1,
-                    'configurazione.questionVersion': 1,
-                    versione: 1,
-                    csiConfig: 1,
-                    createdAt: 1,
-                    updatedAt: 1,
-                    nome: 1,
-                    descrizione: 1
-                })
-                .lean();
-
-            logger.debug('Raw tests found:', {
-                count: tests.length,
-                firstTest: tests[0] ? {
-                    id: tests[0]._id,
-                    tipo: tests[0].tipo,
-                    status: tests[0].status
-                } : 'No tests found',
-                studentId
-            });
-
-            // Log dei test trovati in formato leggibile
-            tests.forEach((test, index) => {
-                logger.debug(`Test ${index + 1}:`, {
-                    id: test._id,
-                    tipo: test.tipo,
-                    status: test.status,
-                    nome: test.nome
-                });
-            });
-
-            return tests;
-        } catch (error) {
-            return handleRepositoryError(
-                error,
-                'getAssignedTests',
-                { studentId, assignedBy },
-                'TestRepository'
-            );
+        // Se è specificato l'assegnatore, filtra solo i suoi test
+        if (assignedBy) {
+            filters.assignedBy = assignedBy;
         }
+
+        logger.debug('Fetching tests with filters:', {
+            filters,
+            modelName: Test.modelName,
+            collectionName: Test.collection.name
+        });
+
+        // Query estesa per recuperare tutti i campi necessari all'interfaccia
+        // Aggiunta l'opzione di populate specifica per assignedBy
+        const tests = await Test.find(filters)
+            .populate('assignedBy', 'fullName username email role') // Popolare più campi
+            .lean({ virtuals: true });
+
+        // Recuperiamo le informazioni sullo studente per arricchire i dati
+        const student = await Student.findById(studentId).select('firstName lastName email').lean();
+        
+        // Integriamo i dati dello studente in ogni test
+        const enrichedTests = tests.map(test => ({
+            ...test,
+            studentFullName: student ? `${student.firstName} ${student.lastName}` : 'Nome non disponibile',
+            studentEmail: student ? student.email : 'Email non disponibile'
+        }));
+
+        // Log dettagliato per debug
+        enrichedTests.forEach((test, index) => {
+            logger.debug(`Test ${index + 1}:`, {
+                id: test._id,
+                tipo: test.tipo,
+                status: test.status,
+                nome: test.nome,
+                assignedBy: test.assignedBy ? (
+                    typeof test.assignedBy === 'object' ?
+                    {
+                        id: test.assignedBy._id,
+                        fullName: test.assignedBy.fullName,
+                        username: test.assignedBy.username
+                    } : test.assignedBy
+                ) : 'Not set'
+            });
+        });
+
+        return enrichedTests;
+    } catch (error) {
+        return handleRepositoryError(
+            error,
+            'getAssignedTests',
+            { studentId, assignedBy },
+            'TestRepository'
+        );
     }
+}
 
     /**
      * Recupera i test assegnati a tutti gli studenti di una classe

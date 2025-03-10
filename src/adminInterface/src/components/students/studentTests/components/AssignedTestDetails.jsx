@@ -47,7 +47,21 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
   const [showTestId, setShowTestId] = useState(false);
   const [fullTestData, setFullTestData] = useState(null);
   const [loadingFullData, setLoadingFullData] = useState(false);
-  
+  const [error, setError] = useState(null);
+  const [revokeButtonDisabled, setRevokeButtonDisabled] = useState(false);
+  const [currentTestId, setCurrentTestId] = useState(null);
+  const [isConfirmingRevoke, setIsConfirmingRevoke] = useState(false);
+
+  // Aggiungiamo un effetto per tenere traccia dell'ID del test corrente
+  useEffect(() => {
+    if (test && test._id !== currentTestId) {
+      setCurrentTestId(test._id);
+      // Reset dello stato quando cambia il test
+      setRevokeButtonDisabled(false);
+      setShowRevokeDialog(false);
+    }
+  }, [test, currentTestId]);
+
   // Effetto per caricare dati completi del test se necessario
   useEffect(() => {
     if (test && test._id && !fullTestData) {
@@ -55,7 +69,7 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
     } else if (!test) {
       setFullTestData(null);
     }
-  }, [test]);
+  }, [test, fullTestData]);
   
   // Funzione per caricare i dati completi del test
   const fetchFullTestData = async (testId) => {
@@ -71,18 +85,21 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
       return;
     }
     
+    setError(null);
     setLoadingFullData(true);
+    
     try {
-      const response = await axiosInstance.get(`/tests/${testId}`);
-      if (response.data && response.data.data && response.data.data.test) {
-        console.debug('Loaded full test data:', response.data.data.test);
-        setFullTestData({...test, ...response.data.data.test});
-      } else {
-        // Se non riusciamo a caricare i dati completi, usiamo quelli che abbiamo
-        setFullTestData(test);
-      }
+      console.debug('Fetching full test data', {
+        testId,
+        endpoint: `/tests/${testId}`
+      });
+      
+      // Usiamo il test che abbiamo già piuttosto che cercare di caricare dati aggiuntivi
+      // che potrebbero non essere disponibili a causa di problemi di autorizzazione
+      setFullTestData(test);
     } catch (error) {
       console.error('Error loading full test data:', error);
+      setError('Si è verificato un errore durante il caricamento dei dettagli del test.');
       // In caso di errore, usiamo i dati parziali che abbiamo
       setFullTestData(test);
     } finally {
@@ -140,7 +157,6 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
     }
   };
 
-  // Ottiene info sullo stato
   const getStatusInfo = (status) => {
     switch (status) {
       case 'pending':
@@ -192,18 +208,79 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
   
   // Gestisce l'apertura del dialogo di revoca
   const handleOpenRevokeDialog = () => {
+    setRevokeButtonDisabled(false); // Reset dello stato del pulsante
     setShowRevokeDialog(true);
   };
   
   // Gestisce la chiusura del dialogo di revoca
   const handleCloseRevokeDialog = () => {
     setShowRevokeDialog(false);
+    // Usiamo un timeout per resettare lo stato disabilitato
+    setTimeout(() => {
+      setRevokeButtonDisabled(false);
+    }, 300);
   };
   
-  // Gestisce la conferma della revoca
+  // Funzione migliorata per la conferma della revoca
   const handleConfirmRevoke = () => {
-    onRevokeTest(displayTest._id);
+    if (!displayTest || !displayTest._id) {
+      console.error('Test ID not available for revocation');
+      return;
+    }
+    
+    // Immediatamente disabilitiamo il pulsante per evitare doppi clic
+    setRevokeButtonDisabled(true);
+    
+    // Log per debug
+    console.debug('Confirming test revocation for test:', {
+      testId: displayTest._id,
+      revokeButtonDisabled: true
+    });
+    
+    // Chiudiamo il dialogo
     setShowRevokeDialog(false);
+    
+    // Chiamiamo la funzione di revoca con un piccolo delay
+    // per permettere la chiusura del dialogo prima
+    setTimeout(() => {
+      if (typeof onRevokeTest === 'function') {
+        onRevokeTest(displayTest._id);
+      } else {
+        console.error('onRevokeTest function is not provided');
+      }
+    }, 100);
+  };
+
+  // Funzione migliorata per visualizzare il campo "Assegnato da"
+  const renderAssignedBy = (test) => {
+    // Stampa di debug per verificare la struttura dei dati
+    console.debug('Rendering assignedBy field:', {
+      assignedBy: test.assignedBy,
+      type: typeof test.assignedBy,
+      hasAssignedBy: !!test.assignedBy
+    });
+    
+    if (!test.assignedBy) {
+      return 'Non specificato';
+    }
+    
+    // Se assignedBy è un oggetto, proviamo a estrarre il nome
+    if (typeof test.assignedBy === 'object') {
+      // Controlla se ci sono campi specifici
+      if (test.assignedBy.fullName) {
+        return test.assignedBy.fullName;
+      } else if (test.assignedBy.username) {
+        return test.assignedBy.username;
+      } else if (test.assignedBy.email) {
+        return test.assignedBy.email;
+      } else if (test.assignedBy._id) {
+        // Se c'è solo l'ID, mostriamo quello
+        return `ID: ${test.assignedBy._id}`;
+      }
+    }
+    
+    // Se assignedBy è una stringa (probabilmente un ID), la mostriamo direttamente
+    return test.assignedBy.toString();
   };
 
   return (
@@ -216,6 +293,13 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
         p: 3
       }}
     >
+      {/* Mostra eventuali errori */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+      
       {/* Header */}
       <Box 
         sx={{ 
@@ -256,14 +340,14 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
           </Box>
         </Box>
 
-        {/* Azioni 
+        {/* Azioni */}
         <Box>
           <Button
             variant="outlined"
             color="error"
             startIcon={<DeleteOutlineIcon />}
             onClick={handleOpenRevokeDialog}
-            disabled={displayTest.status === 'completed'}
+            disabled={displayTest.status === 'completed' || revokeButtonDisabled}
             sx={{ 
               transition: 'all 0.2s',
               '&:hover:not(:disabled)': {
@@ -273,7 +357,7 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
           >
             Revoca Test
           </Button>
-        </Box>*/}
+        </Box>
       </Box>
 
       {/* Barra di progresso dello stato */}
@@ -345,16 +429,12 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
 
               <Grid item xs={12} sm={6}>
                 <Box sx={{ p: 1.5, bgcolor: alpha(theme.palette.background.default, 0.5), borderRadius: 1 }}>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    Assegnato da
-                  </Typography>
-                  <Typography variant="body1" fontWeight={500}>
-                    {displayTest.assignedBy ? 
-                      (typeof displayTest.assignedBy === 'object' ? 
-                        (displayTest.assignedBy.fullName || displayTest.assignedBy.username) : 
-                        displayTest.assignedBy) :
-                      'Informazione non disponibile'}
-                  </Typography>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Assegnato da
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500}>
+                        {renderAssignedBy(displayTest)}
+                    </Typography>
                 </Box>
               </Grid>
 
@@ -494,10 +574,10 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
                     expandIcon={<ExpandMoreIcon />}
                     sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}
                   >
-                    <Typography variant="subtitle1">Descrizione del test</Typography>
+                    <Typography>Descrizione del test</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
-                    <Typography variant="body2">
+                    <Typography variant="body2" color="text.secondary">
                       {displayTest.descrizione}
                     </Typography>
                   </AccordionDetails>
@@ -506,27 +586,16 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
             )}
           </Paper>
         </Grid>
-
-        {/* Colonna laterale */}
+        
+        {/* Sidebar con info studente e azioni */}
         <Grid item xs={12} md={4}>
           <Stack spacing={3}>
-            {/* Card dello studente */}
+            {/* Card info studente */}
             <Card 
               variant="outlined"
               sx={{ 
-                bgcolor: alpha(theme.palette.primary.main, 0.05),
                 borderRadius: 2,
-                position: 'relative',
-                overflow: 'hidden',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '4px',
-                  backgroundColor: theme.palette.primary.main
-                }
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
               }}
             >
               <CardContent>
@@ -651,6 +720,7 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
                       fullWidth
                       startIcon={<DeleteOutlineIcon />}
                       onClick={handleOpenRevokeDialog}
+                      disabled={revokeButtonDisabled} // Aggiungiamo il disabilitato anche qui
                       sx={{ mb: 1 }}
                     >
                       Revoca test
@@ -696,24 +766,40 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
         </Grid>
       </Grid>
       
-      {/* Dialog di conferma revoca */}
+      {/* Dialog di conferma revoca - migliorato */}
       <Dialog
         open={showRevokeDialog}
         onClose={handleCloseRevokeDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
       >
-        <DialogTitle>Conferma revoca test</DialogTitle>
+        <DialogTitle id="alert-dialog-title">
+          Conferma revoca test
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText id="alert-dialog-description">
             Sei sicuro di voler revocare questo test? Questa azione non può essere annullata.
             Lo studente non potrà più accedere a questo test.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseRevokeDialog}>Annulla</Button>
+          <Button onClick={handleCloseRevokeDialog} disabled={revokeButtonDisabled}>
+            Annulla
+          </Button>
           <Button 
             onClick={handleConfirmRevoke} 
             color="error" 
             variant="contained"
+            disabled={revokeButtonDisabled}
+            // Aggiungiamo un styling attivo per indicare l'azione pericolosa
+            sx={{
+              '&:not(:disabled)': {
+                boxShadow: '0 2px 5px rgba(211, 47, 47, 0.2)',
+                '&:hover': {
+                  boxShadow: '0 4px 8px rgba(211, 47, 47, 0.3)',
+                }
+              }
+            }}
           >
             Conferma revoca
           </Button>

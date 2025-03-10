@@ -48,7 +48,7 @@ class PermissionService {
     async hasPermission(user, resource, action, context = {}) {
         try {
             logger.debug('Checking permission', { 
-                userId: user._id,
+                userId: user._id ? user._id.toString() : user.id?.toString(), // Convert ID to string to prevent character-by-character logging
                 role: user.role,
                 resource,
                 action,
