@@ -18,7 +18,7 @@ const createClassRouter = ({ authMiddleware, classController }) => {
     if (!classController) throw new Error('ClassController is required');
 
     const router = express.Router();
-    const { protect, restrictTo } = authMiddleware;
+    const { protect, restrictTo, hasPermission } = authMiddleware;
 
     // Middleware di protezione globale - richiede autenticazione per tutte le rotte
     router.use(protect);
@@ -38,6 +38,7 @@ const createClassRouter = ({ authMiddleware, classController }) => {
      * @access Private - Richiede autenticazione
      */
     router.get('/my-classes', 
+        hasPermission('classes', 'read'),
         asyncHandler(classController.getMyClasses.bind(classController))
     );
 
@@ -46,28 +47,31 @@ const createClassRouter = ({ authMiddleware, classController }) => {
      * @description Recupera le classi di una scuola per un anno accademico specifico
      * @access Private - Richiede autenticazione
      */
-    router.get('/school/:schoolId/year/:year(*)', asyncHandler(async (req, res, next) => {
-        try {
-            const { schoolId, year } = req.params;
-            // Normalizza il formato dell'anno (supporta sia 2024-2025 che 2024/2025)
-            const normalizedYear = year.includes('/') ? 
-                year : 
-                year.replace('-', '/');
+    router.get('/school/:schoolId/year/:year(*)', 
+        hasPermission('classes', 'read'),
+        asyncHandler(async (req, res, next) => {
+            try {
+                const { schoolId, year } = req.params;
+                // Normalizza il formato dell'anno (supporta sia 2024-2025 che 2024/2025)
+                const normalizedYear = year.includes('/') ? 
+                    year : 
+                    year.replace('-', '/');
 
-            await classController.getByAcademicYear(
-                { ...req, params: { schoolId, year: normalizedYear } }, 
-                res, 
-                next
-            );
-        } catch (error) {
-            logger.error('Error in getByAcademicYear:', {
-                error: error.message,
-                schoolId: req.params.schoolId,
-                year: req.params.year
-            });
-            next(error);
-        }
-    }));
+                await classController.getByAcademicYear(
+                    { ...req, params: { schoolId, year: normalizedYear } }, 
+                    res, 
+                    next
+                );
+            } catch (error) {
+                logger.error('Error in getByAcademicYear:', {
+                    error: error.message,
+                    schoolId: req.params.schoolId,
+                    year: req.params.year
+                });
+                next(error);
+            }
+        })
+    );
 
     /**
      * @route GET /api/v1/classes/school/:schoolId
@@ -75,6 +79,7 @@ const createClassRouter = ({ authMiddleware, classController }) => {
      * @access Private - Richiede autenticazione
      */
     router.get('/school/:schoolId', 
+        hasPermission('classes', 'read'),
         asyncHandler(classController.getBySchool.bind(classController))
     );
 
@@ -88,7 +93,7 @@ const createClassRouter = ({ authMiddleware, classController }) => {
      * @access Private - Richiede ruolo admin
      */
     router.post('/transition', 
-        restrictTo('admin'),
+        hasPermission('classes', 'manage'),
         asyncHandler(classController.handleYearTransition.bind(classController))
     );
 
@@ -98,7 +103,7 @@ const createClassRouter = ({ authMiddleware, classController }) => {
      * @access Private - Richiede ruolo admin
      */
     router.post('/initial-setup',
-        restrictTo('admin'),
+        hasPermission('classes', 'create'),
         asyncHandler(classController.createInitialClasses.bind(classController))
     );
 
@@ -109,20 +114,22 @@ const createClassRouter = ({ authMiddleware, classController }) => {
     /**
      * @route POST /api/v1/classes/:classId/students
      * @description Aggiunge studenti a una classe
-     * @access Private - Richiede ruolo admin o teacher
+     * @access Private - Richiede permessi di aggiornamento su classi e studenti
      */
     router.post('/:classId/students', 
-        restrictTo('admin', 'teacher'),
+        hasPermission('classes', 'update'),
+        hasPermission('students', 'update'),
         asyncHandler(classController.addStudents.bind(classController))
     );
 
     /**
      * @route POST /api/v1/classes/:classId/remove-students
      * @description Rimuove studenti da una classe
-     * @access Private - Richiede ruolo admin o teacher
+     * @access Private - Richiede permessi di aggiornamento su classi e studenti
      */
     router.post('/:classId/remove-students',
-        restrictTo('admin', 'teacher'),  
+        hasPermission('classes', 'update'),
+        hasPermission('students', 'update'),
         asyncHandler(classController.removeStudentsFromClass.bind(classController))
     );
 
@@ -133,40 +140,44 @@ const createClassRouter = ({ authMiddleware, classController }) => {
     /**
      * @route POST /api/v1/classes/:classId/update-main-teacher
      * @description Aggiorna il docente principale di una classe
-     * @access Private - Richiede ruolo admin
+     * @access Private - Richiede permessi di aggiornamento su classi e utenti
      */
     router.post('/:classId/update-main-teacher', 
-        restrictTo('admin'),
+        hasPermission('classes', 'update'),
+        hasPermission('users', 'update'),
         asyncHandler(classController.updateMainTeacher.bind(classController))
     );
     
     /**
      * @route POST /api/v1/classes/:classId/remove-main-teacher
      * @description Rimuove il docente principale da una classe
-     * @access Private - Richiede ruolo admin
+     * @access Private - Richiede permessi di aggiornamento su classi e utenti
      */
     router.post('/:classId/remove-main-teacher', 
-        restrictTo('admin'),
+        hasPermission('classes', 'update'),
+        hasPermission('users', 'update'),
         asyncHandler(classController.removeMainTeacher.bind(classController))
     );
 
     /**
      * @route POST /api/v1/classes/:classId/add-teacher
      * @description Aggiunge un docente secondario a una classe
-     * @access Private - Richiede ruolo admin
+     * @access Private - Richiede permessi di aggiornamento su classi e utenti
      */
     router.post('/:classId/add-teacher', 
-        restrictTo('admin'),
+        hasPermission('classes', 'update'),
+        hasPermission('users', 'update'),
         asyncHandler(classController.addTeacher.bind(classController))
     );
 
     /**
      * @route DELETE /api/v1/classes/:classId/teachers/:teacherId
      * @description Rimuove un docente secondario da una classe
-     * @access Private - Richiede ruolo admin
+     * @access Private - Richiede permessi di aggiornamento su classi e utenti
      */
     router.delete('/:classId/teachers/:teacherId', 
-        restrictTo('admin'),
+        hasPermission('classes', 'update'),
+        hasPermission('users', 'update'),
         asyncHandler(classController.removeTeacher.bind(classController))
     );
 
@@ -180,17 +191,20 @@ const createClassRouter = ({ authMiddleware, classController }) => {
      * @route POST /api/v1/classes
      * @description Crea una nuova classe
      * @route DELETE /api/v1/classes
-     * @description Elimina tutte le classi (solo admin)
+     * @description Elimina tutte le classi (solo con permesso di eliminazione)
      * @access Private
      */
     router.route('/')
-        .get(asyncHandler(classController.getAll.bind(classController)))
+        .get(
+            hasPermission('classes', 'read'),
+            asyncHandler(classController.getAll.bind(classController))
+        )
         .post(
-            restrictTo('admin'),
+            hasPermission('classes', 'create'),
             asyncHandler(classController.create.bind(classController))
         )
         .delete(
-            restrictTo('admin'),
+            hasPermission('classes', 'delete'),
             asyncHandler(classController.deleteAll.bind(classController))
         );
 
@@ -204,13 +218,16 @@ const createClassRouter = ({ authMiddleware, classController }) => {
      * @access Private
      */
     router.route('/:id')
-        .get(asyncHandler(classController.getById.bind(classController)))
+        .get(
+            hasPermission('classes', 'read'),
+            asyncHandler(classController.getById.bind(classController))
+        )
         .put(
-            restrictTo('admin', 'teacher'),
+            hasPermission('classes', 'update'),
             asyncHandler(classController.update.bind(classController))
         )
         .delete(
-            restrictTo('admin'),
+            hasPermission('classes', 'delete'),
             asyncHandler(classController.delete.bind(classController))
         );
 

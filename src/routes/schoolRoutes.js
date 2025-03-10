@@ -25,7 +25,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
     if (!schoolController) throw new Error('SchoolController is required');
 
     const router = express.Router();
-    const { protect, restrictTo } = authMiddleware;
+    const { protect, restrictTo, hasPermission } = authMiddleware;
 
     /**
      * Utility per gestire le funzioni asincrone e catturare errori
@@ -66,6 +66,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Tutti gli utenti autenticati
      */
     router.get('/my-school', 
+        hasPermission('schools', 'read'),
         asyncHandler(schoolController.getMySchool.bind(schoolController))
     );
 
@@ -75,6 +76,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Tutti gli utenti autenticati
      */
     router.get('/region/:region', 
+        hasPermission('schools', 'read'),
         asyncHandler(schoolController.getByRegion.bind(schoolController))
     );
 
@@ -84,6 +86,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Tutti gli utenti autenticati
      */
     router.get('/type/:type', 
+        hasPermission('schools', 'read'),
         asyncHandler(schoolController.getByType.bind(schoolController))
     );
 
@@ -94,6 +97,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Tutti gli utenti autenticati
      */
     router.get('/:id/academic-years', 
+        hasPermission('schools', 'read'),
         asyncHandler(schoolController.getAcademicYears.bind(schoolController))
     );
 
@@ -103,6 +107,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Admin e manager della scuola
      */
     router.post('/:id/academic-years', 
+        hasPermission('schools', 'update'),
         asyncHandler(schoolController.setupAcademicYear.bind(schoolController))
     );
 
@@ -112,6 +117,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Admin e manager della scuola
      */
     router.put('/:id/academic-years/:yearId',
+        hasPermission('schools', 'update'),
         asyncHandler(schoolController.updateAcademicYear.bind(schoolController))
     );
 
@@ -121,6 +127,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Admin e manager della scuola
      */
     router.post('/:id/academic-years/:yearId/activate',
+        hasPermission('schools', 'update'),
         asyncHandler(schoolController.activateAcademicYear.bind(schoolController))
     );
 
@@ -130,6 +137,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Admin e manager della scuola
      */
     router.post('/:id/academic-years/:yearId/archive',
+        hasPermission('schools', 'update'),
         asyncHandler(schoolController.archiveAcademicYear.bind(schoolController))
     );
 
@@ -139,6 +147,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Admin e manager della scuola
      */
     router.post('/:id/academic-years/:yearId/reactivate',
+        hasPermission('schools', 'update'),
         asyncHandler(schoolController.reactivateAcademicYear.bind(schoolController))
     );
 
@@ -155,6 +164,8 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Tutti gli utenti autenticati
      */
     router.get('/:id/classes',
+        hasPermission('schools', 'read'),
+        hasPermission('classes', 'read'),
         asyncHandler(schoolController.getClassesByAcademicYear.bind(schoolController))
     );
 
@@ -164,7 +175,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Solo admin
      */
     router.post('/:id/setup', 
-        restrictTo('admin'),
+        hasPermission('schools', 'manage'),
         asyncHandler(schoolController.setupInitialConfiguration.bind(schoolController))
     );
 
@@ -178,6 +189,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Tutti gli utenti autenticati
      */
     sectionsRouter.get('/', 
+        hasPermission('schools', 'read'),
         asyncHandler(schoolController.getSections.bind(schoolController))
     );
 
@@ -187,6 +199,8 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Tutti gli utenti autenticati
      */
     sectionsRouter.get('/:sectionName/students', 
+        hasPermission('schools', 'read'),
+        hasPermission('students', 'read'),
         asyncHandler(schoolController.getSectionStudents.bind(schoolController))
     );
 
@@ -196,7 +210,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Solo admin
      */
     sectionsRouter.post('/:sectionName/deactivate', 
-        restrictTo('admin'),
+        hasPermission('schools', 'update'),
         asyncHandler(schoolController.deactivateSection.bind(schoolController))
     );
 
@@ -206,7 +220,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Solo admin
      */
     sectionsRouter.post('/:sectionName/reactivate',
-        restrictTo('admin'),
+        hasPermission('schools', 'update'),
         asyncHandler(schoolController.reactivateSection.bind(schoolController))
     );
 
@@ -217,7 +231,7 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Admin
      */
     router.post('/:id/sections', 
-        restrictTo('admin'),
+        hasPermission('schools', 'update'),
         asyncHandler(schoolController.createSection.bind(schoolController))
     );
 
@@ -232,9 +246,12 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Solo admin
      */
     router.route('/')
-        .get(asyncHandler(schoolController.getAll.bind(schoolController)))
+        .get(
+            hasPermission('schools', 'read'),
+            asyncHandler(schoolController.getAll.bind(schoolController))
+        )
         .post(
-            restrictTo('admin'),
+            hasPermission('schools', 'create'),
             asyncHandler(schoolController.create.bind(schoolController))
         );
 
@@ -252,13 +269,16 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Solo admin
      */
     router.route('/:id')
-        .get(asyncHandler(schoolController.getById.bind(schoolController)))
+        .get(
+            hasPermission('schools', 'read'),
+            asyncHandler(schoolController.getById.bind(schoolController))
+        )
         .put(
-            restrictTo('admin'),
+            hasPermission('schools', 'update'),
             asyncHandler(schoolController.update.bind(schoolController))
         )
         .delete(
-            restrictTo('admin'),
+            hasPermission('schools', 'delete'),
             asyncHandler(schoolController.delete.bind(schoolController))
         );
 
@@ -269,6 +289,8 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Admin, developer o manager della scuola
      */
     router.post('/:id/users', 
+        hasPermission('schools', 'update'),
+        hasPermission('users', 'update'),
         asyncHandler(schoolController.addUserToSchool.bind(schoolController))
     );
 
@@ -278,6 +300,8 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Admin, developer o manager della scuola
      */
     router.delete('/:id/users', 
+        hasPermission('schools', 'update'),
+        hasPermission('users', 'update'),
         asyncHandler(schoolController.removeUserFromSchool.bind(schoolController))
     );
 
@@ -287,7 +311,8 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Solo admin
      */
     router.post('/:id/add-manager',
-        restrictTo('admin'),
+        hasPermission('schools', 'manage'),
+        hasPermission('users', 'update'),
         asyncHandler(schoolController.addManagerToSchool.bind(schoolController))
     );
 
@@ -297,7 +322,8 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Solo admin
      */
     router.post('/:id/remove-manager',
-        restrictTo('admin'),
+        hasPermission('schools', 'manage'),
+        hasPermission('users', 'update'),
         asyncHandler(schoolController.removeManagerFromSchool.bind(schoolController))
     );
 
@@ -307,11 +333,13 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
      * @access Private - Admin, developer o manager della scuola
      */
     router.post('/:id/create-user', 
+        hasPermission('schools', 'update'),
+        hasPermission('users', 'create'),
         asyncHandler(schoolController.createAndAssociateUser.bind(schoolController))
     );
 
     router.post('/:id/change-type',
-        restrictTo('admin'),
+        hasPermission('schools', 'update'),
         asyncHandler(schoolController.changeSchoolType.bind(schoolController))
     );
 

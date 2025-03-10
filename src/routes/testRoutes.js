@@ -15,7 +15,7 @@ const createTestRouter = ({ authMiddleware, testController }) => {
     if (!testController) throw new Error('TestController is required');
 
     const router = express.Router();
-    const { protect, protectStudent, restrictTo } = authMiddleware;
+    const { protect, protectStudent, restrictTo, hasPermission, hasTestAccess } = authMiddleware;
 
     // Utility per gestione async
     const asyncHandler = (fn) => (req, res, next) => {
@@ -87,12 +87,17 @@ const createTestRouter = ({ authMiddleware, testController }) => {
             } : 'No model'
         });
         next();
-    }, protect, restrictTo('teacher', 'admin'), asyncHandler(testController.getAssignedTests.bind(testController)));
+    }, 
+    protect, 
+    hasPermission('tests', 'read'),
+    hasPermission('students', 'read'),
+    asyncHandler(testController.getAssignedTests.bind(testController)));
 
     // Aggiungi la rotta per i test completati
     router.get('/student/:studentId/completed',
         protect,
-        restrictTo('teacher', 'admin'),
+        hasPermission('tests', 'read'),
+        hasPermission('students', 'read'),
         asyncHandler(testController.getCompletedTests.bind(testController))
     );
 
@@ -113,42 +118,47 @@ const createTestRouter = ({ authMiddleware, testController }) => {
         asyncHandler(testController.startTest.bind(testController))
     );
 
-    // Route che richiedono autenticazione docente/admin
-    router.use(['/all', '/assign', '/:testId/stats'], protect);
-
+    // Route che richiedono autenticazione
     router.get('/all',
-        restrictTo('teacher', 'admin'),
+        protect,
+        hasPermission('tests', 'read'),
         asyncHandler(testController.getAll.bind(testController))
     );
 
     router.post('/assign',
-        restrictTo('teacher', 'admin'),
+        protect,
+        hasPermission('tests', 'update'),
+        hasPermission('students', 'update'),
         asyncHandler(testController.assignTest.bind(testController))
     );
 
     // Nuove route per la gestione dei test a livello di classe
     router.post('/assign-to-class',
         protect,
-        restrictTo('teacher', 'admin'),
+        hasPermission('tests', 'update'),
+        hasPermission('classes', 'read'),
         asyncHandler(testController.assignTestToClass.bind(testController))
     );
 
     router.get('/assigned/class/:classId',
         protect,
-        restrictTo('teacher', 'admin'),
+        hasPermission('tests', 'read'),
+        hasPermission('classes', 'read'),
         asyncHandler(testController.getAssignedTestsByClass.bind(testController))
     );
 
     router.post('/class/:classId/revoke',
         protect,
-        restrictTo('teacher', 'admin'),
+        hasPermission('tests', 'update'),
+        hasPermission('classes', 'read'),
         asyncHandler(testController.revokeClassTests.bind(testController))
     );
 
     // Nuova route per revocare un test
     router.post('/:testId/revoke',
         protect,
-        restrictTo('teacher', 'admin'),
+        hasPermission('tests', 'update'),
+        hasTestAccess(),
         asyncHandler(testController.revokeTest.bind(testController))
     );
 
@@ -167,16 +177,32 @@ const createTestRouter = ({ authMiddleware, testController }) => {
     router.route('/:id')
         .get(
             protect,
-            restrictTo('teacher', 'admin', 'student'),
+            hasPermission('tests', 'read'),
+            hasTestAccess(),
             asyncHandler(testController.getById.bind(testController))
         );
 
     router.get('/:testId/stats',
         protect,
-        restrictTo('teacher', 'admin'),
+        hasPermission('tests', 'read'),
+        hasPermission('analytics', 'read'),
+        hasTestAccess(),
         asyncHandler(testController.getTestStats.bind(testController))
     );
 
+    /**  Rotte per modificare configurazione dei test (solo admin/developer)
+    router.post('/configure', 
+        protect,
+        hasPermission('tests', 'manage'),
+        asyncHandler(testController.configureTest.bind(testController))
+    );
+    
+    router.put('/:testId/questions',
+        protect,
+        hasPermission('tests', 'manage'),
+        asyncHandler(testController.updateQuestions.bind(testController))
+    ); */
+    
     router.post('/:testId/submit',
         protectStudent,
         asyncHandler(testController.submitTest.bind(testController))
@@ -257,34 +283,3 @@ const createTestRouter = ({ authMiddleware, testController }) => {
 };
 
 module.exports = createTestRouter;
-
-/**
- * @summary Documentazione delle Route
- * 
- * Route Pubbliche (accesso con token):
- * POST   /tests/start-token         - Inizia test con token
- * 
- * Route Protette (richiede autenticazione docente/admin):
- * GET    /tests/all                 - Lista tutti i test
- * POST   /tests/assign              - Assegna test a studente
- * POST   /tests/assign-to-class     - Assegna test a tutti gli studenti di una classe
- * GET    /tests/assigned/class/:classId - Ottiene i test assegnati agli studenti di una classe
- * POST   /tests/class/:classId/revoke  - Revoca tutti i test di una classe
- * GET    /tests/:testId/stats       - Statistiche test
- * GET    /tests/assigned/student/:studentId - Ottiene i test assegnati a uno studente
- * GET    /tests/student/:studentId/completed - Ottiene i test completati da uno studente
- * POST   /tests/:testId/revoke      - Revoca un test assegnato
- * 
- * Route Protette (richiede autenticazione studente):
- * GET    /tests/my-tests           - Lista test assegnati
- * POST   /tests/start-assigned/:id  - Inizia test assegnato
- * POST   /tests/:testId/submit     - Invia risposte test
- * 
- * Route Protette (accesso misto):
- * GET    /tests/:id               - Dettaglio test (auth richiesta)
- * 
- * Controllo Accessi:
- * - Admin/Teacher: accesso completo gestione e visualizzazione
- * - Student: accesso ai propri test assegnati
- * - Token: accesso limitato al test specifico
- */

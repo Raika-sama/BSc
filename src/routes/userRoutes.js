@@ -14,7 +14,7 @@ const createUserRouter = ({ authMiddleware, userController }) => {
     if (!userController) throw new Error('UserController is required');
 
     const router = express.Router();
-    const { protect, restrictTo } = authMiddleware;
+    const { protect, hasPermission } = authMiddleware;
 
     // Utility per gestione async
     const asyncHandler = (fn) => (req, res, next) => {
@@ -47,59 +47,92 @@ const createUserRouter = ({ authMiddleware, userController }) => {
 
     // Rotte profilo utente (accessibili a tutti gli utenti autenticati)
     router.get('/me', 
+        hasPermission('users', 'read'),
         asyncHandler(userController.getProfile.bind(userController))
     );
     
     router.put('/me', 
+        hasPermission('users', 'update'),
         asyncHandler(userController.updateProfile.bind(userController))
     );
 
-    // Verifica che l'utente abbia accesso admin, altrimenti non procede
-    // Per semplificare, consideriamo admin e developer
-    router.use((req, res, next) => {
-        if (['admin', 'developer'].includes(req.user?.role)) {
-            return next();
-        }
-        // Per i manager controlliamo solo alcune route
-        if (req.user?.role === 'manager') {
-            // Se la route è nella lista consentita per i manager, procedi
-            const allowedManagerPaths = ['/users', '/users/school'];
-            if (allowedManagerPaths.some(path => req.originalUrl.includes(path))) {
+    // Middleware specifico per la creazione di utenti
+    // Verifica che i manager possano creare solo determinati ruoli
+    const validateUserCreation = (req, res, next) => {
+        try {
+            // Admin e developer possono creare qualsiasi tipo di utente
+            if (['admin', 'developer'].includes(req.user.role)) {
                 return next();
             }
+            
+            // Manager possono creare solo determinati ruoli e solo per la propria scuola
+            if (req.user.role === 'manager') {
+                const allowedRoles = ['teacher', 'pcto', 'tutor']; // Nota: 'student' non c'è perché gli studenti sono gestiti separatamente
+                
+                // Verifica il ruolo richiesto
+                if (!allowedRoles.includes(req.body.role)) {
+                    return next(createError(
+                        ErrorTypes.AUTH.FORBIDDEN,
+                        `Non è possibile creare utenti di tipo "${req.body.role}"`
+                    ));
+                }
+                
+                // Verifica che la scuola sia quella del manager
+                if (req.body.schoolId && req.user.schoolId && 
+                    req.body.schoolId.toString() !== req.user.schoolId.toString()) {
+                    return next(createError(
+                        ErrorTypes.AUTH.FORBIDDEN,
+                        'Non è possibile creare utenti per altre scuole'
+                    ));
+                }
+                
+                // Se non è specificata una scuola, impostiamo quella del manager
+                if (!req.body.schoolId && req.user.schoolId) {
+                    req.body.schoolId = req.user.schoolId;
+                }
+                
+                return next();
+            }
+            
+            // Altri ruoli non possono creare utenti
+            return next(createError(
+                ErrorTypes.AUTH.FORBIDDEN,
+                'Non hai i permessi per creare nuovi utenti'
+            ));
+        } catch (error) {
+            next(error);
         }
-        // Altrimenti, errore di permessi
-        next(createError(
-            ErrorTypes.AUTH.FORBIDDEN,
-            'Accesso al pannello amministrativo non consentito'
-        ));
-    });
+    };
 
-    // Route per i manager disponibili (solo admin)
+    // Route per i manager disponibili (solo admin/developer)
     router.get('/available-managers',
-        restrictTo('admin', 'developer'),
+        hasPermission('users', 'read'),
         asyncHandler(userController.getAvailableManagers.bind(userController))
     );
 
     // Route paginata per lista utenti
     router.get('/', 
+        hasPermission('users', 'read'),
         asyncHandler(userController.getAll.bind(userController))
     );
 
     // Route per insegnanti di una scuola specifica
     router.get('/school/:schoolId/teachers', 
+        hasPermission('users', 'read'),
+        hasPermission('schools', 'read'),
         asyncHandler(userController.getSchoolTeachers.bind(userController))
     );
 
     // Route per lo storico delle modifiche di un utente
     router.get('/:id/history',
-        restrictTo('admin', 'developer'),
+        hasPermission('users', 'read'),
         asyncHandler(userController.getUserHistory.bind(userController))
     );
 
     // Route CRUD per gestione utenti
     router.route('/:id')
         .get(
+            hasPermission('users', 'read'),
             asyncHandler(async (req, res) => {
                 console.log('UserRoutes: GET /:id called with:', {
                     id: req.params.id,
@@ -109,30 +142,32 @@ const createUserRouter = ({ authMiddleware, userController }) => {
             })
         )
         .put(
+            hasPermission('users', 'update'),
             asyncHandler(userController.update.bind(userController))
         )
         .delete(
-            restrictTo('admin', 'developer'),
+            hasPermission('users', 'delete'),
             asyncHandler(userController.delete.bind(userController))
         );
 
     // Rotta per creazione nuovo utente
     router.post('/', 
-        restrictTo('admin', 'developer'),
+        hasPermission('users', 'create'),
+        validateUserCreation,
         asyncHandler(userController.create.bind(userController))
     );
 
     // Nuove rotte per i permessi e le risorse (solo se il controller ha questi metodi)
     if (typeof userController.updatePermissions === 'function') {
         router.post('/:id/permissions',
-            restrictTo('admin', 'developer'),
+            hasPermission('users', 'manage'),
             asyncHandler(userController.updatePermissions.bind(userController))
         );
     }
 
     if (typeof userController.assignResources === 'function') {
         router.post('/:id/resources',
-            restrictTo('admin', 'developer'),
+            hasPermission('users', 'update'),
             asyncHandler(userController.assignResources.bind(userController))
         );
     }
@@ -140,7 +175,7 @@ const createUserRouter = ({ authMiddleware, userController }) => {
     if (typeof userController.changeStatus === 'function') {
         // Cambio da POST a PUT per corrispondere alla chiamata del frontend
         router.put('/:id/status',
-            restrictTo('admin', 'developer'),
+            hasPermission('users', 'update'),
             asyncHandler(userController.changeStatus.bind(userController))
         );
     }

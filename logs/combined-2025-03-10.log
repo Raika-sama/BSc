@@ -1,0 +1,53 @@
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-10T15:14:03.369Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-10T15:14:03.378Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-10T15:14:03.456Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-10T15:14:04.711Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-10T15:14:04.713Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-10T15:14:04.715Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-10T15:14:05.639Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-10T15:14:05.656Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-10T15:14:05.657Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-10T15:17:25.809Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-10T15:17:25.817Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-10T15:17:25.895Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-10T15:17:27.551Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-10T15:17:27.553Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-10T15:17:27.556Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-10T15:17:28.100Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-10T15:17:28.110Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-10T15:17:28.111Z"}
+{"classesUpdated":0,"level":"info","message":"Utente rimosso con successo dalla scuola","schoolId":"679fdad474255ebc8afab683","studentsUpdated":0,"timestamp":"2025-03-10T15:18:29.932Z","userId":"67c0c577285a82c16495c63e"}
+{"assignedBy":"677bfe44f6789c907c9f3766","classId":"679fdad474255ebc8afab6a4","level":"info","message":"Tests assigned to all students in class:","testsCount":3,"timestamp":"2025-03-10T15:18:51.323Z"}
+{"assignedBy":"677bfe44f6789c907c9f3766","classId":"679fdad474255ebc8afab6a4","level":"info","message":"Tests assigned successfully to class:","testsCount":3,"timestamp":"2025-03-10T15:18:51.326Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-10T15:24:49.985Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-10T15:24:49.998Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-10T15:24:50.110Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-10T15:24:51.596Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-10T15:24:51.600Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-10T15:24:51.608Z"}
+{"error":"Cannot read properties of undefined (reading 'bind')","level":"error","message":"Errore durante l'avvio del server:","stack":"TypeError: Cannot read properties of undefined (reading 'bind')\n    at createTestRouter (C:\\Users\\ricca\\Desktop\\BSc\\src\\routes\\testRoutes.js:197:51)\n    at startServer (C:\\Users\\ricca\\Desktop\\BSc\\src\\app.js:330:28)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-03-10T15:24:51.998Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-10T15:27:43.100Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-10T15:27:43.117Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-10T15:27:43.189Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-10T15:27:44.690Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-10T15:27:44.694Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-10T15:27:44.700Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-10T15:27:45.223Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-10T15:27:45.232Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-10T15:27:45.233Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-10T15:34:12.195Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-10T15:34:12.210Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-10T15:34:12.358Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-10T15:34:14.179Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-10T15:34:14.181Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-10T15:34:14.184Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-10T15:34:14.604Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-10T15:34:14.612Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-10T15:34:14.613Z"}
+{"level":"info","message":"User created","timestamp":"2025-03-10T15:34:47.173Z","userId":"67cf0696ba1648dd2aa7485f"}
+{"hasClasses":false,"hasStudents":false,"level":"info","message":"Found user to delete","role":"teacher","timestamp":"2025-03-10T15:34:52.193Z","userId":"67cf0696ba1648dd2aa7485f"}
+{"level":"info","message":"User deleted successfully","timestamp":"2025-03-10T15:34:52.544Z","userId":"67cf0696ba1648dd2aa7485f"}
+{"level":"info","message":"User deleted","success":true,"timestamp":"2025-03-10T15:34:52.546Z","userId":"67cf0696ba1648dd2aa7485f"}
+{"level":"info","message":"Changing user status for 67cf0696ba1648dd2aa7485f","timestamp":"2025-03-10T15:34:58.210Z","updateData":{"status":"inactive"}}
+{"level":"info","message":"User status updated successfully for 67cf0696ba1648dd2aa7485f","newStatus":"inactive","timestamp":"2025-03-10T15:34:58.290Z"}
+{"level":"info","message":"User status changed","status":"inactive","timestamp":"2025-03-10T15:34:58.293Z","userId":"67cf0696ba1648dd2aa7485f"}
