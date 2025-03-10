@@ -8,148 +8,115 @@ const StatsCardsLayout = ({ cards, loading, spacing = 3, maxColumns = 5 }) => {
     const theme = useTheme();
     const columnWidth = 12 / Math.min(cards.length, maxColumns);
     
-    // Determiniamo se il tema è bicolore
-    const isThemeBicolor = theme.palette.secondary && theme.palette.secondary.main;
+    // Dark mode detection
     const isDarkMode = theme.palette.mode === 'dark';
-
-    // Funzione per schiarire/scurire colori basati sul tema
-    const adaptColorToTheme = (color, index) => {
-        // Se il tema è bicolore, alterna tra colori primari e secondari
-        if (isThemeBicolor) {
-            return index % 2 === 0 
-                ? theme.palette.primary.main 
-                : theme.palette.secondary.main;
-        }
-        
-        // Se il colore è fornito, usalo (ma adattato al tema)
-        if (color) {
-            // Se siamo in modalità scura, schiarisci leggermente il colore
-            if (isDarkMode) {
-                // Possiamo usare la funzione alpha per rendere il colore più chiaro
-                return alpha(color, 0.9);
-            }
-            return color;
-        }
-        
-        // Fallback al colore primario del tema
-        return theme.palette.primary.main;
-    };
 
     return (
         <Grid container spacing={spacing}>
-            {cards.map((card, index) => {
-                // Calcola i colori adattati al tema
-                const cardColor = adaptColorToTheme(card.color, index);
-                const textColor = isDarkMode ? theme.palette.common.white : theme.palette.text.primary;
-                const subtitleColor = isDarkMode ? alpha(theme.palette.common.white, 0.7) : theme.palette.text.secondary;
-                
-                return (
-                    <Grid item xs={12} sm={6} md={4} lg={columnWidth} key={index}>
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05, duration: 0.3 }}
+            {cards.map((card, index) => (
+                <Grid item xs={12} sm={6} md={4} lg={columnWidth} key={index}>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1, duration: 0.5 }}
+                    >
+                        <Card 
+                            elevation={0}
+                            sx={{ 
+                                height: '100%',
+                                borderRadius: 2,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                transition: 'transform 0.2s, box-shadow 0.2s',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                '&:hover': {
+                                    transform: 'translateY(-4px)',
+                                    boxShadow: theme.shadows[4]
+                                }
+                            }}
                         >
-                            <Card 
-                                elevation={0}
-                                sx={{ 
-                                    height: '100%',
-                                    borderRadius: theme.shape.borderRadius || 2,
-                                    border: '1px solid',
-                                    borderColor: 'divider',
-                                    background: () => {
-                                        // Crea un gradiente basato sul tema e sul colore della card
-                                        const baseColor = theme.palette.background.paper;
-                                        let gradientColor;
-                                        
-                                        if (isThemeBicolor) {
-                                            // Per temi bicolore, usa colori del tema alternati
-                                            gradientColor = index % 2 === 0 
-                                                ? alpha(theme.palette.primary.main, 0.07)
-                                                : alpha(theme.palette.secondary.main, 0.07);
-                                        } else {
-                                            // Per temi monocolore, usa il colore della card
-                                            gradientColor = alpha(cardColor, 0.07);
-                                        }
-                                        
-                                        return `linear-gradient(135deg, 
-                                            ${baseColor} 0%, 
-                                            ${gradientColor} 100%)`;
-                                    },
-                                    transition: 'all 0.2s ease',
-                                    '&:hover': {
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: isDarkMode 
-                                            ? `0 4px 12px ${alpha(theme.palette.common.black, 0.3)}`
-                                            : `0 4px 12px ${alpha(theme.palette.primary.main, 0.1)}`
-                                    },
-                                    // Riduzione delle dimensioni complessive
-                                    py: 1
+                            {/* Background decoration */}
+                            <Box 
+                                sx={{
+                                    position: 'absolute',
+                                    top: -5,
+                                    right: -5,
+                                    width: 50,
+                                    height: 50,
+                                    borderRadius: '50%',
+                                    backgroundColor: alpha(theme.palette[card.color]?.main || card.color, 0.1),
+                                    zIndex: 0
                                 }}
-                            >
-                                <CardContent sx={{ py: 1, px: 2, '&:last-child': { pb: 1 } }}>
-                                    <Box display="flex" alignItems="center" mb={1}>
-                                        <Box
-                                            sx={{
-                                                // Colore di sfondo dell'icona più integrato col tema
-                                                bgcolor: alpha(cardColor, isDarkMode ? 0.2 : 0.1),
-                                                borderRadius: theme.shape.borderRadius || 2,
-                                                p: 0.75,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}
-                                        >
-                                            {React.createElement(card.icon, { 
-                                                sx: { 
-                                                    color: cardColor,
-                                                    fontSize: '1rem'
-                                                } 
-                                            })}
-                                        </Box>
-                                        <Typography 
-                                            variant="body2" 
-                                            sx={{ 
-                                                ml: 1,
-                                                fontWeight: 500,
-                                                fontSize: '0.75rem',
-                                                color: subtitleColor
-                                            }}
-                                        >
-                                            {card.title}
-                                        </Typography>
-                                    </Box>
+                            />
+                            
+                            <CardContent sx={{ position: 'relative', zIndex: 1, p: 1, '&:last-child': { pb: 1 } }}>
+                                <Box 
+                                    sx={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        mb: 0.5
+                                    }}
+                                >
                                     <Typography 
-                                        variant="h6" 
-                                        component="div"
+                                        variant="subtitle2" 
+                                        color="textSecondary"
+                                        sx={{ fontSize: '0.7rem', fontWeight: 500 }}
+                                    >
+                                        {card.title}
+                                    </Typography>
+                                    <Box 
                                         sx={{ 
-                                            mb: 0.25,
-                                            fontWeight: 600,
-                                            color: cardColor,
-                                            fontSize: '1.25rem'
+                                            backgroundColor: alpha(theme.palette[card.color]?.main || card.color, 0.1),
+                                            borderRadius: '50%',
+                                            p: 0.5,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            width: 20,
+                                            height: 20,
+                                            color: theme.palette[card.color]?.main || card.color
                                         }}
                                     >
-                                        {card.value}
+                                        {React.createElement(card.icon, { 
+                                            sx: { fontSize: '0.9rem' } 
+                                        })}
+                                    </Box>
+                                </Box>
+
+                                <Typography 
+                                    variant="h5" 
+                                    sx={{ 
+                                        fontWeight: 600, 
+                                        mb: 0.25,
+                                        color: isDarkMode ? 'text.primary' : 'text.primary',
+                                        fontSize: '1.1rem',
+                                        lineHeight: 1.2
+                                    }}
+                                >
+                                    {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
+                                </Typography>
+
+                                {card.subtitle && (
+                                    <Typography 
+                                        variant="caption" 
+                                        color="textSecondary"
+                                        sx={{ 
+                                            fontSize: '0.65rem',
+                                            opacity: 0.8,
+                                            display: 'block',
+                                            lineHeight: 1.1
+                                        }}
+                                    >
+                                        {card.subtitle}
                                     </Typography>
-                                    {card.subtitle && (
-                                        <Typography 
-                                            variant="caption"
-                                            sx={{ 
-                                                display: 'block',
-                                                opacity: 0.8,
-                                                fontSize: '0.7rem',
-                                                color: subtitleColor
-                                            }}
-                                        >
-                                            {card.subtitle}
-                                        </Typography>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    </Grid>
-                );
-            })}
+                                )}
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                </Grid>
+            ))}
         </Grid>
     );
 };
