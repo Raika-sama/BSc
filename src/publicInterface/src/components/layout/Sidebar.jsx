@@ -4,7 +4,7 @@ import {
   useColorModeValue, Link as ChakraLink
 } from '@chakra-ui/react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { MdDashboard, MdAnalytics, MdPerson, MdSettings, MdHelp, MdHome, MdLogout } from 'react-icons/md';
+import { MdDashboard, MdAnalytics, MdPerson, MdSettings, MdHelp, MdHome, MdLogout, MdAssignment } from 'react-icons/md';
 import { useAuth } from '../../hooks/useAuth';
 import { useImpostazioni } from '../../hooks/ImpostazioniContext';
 
@@ -94,6 +94,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       <NavItem icon={MdHome} to="/">Home</NavItem>
       <NavItem icon={MdDashboard} to="/dashboard">Dashboard</NavItem>
       <NavItem icon={MdAnalytics} to="/analisi">Analisi</NavItem>
+      <NavItem icon={MdAssignment} to="/test-assegnati">Test Assegnati</NavItem>
       <NavItem icon={MdPerson} to="/profilo">Profilo</NavItem>
       <Divider my={2} />
       <NavItem icon={MdSettings} onClick={openImpostazioni}>Impostazioni</NavItem>

@@ -247,3 +247,87 @@
 {"level":"info","message":"Richiesta profilo studente","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:36:38.082Z"}
 {"level":"info","message":"Recupero profilo studente","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:36:38.085Z"}
 {"level":"info","message":"Profilo studente recuperato con successo","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:36:38.135Z"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/student/tests/assigned","timestamp":"2025-03-13T14:53:32.092Z"}
+{"duration":"78ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741877612022_zolo8nygi","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-03-13T14:53:32.107Z","url":"/api/v1/student/tests/assigned","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/student/tests/assigned","timestamp":"2025-03-13T14:53:32.127Z"}
+{"duration":"18ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741877612110_4jqs1i0io","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-03-13T14:53:32.130Z","url":"/api/v1/student/tests/assigned","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"info","message":"Richiesta profilo studente","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:54:42.185Z"}
+{"level":"info","message":"Recupero profilo studente","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:54:42.186Z"}
+{"level":"info","message":"Profilo studente recuperato con successo","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:54:42.232Z"}
+{"level":"info","message":"Richiesta profilo studente","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:54:42.268Z"}
+{"level":"info","message":"Recupero profilo studente","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:54:42.269Z"}
+{"level":"info","message":"Profilo studente recuperato con successo","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:54:42.331Z"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/student/tests/assigned","timestamp":"2025-03-13T14:54:48.986Z"}
+{"duration":"5ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741877688982_6cg5ls7nd","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-03-13T14:54:48.987Z","url":"/api/v1/student/tests/assigned","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/student/tests/assigned","timestamp":"2025-03-13T14:54:48.991Z"}
+{"duration":"4ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741877688989_42mstfd2p","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-03-13T14:54:48.993Z","url":"/api/v1/student/tests/assigned","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/student/tests/assigned","timestamp":"2025-03-13T14:55:05.749Z"}
+{"duration":"9ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741877705745_497kzmex9","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-03-13T14:55:05.754Z","url":"/api/v1/student/tests/assigned","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/student/tests/assigned","timestamp":"2025-03-13T14:55:05.760Z"}
+{"duration":"4ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741877705757_242decasi","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-03-13T14:55:05.761Z","url":"/api/v1/student/tests/assigned","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"info","message":"Richiesta profilo studente","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:56:02.640Z"}
+{"level":"info","message":"Recupero profilo studente","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:56:02.641Z"}
+{"level":"info","message":"Profilo studente recuperato con successo","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:56:02.684Z"}
+{"level":"info","message":"Richiesta profilo studente","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:56:02.730Z"}
+{"level":"info","message":"Recupero profilo studente","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:56:02.731Z"}
+{"level":"info","message":"Profilo studente recuperato con successo","studentId":"67c4908d647e9de1d9422ed8","timestamp":"2025-03-13T14:56:02.790Z"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/student/tests/assigned","timestamp":"2025-03-13T14:56:10.051Z"}
+{"duration":"6ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741877770048_t7gx5ior2","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-03-13T14:56:10.054Z","url":"/api/v1/student/tests/assigned","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"warn","message":"Route not found:","method":"GET","path":"/api/v1/student/tests/assigned","timestamp":"2025-03-13T14:56:10.058Z"}
+{"duration":"3ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"GET","requestId":"req_1741877770056_iywc73cx7","responseSize":"95 Bytes","statusCode":404,"timestamp":"2025-03-13T14:56:10.059Z","url":"/api/v1/student/tests/assigned","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-13T15:08:23.642Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-13T15:08:23.647Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-13T15:08:23.694Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-13T15:08:24.896Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-13T15:08:24.897Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-13T15:08:24.900Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-13T15:08:25.324Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-13T15:08:25.332Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-13T15:08:25.333Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-13T15:10:48.151Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-13T15:10:48.155Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-13T15:10:48.189Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-13T15:10:49.074Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-13T15:10:49.076Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-13T15:10:49.078Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-13T15:10:49.453Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-13T15:10:49.457Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-13T15:10:49.457Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-13T15:12:51.253Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-13T15:12:51.259Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-13T15:12:51.305Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-13T15:12:52.644Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-13T15:12:52.645Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-13T15:12:52.646Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-13T15:12:53.031Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-13T15:12:53.035Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-13T15:12:53.036Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-13T15:14:26.767Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-13T15:14:26.770Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-13T15:14:26.806Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-13T15:14:27.665Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-13T15:14:27.666Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-13T15:14:27.667Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-13T15:14:28.003Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-13T15:14:28.006Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-13T15:14:28.007Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-13T15:17:27.397Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-13T15:17:27.401Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-13T15:17:27.439Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-13T15:17:28.359Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-13T15:17:28.360Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-13T15:17:28.362Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-13T15:17:28.766Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-13T15:17:28.772Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-13T15:17:28.773Z"}
+{"assignedBy":"677bfe44f6789c907c9f3766","csiConfigId":"67a65a423218fb8ab7bbc040","level":"info","message":"Test assigned to student:","studentId":"67c4908d647e9de1d9422ed8","testId":"67d2f71aafe58d05261dacdd","testType":"CSI","timestamp":"2025-03-13T15:17:46.432Z"}
+{"assignedBy":"677bfe44f6789c907c9f3766","level":"info","message":"Test assigned successfully:","studentId":"67c4908d647e9de1d9422ed8","testId":"67d2f71aafe58d05261dacdd","timestamp":"2025-03-13T15:17:46.433Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-13T15:18:05.868Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-13T15:18:05.872Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-13T15:18:05.908Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-13T15:18:06.798Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-13T15:18:06.799Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-13T15:18:06.801Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-13T15:18:07.169Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-13T15:18:07.172Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-13T15:18:07.173Z"}

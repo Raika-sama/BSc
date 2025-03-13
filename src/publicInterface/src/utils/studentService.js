@@ -10,6 +10,19 @@ const axiosInstance = axios.create({
   withCredentials: true
 });
 
+// Cache per le richieste
+const requestCache = {
+  assignedTests: {
+    data: null,
+    timestamp: null,
+    isLoading: false,
+    promise: null
+  }
+};
+
+// Tempo di validità della cache in millisecondi (30 secondi)
+const CACHE_TTL = 30000;
+
 // Interceptor per aggiungere il token di autenticazione a ogni richiesta
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -162,29 +175,79 @@ const studentService = {
   },
   
   /**
-   * Recupera i test assegnati allo studente
+   * Recupera i test assegnati allo studente con sistema di cache 
+   * per evitare chiamate ripetute in breve tempo
+   * @param {boolean} force - Se true, forza il refresh della cache
    * @returns {Promise} Promise con i dati dei test assegnati
    */
-  getAssignedTests: async () => {
-    try {
-      console.log('Recupero test assegnati...');
-      
-      const response = await axiosInstance.get('/student/tests/assigned');
-      
-      console.log('Risposta test assegnati:', response.data);
-      
-      return {
-        status: 'success',
-        data: response.data.tests || response.data.data?.tests || []
-      };
-    } catch (error) {
-      console.error('Errore durante il recupero dei test assegnati:', error);
-      throw { 
-        error: error.response?.status === 404 ? 'Nessun test trovato' : 'Errore nel recupero dei test',
-        details: error.response?.data || error.message
-      };
+  getAssignedTests: async (force = false) => {
+    const cache = requestCache.assignedTests;
+    const now = Date.now();
+    
+    // Verifica se abbiamo dati in cache validi e non è richiesto un refresh forzato
+    if (!force && cache.data && cache.timestamp && (now - cache.timestamp < CACHE_TTL)) {
+      console.log('Usando dati in cache per i test assegnati');
+      return cache.data;
     }
+    
+    // Se c'è già una richiesta in corso, restituisce la stessa Promise
+    if (cache.isLoading && cache.promise) {
+      console.log('Richiesta già in corso, attendere...');
+      return cache.promise;
+    }
+    
+    // Imposta lo stato di caricamento
+    cache.isLoading = true;
+    
+    // Crea e salva la Promise
+    cache.promise = new Promise(async (resolve, reject) => {
+      try {
+        console.log('Recupero test assegnati...');
+        
+        // Utilizziamo la rotta /tests/my-tests che è già protetta dal middleware protectStudent
+        const response = await axiosInstance.get('/tests/my-tests');
+        
+        console.log('Risposta test assegnati:', response.data);
+        
+        const result = {
+          status: 'success',
+          data: response.data.tests || response.data.data?.tests || []
+        };
+        
+        // Aggiorna la cache
+        cache.data = result;
+        cache.timestamp = Date.now();
+        cache.isLoading = false;
+        
+        resolve(result);
+      } catch (error) {
+        console.error('Errore durante il recupero dei test assegnati:', error);
+        
+        // Resetta lo stato di caricamento in caso di errore
+        cache.isLoading = false;
+        
+        const errorObj = { 
+          error: error.response?.status === 404 ? 'Nessun test trovato' : 'Errore nel recupero dei test',
+          details: error.response?.data || error.message
+        };
+        
+        reject(errorObj);
+      }
+    });
+    
+    return cache.promise;
   },
+  
+  /**
+   * Forza un refresh dei dati in cache
+   */
+  clearCache: () => {
+    requestCache.assignedTests.data = null;
+    requestCache.assignedTests.timestamp = null;
+    requestCache.assignedTests.isLoading = false;
+    requestCache.assignedTests.promise = null;
+    console.log('Cache dei test assegnati cancellata');
+  }
 }
 
 export default studentService;

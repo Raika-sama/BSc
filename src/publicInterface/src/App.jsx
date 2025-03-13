@@ -4,8 +4,10 @@ import Layout from './components/layout/Layout';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
+import AssignedTestsPage from './pages/AssignedTestsPage';
 import PrivateRoute from './components/PrivateRoute';
 import { ImpostazioniProvider, useImpostazioni } from './hooks/ImpostazioniContext';
+import { TestProvider } from './hooks/TestContext';
 import ImpostazioniModal from './components/ImpostazioniModal';
 
 // Componente separato che gestisce il modal globale delle impostazioni
@@ -35,28 +37,30 @@ function App() {
   return (
     // AuthProvider è stato spostato nel file index.js
     <ImpostazioniProvider setMenuPosition={updateMenuPosition}>
-      <Routes>
-        {/* Public route */}
-        <Route path="/login" element={<LoginPage />} />
-        
-        {/* Protected routes */}
-        <Route element={<PrivateRoute />}>
-          <Route element={<Layout menuPosition={menuPosition} />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/dashboard" element={<div>Dashboard Page</div>} />
-            <Route path="/analisi" element={<div>Analisi Page</div>} />
-            <Route path="/test-assegnati" element={<div>Test Assegnati Page</div>} />
-            <Route path="/profilo" element={<ProfilePage />} />
-            <Route path="/supporto" element={<div>Supporto Page</div>} />
+      <TestProvider>
+        <Routes>
+          {/* Public route */}
+          <Route path="/login" element={<LoginPage />} />
+          
+          {/* Protected routes */}
+          <Route element={<PrivateRoute />}>
+            <Route element={<Layout menuPosition={menuPosition} />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/dashboard" element={<div>Dashboard Page</div>} />
+              <Route path="/analisi" element={<div>Analisi Page</div>} />
+              <Route path="/test-assegnati" element={<AssignedTestsPage />} />
+              <Route path="/profilo" element={<ProfilePage />} />
+              <Route path="/supporto" element={<div>Supporto Page</div>} />
+            </Route>
           </Route>
-        </Route>
+          
+          {/* Catch all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
         
-        {/* Catch all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      
-      {/* Modal delle impostazioni globale */}
-      <ImpostazioniModalContainer setMenuPosition={updateMenuPosition} />
+        {/* Modal delle impostazioni globale */}
+        <ImpostazioniModalContainer setMenuPosition={updateMenuPosition} />
+      </TestProvider>
     </ImpostazioniProvider>
   );
 }
