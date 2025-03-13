@@ -1,32 +1,37 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../utils/authService';
 
+// Creazione del contesto di autenticazione
 const AuthContext = createContext(null);
 
 /**
  * Provider per il contesto di autenticazione
  */
 export const AuthProvider = ({ children }) => {
+  // Stati
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
   const [logoutSuccess, setLogoutSuccess] = useState(false);
 
   // Verifica dello stato di autenticazione all'avvio
   useEffect(() => {
     const checkAuth = () => {
       try {
+        console.log('Verifico stato autenticazione...');
         if (authService.isAuthenticated()) {
           const studentData = authService.getStudent();
+          console.log('Dati studente recuperati:', studentData);
           setStudent(studentData);
+        } else {
+          console.log('Nessuna sessione attiva trovata');
+          setStudent(null);
         }
       } catch (err) {
-        console.error('Errore durante il controllo dell\'autenticazione:', err);
-        setError(err);
+        console.error('Errore durante la verifica dell\'autenticazione:', err);
+        setError(err.message || 'Errore durante la verifica dell\'autenticazione');
       } finally {
         setLoading(false);
-        setAuthChecked(true);
       }
     };
 
@@ -55,22 +60,22 @@ export const AuthProvider = ({ children }) => {
         };
       }
       
-      // Gestisci il caso di login normale
-      if (response.data?.student) {
+      // Gestisci il caso di login riuscito
+      if (response.success && response.data?.student) {
         setStudent(response.data.student);
         return { success: true };
-      } else if (response.status === 'success' && response.data?.student) {
-        // Formati alternativi di risposta
-        setStudent(response.data.student);
-        return { success: true };
-      } else {
-        console.error('Formato risposta login non valido:', response);
-        setError('Formato risposta non valido');
-        return { success: false, error: 'Formato risposta non valido' };
       }
+      
+      // Gestisci errori
+      setError(response.error || 'Errore durante il login');
+      return { 
+        success: false, 
+        error: response.error || 'Errore durante il login' 
+      };
     } catch (err) {
       console.error('Errore durante il login in useAuth:', err);
-      const errorMessage = err.error || 'Errore durante il login';
+      const errorMessage = typeof err === 'string' ? err : 
+                          (err.error || err.message || 'Errore durante il login');
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
@@ -86,11 +91,18 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     
     try {
-      await authService.handleFirstAccess(studentId, tempPassword, newPassword);
-      return { success: true };
+      const response = await authService.handleFirstAccess(studentId, tempPassword, newPassword);
+      
+      // Se il primo accesso è riuscito e abbiamo i dati dello studente
+      if (response.success && response.data?.student) {
+        setStudent(response.data.student);
+      }
+      
+      return response;
     } catch (err) {
       console.error('Errore durante il cambio password:', err);
-      const errorMessage = err.error || 'Errore durante il cambio password';
+      const errorMessage = typeof err === 'string' ? err : 
+                          (err.error || err.message || 'Errore durante il cambio password');
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
@@ -129,12 +141,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Valore del contesto
   const value = {
     student,
     loading,
     error,
     isAuthenticated: !!student,
-    authChecked,
     logoutSuccess,
     setLogoutSuccess,
     login,

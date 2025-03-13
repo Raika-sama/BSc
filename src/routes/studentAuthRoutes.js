@@ -48,6 +48,11 @@ const createStudentAuthRouter = ({
     router.post('/logout',
         asyncHandler(studentAuthController.logout.bind(studentAuthController))
     );
+    
+    // FIX: Sposta la rotta first-access nelle rotte pubbliche (non protette)
+    router.post('/first-access/:studentId',
+        asyncHandler(studentAuthController.handleFirstAccess.bind(studentAuthController))
+    );
 
     // Route protette per studenti
     router.use('/student', protectStudent);
@@ -55,10 +60,11 @@ const createStudentAuthRouter = ({
     router.get('/student/profile',
         asyncHandler(studentAuthController.getProfile.bind(studentAuthController))
     );
-
-    router.post('/student/first-access/:studentId',
-        asyncHandler(studentAuthController.handleFirstAccess.bind(studentAuthController))
-    );
+    
+    // Non è più necessaria qui perché spostata nelle rotte pubbliche
+    // router.post('/student/first-access/:studentId',
+    //    asyncHandler(studentAuthController.handleFirstAccess.bind(studentAuthController))
+    // );
 
     router.post('/student/logout',
         asyncHandler(studentAuthController.logout.bind(studentAuthController))
@@ -133,10 +139,11 @@ module.exports = createStudentAuthRouter;
  * Route Pubbliche (Studenti):
  * POST   /student-auth/login                    - Login studente
  * POST   /student-auth/logout                   - Logout studente
+ * POST   /student-auth/first-access/:id         - Primo accesso e cambio password
  * 
  * Route Protette (Studenti):
- * POST   /student-auth/student/first-access/:id - Primo accesso e cambio password
- * POST   /student-auth/student/logout           - Logout studente
+ * GET    /student-auth/student/profile          - Profilo studente
+ * POST   /student-auth/student/logout           - Logout studente (alternativo)
  * 
  * Route Protette (Admin/Manager):
  * POST   /student-auth/admin/generate/:id       - Genera credenziali singolo studente

@@ -13,13 +13,7 @@ const axiosInstance = axios.create({
 // Interceptor per aggiungere il token di autenticazione a ogni richiesta
 axiosInstance.interceptors.request.use(
   (config) => {
-    const tokenFromCookie = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('student-token='))
-      ?.split('=')[1];
-    
-    const tokenFromStorage = localStorage.getItem('student-token');
-    const token = tokenFromCookie || tokenFromStorage;
+    const token = authService.getToken();
     
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -41,25 +35,51 @@ const studentService = {
    */
   getStudentProfile: async () => {
     try {
-      console.log('========== PROFILE DEBUG ==========');
+      console.log('Recupero profilo studente...');
       
-      // ===== HARD-CODED ID PER TESTING =====
-      const TEMPORARY_TEST_ID = '67b20991d8fdac4600a0def6'; // ID dello studente Ciccio Pasticcio
-      console.log('Using hard-coded student ID for testing:', TEMPORARY_TEST_ID);
+      // Ottieni lo studentId dal servizio di autenticazione
+      const studentId = authService.getStudentId();
       
-      // Usa l'ID di test per chiamare l'endpoint
-      const response = await axiosInstance.get(`/students/${TEMPORARY_TEST_ID}`);
+      if (!studentId) {
+        console.error('ID studente non disponibile');
+        throw new Error('ID studente non disponibile. Effettua il login.');
+      }
       
-      console.log('API response from /students/:id:', response.data);
+      console.log('Usando ID studente:', studentId);
       
-      if (response.data && response.data.data && response.data.data.student) {
-        // Normalizza i dati per la visualizzazione
+      // Usa l'ID studente per chiamare l'endpoint
+      const response = await axiosInstance.get(`/student-auth/student/profile`);
+      
+      console.log('Risposta profilo studente:', response.data);
+      
+      // Verifica e standardizza la risposta
+      if (response.data) {
+        // Normalizza la struttura della risposta
+        let studentData = response.data.student || response.data.data?.student;
+        let schoolData = response.data.school || response.data.data?.school;
+        let classData = response.data.class || response.data.data?.class;
+        
+        // Se i dati della scuola sono contenuti nello studente
+        if (!schoolData && studentData?.schoolId && typeof studentData.schoolId === 'object') {
+          schoolData = studentData.schoolId;
+        }
+        
+        // Se i dati della classe sono contenuti nello studente
+        if (!classData && studentData?.classId && typeof studentData.classId === 'object') {
+          classData = studentData.classId;
+        }
+        
+        // Salva l'ID dello studente se non era già salvato
+        if (studentData && (studentData._id || studentData.id)) {
+          localStorage.setItem('studentId', studentData._id || studentData.id);
+        }
+        
         return {
           status: 'success',
           data: {
-            student: response.data.data.student,
-            school: response.data.data.student.schoolId,
-            class: response.data.data.student.classId
+            student: studentData || {},
+            school: schoolData || {},
+            class: classData || {}
           }
         };
       }
@@ -67,6 +87,14 @@ const studentService = {
       throw new Error('Formato risposta non valido');
     } catch (error) {
       console.error('Error fetching student profile:', error);
+      
+      // Per errori 401, reindirizza al login
+      if (error.response && error.response.status === 401) {
+        // Pulisci i dati di autenticazione
+        authService.logout();
+        throw new Error('Sessione scaduta. Effettua nuovamente il login.');
+      }
+      
       throw error;
     }
   },
@@ -78,13 +106,6 @@ const studentService = {
   getStudentClass: async () => {
     try {
       console.log('Recupero informazioni della classe...');
-      
-      // Ottieni lo studentId salvato durante il login
-      const studentId = authService.getStudentId();
-      
-      if (!studentId) {
-        throw new Error('ID studente non disponibile');
-      }
       
       // Prima, tenta di recuperare dal profilo completo
       try {
@@ -99,11 +120,7 @@ const studentService = {
         console.error('Impossibile recuperare la classe dal profilo:', profileError);
       }
       
-      // Se non è disponibile nel profilo, tenta di recuperarla direttamente
-      const response = await axiosInstance.get(`/students/${studentId}/class`);
-      
-      console.log('Dati classe ricevuti:', response.data);
-      return response.data;
+      throw new Error('Informazioni sulla classe non disponibili');
     } catch (error) {
       console.error('Errore durante il recupero della classe:', error);
       throw { 
@@ -121,13 +138,6 @@ const studentService = {
     try {
       console.log('Recupero informazioni della scuola...');
       
-      // Ottieni lo studentId salvato durante il login
-      const studentId = authService.getStudentId();
-      
-      if (!studentId) {
-        throw new Error('ID studente non disponibile');
-      }
-      
       // Prima, tenta di recuperare dal profilo completo
       try {
         const profileData = await studentService.getStudentProfile();
@@ -141,11 +151,7 @@ const studentService = {
         console.error('Impossibile recuperare la scuola dal profilo:', profileError);
       }
       
-      // Se non è disponibile nel profilo, tenta di recuperarla direttamente
-      const response = await axiosInstance.get(`/students/${studentId}/school`);
-      
-      console.log('Dati scuola ricevuti:', response.data);
-      return response.data;
+      throw new Error('Informazioni sulla scuola non disponibili');
     } catch (error) {
       console.error('Errore durante il recupero della scuola:', error);
       throw { 
@@ -153,7 +159,32 @@ const studentService = {
         details: error.response?.data || error.message
       };
     }
-  }
-};
+  },
+  
+  /**
+   * Recupera i test assegnati allo studente
+   * @returns {Promise} Promise con i dati dei test assegnati
+   */
+  getAssignedTests: async () => {
+    try {
+      console.log('Recupero test assegnati...');
+      
+      const response = await axiosInstance.get('/student/tests/assigned');
+      
+      console.log('Risposta test assegnati:', response.data);
+      
+      return {
+        status: 'success',
+        data: response.data.tests || response.data.data?.tests || []
+      };
+    } catch (error) {
+      console.error('Errore durante il recupero dei test assegnati:', error);
+      throw { 
+        error: error.response?.status === 404 ? 'Nessun test trovato' : 'Errore nel recupero dei test',
+        details: error.response?.data || error.message
+      };
+    }
+  },
+}
 
 export default studentService;

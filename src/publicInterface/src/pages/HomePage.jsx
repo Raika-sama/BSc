@@ -72,13 +72,21 @@ const HomePage = ({ setMenuPosition }) => {
               </Stack>
             </Box>
             <Flex flex={1} justify="center">
-              <Image
-                src="https://via.placeholder.com/500x400?text=Brain+Visualization"
-                alt="Brain Scanner Visualization"
+              {/* FIX: Usa un'immagine locale dalle risorse pubbliche o mostra un'alternativa */}
+              <Box
+                w="500px"
+                h="400px"
+                bg="gray.200"
                 borderRadius="lg"
                 shadow="xl"
-                maxH="400px"
-              />
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <Text textAlign="center" fontWeight="bold" color="gray.500">
+                  Brain Visualization
+                </Text>
+              </Box>
             </Flex>
           </Stack>
         </Container>

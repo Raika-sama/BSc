@@ -357,7 +357,43 @@ class StudentAuthService {
         return password;
     }
 
-    
+    /**
+     * Verifica un token JWT
+     * @param {string} token - Token da verificare
+     * @returns {Object} Payload decodificato
+     */
+    verifyToken(token) {
+        try {
+            if (!token) {
+                throw createError(
+                    ErrorTypes.AUTH.NO_TOKEN,
+                    'Token mancante'
+                );
+            }
+
+            const decoded = jwt.verify(token, config.jwt.secret);
+            return decoded;
+        } catch (error) {
+            logger.error('Errore durante la verifica del token', {
+                error: error.message,
+                name: error.name
+            });
+            
+            if (error.name === 'JsonWebTokenError') {
+                throw createError(
+                    ErrorTypes.AUTH.INVALID_TOKEN,
+                    'Token non valido'
+                );
+            }
+            if (error.name === 'TokenExpiredError') {
+                throw createError(
+                    ErrorTypes.AUTH.TOKEN_EXPIRED,
+                    'Token scaduto'
+                );
+            }
+            throw error;
+        }
+    }
 }
 
 module.exports = new StudentAuthService();

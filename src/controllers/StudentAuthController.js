@@ -5,7 +5,7 @@ const logger = require('../utils/errors/logger/logger');
 const { ErrorTypes, createError } = require('../utils/errors/errorTypes');
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
-const Student = require('../models/Student'); // Aggiungi questa riga
+const Student = require('../models/Student');
 
 /**
  * Controller che gestisce le operazioni di autenticazione degli studenti
@@ -35,12 +35,13 @@ class StudentAuthController extends BaseController {
             
             // Per il primo accesso, invia solo le informazioni necessarie per il cambio password
             if (result.isFirstAccess) {
-                return this.sendResponse(res, {
+                // FIX: Risposta standardizzata per primo accesso
+                return res.status(200).json({
                     status: 'success',
                     data: {
                         isFirstAccess: true,
                         studentId: result.studentId,
-                        message: result.message
+                        message: result.message || 'Password temporanea corretta. Richiesto cambio password.'
                     }
                 });
             }
@@ -55,11 +56,21 @@ class StudentAuthController extends BaseController {
             
             res.cookie('student-token', result.token, cookieOptions);
             
-            // Invia la risposta
-            this.sendResponse(res, {
+            // STANDARDIZZAZIONE: Assicuriamoci che l'ID studente sia sempre presente con _id
+            const studentData = result.student;
+            if (studentData) {
+                // Aggiungi _id se manca ma c'è id
+                if (!studentData._id && studentData.id) {
+                    studentData._id = studentData.id;
+                }
+            }
+            
+            // FIX: Invia la risposta standardizzata (senza doppio wrapping)
+            return res.status(200).json({
                 status: 'success',
                 data: {
-                    student: result.student
+                    student: studentData,
+                    token: result.token
                 }
             });
         } catch (error) {
@@ -105,12 +116,21 @@ class StudentAuthController extends BaseController {
             
             res.cookie('student-token', result.token, cookieOptions);
             
-            // Invia la risposta
-            this.sendResponse(res, {
+            // STANDARDIZZAZIONE: Assicuriamoci che l'ID studente sia sempre presente con _id
+            const studentData = result.student;
+            if (studentData) {
+                if (!studentData._id && studentData.id) {
+                    studentData._id = studentData.id;
+                }
+            }
+            
+            // FIX: Risposta standardizzata (senza doppio wrapping)
+            return res.status(200).json({
                 status: 'success',
-                message: result.message,
+                message: result.message || 'Password aggiornata con successo',
                 data: {
-                    student: result.student
+                    student: studentData,
+                    token: result.token
                 }
             });
         } catch (error) {
@@ -138,8 +158,10 @@ class StudentAuthController extends BaseController {
                 httpOnly: true
             });
             
-            this.sendResponse(res, {
+            // FIX: Risposta standardizzata (senza doppio wrapping)
+            return res.status(200).json({
                 status: 'success',
+                message: 'Logout effettuato con successo',
                 data: null
             });
         } catch (error) {
@@ -148,10 +170,12 @@ class StudentAuthController extends BaseController {
                 stack: error.stack
             });
             
-            this.sendError(res, {
-                statusCode: 500,
+            return res.status(500).json({
+                status: 'error',
                 message: 'Errore durante il logout',
-                code: 'LOGOUT_ERROR'
+                error: {
+                    code: 'LOGOUT_ERROR'
+                }
             });
         }
     }
@@ -171,10 +195,12 @@ class StudentAuthController extends BaseController {
                           : null);
 
             if (!token) {
-                return this.sendError(res, {
-                    statusCode: 401,
+                return res.status(401).json({
+                    status: 'error',
                     message: 'Non autenticato - token mancante',
-                    code: 'NOT_AUTHENTICATED'
+                    error: {
+                        code: 'NOT_AUTHENTICATED'
+                    }
                 });
             }
 
@@ -183,10 +209,12 @@ class StudentAuthController extends BaseController {
             try {
                 decoded = jwt.verify(token, config.jwt.secret);
             } catch (err) {
-                return this.sendError(res, {
-                    statusCode: 401,
+                return res.status(401).json({
+                    status: 'error',
                     message: 'Sessione scaduta o token non valido',
-                    code: 'INVALID_TOKEN'
+                    error: {
+                        code: 'INVALID_TOKEN'
+                    }
                 });
             }
 
@@ -194,18 +222,28 @@ class StudentAuthController extends BaseController {
             const studentId = decoded.id || req.student?.id || req.params.studentId;
             
             if (!studentId) {
-                return this.sendError(res, {
-                    statusCode: 401,
+                return res.status(401).json({
+                    status: 'error',
                     message: 'ID studente non disponibile',
-                    code: 'STUDENT_ID_MISSING'
+                    error: {
+                        code: 'STUDENT_ID_MISSING'
+                    }
                 });
             }
                 
             logger.info('Richiesta profilo studente', { studentId });
                 
             const profileData = await StudentAuthService.getStudentProfile(studentId);
+            
+            // STANDARDIZZAZIONE: Assicuriamoci che l'ID studente sia sempre presente con _id
+            if (profileData.student) {
+                if (!profileData.student._id && profileData.student.id) {
+                    profileData.student._id = profileData.student.id;
+                }
+            }
                 
-            this.sendResponse(res, {
+            // FIX: Risposta standardizzata (senza doppio wrapping)
+            return res.status(200).json({
                 status: 'success',
                 data: profileData
             });
