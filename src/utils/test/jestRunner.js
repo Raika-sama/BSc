@@ -25,6 +25,7 @@ function runJest(args = [], cwd = null) {
             console.log(`[JestRunner] Avvio dell'esecuzione dei test...`);
             console.log(`[JestRunner] Directory di lavoro: ${workingDir}`);
             console.log(`[JestRunner] Sistema operativo: ${isWindows ? 'Windows' : 'Unix/Linux'}`);
+            console.log(`[JestRunner] Argomenti forniti:`, args);
             
             // Verifica che Jest sia installato
             try {
@@ -46,6 +47,41 @@ function runJest(args = [], cwd = null) {
             
             // Aggiungi parametri di base
             const baseArgs = ['jest', '--detectOpenHandles', '--forceExit', '--no-cache'];
+            
+            // Migliore gestione per testPathPattern
+            // Se abbiamo un file specifico, usiamo testPathPattern per limitare i test solo a quel file
+            const hasSpecificFile = args.some(arg => arg.endsWith('.test.js') || arg.includes('Repository'));
+            
+            if (hasSpecificFile) {
+                // Cerchiamo il pattern del file e lo usiamo come testPathPattern esatto
+                let filePattern = args.find(arg => arg.endsWith('.test.js') || arg.includes('Repository'));
+                
+                if (filePattern) {
+                    // Estrai solo il nome del repository specifico se è disponibile
+                    if (filePattern.includes('Repository')) {
+                        // Estrai il nome esatto del repository (es. UserRepository, SchoolRepository)
+                        const match = filePattern.match(/([A-Za-z]+Repository)/);
+                        if (match && match[1]) {
+                            filePattern = match[1];
+                            console.log(`[JestRunner] Estratto nome repository: ${filePattern}`);
+                        }
+                    }
+                    
+                    // Rimuovi eventuali testPathPattern esistenti
+                    args = args.filter(arg => !arg.includes('--testPathPattern='));
+                    
+                    // Usa un'espressione regolare per garantire che il match sia esatto per il nome file
+                    args.push(`--testPathPattern=\\/${filePattern}\\.test\\.js$`);
+                    
+                    // Aggiungi anche una regola --testNamePattern per far eseguire solo i test di questo repository
+                    if (!args.some(arg => arg.includes('--testNamePattern='))) {
+                        args.push(`--testNamePattern=${filePattern}`);
+                    }
+                    
+                    console.log(`[JestRunner] Test limitato SOLO al file specificato: ${filePattern}`);
+                }
+            }
+            
             const allArgs = [...baseArgs, ...args];
             
             // Se è un test specifico, aggiungi --runInBand per evitare problemi di concorrenza

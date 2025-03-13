@@ -607,6 +607,15 @@ const AcademicYearsTab = ({ school }) => {
     
     const handleActivateYear = async (yearId) => {
         try {
+            // Verifica se esiste già un anno accademico attivo
+            if (currentYear) {
+                showNotification(
+                    'Esiste già un anno accademico attivo. Utilizzare la funzione di transizione anno per passare da un anno all\'altro.',
+                    'error'
+                );
+                return;
+            }
+            
             setIsLoading(true);
             const response = await axiosInstance.post(`/schools/${school._id}/academic-years/${yearId}/activate`);
             

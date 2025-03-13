@@ -7,6 +7,7 @@ const logger = require('../utils/errors/logger/logger');
 const mongoose = require('mongoose');
 const handleRepositoryError = require('../utils/errors/repositoryErrorHandler');
 
+
 /**
  * Repository per la gestione delle operazioni relative agli studenti
  * Estende le funzionalità base del BaseRepository
@@ -58,15 +59,25 @@ class StudentRepository extends BaseRepository {
                         as: 'testStats'
                     }
                 },
-                // Lookup essenziale per mainTeacher
-                {
-                    $lookup: {
-                        from: 'users',
-                        localField: 'mainTeacher',
-                        foreignField: '_id',
-                        as: 'mainTeacherDetails'
-                    }
-                },
+                // Modifica il lookup per mainTeacher per includere più campi
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'mainTeacher',
+                    foreignField: '_id',
+                    as: 'mainTeacherDetails'
+                }
+            },
+            
+            // Aggiungi un nuovo lookup per i teachers
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'teachers',
+                    foreignField: '_id',
+                    as: 'teachersDetails'
+                }
+            },
                 // Lookup essenziale per school
                 {
                     $lookup: {
@@ -96,6 +107,7 @@ class StudentRepository extends BaseRepository {
                             }
                         },
                         mainTeacher: { $arrayElemAt: ['$mainTeacherDetails', 0] },
+                        teachers: '$teachersDetails',
                         schoolId: { $arrayElemAt: ['$schoolDetails', 0] },
                         classId: { $arrayElemAt: ['$classDetails', 0] }
                     }
@@ -110,11 +122,6 @@ class StudentRepository extends BaseRepository {
                         status: 1,
                         specialNeeds: 1,
                         testCount: 1,
-                        mainTeacher: {
-                            _id: 1,
-                            firstName: 1,
-                            lastName: 1
-                        },
                         schoolId: {
                             _id: 1,
                             name: 1
@@ -123,6 +130,23 @@ class StudentRepository extends BaseRepository {
                             _id: 1,
                             year: 1,
                             section: 1
+                        },
+                        // Campi dettagliati dei docenti
+                        mainTeacher: {
+                            _id: 1,
+                            firstName: 1,
+                            lastName: 1,
+                            email: 1,
+                            role: 1,
+                            assignedSchoolIds: 1
+                        },
+                        teachers: {
+                            _id: 1,
+                            firstName: 1,
+                            lastName: 1,
+                            email: 1,
+                            role: 1,
+                            assignedSchoolIds: 1
                         }
                     }
                 }
@@ -266,8 +290,6 @@ class StudentRepository extends BaseRepository {
         }
     }
 
-// nuovo metodo specifico con una query diversa dove cerchiamo schoolId: { $exists: false } invece di usare schoolId come filtro.    
-
 async findUnassignedToSchoolStudents() {
     try {
         logger.debug('Cercando studenti senza scuola...');
@@ -404,6 +426,20 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             mainTeacher: mainTeacherId,
             teachersCount: teacherIds.length
         });
+
+        // 6. Aggiorna gli assignedStudentIds per tutti gli insegnanti
+        if (teacherIds.length > 0 || mainTeacherId) {
+            const allTeacherIds = [...new Set([...teacherIds, mainTeacherId].filter(Boolean))];
+            await mongoose.model('User').updateMany(
+                { _id: { $in: allTeacherIds } },
+                {
+                    $addToSet: {
+                        assignedStudentIds: { $each: studentIds }
+                    }
+                },
+                { session }
+            );
+        }
 
         await session.commitTransaction();
         
@@ -816,6 +852,15 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                 );
             }
 
+            // Raccogli tutti gli ID degli insegnanti (principale + co-docenti)
+            const teacherIds = [];
+            if (classDoc.mainTeacher) {
+                teacherIds.push(classDoc.mainTeacher._id);
+            }
+            if (classDoc.teachers && classDoc.teachers.length > 0) {
+                teacherIds.push(...classDoc.teachers.map(t => t._id));
+            }
+
             // Aggiorna lo storico se necessario
             if (student.classId && student.classId.toString() !== classId) {
                 student.classChangeHistory.push({
@@ -841,8 +886,30 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
             student.lastClassChangeDate = new Date();
 
             await student.save({ session });
-            await session.commitTransaction();
 
+            // Aggiorna la classe
+            await classDoc.updateOne(
+                { _id: classId },
+                {
+                    $addToSet: {
+                        students: { studentId: student._id }
+                    }
+                }
+            );
+
+            // Aggiorna gli assignedStudentIds per tutti gli insegnanti
+            if (teacherIds.length > 0) {
+                await mongoose.model('User').updateMany(
+                    { _id: { $in: teacherIds } },
+                    {
+                        $addToSet: {
+                            assignedStudentIds: student._id
+                        }
+                    }
+                );
+            }
+
+            await session.commitTransaction();
             return student;
         } catch (error) {
             await session.abortTransaction();
@@ -1007,7 +1074,19 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
      * @returns {Promise<Object>} Studente aggiornato
      */
     async update(studentId, updateData) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
         try {
+            // Verifica esistenza dello studente
+            const student = await this.model.findById(studentId).session(session);
+            if (!student) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Studente non trovato'
+                );
+            }
+
             // Verifica unicità email/codice fiscale se vengono modificati
             if (updateData.email || updateData.fiscalCode) {
                 const exists = await this.model.findOne({
@@ -1016,7 +1095,7 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                         updateData.email ? { email: updateData.email } : null,
                         updateData.fiscalCode ? { fiscalCode: updateData.fiscalCode } : null
                     ].filter(Boolean)
-                });
+                }).session(session);
 
                 if (exists) {
                     throw createError(
@@ -1026,30 +1105,82 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                 }
             }
 
-            const student = await this.model.findByIdAndUpdate(
+            // Gestione speciale per l'aggiornamento dei docenti
+            if (updateData.teachers && updateData.updateTeacherAssignments) {
+                // Normalizza gli ID dei docenti
+                updateData.teachers = updateData.teachers.map(teacherId => 
+                    typeof teacherId === 'string' ? teacherId : teacherId._id
+                );
+
+                // Ottiene i docenti precedenti dello studente
+                const previousTeachers = student.teachers || [];
+                
+                // Converte in array di stringhe (ID)
+                const previousTeacherIds = previousTeachers.map(teacher => 
+                    teacher.toString()
+                );
+
+                // Converti i nuovi ID docenti in stringhe per confronto
+                const newTeacherIds = updateData.teachers.map(id => id.toString());
+                
+                // Calcola i docenti aggiunti e rimossi
+                const addedTeachers = newTeacherIds.filter(id => !previousTeacherIds.includes(id));
+                const removedTeachers = previousTeacherIds.filter(id => !newTeacherIds.includes(id));
+
+                logger.debug('Aggiornamento relazioni docenti-studente:', {
+                    studentId,
+                    addedTeachers,
+                    removedTeachers
+                });
+
+                const User = mongoose.model('User');
+                
+                // Aggiungi lo studentId all'array assignedStudentIds dei docenti aggiunti
+                if (addedTeachers.length > 0) {
+                    await User.updateMany(
+                        { _id: { $in: addedTeachers } },
+                        { $addToSet: { assignedStudentIds: studentId } },
+                        { session }
+                    );
+                }
+                
+                // Rimuovi lo studentId dall'array assignedStudentIds dei docenti rimossi
+                if (removedTeachers.length > 0) {
+                    await User.updateMany(
+                        { _id: { $in: removedTeachers } },
+                        { $pull: { assignedStudentIds: studentId } },
+                        { session }
+                    );
+                }
+                
+                // Rimuoviamo il flag updateTeacherAssignments per evitare che venga salvato nel DB
+                delete updateData.updateTeacherAssignments;
+            }
+
+            // Esegue l'aggiornamento dello studente
+            const updatedStudent = await this.model.findByIdAndUpdate(
                 studentId,
                 updateData,
                 { 
                     new: true,
-                    runValidators: true
+                    runValidators: true,
+                    session
                 }
-            ).populate('schoolId classId mainTeacher teachers');
+            );
 
-            if (!student) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Studente non trovato'
-                );
-            }
+            await session.commitTransaction();
+            return updatedStudent;
 
-            return student;
         } catch (error) {
+            await session.abortTransaction();
             return handleRepositoryError(
                 error,
                 'update',
                 { studentId, updateData },
                 'StudentRepository'
             );
+        } finally {
+            session.endSession();
         }
     }
 
@@ -1163,7 +1294,8 @@ async batchAssignToClass(studentIds, { classId, academicYear }) {
                         let: { studentId: '$_id' },
                         pipeline: [
                             {
-                                $match: {
+                                $match:
+                                {
                                     $expr: {
                                         $and: [
                                             { $eq: ['$studentId', '$$studentId'] },

@@ -137,7 +137,26 @@ const schoolSchema = new mongoose.Schema({
             enum: ['admin', 'developer', 'manager', 'pcto', 'teacher', 'tutor', 'researcher', 'health']
         }
     }],
-    
+    isActive: {
+        type: Boolean,
+        default: true
+    },
+    deactivatedAt: {
+        type: Date,
+        default: null
+    },
+    deactivationReason: {
+        type: String,
+        trim: true
+    },
+    deactivationNotes: {
+        type: String,
+        trim: true
+    },
+    reactivatedAt: {
+        type: Date,
+        default: null
+    },
     isActive: {
         type: Boolean,
         default: true

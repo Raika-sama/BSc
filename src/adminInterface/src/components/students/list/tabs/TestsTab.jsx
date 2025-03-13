@@ -218,7 +218,6 @@ const TestsTab = ({ student }) => {
                 pt: 2,
                 position: 'relative' // Necessario per il posizionamento assoluto del Backdrop
             }}>
-                {/* Utilizziamo AnimatePresence con mode="sync" */}
                 <AnimatePresence mode="sync">
                     {/* Tab dei test assegnati */}
                     {tabValue === 0 && (

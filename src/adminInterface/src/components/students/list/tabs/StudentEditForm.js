@@ -15,12 +15,10 @@ import {
 } from '@mui/material';
 import { Save as SaveIcon } from '@mui/icons-material';
 import { useStudent } from '../../../../context/StudentContext';
-import { useUser } from '../../../../context/UserContext';
 import { useNotification } from '../../../../context/NotificationContext';
 
-const StudentEditForm = ({ student, setStudent }) => {
+const StudentEditForm = ({ student, setStudent, onCancel }) => {
     const { updateStudent } = useStudent();
-    const { users, getUsers } = useUser();
     const { showNotification } = useNotification();
 
     const [loading, setLoading] = useState(false);
@@ -34,25 +32,11 @@ const StudentEditForm = ({ student, setStudent }) => {
         dateOfBirth: '',
         email: '',
         parentEmail: '',
-        mainTeacher: '',
-        teachers: [],
         specialNeeds: false
     });
 
     useEffect(() => {
-        if (users.length === 0) {
-            getUsers();
-        }
-    }, [users.length, getUsers]);
-
-    useEffect(() => {
         if (student) {
-            // Debug log per vedere cosa arriva
-            console.log('Student data received:', {
-                mainTeacher: student.mainTeacher,
-                mainTeacherId: student.mainTeacher?._id || student.mainTeacher
-            });
-
             setFormData({
                 firstName: student.firstName || '',
                 lastName: student.lastName || '',
@@ -61,14 +45,6 @@ const StudentEditForm = ({ student, setStudent }) => {
                 dateOfBirth: student.dateOfBirth ? student.dateOfBirth.split('T')[0] : '',
                 email: student.email || '',
                 parentEmail: student.parentEmail || '',
-                // Assicurati di prendere SOLO l'ID, non l'oggetto intero
-                mainTeacher: typeof student.mainTeacher === 'string' 
-                    ? student.mainTeacher 
-                    : student.mainTeacher?._id || '',
-                // Stessa cosa per teachers - prendiamo solo gli ID
-                teachers: student.teachers?.map(t => 
-                    typeof t === 'string' ? t : t._id
-                ) || [],
                 specialNeeds: student.specialNeeds || false
             });
         }
@@ -79,17 +55,6 @@ const StudentEditForm = ({ student, setStudent }) => {
         
         if (name === 'specialNeeds') {
             setFormData(prev => ({ ...prev, specialNeeds: checked }));
-        } else if (name === 'teachers') {
-            setFormData(prev => ({ 
-                ...prev, 
-                teachers: Array.isArray(value) ? value : []
-            }));
-        } else if (name === 'mainTeacher') {
-            // Assicurati che il valore sia una stringa o stringa vuota
-            setFormData(prev => ({ 
-                ...prev, 
-                mainTeacher: value || ''
-            }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -127,39 +92,46 @@ const StudentEditForm = ({ student, setStudent }) => {
             setError('ID studente non valido');
             return;
         }
-    
+
         const errors = validateForm();
         if (errors.length > 0) {
             setError(errors.join(', '));
             return;
         }
-    
+
         try {
             setLoading(true);
-            // Puliamo i dati prima di inviarli
+            setError(null);
+            
             const updateData = {
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
                 gender: formData.gender,
                 dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
                 email: formData.email.trim(),
-                // Invia fiscalCode solo se non è vuoto
                 ...(formData.fiscalCode ? { fiscalCode: formData.fiscalCode.trim().toUpperCase() } : {}),
-                // Invia parentEmail solo se non è vuoto
                 ...(formData.parentEmail ? { parentEmail: formData.parentEmail.trim() } : {}),
-                // Assicurati che mainTeacher sia una stringa valida o null
-                mainTeacher: formData.mainTeacher || null,
-                // Filtra eventuali teachers vuoti o invalidi
-                teachers: (formData.teachers || []).filter(Boolean),
                 specialNeeds: Boolean(formData.specialNeeds)
             };
-    
-            console.log('Sending update data:', updateData); // Debug log
-    
+
             const updatedStudent = await updateStudent(studentId, updateData);
-            setStudent(updatedStudent);
-            setModified(false);
-            showNotification('Studente aggiornato con successo', 'success');
+            
+            if (updatedStudent) {
+                showNotification('Studente aggiornato con successo', 'success');
+                
+                // Prima chiudiamo il form
+                if (onCancel) {
+                    onCancel();
+                }
+                
+                // Poi aggiorniamo lo stato dello studente
+                // Usiamo setTimeout per assicurarci che l'aggiornamento avvenga dopo la chiusura del form
+                setTimeout(() => {
+                    setStudent(updatedStudent);
+                }, 0);
+                
+                setModified(false);
+            }
         } catch (err) {
             console.error('Update error:', err);
             setError(err.response?.data?.message || err.message);
@@ -260,44 +232,6 @@ const StudentEditForm = ({ student, setStudent }) => {
                     />
                 </Grid>
 
-                <Grid item xs={12} sm={6} md={4}>
-                <FormControl fullWidth>
-                    <InputLabel>Docente Principale</InputLabel>
-                    <Select
-                        name="mainTeacher"
-                        value={formData.mainTeacher || ''} // Ora questo sarà sempre un ID o stringa vuota
-                        onChange={handleChange}
-                        label="Docente Principale"
-                    >
-                        <MenuItem value="">Nessuno</MenuItem>
-                        {users.map(user => (
-                            <MenuItem key={user._id} value={user._id}>
-                                {`${user.firstName} ${user.lastName}`}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                    <FormControl fullWidth>
-                        <InputLabel>Docenti</InputLabel>
-                        <Select
-                            multiple
-                            name="teachers"
-                            value={formData.teachers}
-                            onChange={handleChange}
-                            label="Docenti"
-                        >
-                            {users.map(user => (
-                                <MenuItem key={user._id} value={user._id}>
-                                    {`${user.firstName} ${user.lastName}`}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Grid>
-
                 <Grid item xs={12}>
                     <Box sx={{ 
                         display: 'flex', 
@@ -316,14 +250,23 @@ const StudentEditForm = ({ student, setStudent }) => {
                             label="Necessità Speciali"
                         />
                         
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            disabled={!modified || loading}
-                            startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-                        >
-                            {loading ? 'Salvataggio...' : 'Salva Modifiche'}
-                        </Button>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                            <Button
+                                variant="outlined"
+                                onClick={onCancel}
+                                disabled={loading}
+                            >
+                                Annulla
+                            </Button>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                disabled={!modified || loading}
+                                startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+                            >
+                                {loading ? 'Salvataggio...' : 'Salva Modifiche'}
+                            </Button>
+                        </Box>
                     </Box>
                 </Grid>
             </Grid>

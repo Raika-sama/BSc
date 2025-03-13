@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Typography, IconButton, Chip, Tooltip } from '@mui/material';  // Aggiungiamo Typography
+import { Box, Typography, IconButton, Chip, Tooltip, Stack } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { motion } from 'framer-motion';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
@@ -18,6 +18,28 @@ const SectionList = ({ sections = [], showInactive = false, onDeactivate, onReac
                     {params.value}
                 </Box>
             ),
+        },
+        {
+            field: 'academicYear',
+            headerName: 'Anni Accademici',
+            flex: 1.5,
+            minWidth: 200,
+            renderCell: (params) => {
+                const years = params.value.split(', ').filter(y => y !== '-');
+                return (
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                        {years.length > 0 ? years.map((year) => (
+                            <Chip
+                                key={year}
+                                label={year}
+                                size="small"
+                                color="info"
+                                variant="outlined"
+                            />
+                        )) : '-'}
+                    </Stack>
+                );
+            },
         },
         {
             field: 'isActive',
@@ -93,7 +115,7 @@ const SectionList = ({ sections = [], showInactive = false, onDeactivate, onReac
     const filteredSections = useMemo(() => {
         return sections.filter(section => showInactive ? true : section.isActive)
             .map(section => ({
-                id: section.name, // Necessario per DataGrid
+                id: section.name,
                 ...section
             }));
     }, [sections, showInactive]);

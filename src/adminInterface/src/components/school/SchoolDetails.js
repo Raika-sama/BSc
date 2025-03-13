@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Container, Typography, Box, Button,
-    IconButton, CircularProgress, Alert, Tabs, Tab
+    IconButton, CircularProgress, Alert, Tabs, Tab,
+    Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
 } from '@mui/material';
 import {
     Edit as EditIcon,
     ArrowBack as ArrowBackIcon,
+    Delete as DeleteIcon,
+    Warning as WarningIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSchool } from '../../context/SchoolContext';
@@ -69,6 +72,7 @@ const tabContentVariants = {
 
 const SchoolDetails = () => {
     const [activeTab, setActiveTab] = useState(0);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const navigate = useNavigate();
     const { id } = useParams();
     const { showNotification } = useNotification();
@@ -78,7 +82,8 @@ const SchoolDetails = () => {
         error,
         getSchoolById,
         updateSchool,
-        addUserToSchool
+        addUserToSchool,
+        deleteSchool
     } = useSchool();
 
     useEffect(() => {
@@ -139,6 +144,29 @@ const SchoolDetails = () => {
         navigate(`/admin/schools/${id}/edit`);
     };
 
+    const handleDeleteClick = () => {
+        setDeleteDialogOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        try {
+            await deleteSchool(id);
+            showNotification('Scuola eliminata con successo', 'success');
+            navigate('/admin/schools');
+        } catch (error) {
+            showNotification(
+                error.response?.data?.error?.message || 'Errore nell\'eliminazione della scuola',
+                'error'
+            );
+        } finally {
+            setDeleteDialogOpen(false);
+        }
+    };
+
+    const handleDeleteCancel = () => {
+        setDeleteDialogOpen(false);
+    };
+
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -172,6 +200,14 @@ const SchoolDetails = () => {
                         {selectedSchool.name}
                     </Typography>
                     
+                    <Button 
+                        variant="outlined"
+                        color="error"
+                        startIcon={<DeleteIcon />}
+                        onClick={handleDeleteClick}
+                    >
+                        Elimina
+                    </Button>
                 </Box>
 
                 {/* Tabs */}
@@ -219,6 +255,55 @@ const SchoolDetails = () => {
                     </motion.div>
                 </AnimatePresence>
             </Container>
+
+            {/* Dialog di conferma eliminazione */}
+            <Dialog
+                open={deleteDialogOpen}
+                onClose={handleDeleteCancel}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+                maxWidth="md"
+            >
+                <DialogTitle id="alert-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <WarningIcon color="error" />
+                    Conferma eliminazione scuola
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Stai per eliminare la scuola <strong>{selectedSchool?.name}</strong>.
+                    </DialogContentText>
+                    <Box sx={{ mt: 2, mb: 2, backgroundColor: 'error.light', p: 2, borderRadius: 1 }}>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                            Questa operazione comporterà:
+                        </Typography>
+                        <ul>
+                            <li>L'eliminazione permanente di tutte le classi associate alla scuola</li>
+                            <li>La rimozione di tutte le associazioni con gli utenti (docenti e manager)</li>
+                            <li>La perdita di tutti i dati relativi alla scuola e alle sue configurazioni</li>
+                        </ul>
+                        <Typography variant="body2" fontWeight="bold" sx={{ mt: 1 }}>
+                            L'operazione non è reversibile e i dati non potranno essere recuperati.
+                        </Typography>
+                    </Box>
+                    <DialogContentText color="error" sx={{ fontWeight: 'bold' }}>
+                        Sei sicuro di voler procedere con l'eliminazione?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleDeleteCancel} color="primary" variant="outlined">
+                        Annulla
+                    </Button>
+                    <Button 
+                        onClick={handleDeleteConfirm} 
+                        color="error" 
+                        variant="contained"
+                        startIcon={<DeleteIcon />}
+                        autoFocus
+                    >
+                        Elimina definitivamente
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </motion.div>
     );
 };

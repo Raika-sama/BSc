@@ -2,38 +2,65 @@ import React, { createContext, useContext, useReducer } from 'react';
 import { axiosInstance } from '../services/axiosConfig';
 import { useNotification } from './NotificationContext';
 
-// Helper function per normalizzare i dati degli studenti
-const normalizeStudent = (student) => {
-    if (!student) return null;
-
-    const normalized = {
-        ...student,
-        id: student._id || student.id,
-        schoolId: normalizeSchoolId(student.schoolId),
-        classId: normalizeClassId(student.classId),
-        lastName: student.lastName || '',
-        firstName: student.firstName || '',
-        fiscalCode: student.fiscalCode || '',
-        gender: student.gender || '',
-        email: student.email || '',
-        dateOfBirth: student.dateOfBirth || null,
-        parentEmail: student.parentEmail || '',
-        status: student.status || 'pending',
-        needsClassAssignment: student.needsClassAssignment ?? true,
-        isActive: student.isActive ?? true,
-        specialNeeds: student.specialNeeds ?? false,
-        mainTeacher: normalizeTeacher(student.mainTeacher),
-        teachers: Array.isArray(student.teachers) ? 
-            student.teachers.map(normalizeTeacher) : 
-            []
-    };
-
-    return normalized;
+// Helper function per normalizzare i docenti
+const normalizeTeacher = (teacher) => {
+    // Caso 1: Se teacher è null o undefined
+    if (!teacher) return null;
+    
+    // Caso 2: Se teacher è una stringa (solo ID)
+    if (typeof teacher === 'string') {
+        return {
+            id: teacher,
+            _id: teacher,
+            firstName: '',
+            lastName: '',
+            name: `Docente ${teacher.substring(0, 6)}...`,
+            displayName: `Docente ${teacher.substring(0, 6)}...`
+        };
+    }
+    
+    // Caso 3: Se teacher è un oggetto
+    if (typeof teacher === 'object') {
+        // Estrai l'ID (potrebbe essere in teacher._id o teacher.id)
+        const id = teacher._id || teacher.id;
+        
+        // Se l'oggetto non ha un ID, restituisci null
+        if (!id) return null;
+        
+        // Gestisci il nome in base alle proprietà disponibili
+        let firstName = teacher.firstName || '';
+        let lastName = teacher.lastName || '';
+        let name = '';
+        
+        // Determina il nome da visualizzare
+        if (teacher.name) {
+            name = teacher.name;
+        } else if (firstName || lastName) {
+            name = `${firstName} ${lastName}`.trim();
+        } else {
+            name = `Docente ${id.substring(0, 6)}...`;
+        }
+        
+        // Crea un oggetto normalizzato
+        return {
+            id: id,
+            _id: id,
+            firstName: firstName,
+            lastName: lastName,
+            name: name,
+            displayName: name,
+            email: teacher.email || '',
+            role: teacher.role || '',
+            ...teacher // Mantieni tutte le altre proprietà originali
+        };
+    }
+    
+    // Caso default: Se arriviamo qui, c'è un formato non previsto
+    console.warn('Formato docente non riconosciuto:', teacher);
+    return null;
 };
 
-
-
-// Helper functions per normalizzare i sotto-oggetti
+// Helper functions per normalizzare gli oggetti scolastici
 const normalizeSchoolId = (schoolId) => {
     if (!schoolId) return { _id: null, name: 'N/D' };
     if (typeof schoolId === 'object') return schoolId;
@@ -46,36 +73,79 @@ const normalizeClassId = (classId) => {
     return { _id: classId };
 };
 
-const normalizeTeacher = (teacher) => {
-    if (!teacher) return null;
+// Funzione principale per normalizzare uno studente
+const normalizeStudent = (student) => {
+    if (!student) return null;
     
-    // Se è una stringa (ID), restituisci un oggetto base
-    if (typeof teacher === 'string') {
-        return { id: teacher, name: `Docente ${teacher.substr(0, 6)}...` };
+    // Debug log - prima della normalizzazione
+    console.log('Normalizing student:', {
+        id: student._id || student.id,
+        name: `${student.firstName} ${student.lastName}`,
+        mainTeacher: student.mainTeacher,
+        teachersCount: Array.isArray(student.teachers) ? student.teachers.length : 'not an array'
+    });
+    
+    // Assicuriamoci di avere un ID valido
+    const studentId = student._id || student.id;
+    if (!studentId) {
+        console.warn('Student without ID:', student);
+        return null;
     }
+    
+    const normalized = {
+        ...student,
+        id: studentId,
+        _id: studentId,
+        
+        schoolId: student.schoolId ? {
+            _id: typeof student.schoolId === 'object' ? student.schoolId._id : student.schoolId,
+            name: typeof student.schoolId === 'object' ? student.schoolId.name : 'N/D',
+            schoolType: typeof student.schoolId === 'object' ? student.schoolId.schoolType : null,
+            institutionType: typeof student.schoolId === 'object' ? student.schoolId.institutionType : null,
+            region: typeof student.schoolId === 'object' ? student.schoolId.region : null,
+            province: typeof student.schoolId === 'object' ? student.schoolId.province : null
+        } : null,
+        
+        classId: student.classId ? {
+            _id: typeof student.classId === 'object' ? student.classId._id : student.classId,
+            year: typeof student.classId === 'object' ? student.classId.year : null,
+            section: typeof student.classId === 'object' ? student.classId.section : null,
+            academicYear: typeof student.classId === 'object' ? student.classId.academicYear : null
+        } : null,
+        
+        lastName: student.lastName || '',
+        firstName: student.firstName || '',
+        fiscalCode: student.fiscalCode || '',
+        gender: student.gender || '',
+        email: student.email || '',
+        dateOfBirth: student.dateOfBirth || null,
+        parentEmail: student.parentEmail || '',
+        status: student.status || 'pending',
+        needsClassAssignment: student.needsClassAssignment ?? true,
+        isActive: student.isActive ?? true,
+        specialNeeds: student.specialNeeds ?? false,
+        
+        // Normalizza il docente principale utilizzando la funzione migliorata
+        mainTeacher: normalizeTeacher(student.mainTeacher),
+        
+        // Normalizza l'array di docenti, filtrando eventuali valori null
+        teachers: Array.isArray(student.teachers) ? 
+            student.teachers.map(normalizeTeacher).filter(Boolean) : 
+            [],
+        
+        testCount: student.testCount || 0
+    };
 
-    // Se è un oggetto ma senza proprietà necessarie
-    if (typeof teacher === 'object') {
-        const id = teacher._id || teacher.id;
-        if (!id) return null;
-
-        // Costruisci il nome del docente in base alle proprietà disponibili
-        let name = teacher.name;
-        if (!name && teacher.firstName) {
-            name = `${teacher.firstName} ${teacher.lastName || ''}`.trim();
-        }
-        if (!name) {
-            name = `Docente ${id.substr(0, 6)}...`;
-        }
-
-        return {
-            id: id,
-            name: name,
-            ...teacher  // mantieni le altre proprietà
-        };
-    }
-
-    return null;
+    // Debug log - dopo la normalizzazione
+    console.log('Normalized student:', {
+        id: normalized.id,
+        name: `${normalized.firstName} ${normalized.lastName}`,
+        mainTeacher: normalized.mainTeacher ? normalized.mainTeacher.displayName : 'none',
+        teachersCount: normalized.teachers.length,
+        teachersSample: normalized.teachers.slice(0, 2).map(t => t.displayName)
+    });
+    
+    return normalized;
 };
 
 const StudentContext = createContext();
@@ -140,6 +210,14 @@ const studentReducer = (state, action) => {
                 error: null
             };
             case STUDENT_ACTIONS.SET_SELECTED_STUDENT:
+                // Return current state if payload is null or undefined
+                if (!action.payload) {
+                    return {
+                        ...state,
+                        selectedStudent: null
+                    };
+                }
+                
                 const student = action.payload;
                 console.log('[StudentReducer] Setting selected student:', {
                     original: student,
@@ -327,6 +405,13 @@ export const StudentProvider = ({ children }) => {
             
             if (response.data.status === 'success') {
                 const student = response.data.data.student;
+                // Nella funzione getStudentById, aggiungi questo prima di normalizzare
+console.log('Raw student data from API:', {
+    mainTeacherType: typeof student.mainTeacher,
+    mainTeacher: student.mainTeacher,
+    teachersType: typeof student.teachers,
+    teachers: student.teachers
+});
                 const normalizedStudent = normalizeStudent(student);
                 
                 // Aggiorna lo stato interno
@@ -358,72 +443,6 @@ export const StudentProvider = ({ children }) => {
         } finally {
             dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: false });
         }
-    };
-
-    // Crea nuovo studente
-    // Modifica la funzione createStudent per validare e formattare i dati prima dell'invio
-    const normalizeStudent = (student) => {
-    if (!student) return null;
-    
-    // Debugging
-    //console.log('Normalizing student:', student);
-    //console.log('Original mainTeacher:', student.mainTeacher);
-    
-    // Assicuriamoci di avere un ID valido
-    const studentId = student._id || student.id;
-    if (!studentId) {
-        console.warn('Student without ID:', student);
-        return null;
-    }
-    const normalized = {
-        ...student,
-        id: studentId,
-        _id: studentId,
-
-        schoolId: student.schoolId ? {
-            _id: student.schoolId._id,
-            name: student.schoolId.name,
-            schoolType: student.schoolId.schoolType,
-            institutionType: student.schoolId.institutionType,
-            region: student.schoolId.region,
-            province: student.schoolId.province
-        } : null,
-        classId: student.classId ? {
-            _id: student.classId._id,
-            year: student.classId.year,
-            section: student.classId.section,
-            academicYear: student.classId.academicYear
-        } : null,
-       lastName: student.lastName || '',
-        firstName: student.firstName || '',
-        fiscalCode: student.fiscalCode || '',
-        gender: student.gender || '',
-        email: student.email || '',
-        dateOfBirth: student.dateOfBirth || null,
-        parentEmail: student.parentEmail || '',
-        status: student.status || 'pending',
-        needsClassAssignment: student.needsClassAssignment ?? true,
-        isActive: student.isActive ?? true,
-        specialNeeds: student.specialNeeds ?? false,
-        // Gestione più accurata del mainTeacher
-        mainTeacher: student.mainTeacher ? {
-            id: student.mainTeacher._id || student.mainTeacher.id,
-            name: student.mainTeacher.name || student.mainTeacher.firstName + ' ' + student.mainTeacher.lastName || 'N/D',
-            ...student.mainTeacher
-            
-        } : null,        
-        teachers: Array.isArray(student.teachers) ? 
-        student.teachers.map(normalizeTeacher) : 
-            [],
-        testCount: student.testCount || 0
-
-    };
-
-// Debugging
-console.log('Normalized student:', normalized);
-console.log('Normalized mainTeacher:', normalized.mainTeacher);
-    
-return normalized;
     };
 
     // Modifica createStudent
@@ -520,46 +539,56 @@ return normalized;
                 error.code = 'MISSING_ID';
                 throw error;
             }
-    
-            // Pulisci i dati prima dell'invio
-            const cleanedData = {
-                ...updateData,
-                mainTeacher: updateData.mainTeacher || null,  // Converti stringa vuota in null
-                teachers: Array.isArray(updateData.teachers) ? updateData.teachers.filter(Boolean) : [], // Rimuovi valori falsy
-                fiscalCode: updateData.fiscalCode || null,  // Converti stringa vuota in null
-                parentEmail: updateData.parentEmail || null  // Converti stringa vuota in null
-            };
-    
-            console.log('Updating student with cleaned data:', { 
-                studentId, 
-                originalData: updateData,
-                cleanedData 
-            });
-    
-            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
-            console.log('[StudentContext] Cleaned update data:', cleanedData);
 
-            const response = await axiosInstance.put(`/students/${studentId}`, cleanedData);
+            // Gestione specifica per i docenti per evitare riferimenti circolari
+            const sanitizedData = { ...updateData };
+            
+            // Sanitizza l'array dei docenti se presente
+            if (Array.isArray(sanitizedData.teachers)) {
+                sanitizedData.teachers = sanitizedData.teachers.map(teacher => {
+                    // Se è già un ID, ritornalo
+                    if (typeof teacher === 'string') return teacher;
+                    // Se è un oggetto docente, prendi solo l'ID
+                    return teacher._id || teacher.id;
+                });
+            }
+
+            // Sanitizza il docente principale se presente
+            if (sanitizedData.mainTeacher) {
+                if (typeof sanitizedData.mainTeacher === 'object') {
+                    sanitizedData.mainTeacher = sanitizedData.mainTeacher._id || sanitizedData.mainTeacher.id;
+                }
+            }
+
+            console.log('[StudentContext] Sanitized update data:', sanitizedData);
+            
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: true });
+            
+            const response = await axiosInstance.put(`/students/${studentId}`, sanitizedData);
             console.log('[StudentContext] Update response:', response.data);
 
             if (response.data.status === 'success') {
-                const updatedStudent = {
-                    ...response.data.data.student,
-                    _id: response.data.data.student.id,
-                    id: response.data.data.student.id
-                };
-    
-                console.log('[StudentContext] Normalized updated student:', updatedStudent);
-
+                const updatedStudent = normalizeStudent(response.data.data.student);
                 
+                // Dispatch the update action to update both the students list and selectedStudent
                 dispatch({
                     type: STUDENT_ACTIONS.UPDATE_STUDENT,
                     payload: updatedStudent
                 });
+
+                // If this is the selected student, update it as well
+                if (state.selectedStudent?.id === studentId) {
+                    dispatch({
+                        type: STUDENT_ACTIONS.SET_SELECTED_STUDENT,
+                        payload: updatedStudent
+                    });
+                }
                 
                 showNotification('Studente aggiornato con successo', 'success');
                 return updatedStudent;
             }
+
+            throw new Error('Errore nell\'aggiornamento dello studente');
         } catch (error) {
             console.error('Error in update student:', {
                 error: error.message,
@@ -579,6 +608,8 @@ return normalized;
             
             showNotification(errorMessage, 'error');
             throw error;
+        } finally {
+            dispatch({ type: STUDENT_ACTIONS.SET_LOADING, payload: false });
         }
     };
 
@@ -646,13 +677,13 @@ return normalized;
             const response = await axiosInstance.get(`/students/unassigned/${schoolId}`);
             
             console.log('Server response:', response.data);
-    
+
             // Modifica qui: accedi correttamente ai dati annidati
             if (response.data?.data?.data?.students) {
                 const students = response.data.data.data.students;
                 
                 console.log('Received students:', students);
-    
+
                 // Normalizza i dati degli studenti
                 const normalizedStudents = students.map(student => ({
                     ...student,
@@ -663,14 +694,14 @@ return normalized;
                     gender: student.gender || '',
                     fullName: `${student.firstName} ${student.lastName}`
                 }));
-    
+
                 console.log('Normalized students:', normalizedStudents);
-    
+
                 dispatch({
                     type: STUDENT_ACTIONS.SET_UNASSIGNED_STUDENTS,
                     payload: normalizedStudents
                 });
-    
+
                 return normalizedStudents;
             } else {
                 console.error('Struttura dati non valida:', response.data);

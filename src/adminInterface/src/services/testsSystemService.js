@@ -8,62 +8,85 @@ const BASE_URL = '/system-tests';
 const testSystemService = {
   /**
    * Ottiene la lista dei test unitari disponibili
+   * @param {string} repository - Nome del repository da filtrare (opzionale)
    * @returns {Promise} Promise che risolve con la lista dei test unitari
    */
-  getUnitTests: () => {
-    return axiosInstance.get(`${BASE_URL}/unit`);
+  getUnitTests: (repository) => {
+    return axiosInstance.get(`${BASE_URL}/unit`, {
+      params: repository ? { repository } : {}
+    });
   },
 
   /**
    * Esegue un test unitario specifico
    * @param {string} testFile - Percorso del file di test da eseguire
+   * @param {string} methodName - Nome del metodo specifico da testare (opzionale)
    * @returns {Promise} Promise che risolve con i risultati del test
    */
-  runUnitTest: (testFile) => {
-    // Modifica: Passa testFile nel corpo della richiesta anziché come parametro di query
-    return axiosInstance.post(`${BASE_URL}/unit/run`, { testFile });
+  runUnitTest: (testFile, methodName) => {
+    const requestBody = { 
+      testFile,
+      // Standardizziamo i parametri per garantire compatibilità
+      methodName: methodName, // Usiamo methodName come parametro primario
+      testNamePattern: methodName, // Mandiamo anche come testNamePattern per retrocompatibilità
+    };
+    
+    return axiosInstance.post(`${BASE_URL}/unit/run`, requestBody);
   },
 
   /**
-   * Esegue tutti i test unitari
+   * Esegue tutti i test unitari per un repository specifico
+   * @param {string} repository - Nome del repository da testare (opzionale)
    * @returns {Promise} Promise che risolve con i risultati dei test
    */
-  runAllUnitTests: () => {
-    return axiosInstance.post(`${BASE_URL}/unit/run`);
+  runAllUnitTests: (repository) => {
+    const requestBody = repository ? { repository } : {};
+    return axiosInstance.post(`${BASE_URL}/unit/run`, requestBody);
   },
 
   /**
    * Ottiene la lista dei test di integrazione disponibili
+   * @param {string} repository - Nome del repository da filtrare (opzionale)
    * @returns {Promise} Promise che risolve con la lista dei test di integrazione
    */
-  getIntegrationTests: () => {
-    return axiosInstance.get(`${BASE_URL}/integration`);
+  getIntegrationTests: (repository) => {
+    return axiosInstance.get(`${BASE_URL}/integration`, {
+      params: repository ? { repository } : {}
+    });
   },
 
   /**
    * Esegue un test di integrazione specifico
    * @param {string} testFile - Percorso del file di test da eseguire
+   * @param {string} methodName - Nome del metodo specifico da testare (opzionale)
    * @returns {Promise} Promise che risolve con i risultati del test
    */
-  runIntegrationTest: (testFile) => {
-    // Modifica: Passa testFile nel corpo della richiesta anziché come parametro di query
-    return axiosInstance.post(`${BASE_URL}/integration/run`, { testFile });
+  runIntegrationTest: (testFile, methodName) => {
+    const requestBody = { 
+      testFile,
+      methodName: methodName,
+      testNamePattern: methodName // Manteniamo la doppia rappresentazione per compatibilità
+    };
+    
+    return axiosInstance.post(`${BASE_URL}/integration/run`, requestBody);
   },
 
   /**
    * Esegue tutti i test di integrazione
+   * @param {string} repository - Nome del repository per cui eseguire i test (opzionale)
    * @returns {Promise} Promise che risolve con i risultati dei test
    */
-  runAllIntegrationTests: () => {
-    return axiosInstance.post(`${BASE_URL}/integration/run`);
+  runAllIntegrationTests: (repository) => {
+    return axiosInstance.post(`${BASE_URL}/integration/run`, repository ? { repository } : {});
   },
 
   /**
    * Esegue tutti i test (unitari e di integrazione)
+   * @param {string} repository - Nome del repository per cui eseguire i test (opzionale)
    * @returns {Promise} Promise che risolve con i risultati dei test
    */
-  runAllTests: () => {
-    return axiosInstance.post(`${BASE_URL}/run-all`);
+  runAllTests: (repository) => {
+    return axiosInstance.post(`${BASE_URL}/run-all`, repository ? { repository } : {});
   },
 
   /**

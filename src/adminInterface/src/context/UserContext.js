@@ -13,16 +13,18 @@ export const UserProvider = ({ children }) => {
     const { showNotification } = useNotification();
 
   // Wrappa getUsers in useCallback
-  const getUsers = useCallback(async (filters = {}) => {
+// Modifica alla funzione getUsers nel UserContext.js
+const getUsers = useCallback(async (filters = {}) => {
     try {
         setLoading(true);
         console.log('UserContext: Getting users with filters:', filters);
         
         const queryParams = new URLSearchParams({
             page: filters.page || 1,
-            limit: filters.limit || 10,
+            limit: filters.limit || 50, // Aumentato a 50 per ottenere più utenti
             search: filters.search || '',
-            sort: filters.sort || '-createdAt'
+            sort: filters.sort || '-createdAt',
+            includeSchoolIds: 'true' // Aggiungi questo parametro per richiedere assignedSchoolIds
         });
   
         if (filters.schoolId) {
@@ -33,15 +35,44 @@ export const UserProvider = ({ children }) => {
             queryParams.append('role', filters.role);
         }
   
-        // AGGIUNGI QUESTO BLOCCO per gestire il parametro status
         if (filters.status) {
             queryParams.append('status', filters.status);
         }
   
+        console.log('UserContext: Fetching users with params:', queryParams.toString());
         const response = await axiosInstance.get(`/users?${queryParams.toString()}`);
         
         if (response.data.status === 'success') {
-            const { users, total, page: currentPage } = response.data.data.data;
+            let users = [];
+            let total = 0;
+            let currentPage = 1;
+            
+            // Gestisci diverse strutture di risposta possibili
+            if (response.data.data?.data?.users) {
+                users = response.data.data.data.users;
+                total = response.data.data.data.total || users.length;
+                currentPage = response.data.data.data.page || 1;
+            } else if (response.data.data?.users) {
+                users = response.data.data.users;
+                total = response.data.data.total || users.length;
+                currentPage = response.data.data.page || 1;
+            } else if (Array.isArray(response.data.data)) {
+                users = response.data.data;
+                total = users.length;
+            }
+            
+            // Log per debug: verifica se gli utenti hanno assignedSchoolIds
+            console.log('UserContext: Users received from API:', {
+                count: users.length,
+                withSchoolIds: users.filter(u => u.assignedSchoolIds?.length > 0).length,
+                sample: users.slice(0, 3).map(u => ({
+                    id: u._id,
+                    name: `${u.firstName} ${u.lastName}`,
+                    role: u.role,
+                    hasSchoolIds: !!u.assignedSchoolIds,
+                    schoolIdsCount: u.assignedSchoolIds?.length || 0
+                }))
+            });
             
             setUsers(users || []);
             setTotalUsers(total || 0);
@@ -70,7 +101,7 @@ export const UserProvider = ({ children }) => {
     } finally {
         setLoading(false);
     }
-}, []); // dipende solo da showNotification che è stabile
+}, [showNotification]); // dipende solo da showNotification che è stabile
 
     const getUserById = async (userId) => {
         try {

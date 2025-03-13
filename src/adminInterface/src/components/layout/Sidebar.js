@@ -240,7 +240,7 @@ const Sidebar = ({ open, drawerWidth }) => {
                 sx={scrollbarStyles}
             >
                 <List sx={{ pt: 1, pb: 2 }}>
-                    <AnimatePresence mode="wait">
+                    <AnimatePresence mode="sync">
                         {filteredMenuItems.map((route, index) => {
                             const basePath = route.path.split('/')[0];
                             const isSelected = location.pathname.startsWith(`/admin/${basePath}`);

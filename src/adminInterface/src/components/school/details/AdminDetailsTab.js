@@ -18,12 +18,15 @@ import {
     Settings as SettingsIcon,
     History as HistoryIcon,
     Group as GroupIcon,
-    Info as InfoIcon
+    Info as InfoIcon,
+    Block as BlockIcon
 } from '@mui/icons-material';
+import SchoolActivationStatus from '../schoolComponents/SchoolActivationStatus';
 
 const AdminDetailsTab = ({ school }) => {
     // Funzione per formattare le date con ora
     const formatDateTime = (dateString) => {
+        if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleString('it-IT', {
             year: 'numeric',
             month: 'long',
@@ -33,8 +36,31 @@ const AdminDetailsTab = ({ school }) => {
         });
     };
 
+    // Funzione semplice per formattare solo la data
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleDateString('it-IT', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    const handleStatusChange = (updatedSchool) => {
+        // Qui potremmo gestire l'aggiornamento dello stato se necessario
+        // In questo caso, l'aggiornamento avviene già nel context
+    };
+
     return (
         <Grid container spacing={3}>
+            {/* Componente di attivazione/disattivazione */}
+            <Grid item xs={12}>
+                <SchoolActivationStatus 
+                    school={school} 
+                    onStatusChange={handleStatusChange} 
+                />
+            </Grid>
+
             {/* Info Amministrative */}
             <Grid item xs={12} md={6}>
                 <Card elevation={2}>
@@ -51,7 +77,8 @@ const AdminDetailsTab = ({ school }) => {
                                         <Typography component="div" variant="body2">
                                             <Box sx={{ mt: 0.5 }}>
                                                 <Chip 
-                                                    label={school.isActive ? "Attiva" : "Inattiva"}
+                                                    icon={school.isActive ? null : <BlockIcon />}
+                                                    label={school.isActive ? "Attiva" : "Disattivata"}
                                                     color={school.isActive ? "success" : "error"}
                                                     size="small"
                                                 />
@@ -112,6 +139,30 @@ const AdminDetailsTab = ({ school }) => {
                                     secondary={formatDateTime(school.updatedAt)}
                                 />
                             </ListItem>
+                            
+                            {!school.isActive && (
+                                <>
+                                    <Divider component="li" />
+                                    <ListItem>
+                                        <ListItemText 
+                                            primary="Disattivata il"
+                                            secondary={formatDateTime(school.deactivatedAt)}
+                                        />
+                                    </ListItem>
+                                </>
+                            )}
+                            
+                            {school.reactivatedAt && (
+                                <>
+                                    <Divider component="li" />
+                                    <ListItem>
+                                        <ListItemText 
+                                            primary="Ultima Riattivazione"
+                                            secondary={formatDateTime(school.reactivatedAt)}
+                                        />
+                                    </ListItem>
+                                </>
+                            )}
                         </List>
                     </CardContent>
                 </Card>
@@ -215,6 +266,34 @@ const AdminDetailsTab = ({ school }) => {
                                 </Box>
                             </Stack>
                         </Paper>
+
+                        {/* Mostra informazioni sulla disattivazione se la scuola è disattivata */}
+                        {!school.isActive && school.deactivationReason && (
+                            <Box sx={{ mt: 3 }}>
+                                <Typography variant="subtitle1" color="error" gutterBottom>
+                                    Informazioni sulla disattivazione:
+                                </Typography>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'error.light', color: 'error.contrastText' }}>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                        Motivo:
+                                    </Typography>
+                                    <Typography variant="body2" paragraph>
+                                        {school.deactivationReason}
+                                    </Typography>
+                                    
+                                    {school.deactivationNotes && (
+                                        <>
+                                            <Typography variant="subtitle2" gutterBottom>
+                                                Note aggiuntive:
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                {school.deactivationNotes}
+                                            </Typography>
+                                        </>
+                                    )}
+                                </Paper>
+                            </Box>
+                        )}
                     </CardContent>
                 </Card>
             </Grid>

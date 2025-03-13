@@ -30,7 +30,13 @@ import {
   Badge,
   ListItemText,
   ListItem,
-  List
+  List,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import { 
   PlayArrow as RunIcon, 
@@ -44,7 +50,9 @@ import {
   AccessTime as TimeIcon,
   Code as CodeIcon,
   ExpandMore as ExpandMoreIcon,
-  AccessTime
+  AccessTime,
+  ChevronRight as ChevronRightIcon,
+  FilterList as FilterIcon
 } from '@mui/icons-material';
 import testSystemService from '../../services/testsSystemService';
 
@@ -137,11 +145,8 @@ const TestOutput = ({ output }) => {
 };
 
 // Componente per visualizzare le statistiche di un test
-// Componente TestStats completo da sostituire nel tuo file
 const TestStats = ({ result }) => {
   if (!result) return null;
-  
-  console.log('TestStats riceve:', result);
   
   // Normalizzazione dei dati per garantire compatibilità
   const passed = result.passed !== undefined ? result.passed : result.passedTests || 0;
@@ -155,8 +160,6 @@ const TestStats = ({ result }) => {
   if (passRate >= 90) progressColor = "success.main";
   else if (passRate >= 75) progressColor = "primary.main";
   else if (passRate >= 50) progressColor = "warning.main";
-  
-  console.log('Stats con dati normalizzati:', { passed, failed, total, passRate }); // Debug
   
   return (
     <Card sx={{ mb: 3 }} variant="outlined">
@@ -266,8 +269,6 @@ const TestDetailsList = ({ results }) => {
     );
   }
 
-  console.log('Dettaglio risultati test:', results); // Debug
-
   return (
     <List sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
       {results.map((result, index) => (
@@ -361,7 +362,181 @@ const logDebug = (message, ...data) => {
   }
 };
 
+// Componente per mostrare lo stato di salute dei test
+const RepositoryHealthStatus = ({ tests }) => {
+  if (!tests || tests.length === 0) return null;
+  
+  // Conteggia i test passati, falliti e in attesa
+  const passedTests = tests.filter(t => t.status === 'passed').length;
+  const failedTests = tests.filter(t => t.status === 'failed').length;
+  const pendingTests = tests.filter(t => t.status === 'pending').length;
+  
+  // Calcola la percentuale di salute
+  const totalTests = tests.length;
+  const healthPercentage = totalTests > 0 ? (passedTests / totalTests) * 100 : 0;
+  
+  // Determina il colore in base alla percentuale
+  let healthColor = 'error';
+  if (healthPercentage >= 90) healthColor = 'success';
+  else if (healthPercentage >= 75) healthColor = 'primary';
+  else if (healthPercentage >= 50) healthColor = 'warning';
+  
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Typography variant="body2">
+        Stato:
+      </Typography>
+      <LinearProgress
+        variant="determinate"
+        value={healthPercentage}
+        color={healthColor}
+        sx={{ 
+          width: 120, 
+          height: 10, 
+          borderRadius: 5,
+          mr: 1
+        }}
+      />
+      <Typography variant="body2" fontWeight="medium">
+        {healthPercentage.toFixed(0)}%
+      </Typography>
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Chip 
+          size="small" 
+          color="success" 
+          label={`${passedTests} OK`} 
+          icon={<PassIcon fontSize="small" />}
+        />
+        {failedTests > 0 && (
+          <Chip 
+            size="small" 
+            color="error" 
+            label={`${failedTests} KO`}
+            icon={<FailIcon fontSize="small" />}
+          />
+        )}
+        {pendingTests > 0 && (
+          <Chip 
+            size="small" 
+            color="warning" 
+            label={`${pendingTests} ?`}
+            icon={<PendingIcon fontSize="small" />}
+          />
+        )}
+      </Box>
+    </Box>
+  );
+};
+
+// Componente per mostrare il filtro rapido per test con problemi
+const QuickFilterButtons = ({ tests, onFilterChange, activeFilter }) => {
+  const failedTests = tests.filter(t => t.status === 'failed').length;
+  
+  return (
+    <Box sx={{ display: 'flex', gap: 1 }}>
+      <Button
+        size="small"
+        variant={activeFilter === 'failed' ? "contained" : "outlined"}
+        color="error"
+        startIcon={<FailIcon />}
+        onClick={() => onFilterChange('failed')}
+        disabled={failedTests === 0}
+      >
+        Mostra falliti ({failedTests})
+      </Button>
+      <Button
+        size="small"
+        variant={activeFilter === null ? "contained" : "outlined"}
+        color="primary"
+        startIcon={<FilterIcon />}
+        onClick={() => onFilterChange(null)}
+      >
+        Mostra tutti
+      </Button>
+    </Box>
+  );
+};
+
+// Componente per mostrare il conteggio dei metodi disponibili per un test
+const MethodCountBadge = ({ test }) => {
+  if (!test.methodTests || test.methodTests.length === 0) {
+    return null;
+  }
+  
+  return (
+    <Chip
+      size="small"
+      variant="outlined"
+      color="primary"
+      label={`${test.methodTests.length} metodi`}
+      sx={{ ml: 1, height: 20 }}
+    />
+  );
+};
+
+// Funzione per calcolare gli elementi da visualizzare con test espansi
+const getDisplayedTests = (tests, page, rowsPerPage, expandedTests) => {
+  if (!tests || tests.length === 0) return [];
+  
+  // Se non è impostata la paginazione, restituisci tutti i test
+  if (rowsPerPage <= 0) return tests;
+  
+  // Calcola il numero effettivo di righe considerando i test espansi
+  let displayedRows = [];
+  let totalRows = 0;
+  let currentIndex = 0;
+  
+  // Analizza tutti i test per determinare quante righe occupa ciascuno
+  for (let i = 0; i < tests.length; i++) {
+    // Aggiungi una riga per il test principale
+    totalRows++;
+    
+    // Verifica se il test è espanso e ha metodi
+    const isExpanded = expandedTests[tests[i].id] && 
+                       tests[i].methodTests && 
+                       tests[i].methodTests.length > 0;
+                       
+    // Se il test è espanso, aggiungi il numero di metodi alla conta delle righe
+    if (isExpanded) {
+      totalRows += tests[i].methodTests.length;
+    }
+    
+    // Verifica se questo test rientra nella pagina corrente
+    if (currentIndex >= page * rowsPerPage && currentIndex < (page + 1) * rowsPerPage) {
+      displayedRows.push(tests[i]);
+    } else if (currentIndex < page * rowsPerPage && 
+               currentIndex + (isExpanded ? tests[i].methodTests.length + 1 : 1) > page * rowsPerPage) {
+      // Test che inizia nella pagina precedente ma ha metodi che si estendono in questa pagina
+      displayedRows.push(tests[i]);
+    }
+    
+    // Incrementa l'indice considerando il test e i suoi metodi
+    currentIndex += 1 + (isExpanded ? tests[i].methodTests.length : 0);
+  }
+  
+  return displayedRows;
+};
+
+// Funzione per calcolare il numero totale di righe considerando i test espansi
+const getTotalRowsCount = (tests, expandedTests) => {
+  if (!tests) return 0;
+  
+  return tests.reduce((total, test) => {
+    // Una riga per il test principale
+    let rows = 1;
+    
+    // Aggiungi righe se il test è espanso e ha metodi
+    if (expandedTests[test.id] && test.methodTests && test.methodTests.length > 0) {
+      rows += test.methodTests.length;
+    }
+    
+    return total + rows;
+  }, 0);
+};
+
+// Componente principale per il pannello dei test unitari
 const UnitTestsPanel = () => {
+  // Stati base
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -373,16 +548,193 @@ const UnitTestsPanel = () => {
   const [dialogTab, setDialogTab] = useState(0);
   const [testResults, setTestResults] = useState(null);
   const [resultLoading, setResultLoading] = useState(false);
+  
+  // Stati per la visualizzazione e filtro dei test
+  const [selectedRepository, setSelectedRepository] = useState('UserRepository');
+  const [availableRepositories, setAvailableRepositories] = useState(['UserRepository', 'ClassRepository', 'SchoolRepository']);
+  const [expandedTests, setExpandedTests] = useState({});
+  const [expandAllTests, setExpandAllTests] = useState(false);
+  const [activeFilter, setActiveFilter] = useState(null);
 
   // Carica i test unitari dal backend
   useEffect(() => {
     fetchTests();
+  }, [selectedRepository]); // Ricarica i test quando cambia il repository selezionato
+
+  // Funzione per filtrare i test
+  const getFilteredTests = (tests, filter) => {
+    if (!filter) return tests;
+    return tests.filter(test => test.status === filter);
+  };
+
+  // Funzione che espande o collassa tutti i test in una volta
+  const handleToggleAllDetails = () => {
+    // Inverti lo stato corrente
+    const newExpandAllState = !expandAllTests;
+    setExpandAllTests(newExpandAllState);
+    
+    // Crea un nuovo oggetto di stati espansi
+    const newExpandedTests = {};
+    
+    // Se stiamo espandendo tutto, imposta tutti i test come espansi
+    if (newExpandAllState) {
+      tests.forEach(test => {
+        if (test.methodTests && test.methodTests.length > 0) {
+          newExpandedTests[test.id] = true;
+        }
+      });
+    }
+    
+    // Aggiorna lo stato
+    setExpandedTests(newExpandedTests);
+  };
+
+  // Funzione per espandere/collassare i test dettagliati di un file
+  const handleToggleDetails = (testId) => {
+    setExpandedTests(prev => {
+      const newState = {
+        ...prev,
+        [testId]: !prev[testId]
+      };
+      
+      // Se stiamo collassando un test e expandAllTests è true,
+      // dobbiamo aggiornare anche quello
+      if (expandAllTests && !newState[testId]) {
+        setExpandAllTests(false);
+      }
+      
+      return newState;
+    });
+  };
+  
+  // Funzione per gestire il cambio di filtro
+  const handleFilterChange = (filterType) => {
+    setActiveFilter(filterType);
+    // Resetta la pagina quando cambia il filtro
+    setPage(0);
+  };
+
+  // Carica dettagli di tutti i repository disponibili
+  useEffect(() => {
+    const fetchRepositories = async () => {
+      try {
+        // Potresti implementare una chiamata API specifica per ottenere tutti i repository
+        // disponibili, per ora utilizziamo un elenco predefinito
+        setAvailableRepositories(['UserRepository', 'ClassRepository', 'SchoolRepository']);
+      } catch (err) {
+        console.error('Errore nel caricamento dei repository:', err);
+      }
+    };
+    
+    fetchRepositories();
   }, []);
 
+  /**
+   * Processa i dati dei test e estrae i metodi testati
+   * @param {Array} tests - Lista di test da processare
+   * @returns {Array} - Lista di test processati con metodi estratti
+   */
+  const processTestData = (tests) => {
+    const processedTests = [...tests];
+    
+    // Per ogni test, estrai i metodi testati dall'output o dal contenuto dei test
+    processedTests.forEach(test => {
+      // Considera sia test.output che test.rawOutput
+      const output = test.output || test.rawOutput || '';
+      
+      // Array per memorizzare i metodi trovati
+      let methodTests = test.methods || [];
+      
+      // Se abbiamo già i metodi definiti e non ci serve estrarli
+      if (methodTests.length > 0) {
+        logDebug(`Test ${test.name} ha già ${methodTests.length} metodi definiti`);
+        test.methodTests = methodTests;
+        return;
+      }
+      
+      const methodsFound = new Set();
+      
+      // Pattern 1: cerca metodi nel formato "Repository › method"
+      const pattern1 = new RegExp(`${test.name} › ([a-zA-Z]+)`, 'g');
+      let match;
+      while ((match = pattern1.exec(output)) !== null) {
+        if (match[1]) methodsFound.add(match[1]);
+      }
+      
+      // Pattern 2: cerca metodi nel formato "describe('method'"
+      const pattern2 = /describe\(['"]([a-zA-Z]+)['"]/g;
+      while ((match = pattern2.exec(output)) !== null) {
+        if (match[1]) methodsFound.add(match[1]);
+      }
+      
+      // Pattern 3: cerca metodi nel formato "method: should"
+      const pattern3 = /([a-zA-Z]+): should/g;
+      while ((match = pattern3.exec(output)) !== null) {
+        if (match[1]) methodsFound.add(match[1]);
+      }
+      
+      // Metodi noti: lista completa dei metodi che dovremmo trovare in questo repository
+      const knownMethods = {
+        'UserRepository': ['findById', 'findByEmail', 'create', 'update', 'findWithFilters'],
+        'SchoolRepository': ['findOne', 'findById', 'create', 'update', 'addUser', 'findByRegion', 
+                            'setupAcademicYear', 'removeUser', 'deactivateSection', 'reactivateSection',
+                            'findWithUsers', 'getSectionsWithStudentCount', 'activateAcademicYear',
+                            'archiveAcademicYear', 'getClassesByAcademicYear', 'changeSchoolType',
+                            'removeManagerFromSchool', 'addManagerToSchool', 'getStudentsBySection',
+                            'reactivateAcademicYear', 'updateAcademicYear', 'deleteWithClasses', 'findAll',
+                            'syncAssignedSchoolIds'],
+        'ClassRepository': ['create', 'findById', 'update', 'delete', 'find', 'exists', 
+                           'findBySchool', 'findWithDetails', 'createInitialClasses', 'promoteStudents']
+      };
+      
+      // Se il test è relativo a un repository noto, aggiungi i metodi noti non trovati
+      if (test.name && knownMethods[test.name]) {
+        // Se non è stato trovato alcun metodo, aggiungi tutti i metodi noti
+        if (methodsFound.size === 0) {
+          knownMethods[test.name].forEach(method => methodsFound.add(method));
+          logDebug(`Nessun metodo trovato per ${test.name}, aggiunti ${methodsFound.size} metodi noti`);
+        }
+        // Verifica che non manchi alcun metodo noto, se mancano aggiungili
+        else {
+          const missingMethods = knownMethods[test.name].filter(m => !methodsFound.has(m));
+          if (missingMethods.length > 0) {
+            missingMethods.forEach(method => methodsFound.add(method));
+            logDebug(`Aggiunti ${missingMethods.length} metodi mancanti per ${test.name}`);
+          }
+        }
+      }
+      
+      // Crea un test "figlio" per ogni metodo trovato
+      methodTests = Array.from(methodsFound).map(method => ({
+        id: `${test.id}-${method}`,
+        name: method,
+        description: `Test del metodo ${method}`,
+        parentTest: test.id,
+        repository: test.name,
+        file: test.file,
+        isMethodTest: true
+      }));
+      
+      // Aggiorna i metodi del test
+      test.methodTests = methodTests;
+      
+      // Debug dei metodi trovati
+      if (methodTests.length > 0) {
+        logDebug(`Trovati ${methodTests.length} metodi per ${test.name}: ${methodTests.map(m => m.name).join(', ')}`);
+      } else {
+        logDebug(`Nessun metodo trovato per ${test.name}`);
+      }
+    });
+    
+    return processedTests;
+  };
+
+  // Override della funzione fetchTests per includere l'elaborazione dei test dei metodi
   const fetchTests = async () => {
     try {
       setLoading(true);
-      const response = await testSystemService.getUnitTests();
+      // Modifica la richiesta per includere il parametro repository
+      const response = await testSystemService.getUnitTests(selectedRepository);
       
       // Semplifichiamo l'accesso ai dati rimuovendo le condizioni complesse
       let testData = [];
@@ -409,11 +761,13 @@ const UnitTestsPanel = () => {
         results: test.results || [] // Aggiungiamo questo campo per i risultati dettagliati
       }));
       
-      setTests(processedTests);
+      // Processiamo i test per estrarre i metodi testati
+      const finalTests = processTestData(processedTests);
+      setTests(finalTests);
     } catch (err) {
       console.error('Errore nel caricamento dei test unitari:', err);
       setError('Errore nel caricamento dei test unitari: ' + (err.message || 'Errore sconosciuto'));
-    } finally {
+    }finally {
       setLoading(false);
     }
   };
@@ -603,12 +957,14 @@ const UnitTestsPanel = () => {
     setDialogTab(newValue);
   };
 
+  // Formatta la data
   const formatDate = (dateString) => {
     if (!dateString) return 'Mai eseguito';
     const date = new Date(dateString);
     return date.toLocaleString('it-IT');
   };
 
+  // Renderizza lo stato del test
   const renderStatus = (status) => {
     switch (status) {
       case 'passed':
@@ -620,6 +976,237 @@ const UnitTestsPanel = () => {
       default:
         return <Chip label="Sconosciuto" color="default" size="small" />;
     }
+  };
+
+  // Gestisce il cambio del repository selezionato
+  const handleRepositoryChange = (event) => {
+    setSelectedRepository(event.target.value);
+  };
+
+  /**
+   * Esegue un test specifico di un metodo
+   * @param {Object} test - Oggetto test contenente informazioni sul file
+   * @param {String} methodName - Nome del metodo da testare
+   */
+  const handleRunMethodTest = async (test, methodName) => {
+    setRunningTestId(test.id + '-' + methodName);
+    setError(null);
+    
+    try {
+      logDebug(`Avvio esecuzione test di metodo: ${test.name}.${methodName}`);
+      
+      // Preparazione della richiesta
+      // In base al tipo di test, prepariamo i parametri corretti
+      let fileName, repositoryName;
+      
+      // Se è un test per un repository specifico
+      if (test.file.includes('Repository.test.js')) {
+        fileName = test.file;
+        
+        // Estrai il nome del repository
+        const match = test.file.match(/([A-Za-z]+Repository)\.test\.js/);
+        if (match && match[1]) {
+          repositoryName = match[1];
+          logDebug(`Identificato repository: ${repositoryName}`);
+        }
+      } else {
+        fileName = test.file;
+      }
+      
+      // Formatto correttamente il pattern di test
+      const testPattern = repositoryName 
+        ? `${repositoryName} › ${methodName}` // Pattern completo
+        : methodName; // Solo il nome del metodo
+      
+      logDebug(`Pattern di test: "${testPattern}"`);
+      
+      // Chiamata all'API
+      const response = await testSystemService.runUnitTest(fileName, testPattern);
+      
+      // Gestione della risposta
+      const testData = response.data && response.data.data 
+        ? response.data.data 
+        : response.data;
+      
+      logDebug('Risposta dal server:', testData);
+      
+      // Normalizzazione dei dati
+      const success = testData.success !== undefined ? testData.success : false;
+      const passedTests = parseInt(testData.passedTests) || 0;
+      const failedTests = parseInt(testData.failedTests) || 0;
+      const totalTests = parseInt(testData.totalTests) || (passedTests + failedTests) || 0;
+      
+      // Preparazione risultati formattati
+      const formattedResults = {
+        file: test.file,
+        name: `${test.name}.${methodName}`,
+        passedTests: passedTests,
+        failedTests: failedTests,
+        totalTests: totalTests,
+        duration: testData.duration || 0,
+        output: testData.rawOutput || testData.output || '',
+        success: success,
+        executedAt: new Date(),
+        // Usa i risultati dettagliati se disponibili
+        testResults: Array.isArray(testData.testResults) && testData.testResults.length > 0 
+          ? testData.testResults.filter(result => {
+              // Seleziona solo i test relativi al metodo specificato
+              return result.name.includes(methodName) || 
+                    (result.group && result.group === methodName);
+            })
+          : [{
+              name: `${test.name} › ${methodName}`,
+              status: success ? 'passed' : 'failed',
+              suite: test.name,
+              group: methodName,
+              description: `Test del metodo ${methodName}`,
+              duration: testData.duration ? testData.duration * 1000 : 0
+            }]
+      };
+      
+      logDebug(`Risultati formattati per il metodo ${methodName}:`, formattedResults);
+      
+      // Aggiornamento stato UI
+      setTestResults(formattedResults);
+      setSelectedTest({
+        ...test,
+        name: `${test.name}.${methodName}`,
+        lastExecuted: new Date(),
+        status: formattedResults.success ? 'passed' : 'failed',
+        passedTests: formattedResults.passedTests,
+        failedTests: formattedResults.failedTests,
+        totalTests: formattedResults.totalTests,
+        output: formattedResults.output
+      });
+      
+      // Aggiornamento della lista dei test
+      await fetchTests();
+      
+      // Apertura della finestra di dialogo con i risultati
+      setDialogOpen(true);
+    } catch (err) {
+      logDebug(`Errore nell'esecuzione del test del metodo ${methodName}:`, err);
+      setError(`Errore nell'esecuzione del test del metodo ${methodName}: ${err.message || 'Errore sconosciuto'}`);
+    } finally {
+      setRunningTestId(null);
+    }
+  };
+
+  // Funzione per renderizzare un singolo test di metodo
+  const renderMethodTest = (test, methodTest) => {
+    const isRunning = runningTestId === methodTest.id;
+    
+    // Calcola il colore di sfondo in base allo stato del metodo (se disponibile)
+    let backgroundColor = 'rgba(0, 0, 0, 0.02)';
+    let statusComponent = null;
+    
+    if (methodTest.status) {
+      if (methodTest.status === 'passed') {
+        backgroundColor = 'rgba(76, 175, 80, 0.08)'; // Verde chiaro
+        statusComponent = <Chip icon={<PassIcon />} label="Passato" color="success" size="small" />;
+      } else if (methodTest.status === 'failed') {
+        backgroundColor = 'rgba(244, 67, 54, 0.08)'; // Rosso chiaro
+        statusComponent = <Chip icon={<FailIcon />} label="Fallito" color="error" size="small" />;
+      }
+    }
+    
+    return (
+      <TableRow 
+        key={methodTest.id}
+        sx={{ 
+          backgroundColor,
+          '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
+        }}
+      >
+        <TableCell sx={{ pl: 6 }}>
+          <Typography variant="body2">{methodTest.name}</Typography>
+        </TableCell>
+        <TableCell>
+          <Typography variant="body2" color="text.secondary">
+            Test del metodo {methodTest.name}
+          </Typography>
+        </TableCell>
+        <TableCell>
+          <Tooltip title={test.file}>
+            <Typography 
+              variant="body2" 
+              color="text.secondary"
+              sx={{ 
+                maxWidth: '150px', 
+                overflow: 'hidden', 
+                textOverflow: 'ellipsis', 
+                whiteSpace: 'nowrap' 
+              }}
+            >
+              {test.file}
+            </Typography>
+          </Tooltip>
+        </TableCell>
+        <TableCell>{statusComponent || '-'}</TableCell>
+        <TableCell align="center">
+          {methodTest.passedTests && methodTest.totalTests ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              <Typography>{`${methodTest.passedTests}/${methodTest.totalTests}`}</Typography>
+              <LinearProgress
+                variant="determinate"
+                value={((methodTest.passedTests) / (methodTest.totalTests)) * 100}
+                sx={{ width: 50, height: 6, borderRadius: 3 }}
+                color={methodTest.status === 'passed' ? 'success' : 'error'}
+              />
+            </Box>
+          ) : (
+            <Typography color="text.secondary">-</Typography>
+          )}
+        </TableCell>
+        <TableCell>{methodTest.lastExecuted ? formatDate(methodTest.lastExecuted) : '-'}</TableCell>
+        <TableCell>
+          {methodTest.duration ? <DurationDisplay milliseconds={methodTest.duration} /> : '-'}
+        </TableCell>
+        <TableCell align="center">
+          <IconButton 
+            color="primary" 
+            size="small"
+            onClick={() => handleRunMethodTest(test, methodTest.name)}
+            disabled={isRunning || loading}
+            title={`Esegui test del metodo ${methodTest.name}`}
+          >
+            {isRunning ? (
+              <CircularProgress size={20} />
+            ) : (
+              <RunIcon fontSize="small" />
+            )}
+          </IconButton>
+        </TableCell>
+      </TableRow>
+    );
+  };
+
+  // EnhancedTablePagination component
+  const EnhancedTablePagination = ({ 
+    count, 
+    page, 
+    rowsPerPage, 
+    onPageChange, 
+    onRowsPerPageChange,
+    expandedTests,
+    tests
+  }) => {
+    // Calcola il conteggio effettivo considerando i test espansi
+    const effectiveCount = getTotalRowsCount(tests, expandedTests);
+    
+    return (
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25, 50, 100]}
+        component="div"
+        count={effectiveCount}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={onPageChange}
+        onRowsPerPageChange={onRowsPerPageChange}
+        labelRowsPerPage="Righe per pagina:"
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to} di ${count}`}
+      />
+    );
   };
 
   if (loading && tests.length === 0) {
@@ -637,7 +1224,48 @@ const UnitTestsPanel = () => {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Test Unitari</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="h6">Test Unitari</Typography>
+          <RepositoryHealthStatus tests={tests} />
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <QuickFilterButtons 
+            tests={tests} 
+            onFilterChange={handleFilterChange}
+            activeFilter={activeFilter}
+          />
+          <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
+            <InputLabel id="repository-select-label">Repository</InputLabel>
+            <Select
+              labelId="repository-select-label"
+              id="repository-select"
+              value={selectedRepository}
+              onChange={handleRepositoryChange}
+              label="Repository"
+            >
+              {availableRepositories.map((repo) => (
+                <MenuItem key={repo} value={repo}>{repo}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+      </Box>
+
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={expandAllTests}
+                onChange={handleToggleAllDetails}
+                color="primary"
+                size="small"
+              />
+            }
+            label="Espandi tutti"
+            sx={{ ml: 0 }}
+          />
+        </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant="outlined"
@@ -683,93 +1311,111 @@ const UnitTestsPanel = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              (rowsPerPage > 0
-                ? tests.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                : tests
-              ).map((test) => (
-                <TableRow 
-                  key={test.id} 
-                  hover
-                  sx={test.status === 'failed' ? { bgcolor: 'rgba(255, 0, 0, 0.03)' } : {}}
-                >
-                  <TableCell component="th" scope="row">
-                    {test.name}
-                  </TableCell>
-                  <TableCell>{test.description}</TableCell>
-                  <TableCell>
-                    <Tooltip title={test.file}>
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          maxWidth: '150px', 
-                          overflow: 'hidden', 
-                          textOverflow: 'ellipsis', 
-                          whiteSpace: 'nowrap' 
-                        }}
-                      >
-                        {test.file}
-                      </Typography>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell>{renderStatus(test.status)}</TableCell>
-                  <TableCell align="center">
-                    {test.totalTests > 0 ? (
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                        <Typography>{`${test.passedTests || 0}/${test.totalTests || 0}`}</Typography>
-                        <LinearProgress
-                          variant="determinate"
-                          value={((test.passedTests || 0) / (test.totalTests || 1)) * 100}
-                          sx={{ width: 50, height: 6, borderRadius: 3 }}
-                          color={test.status === 'passed' ? 'success' : 'error'}
-                        />
-                      </Box>
-                    ) : (
-                      <Typography color="text.secondary">-</Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>{formatDate(test.lastExecuted)}</TableCell>
-                  <TableCell><DurationDisplay milliseconds={test.duration} /></TableCell>
-                  <TableCell align="center">
-                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                      <IconButton 
-                        color="primary" 
-                        size="small"
-                        onClick={() => handleRunTest(test)}
-                        disabled={runningTestId === test.id || loading}
-                        title="Esegui test"
-                      >
-                        {runningTestId === test.id ? (
-                          <CircularProgress size={20} />
+              getDisplayedTests(getFilteredTests(tests, activeFilter), page, rowsPerPage, expandedTests).map((test) => (
+                <React.Fragment key={test.id}>
+                  <TableRow 
+                    hover
+                    sx={test.status === 'failed' ? { bgcolor: 'rgba(255, 0, 0, 0.03)' } : {}}
+                  >
+                    <TableCell component="th" scope="row">
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        {test.methodTests && test.methodTests.length > 0 ? (
+                          <IconButton
+                            size="small"
+                            onClick={() => handleToggleDetails(test.id)}
+                            sx={{ mr: 1 }}
+                          >
+                            {expandedTests[test.id] ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+                          </IconButton>
                         ) : (
-                          <RunIcon fontSize="small" />
+                          <Box sx={{ width: 28 }} /> // Spazio vuoto per allineare i test senza metodi
                         )}
-                      </IconButton>
-                      <IconButton 
-                        color="info"
-                        size="small"
-                        onClick={() => handleViewTest(test)}
-                        title="Visualizza dettagli"
-                        disabled={!test.lastExecuted}
-                      >
-                        <ViewIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </TableCell>
-                </TableRow>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Typography variant="body2">{test.name}</Typography>
+                          <MethodCountBadge test={test} />
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>{test.description}</TableCell>
+                    <TableCell>
+                      <Tooltip title={test.file}>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            maxWidth: '150px', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            whiteSpace: 'nowrap' 
+                          }}
+                        >
+                          {test.file}
+                        </Typography>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell>{renderStatus(test.status)}</TableCell>
+                    <TableCell align="center">
+                      {test.totalTests > 0 ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                          <Typography>{`${test.passedTests || 0}/${test.totalTests || 0}`}</Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={((test.passedTests || 0) / (test.totalTests || 1)) * 100}
+                            sx={{ width: 50, height: 6, borderRadius: 3 }}
+                            color={test.status === 'passed' ? 'success' : 'error'}
+                          />
+                        </Box>
+                      ) : (
+                        <Typography color="text.secondary">-</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>{formatDate(test.lastExecuted)}</TableCell>
+                    <TableCell><DurationDisplay milliseconds={test.duration} /></TableCell>
+                    <TableCell align="center">
+                      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                        <IconButton 
+                          color="primary" 
+                          size="small"
+                          onClick={() => handleRunTest(test)}
+                          disabled={runningTestId === test.id || loading}
+                          title="Esegui test"
+                        >
+                          {runningTestId === test.id ? (
+                            <CircularProgress size={20} />
+                          ) : (
+                            <RunIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                        <IconButton 
+                          color="info"
+                          size="small"
+                          onClick={() => handleViewTest(test)}
+                          title="Visualizza dettagli"
+                          disabled={!test.lastExecuted}
+                        >
+                          <ViewIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                  
+                  {/* Mostra i test dei singoli metodi se il test è espanso */}
+                  {expandedTests[test.id] && 
+                   test.methodTests && 
+                   test.methodTests.map(methodTest => renderMethodTest(test, methodTest))}
+                </React.Fragment>
               ))
             )}
           </TableBody>
         </Table>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
+        
+        <EnhancedTablePagination
           count={tests.length}
-          rowsPerPage={rowsPerPage}
           page={page}
+          rowsPerPage={rowsPerPage}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage="Righe per pagina:"
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} di ${count}`}
+          expandedTests={expandedTests}
+          tests={getFilteredTests(tests, activeFilter)}
         />
       </TableContainer>
 

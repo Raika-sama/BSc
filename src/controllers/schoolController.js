@@ -42,6 +42,8 @@ class SchoolController extends BaseController {
         this.getClassesByAcademicYear = this.getClassesByAcademicYear.bind(this);
         this.createSection = this.createSection.bind(this);
         this.updateAcademicYear = this.updateAcademicYear.bind(this); // Nuovo metodo bindato
+    this.reactivateSchool = this.reactivateSchool.bind(this);
+    this.deactivateSchool = this.deactivateSchool.bind(this);
     }
 
     // Aggiungi questi metodi di utility
@@ -121,67 +123,68 @@ class SchoolController extends BaseController {
         }
     }
 
-    /**
-     * Crea una nuova scuola
-     * @override
-     */
-    async create(req, res) {
-        try {
-            console.log('Received school creation request:', {
-                body: req.body,
-                user: req.user
-            });
-    
-            const schoolData = {
-                ...req.body,
-                manager: req.user.id
-            };
-    
-            console.log('Attempting to create school with data:', schoolData);
-    
-            const school = await this.repository.create(schoolData);
-            
-            console.log('School created successfully:', {
-                schoolId: school._id,
-                schoolName: school.name
-            });
-    
-            return this.sendResponse(res, { school }, 201);
-        } catch (error) {
-            console.error('School creation error:', {
-                error: error.message,
-                stack: error.stack,
-                code: error.code
-            });
-    
-            if (error.code === 11000) {
-                return this.sendError(res, {
-                    statusCode: 400,
-                    message: 'Esiste già una scuola con questo nome',
-                    code: 'SCHOOL_001'
-                });
-            }
-    
-            if (error.name === 'ValidationError') {
-                return this.sendError(res, {
-                    statusCode: 400,
-                    message: 'Dati scuola non validi',
-                    code: 'SCHOOL_002',
-                    errors: Object.values(error.errors).map(err => ({
-                        field: err.path,
-                        message: err.message
-                    }))
-                });
-            }
-    
+/**
+ * Crea una nuova scuola
+ * @override
+ */
+async create(req, res) {
+    try {
+        console.log('Received school creation request:', {
+            body: req.body,
+            user: req.user
+        });
+
+        const schoolData = {
+            ...req.body,
+            manager: req.user.id
+        };
+
+        console.log('Attempting to create school with data:', schoolData);
+
+        // Utilizziamo il repository per creare la scuola e aggiornare l'assignedSchoolIds dell'utente
+        const school = await this.repository.createAndAssignToManager(schoolData);
+        
+        console.log('School created successfully:', {
+            schoolId: school._id,
+            schoolName: school.name
+        });
+
+        return this.sendResponse(res, { school }, 201);
+    } catch (error) {
+        console.error('School creation error:', {
+            error: error.message,
+            stack: error.stack,
+            code: error.code
+        });
+
+        if (error.code === 11000) {
             return this.sendError(res, {
-                statusCode: 500,
-                message: 'Errore nella creazione della scuola',
-                code: 'SCHOOL_003',
-                details: error.message
+                statusCode: 400,
+                message: 'Esiste già una scuola con questo nome',
+                code: 'SCHOOL_001'
             });
         }
+
+        if (error.name === 'ValidationError') {
+            return this.sendError(res, {
+                statusCode: 400,
+                message: 'Dati scuola non validi',
+                code: 'SCHOOL_002',
+                errors: Object.values(error.errors).map(err => ({
+                    field: err.path,
+                    message: err.message
+                }))
+            });
+        }
+
+        return this.sendError(res, {
+            statusCode: 500,
+            message: 'Errore nella creazione della scuola',
+            code: 'SCHOOL_003',
+            details: error.message
+        });
     }
+}
 
     /**
      * Crea un nuovo utente e lo associa direttamente alla scuola
@@ -540,7 +543,9 @@ class SchoolController extends BaseController {
                 message: 'Scuola e dati correlati eliminati con successo',
                 deletedData: {
                     school: result.school.name,
-                    classesCount: result.deletedClassesCount
+                    classesCount: result.deletedClassesCount,
+                    studentsUpdated: result.updatedStudentsCount,
+                    usersUpdated: result.updatedUsersCount
                 }
             });
         } catch (error) {
@@ -1616,6 +1621,104 @@ async createSection(req, res) {
             ));
         }
     }
+
+    /**
+ * Disattiva una scuola e tutte le sue classi attive
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+async deactivateSchool(req, res) {
+    try {
+        logger.debug('Controller: Richiesta disattivazione scuola', { 
+            schoolId: req.params.id,
+            userId: req.user._id
+        });
+
+        // Verifica autorizzazioni (solo admin)
+        if (req.user.role !== 'admin') {
+            return this.sendError(res, createError(
+                ErrorTypes.AUTHORIZATION.FORBIDDEN,
+                'Solo gli amministratori possono disattivare una scuola'
+            ));
+        }
+
+        const options = {
+            reason: req.body.reason || 'Disattivazione amministrativa',
+            notes: req.body.notes
+        };
+
+        // Chiama il repository per disattivare la scuola
+        const result = await this.repository.deactivateSchool(req.params.id, options);
+
+        logger.info('Scuola disattivata con successo', {
+            schoolId: req.params.id,
+            classesDeactivated: result.classesDeactivated
+        });
+
+        // Invia la risposta
+        this.sendResponse(res, {
+            message: 'Scuola disattivata con successo',
+            school: result.school,
+            stats: {
+                classesDeactivated: result.classesDeactivated
+            }
+        });
+    } catch (error) {
+        logger.error('Errore nella disattivazione della scuola', {
+            error: error.message,
+            stack: error.stack,
+            schoolId: req.params.id
+        });
+        this.sendError(res, error);
+    }
+}
+
+/**
+ * Riattiva una scuola precedentemente disattivata e le sue classi
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+async reactivateSchool(req, res) {
+    try {
+        logger.debug('Controller: Richiesta riattivazione scuola', { 
+            schoolId: req.params.id,
+            userId: req.user._id
+        });
+
+        // Verifica autorizzazioni (solo admin)
+        if (req.user.role !== 'admin') {
+            return this.sendError(res, createError(
+                ErrorTypes.AUTHORIZATION.FORBIDDEN,
+                'Solo gli amministratori possono riattivare una scuola'
+            ));
+        }
+
+        // Chiama il repository per riattivare la scuola
+        const result = await this.repository.reactivateSchool(req.params.id);
+
+        logger.info('Scuola riattivata con successo', {
+            schoolId: req.params.id,
+            classesReactivated: result.classesReactivated
+        });
+
+        // Invia la risposta
+        this.sendResponse(res, {
+            message: 'Scuola riattivata con successo',
+            school: result.school,
+            stats: {
+                classesReactivated: result.classesReactivated
+            }
+        });
+    } catch (error) {
+        logger.error('Errore nella riattivazione della scuola', {
+            error: error.message,
+            stack: error.stack,
+            schoolId: req.params.id
+        });
+        this.sendError(res, error);
+    }
+}
+
 }
 
 module.exports = SchoolController;  // CORRETTO

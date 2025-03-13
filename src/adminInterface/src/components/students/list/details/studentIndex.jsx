@@ -20,7 +20,8 @@ import {
     Assessment as AssessmentIcon,
     School as SchoolIcon,
     History as HistoryIcon,
-    VpnKey as VpnKeyIcon
+    VpnKey as VpnKeyIcon,
+    People as PeopleIcon
 } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
 import { useStudent } from '../../../../context/StudentContext';
@@ -32,6 +33,7 @@ import TestsTab from '../tabs/TestsTab';
 import SchoolTab from '../tabs/SchoolTab';
 import HistoryTab from '../tabs/HistoryTab';
 import PermissionsTab from '../tabs/PermissionsTab';
+import TeachersTab from '../tabs/TeachersTab';
 
 // Componente TabPanel per gestire il contenuto delle tab
 const TabPanel = ({ children, value, index, ...other }) => (
@@ -75,13 +77,31 @@ const StudentIndex = ({ initialTab = 'info' }) => {
             'info': 0,
             'tests': 1,
             'school': 2,
-            'history': 3,
-            'permissions': 4
+            'teachers': 3,
+            'history': 4,
+            'permissions': 5
         };
         return tabMapping[initialTab] || 0;
     });
     const [loadingStudent, setLoadingStudent] = useState(true);
 
+// Aggiungiamo una funzione per aggiornare lo studente che forza il re-render
+const handleStudentUpdate = (updatedData) => {
+    setStudent(prevStudent => {
+        const newStudent = {
+            ...prevStudent,
+            ...updatedData,
+            // Assicuriamoci che questi campi vengano mantenuti
+            schoolId: prevStudent.schoolId,
+            classId: prevStudent.classId,
+            mainTeacher: prevStudent.mainTeacher,
+            teachers: prevStudent.teachers,
+            // Aggiungiamo un timestamp per forzare il re-render
+            _lastUpdate: new Date().getTime()
+        };
+        return newStudent;
+    });
+};
     useEffect(() => {
         const loadStudent = async () => {
             try {
@@ -297,6 +317,8 @@ const StudentIndex = ({ initialTab = 'info' }) => {
                         px: 2,
                         bgcolor: alpha('#1976d2', 0.03)
                     }}
+                    variant="scrollable"
+                    scrollButtons="auto"
                 >
                     <Tab 
                         icon={<PersonIcon />} 
@@ -314,6 +336,11 @@ const StudentIndex = ({ initialTab = 'info' }) => {
                         iconPosition="start"
                     />
                     <Tab 
+                        icon={<PeopleIcon />} 
+                        label="Docenti" 
+                        iconPosition="start"
+                    />
+                    <Tab 
                         icon={<HistoryIcon />} 
                         label="Storico" 
                         iconPosition="start"
@@ -328,7 +355,10 @@ const StudentIndex = ({ initialTab = 'info' }) => {
                 {/* Tab Panels */}
                 <Box sx={{ bgcolor: 'background.paper' }}>
                     <TabPanel value={activeTab} index={0}>
-                        <InfoTab student={student} setStudent={setStudent} />
+                        <InfoTab 
+                            student={student} 
+                            setStudent={handleStudentUpdate}  // Usiamo la nuova funzione
+                        />
                     </TabPanel>
                     <TabPanel value={activeTab} index={1}>
                         <TestsTab student={student} />
@@ -337,9 +367,12 @@ const StudentIndex = ({ initialTab = 'info' }) => {
                         <SchoolTab student={student} setStudent={setStudent} />
                     </TabPanel>
                     <TabPanel value={activeTab} index={3}>
-                        <HistoryTab student={student} />
+                        <TeachersTab student={student} setStudent={setStudent} />
                     </TabPanel>
                     <TabPanel value={activeTab} index={4}>
+                        <HistoryTab student={student} />
+                    </TabPanel>
+                    <TabPanel value={activeTab} index={5}>
                         <PermissionsTab student={student} />
                     </TabPanel>
                 </Box>

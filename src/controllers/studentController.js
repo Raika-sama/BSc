@@ -150,15 +150,23 @@ class StudentController extends BaseController {
                 .populate({
                     path: 'classId',
                     select: 'year section academicYear'
+                })
+                .populate({
+                    path: 'mainTeacher',
+                    select: 'firstName lastName email role assignedSchoolIds'
+                })
+                .populate({
+                    path: 'teachers',
+                    select: 'firstName lastName email role assignedSchoolIds'
                 });
-
+    
             if (!student) {
                 throw createError(
                     ErrorTypes.VALIDATION.NOT_FOUND,
                     'Studente non trovato'
                 );
             }
-
+    
             this.sendResponse(res, { student });
         } catch (error) {
             next(error);
@@ -482,33 +490,125 @@ class StudentController extends BaseController {
      * Aggiorna uno studente
      * @override
      */
-    async update(req, res, next) {
+    async update(req, res) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
         try {
             const { id } = req.params;
-            console.log('Updating student with data:', { 
-                id,
-                updates: req.body 
-            });
-            logger.debug('Updating student:', { 
+            const updateData = req.body;
+            
+            // Estrai il flag updateTeacherAssignments
+            const shouldUpdateTeachers = updateData.updateTeacherAssignments;
+            delete updateData.updateTeacherAssignments;
+
+            logger.debug('Update operation starting:', {
                 studentId: id,
-                updates: req.body,
-                user: req.user?.id
+                updateFields: Object.keys(updateData),
+                shouldUpdateTeachers
             });
 
-            // Verifica permessi
-            if (req.user.role !== 'admin') {
+            // Trova lo studente prima dell'aggiornamento per confronto
+            const oldStudent = await this.model.findById(id);
+            if (!oldStudent) {
                 throw createError(
-                    ErrorTypes.AUTH.FORBIDDEN,
-                    'Non autorizzato a modificare studenti'
+                    ErrorTypes.VALIDATION.NOT_FOUND,
+                    'Studente non trovato'
                 );
             }
 
-            const student = await this.repository.update(id, req.body);
+            // Normalizza gli ID dei docenti se presenti
+            if (updateData.teachers) {
+                updateData.teachers = updateData.teachers.map(teacherId => 
+                    typeof teacherId === 'string' ? teacherId : teacherId._id
+                );
+            }
+
+            // Aggiorna lo studente
+            const updatedStudent = await this.model.findByIdAndUpdate(
+                id,
+                updateData,
+                { 
+                    new: true,
+                    session,
+                    runValidators: true 
+                }
+            ).populate([
+                {
+                    path: 'schoolId',
+                    select: 'name schoolType institutionType region province'
+                },
+                {
+                    path: 'classId',
+                    select: 'year section academicYear'
+                },
+                {
+                    path: 'mainTeacher',
+                    select: 'firstName lastName email role'
+                },
+                {
+                    path: 'teachers',
+                    select: 'firstName lastName email role'
+                }
+            ]);
+
+            // Se richiesto, aggiorna gli assignedStudentIds dei docenti
+            if (shouldUpdateTeachers && updateData.teachers) {
+                const oldTeacherIds = oldStudent.teachers?.map(t => t.toString()) || [];
+                const newTeacherIds = updateData.teachers.map(t => t.toString());
+
+                // Trova docenti aggiunti e rimossi
+                const addedTeachers = newTeacherIds.filter(t => !oldTeacherIds.includes(t));
+                const removedTeachers = oldTeacherIds.filter(t => !newTeacherIds.includes(t));
+
+                logger.debug('Teacher updates:', {
+                    addedTeachers,
+                    removedTeachers
+                });
+
+                // Aggiorna in parallelo
+                await Promise.all([
+                    // Aggiungi lo studente ai nuovi docenti
+                    addedTeachers.length > 0 ? 
+                        mongoose.model('User').updateMany(
+                            { _id: { $in: addedTeachers } },
+                            { $addToSet: { assignedStudentIds: id } },
+                            { session }
+                        ) : Promise.resolve(),
+                    
+                    // Rimuovi lo studente dai docenti rimossi
+                    removedTeachers.length > 0 ?
+                        mongoose.model('User').updateMany(
+                            { _id: { $in: removedTeachers } },
+                            { $pull: { assignedStudentIds: id } },
+                            { session }
+                        ) : Promise.resolve()
+                ]);
+            }
+
+            await session.commitTransaction();
             
-            this.sendResponse(res, { student });
+            logger.debug('Update completed successfully:', {
+                studentId: id,
+                updatedFields: Object.keys(updateData)
+            });
+
+            return this.sendResponse(res, { 
+                status: 'success',
+                data: { student: updatedStudent }
+            });
+
         } catch (error) {
-            logger.error('Error updating student:', error);
-            next(error);
+            await session.abortTransaction();
+            
+            logger.error('Error in student update:', {
+                error: error.message,
+                stack: error.stack
+            });
+
+            return this.sendError(res, error);
+        } finally {
+            session.endSession();
         }
     }
 

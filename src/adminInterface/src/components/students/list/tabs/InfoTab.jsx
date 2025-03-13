@@ -35,7 +35,7 @@ const CredentialsDialog = ({ open, onClose, credentials, showNotification }) => 
         } catch (error) {
             showNotification('Errore nella copia delle credenziali', 'error');
         }
-    };
+    };    
 
     return (
         <Dialog 
@@ -106,6 +106,15 @@ const InfoTab = ({ student, setStudent }) => {
         }
         setCredentials(creds);
         setOpenCredentialsDialog(true);
+    };
+
+    const handleStudentUpdate = async (updatedData) => {
+        // Aggiorniamo lo stato prima di chiudere il form
+        await Promise.resolve(setStudent(updatedData));
+        // Forziamo il re-render prima di chiudere il form
+        await new Promise(resolve => setTimeout(resolve, 0));
+        // Poi chiudiamo il form
+        setIsEditing(false);
     };
 
     // Debug per lastCredentials
@@ -743,7 +752,7 @@ const InfoTab = ({ student, setStudent }) => {
                     </Box>
                     <StudentEditForm 
                         student={student} 
-                        setStudent={setStudent}
+                        setStudent={handleStudentUpdate}  // Usiamo la nuova funzione
                         onCancel={() => setIsEditing(false)}
                     />
                 </Box>

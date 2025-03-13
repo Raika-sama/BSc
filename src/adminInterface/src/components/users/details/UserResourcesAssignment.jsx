@@ -159,8 +159,10 @@ const UserResourcesAssignment = ({ userData }) => {
                     const classes = [];
                     for (const classId of userData.assignedClassIds) {
                         try {
-                            const classData = await getClassById(classId);
-                            if (classData) classes.push(classData);
+                            const response = await axiosInstance.get(`/classes/${classId}`);
+                            if (response.data.status === 'success' && response.data.data.class) {
+                                classes.push(response.data.data.class);
+                            }
                         } catch (err) {
                             console.error(`Error loading class ${classId}:`, err);
                         }
@@ -173,8 +175,10 @@ const UserResourcesAssignment = ({ userData }) => {
                     const students = [];
                     for (const studentId of userData.assignedStudentIds) {
                         try {
-                            const studentData = await getStudentById(studentId);
-                            if (studentData) students.push(studentData);
+                            const response = await axiosInstance.get(`/students/${studentId}`);
+                            if (response.data.status === 'success' && response.data.data.student) {
+                                students.push(response.data.data.student);
+                            }
                         } catch (err) {
                             console.error(`Error loading student ${studentId}:`, err);
                         }
@@ -190,7 +194,7 @@ const UserResourcesAssignment = ({ userData }) => {
         };
 
         loadResourcesData();
-    }, [userData, roleRequirements, getClassById, getStudentById]);
+    }, [userData, roleRequirements]);
 
     // Mostra messaggio se il ruolo non richiede risorse
     if (!roleRequirements.needsSchool && 

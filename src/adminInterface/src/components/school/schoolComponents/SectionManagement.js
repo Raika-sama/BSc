@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Box, CircularProgress, Alert, Typography } from '@mui/material';  // Aggiungiamo Typography
-import { useSchool } from '../../../context/SchoolContext';  // Aggiungi questo import
+import { Box, CircularProgress, Alert } from '@mui/material';
+import { useSchool } from '../../../context/SchoolContext';
 import SectionManagementHeader from './SectionManagementHeader';
 import SectionStats from './SectionStats';
 import SectionList from './SectionList';
@@ -15,7 +15,6 @@ const SectionManagement = () => {
         loading,
         error
     } = useSchool();
-
 
     const [showInactive, setShowInactive] = useState(true);
     const [selectedSection, setSelectedSection] = useState(null);
@@ -64,6 +63,20 @@ const SectionManagement = () => {
         return <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>;
     }
 
+    // Prepara i dati delle sezioni includendo tutti gli anni accademici attivi
+    const sectionsWithAcademicYears = selectedSchool?.sections.map(section => {
+        // Filtra gli anni accademici attivi per questa sezione
+        const sectionAcademicYears = section.academicYears
+            ?.filter(ay => ay.status === 'active')
+            ?.map(ay => ay.year)
+            ?.join(', ') || '-';
+
+        return {
+            ...section,
+            academicYear: sectionAcademicYears
+        };
+    }) || [];
+
     return (
         <Box sx={{ pt: 1 }}>
             <SectionManagementHeader 
@@ -75,8 +88,8 @@ const SectionManagement = () => {
             
             <SectionList
                 sections={showInactive ? 
-                    selectedSchool?.sections || [] : 
-                    (selectedSchool?.sections || []).filter(s => s.isActive)
+                    sectionsWithAcademicYears : 
+                    sectionsWithAcademicYears.filter(s => s.isActive)
                 }
                 showInactive={showInactive}
                 onDeactivate={handleDeactivateClick}

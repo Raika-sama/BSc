@@ -720,7 +720,7 @@ class SchoolRepository extends BaseRepository {
         session.startTransaction();
     
         try {
-            logger.debug('Starting delete operation for school:', { schoolId: id });
+            logger.debug('Starting complete delete operation for school:', { schoolId: id });
     
             // 1. Verifica esistenza scuola
             const school = await this.model.findById(id).session(session);
@@ -731,7 +731,89 @@ class SchoolRepository extends BaseRepository {
                 );
             }
     
-            // 2. Elimina le classi
+            // 2. Raccoglie tutti gli ID delle classi e degli utenti associati
+            const classes = await Class.find({ schoolId: id }).session(session);
+            const classIds = classes.map(c => c._id);
+            
+            // Raccoglie tutti gli ID degli utenti (insegnanti e manager)
+            const teacherIds = new Set();
+            if (school.manager) teacherIds.add(school.manager.toString());
+            
+            school.users.forEach(user => {
+                if (user.user) teacherIds.add(user.user.toString());
+            });
+            
+            classes.forEach(cls => {
+                if (cls.mainTeacher) teacherIds.add(cls.mainTeacher.toString());
+                if (cls.teachers && cls.teachers.length) {
+                    cls.teachers.forEach(t => teacherIds.add(t.toString()));
+                }
+            });
+    
+            // 3. Raccoglie e aggiorna gli studenti
+            const students = await Student.find({ schoolId: id }).session(session);
+            const studentIds = students.map(s => s._id);
+            
+            // Aggiorna ogni studente
+            for (const student of students) {
+                // Salva i dati prima di reimpostare i campi
+                const fromClass = student.classId;
+                const fromSection = student.section;
+                const fromYear = student.currentYear;
+                
+                // Aggiorna lo studente
+                student.schoolId = null;
+                student.classId = null;
+                student.section = null;
+                student.currentYear = null;
+                student.status = 'inactive';
+                student.mainTeacher = null;
+                student.teachers = [];
+                student.lastClassChangeDate = new Date();
+                
+                // Aggiungi al classChangeHistory
+                student.classChangeHistory.push({
+                    fromClass,
+                    fromSection,
+                    fromYear,
+                    date: new Date(),
+                    reason: 'Eliminazione scuola',
+                    academicYear: school.academicYears.find(y => y.status === 'active')?.year || 'N/A'
+                });
+    
+                await student.save({ session });
+            }
+    
+            // 4. Aggiorna TUTTI gli utenti del sistema rimuovendo qualsiasi riferimento alla scuola
+            const User = mongoose.model('User');
+            
+            // 4.1 Rimuovi i riferimenti alla scuola, classi e studenti da tutti gli utenti coinvolti
+            await User.updateMany(
+                {}, // Tutti gli utenti nel sistema
+                { 
+                    $pull: { 
+                        // Rimuovi la scuola da assignedSchoolIds
+                        assignedSchoolIds: id,
+                        // Rimuovi le classi da assignedClassIds
+                        assignedClassIds: { $in: classIds },
+                        // Rimuovi gli studenti da assignedStudentIds
+                        assignedStudentIds: { $in: studentIds }
+                    }
+                },
+                { session }
+            );
+            
+            // 4.2 NON disattiviamo gli utenti, anche se non hanno più scuole
+            // Gli utenti vengono mantenuti attivi indipendentemente dalla cancellazione della scuola
+            if (teacherIds.size > 0) {
+                logger.debug('Aggiornati riferimenti utenti senza disattivazione:', {
+                    teacherCount: teacherIds.size,
+                    classCount: classIds.length,
+                    studentCount: studentIds.length
+                });
+            }
+    
+            // 5. Elimina tutte le classi della scuola
             const deleteClassesResult = await Class.deleteMany(
                 { schoolId: id },
                 { session }
@@ -739,19 +821,33 @@ class SchoolRepository extends BaseRepository {
     
             logger.debug('Classes deleted:', { count: deleteClassesResult.deletedCount });
     
-            // 3. Elimina la scuola
+            // 6. Elimina la scuola
             await this.model.findByIdAndDelete(id).session(session);
     
-            // 4. Commit della transazione
+            // 7. Commit della transazione
             await session.commitTransaction();
+    
+            logger.info('School deleted successfully with all references cleaned:', {
+                schoolId: id,
+                deletedClassesCount: deleteClassesResult.deletedCount,
+                updatedStudentsCount: students.length,
+                teacherReferencesUpdated: teacherIds.size
+            });
     
             return {
                 school,
-                deletedClassesCount: deleteClassesResult.deletedCount
+                deletedClassesCount: deleteClassesResult.deletedCount,
+                updatedStudentsCount: students.length,
+                updatedUsersCount: teacherIds.size
             };
     
         } catch (error) {
             await session.abortTransaction();
+            logger.error('Error deleting school:', {
+                schoolId: id,
+                error: error.message,
+                stack: error.stack
+            });
             return handleRepositoryError(
                 error,
                 'deleteWithClasses',
@@ -2264,6 +2360,388 @@ async reactivateAcademicYear(schoolId, yearId) {
             );
         }
     }
+
+    /**
+ * Disattiva una scuola e tutte le sue classi attive
+ * @param {String} schoolId - ID della scuola da disattivare
+ * @param {Object} options - Opzioni aggiuntive (motivo, note, ecc.)
+ * @returns {Promise<Object>} Risultato con dati sulla scuola e statistiche
+ */
+async deactivateSchool(schoolId, options = {}) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        logger.debug('Inizio disattivazione scuola', { schoolId });
+
+        // 1. Trova la scuola e verifica che esista
+        const school = await this.model.findById(schoolId).session(session);
+        if (!school) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            );
+        }
+
+        // 2. Verifica che la scuola non sia già disattivata
+        if (!school.isActive) {
+            logger.warn('Tentativo di disattivare una scuola già disattivata', { schoolId });
+            return { school, classesDeactivated: 0 };
+        }
+
+        // 3. Disattiva la scuola
+        school.isActive = false;
+        school.deactivatedAt = new Date(); // Aggiungiamo un timestamp di disattivazione
+        
+        // Aggiungiamo motivo e note se forniti
+        if (options.reason) school.deactivationReason = options.reason;
+        if (options.notes) school.deactivationNotes = options.notes;
+        
+        await school.save({ session });
+
+        // 4. Disattiva tutte le classi della scuola
+        const result = await Class.updateMany(
+            { 
+                schoolId, 
+                isActive: true 
+            },
+            { 
+                $set: { 
+                    isActive: false,
+                    deactivatedAt: new Date(),
+                    deactivationReason: options.reason || 'Scuola disattivata',
+                    status: 'inactive' // Aggiungiamo anche un update dello status
+                }
+            },
+            { session }
+        );
+
+        await session.commitTransaction();
+
+        logger.info('Scuola disattivata con successo', {
+            schoolId,
+            classesDeactivated: result.modifiedCount
+        });
+
+        return {
+            school,
+            classesDeactivated: result.modifiedCount
+        };
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Errore nella disattivazione della scuola', {
+            error: error.message,
+            stack: error.stack,
+            schoolId
+        });
+        throw error;
+    } finally {
+        session.endSession();
+    }
+}
+
+/**
+ * Riattiva una scuola precedentemente disattivata e le sue classi
+ * @param {String} schoolId - ID della scuola da riattivare
+ * @returns {Promise<Object>} Risultato con dati sulla scuola e statistiche
+ */
+async reactivateSchool(schoolId) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        logger.debug('Inizio riattivazione scuola', { schoolId });
+
+        // 1. Trova la scuola e verifica che esista
+        const school = await this.model.findById(schoolId).session(session);
+        if (!school) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            );
+        }
+
+        // 2. Verifica che la scuola sia effettivamente disattivata
+        if (school.isActive) {
+            logger.warn('Tentativo di riattivare una scuola già attiva', { schoolId });
+            return { school, classesReactivated: 0 };
+        }
+
+        // 3. Riattiva la scuola
+        school.isActive = true;
+        school.deactivatedAt = undefined; // Rimuoviamo il timestamp di disattivazione
+        school.deactivationReason = undefined; // Rimuoviamo il motivo della disattivazione
+        school.deactivationNotes = undefined; // Rimuoviamo le note di disattivazione
+        school.reactivatedAt = new Date(); // Aggiungiamo un timestamp di riattivazione
+        
+        await school.save({ session });
+
+        // 4. Riattiva tutte le classi della scuola che erano state disattivate per la disattivazione della scuola
+        // Nota: riattiva solo le classi che erano state disattivate a causa della scuola
+        const result = await Class.updateMany(
+            { 
+                schoolId, 
+                isActive: false,
+                deactivationReason: 'Scuola disattivata' // Solo classi disattivate per questo motivo
+            },
+            { 
+                $set: { 
+                    isActive: true,
+                    deactivatedAt: undefined,
+                    deactivationReason: undefined,
+                    status: 'active', // Ripristina lo status
+                    reactivatedAt: new Date() // Timestamp di riattivazione
+                }
+            },
+            { session }
+        );
+
+        await session.commitTransaction();
+
+        logger.info('Scuola riattivata con successo', {
+            schoolId,
+            classesReactivated: result.modifiedCount
+        });
+
+        return {
+            school,
+            classesReactivated: result.modifiedCount
+        };
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Errore nella riattivazione della scuola', {
+            error: error.message,
+            stack: error.stack,
+            schoolId
+        });
+        throw error;
+    } finally {
+        session.endSession();
+    }
+}
+
+/**
+ * Riattiva una scuola precedentemente disattivata e le sue classi dell'anno accademico corrente
+ * @param {String} schoolId - ID della scuola da riattivare
+ * @returns {Promise<Object>} Risultato con dati sulla scuola e statistiche
+ */
+async reactivateSchool(schoolId) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        logger.debug('Inizio riattivazione scuola', { schoolId });
+
+        // 1. Trova la scuola e verifica che esista
+        const school = await this.model.findById(schoolId).session(session);
+        if (!school) {
+            throw createError(
+                ErrorTypes.RESOURCE.NOT_FOUND,
+                'Scuola non trovata'
+            );
+        }
+
+        // 2. Verifica che la scuola sia effettivamente disattivata
+        if (school.isActive) {
+            logger.warn('Tentativo di riattivare una scuola già attiva', { schoolId });
+            return { school, classesReactivated: 0 };
+        }
+
+        // 3. Trova l'anno accademico corrente
+        const currentAcademicYear = school.academicYears.find(y => y.status === 'active');
+        
+        if (!currentAcademicYear) {
+            logger.warn('Nessun anno accademico attivo trovato per la scuola', { schoolId });
+        }
+        
+        const academicYearToUse = currentAcademicYear ? currentAcademicYear.year : null;
+        
+        logger.debug('Anno accademico identificato per la riattivazione', { 
+            academicYear: academicYearToUse,
+            hasActiveYear: !!currentAcademicYear
+        });
+
+        // 4. Riattiva la scuola
+        school.isActive = true;
+        school.reactivatedAt = new Date(); // Aggiungiamo un timestamp di riattivazione
+        
+        // Usiamo $unset per rimuovere i campi di disattivazione
+        school.deactivatedAt = undefined;
+        school.deactivationReason = undefined;
+        school.deactivationNotes = undefined;
+        
+        await school.save({ session });
+
+        // 5. Costruisci la query per le classi da riattivare
+        let classQuery = {
+            schoolId,
+            isActive: false
+        };
+        
+        // Se abbiamo un anno accademico corrente, lo includiamo nella query
+        if (academicYearToUse) {
+            classQuery.academicYear = academicYearToUse;
+        }
+        
+        // Log della query
+        logger.debug('Query di riattivazione classi:', {
+            query: classQuery
+        });
+
+        // 6. Riattiva le classi che corrispondono ai criteri
+        const result = await Class.updateMany(
+            classQuery,
+            { 
+                $set: { 
+                    isActive: true,
+                    status: 'active',
+                    reactivatedAt: new Date(),
+                    updatedAt: new Date()
+                },
+                $unset: {
+                    deactivatedAt: "",
+                    deactivationReason: ""
+                }
+            },
+            { session }
+        );
+
+        // Log dettagliato per debug
+        logger.debug('Risultato riattivazione classi:', {
+            matchedCount: result.matchedCount,
+            modifiedCount: result.modifiedCount,
+            upsertedCount: result.upsertedCount,
+            academicYear: academicYearToUse
+        });
+
+        await session.commitTransaction();
+
+        logger.info('Scuola riattivata con successo', {
+            schoolId,
+            classesReactivated: result.modifiedCount,
+            academicYear: academicYearToUse
+        });
+
+        return {
+            school,
+            classesReactivated: result.modifiedCount,
+            academicYear: academicYearToUse
+        };
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Errore nella riattivazione della scuola', {
+            error: error.message,
+            stack: error.stack,
+            schoolId
+        });
+        throw error;
+    } finally {
+        session.endSession();
+    }
+}
+
+// Aggiungi questo metodo alla classe SchoolRepository in SchoolRepository.js
+
+/**
+ * Crea una nuova scuola e la assegna al manager (aggiornando assignedSchoolIds)
+ * @param {Object} schoolData - Dati della scuola da creare
+ * @returns {Promise<Object>} La scuola creata
+ */
+async createAndAssignToManager(schoolData) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        logger.debug('Creating school and assigning to manager:', {
+            schoolName: schoolData.name,
+            managerId: schoolData.manager
+        });
+
+        // 1. Validazione dei dati
+        if (!schoolData.name) {
+            throw createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'Nome scuola richiesto'
+            );
+        }
+
+        if (!schoolData.manager) {
+            throw createError(
+                ErrorTypes.VALIDATION.BAD_REQUEST,
+                'Manager richiesto per la creazione della scuola'
+            );
+        }
+
+        // 2. Crea la scuola
+        const school = new this.model(schoolData);
+        await school.save({ session });
+        
+        logger.debug('School created successfully:', {
+            schoolId: school._id,
+            schoolName: school.name
+        });
+
+        // 3. Aggiorna l'utente manager aggiungendo la scuola all'array assignedSchoolIds
+        const User = mongoose.model('User');
+        const updatedUser = await User.findByIdAndUpdate(
+            schoolData.manager,
+            { $addToSet: { assignedSchoolIds: school._id } },
+            { 
+                session, 
+                new: true // Ritorna il documento aggiornato
+            }
+        );
+
+        if (!updatedUser) {
+            throw createError(
+                ErrorTypes.DATABASE.UPDATE_FAILED,
+                'Errore nell\'aggiornamento dell\'utente manager'
+            );
+        }
+
+        logger.info('User assignedSchoolIds updated successfully:', {
+            userId: updatedUser._id,
+            schoolId: school._id,
+            assignedSchoolIdsCount: updatedUser.assignedSchoolIds?.length || 0
+        });
+
+        // 4. Commit della transazione
+        await session.commitTransaction();
+        
+        return school;
+    } catch (error) {
+        // Rollback in caso di errore
+        await session.abortTransaction();
+        
+        logger.error('Error in createAndAssignToManager:', {
+            error: error.message,
+            stack: error.stack,
+            schoolData: { ...schoolData, manager: '[REDACTED]' }
+        });
+        
+        // Gestione degli errori specifici
+        if (error.code === 11000) {
+            throw createError(
+                ErrorTypes.RESOURCE.ALREADY_EXISTS,
+                'Esiste già una scuola con questo nome'
+            );
+        }
+        
+        if (error.code) {
+            // Se l'errore è già formattato, lo rilanciamo
+            throw error;
+        }
+        
+        // Altrimenti creiamo un nuovo errore formattato
+        throw createError(
+            ErrorTypes.DATABASE.OPERATION_FAILED,
+            'Errore nella creazione della scuola',
+            { originalError: error.message }
+        );
+    } finally {
+        session.endSession();
+    }
+}
 
 }
 

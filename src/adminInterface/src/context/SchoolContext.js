@@ -979,6 +979,87 @@ const executeYearTransition = async (schoolId, transitionData) => {
     }
 };
 
+/**
+ * Disattiva una scuola e tutte le sue classi attive
+ * @param {String} schoolId - ID della scuola da disattivare
+ * @param {Object} options - Opzioni aggiuntive (motivo, note, ecc.)
+ * @returns {Promise<Object>} Risultato dell'operazione
+ */
+const deactivateSchool = async (schoolId, options = {}) => {
+    try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('Deactivating school:', { schoolId, options });
+        
+        const response = await axiosInstance.post(`/schools/${schoolId}/deactivate`, options);
+        
+        if (response.data.status === 'success') {
+            // Aggiorna lo stato locale
+            setSchools(prev => prev.map(school => 
+                school._id === schoolId ? { ...school, isActive: false } : school
+            ));
+            
+            // Aggiorna anche selectedSchool se è quella che stiamo disattivando
+            if (selectedSchool && selectedSchool._id === schoolId) {
+                setSelectedSchool(prev => ({ ...prev, isActive: false }));
+            }
+            
+            showNotification('Scuola disattivata con successo', 'success');
+            return response.data.data;
+        }
+    } catch (error) {
+        console.error('Error deactivating school:', error);
+        const errorMessage = error.response?.data?.error?.message || 
+                          'Errore nella disattivazione della scuola';
+        setError(errorMessage);
+        showNotification(errorMessage, 'error');
+        throw error;
+    } finally {
+        setLoading(false);
+    }
+};
+
+/**
+ * Riattiva una scuola precedentemente disattivata
+ * @param {String} schoolId - ID della scuola da riattivare
+ * @returns {Promise<Object>} Risultato dell'operazione
+ */
+const reactivateSchool = async (schoolId) => {
+    try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('Reactivating school:', { schoolId });
+        
+        const response = await axiosInstance.post(`/schools/${schoolId}/reactivate`);
+        
+        if (response.data.status === 'success') {
+            // Aggiorna lo stato locale
+            setSchools(prev => prev.map(school => 
+                school._id === schoolId ? { ...school, isActive: true } : school
+            ));
+            
+            // Aggiorna anche selectedSchool se è quella che stiamo riattivando
+            if (selectedSchool && selectedSchool._id === schoolId) {
+                setSelectedSchool(prev => ({ ...prev, isActive: true }));
+            }
+            
+            showNotification('Scuola riattivata con successo', 'success');
+            return response.data.data;
+        }
+    } catch (error) {
+        console.error('Error reactivating school:', error);
+        const errorMessage = error.response?.data?.error?.message || 
+                          'Errore nella riattivazione della scuola';
+        setError(errorMessage);
+        showNotification(errorMessage, 'error');
+        throw error;
+    } finally {
+        setLoading(false);
+    }
+};
+
     return (
         <SchoolContext.Provider value={{
             schools,
@@ -1014,7 +1095,10 @@ const executeYearTransition = async (schoolId, transitionData) => {
             getTransitionPreview,
             executeYearTransition,
             currentSchool,
-            setCurrentSchool
+            setCurrentSchool,
+            activateAcademicYear,
+            deactivateSchool,
+            reactivateSchool
         }}>
             {children}
         </SchoolContext.Provider>

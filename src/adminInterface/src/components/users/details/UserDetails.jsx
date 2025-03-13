@@ -15,7 +15,7 @@ import {
     Divider,
     Grid
 } from '@mui/material';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '../../../context/UserContext';
 import { useSchool } from '../../../context/SchoolContext';
 import UserInfo from './UserInfo';
@@ -216,40 +216,52 @@ const UserDetails = () => {
                     </Tabs>
 
                     <Box sx={{ p: 3 }}>
-                        {currentTab === 0 && (
-                            <UserInfo 
-                                userData={userData} 
-                                onUpdate={loadUserData} 
-                            />
-                        )}
-                        {currentTab === 1 && (
-                            <UserRoleInfo 
-                                role={userData.role} 
-                            />
-                        )}
-                        {currentTab === 2 && (
-                            <UserPermissions 
-                                userData={userData} 
-                                onUpdate={loadUserData} 
-                            />
-                        )}
-                        {currentTab === 3 && (
-                            <UserResourcesAssignment 
-                                userData={userData} 
-                                onUpdate={loadUserData}
-                            />
-                        )}
-                        {currentTab === 4 && (
-                            <UserSessions 
-                                userData={userData} 
-                                onUpdate={loadUserData} 
-                            />
-                        )}
-                        {currentTab === 5 && (
-                            <UserHistory 
-                                userData={userData}
-                            />
-                        )}
+                        <AnimatePresence mode="sync">
+                            <Box 
+                                component={motion.div}
+                                key={currentTab}
+                                initial={{ opacity: 0, x: 50 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -50 }}
+                                transition={{ duration: 0.3 }}
+                                sx={{ width: '100%' }}
+                            >
+                                {currentTab === 0 && (
+                                    <UserInfo 
+                                        userData={userData} 
+                                        onUpdate={loadUserData} 
+                                    />
+                                )}
+                                {currentTab === 1 && (
+                                    <UserRoleInfo 
+                                        role={userData.role} 
+                                    />
+                                )}
+                                {currentTab === 2 && (
+                                    <UserPermissions 
+                                        userData={userData} 
+                                        onUpdate={loadUserData} 
+                                    />
+                                )}
+                                {currentTab === 3 && (
+                                    <UserResourcesAssignment 
+                                        userData={userData} 
+                                        onUpdate={loadUserData}
+                                    />
+                                )}
+                                {currentTab === 4 && (
+                                    <UserSessions 
+                                        userData={userData} 
+                                        onUpdate={loadUserData} 
+                                    />
+                                )}
+                                {currentTab === 5 && (
+                                    <UserHistory 
+                                        userData={userData}
+                                    />
+                                )}
+                            </Box>
+                        </AnimatePresence>
                     </Box>
                 </Paper>
             </Box>

@@ -282,6 +282,26 @@ const createSchoolRouter = ({ authMiddleware, schoolController }) => {
             asyncHandler(schoolController.delete.bind(schoolController))
         );
 
+        /**
+         * @route POST /api/schools/:id/deactivate
+         * @desc Disattiva una scuola e le sue classi
+         * @access Private - Solo admin
+         */
+        router.post('/:id/deactivate',
+            hasPermission('schools', 'manage'),
+            asyncHandler(schoolController.deactivateSchool.bind(schoolController))
+        );
+
+        /**
+         * @route POST /api/schools/:id/reactivate
+         * @desc Riattiva una scuola precedentemente disattivata
+         * @access Private - Solo admin
+         */
+        router.post('/:id/reactivate',
+            hasPermission('schools', 'manage'),
+            asyncHandler(schoolController.reactivateSchool.bind(schoolController))
+        );
+
     // 5. Rotte per la gestione degli utenti della scuola
     /**
      * @route POST /api/schools/:id/users

@@ -189,10 +189,21 @@ class ClassRepository extends BaseRepository {
     }
 
     async addStudent(classId, studentId) {
-        try {
-            const classData = await this.findById(classId);
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
-            if (classData.students.includes(studentId)) {
+        try {
+            // Trova la classe con i suoi docenti
+            const classDoc = await this.model.findById(classId).session(session);
+            if (!classDoc) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Classe non trovata'
+                );
+            }
+
+            // Verifica se lo studente è già presente
+            if (classDoc.students.some(s => s.studentId.toString() === studentId.toString())) {
                 logger.warn('Tentativo di aggiungere uno studente già presente', { classId, studentId });
                 throw createError(
                     ErrorTypes.RESOURCE.ALREADY_EXISTS,
@@ -200,11 +211,36 @@ class ClassRepository extends BaseRepository {
                 );
             }
 
-            classData.students.push(studentId);
-            await classData.save();
+            // Raccogli tutti gli ID degli insegnanti (principale + co-docenti)
+            const teacherIds = [];
+            if (classDoc.mainTeacher) {
+                teacherIds.push(classDoc.mainTeacher);
+            }
+            if (classDoc.teachers && classDoc.teachers.length > 0) {
+                teacherIds.push(...classDoc.teachers);
+            }
 
-            return classData;
+            // Aggiungi lo studente alla classe
+            classDoc.students.push({ studentId });
+            await classDoc.save({ session });
+
+            // Aggiorna gli assignedStudentIds per tutti gli insegnanti
+            if (teacherIds.length > 0) {
+                await mongoose.model('User').updateMany(
+                    { _id: { $in: teacherIds } },
+                    {
+                        $addToSet: {
+                            assignedStudentIds: studentId
+                        }
+                    },
+                    { session }
+                );
+            }
+
+            await session.commitTransaction();
+            return classDoc;
         } catch (error) {
+            await session.abortTransaction();
             if (error.code) throw error;
             throw handleRepositoryError(
                 error,
@@ -212,6 +248,8 @@ class ClassRepository extends BaseRepository {
                 { classId, studentId },
                 this.repositoryName
             );
+        } finally {
+            session.endSession();
         }
     }
 
@@ -408,6 +446,7 @@ class ClassRepository extends BaseRepository {
                     return oldClass.year < maxYear;
                 })
                 .map(oldClass => ({
+
                     schoolId: oldClass.schoolId._id,
                     year: oldClass.year + 1,
                     section: oldClass.section,
@@ -713,8 +752,26 @@ class ClassRepository extends BaseRepository {
         session.startTransaction();
     
         try {
+            // Trova la classe per ottenere i riferimenti agli insegnanti
+            const classDoc = await this.model.findById(classId).session(session);
+            if (!classDoc) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Classe non trovata'
+                );
+            }
+
+            // Raccogli tutti gli ID degli insegnanti (principale + co-docenti)
+            const teacherIds = [];
+            if (classDoc.mainTeacher) {
+                teacherIds.push(classDoc.mainTeacher);
+            }
+            if (classDoc.teachers && classDoc.teachers.length > 0) {
+                teacherIds.push(...classDoc.teachers);
+            }
+
             // Aggiorna la classe rimuovendo gli studenti
-            const classDoc = await this.model.findByIdAndUpdate(
+            const updatedClass = await this.model.findByIdAndUpdate(
                 classId,
                 {
                     $pull: {
@@ -741,9 +798,22 @@ class ClassRepository extends BaseRepository {
                 },
                 { session }
             );
+
+            // Aggiorna il campo assignedStudentIds per gli insegnanti
+            if (teacherIds.length > 0) {
+                await mongoose.model('User').updateMany(
+                    { _id: { $in: teacherIds } },
+                    {
+                        $pull: {
+                            assignedStudentIds: { $in: studentIds }
+                        }
+                    },
+                    { session }
+                );
+            }
     
             await session.commitTransaction();
-            return classDoc;
+            return updatedClass;
         } catch (error) {
             await session.abortTransaction();
             throw handleRepositoryError(

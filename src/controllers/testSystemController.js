@@ -26,6 +26,7 @@ class TestSystemController extends BaseController {
         this._parseTestResults = this._parseTestResults.bind(this);
         this._extractJestSummary = this._extractJestSummary.bind(this);
         this._parseJestJsonOutput = this._parseJestJsonOutput.bind(this);
+        this._extractDetailedResults = this._extractDetailedResults.bind(this);
     }
 
 /**
@@ -36,12 +37,18 @@ class TestSystemController extends BaseController {
 async runUnitTests(req, res) {
     try {
         console.log("[TestSystemController] runUnitTests chiamato");
-        const { testFile } = req.body || {};
+        const { testFile, methodName, testNamePattern, repository } = req.body || {};
         
         // Costruisci gli argomenti per Jest
-        let testPath, commandArgs;
+        let testPath, commandArgs = [];
         
-        if (testFile) {
+        // Ottimizzazione per i repository
+        if (repository) {
+            console.log(`[TestSystemController] Esecuzione test per repository specifico: ${repository}`);
+            // Cerca test relativi a questo repository specifico
+            testPath = `src/systemTests/unit/*${repository}*.test.js`;
+            commandArgs.push(`--testPathPattern=${testPath}`);
+        } else if (testFile) {
             // Normalizza i separatori di percorso (trasforma \ in /)
             const normalizedTestFile = testFile.replace(/\\/g, '/');
             console.log(`[TestSystemController] File di test richiesto: ${normalizedTestFile}`);
@@ -55,11 +62,37 @@ async runUnitTests(req, res) {
                 testPath = normalizedTestFile;
             }
             
-            commandArgs = [`--testPathPattern=${testPath}`];
+            commandArgs.push(`--testPathPattern=${testPath}`);
         } else {
             // Se non è specificato un file, esegui tutti i test unitari
             testPath = 'src/systemTests/unit';
-            commandArgs = [`--testPathPattern=${testPath}`];
+            commandArgs.push(`--testPathPattern=${testPath}`);
+        }
+        
+        // NOTA IMPORTANTE: testNamePattern ha precedenza su methodName
+        // (per compatibilità con diverse implementazioni frontend)
+        let testNameFilter = testNamePattern || methodName;
+        
+        // Se è specificato un filtro per nome test, aggiungilo
+        if (testNameFilter) {
+            // Verifica che tipo di filtro è stato specificato
+            if (testNameFilter.includes(' › ')) {
+                // È già un pattern completo, usalo così com'è
+                console.log(`[TestSystemController] Filtro completo per test: "${testNameFilter}"`);
+                commandArgs.push(`--testNamePattern="${testNameFilter}"`);
+            } else if (repository && testNameFilter) {
+                // È un repository specifico + metodo, costruisci un pattern completo
+                console.log(`[TestSystemController] Filtro per repository e metodo: ${repository} › ${testNameFilter}`);
+                commandArgs.push(`--testNamePattern="${repository}.*${testNameFilter}"`);
+            } else {
+                // È solo un nome di metodo, aggiungi pattern generico
+                console.log(`[TestSystemController] Filtro generico per metodo: ${testNameFilter}`);
+                // Pattern migliorato che funziona sia con descrive che con test diretti
+                commandArgs.push(`--testNamePattern="(${testNameFilter}|[a-zA-Z]+Repository.+${testNameFilter})"`);
+            }
+        } else {
+            // Se non c'è filtro specifico, usa un pattern che cattura tutti i test
+            commandArgs.push('--testNamePattern=".+"'); 
         }
         
         console.log(`[TestSystemController] Esecuzione test con pattern: ${testPath}`);
@@ -69,7 +102,6 @@ async runUnitTests(req, res) {
         commandArgs.push('--verbose'); // Output dettagliato
         commandArgs.push('--colors'); // Colora l'output
         commandArgs.push('--json'); // Output in formato JSON per parsing preciso
-        commandArgs.push('--testNamePattern=".+"'); // Forza l'inclusione dei nomi dei test nell'output
         
         // Aggiungi --runInBand per eseguire i test in serie (evita problemi con MongoDB)
         commandArgs.push('--runInBand');
@@ -88,9 +120,9 @@ async runUnitTests(req, res) {
             const output = execSync(command, { 
                 stdio: 'pipe',
                 encoding: 'utf8',
-                timeout: 60000, // 1 minuto di timeout
+                timeout: 90000, // 1.5 minuti di timeout - aumentato per test più complessi
                 shell: true,
-                maxBuffer: 10 * 1024 * 1024 // Aumenta il buffer massimo a 10MB
+                maxBuffer: 20 * 1024 * 1024 // Aumenta il buffer massimo a 20MB
             });
             
             console.log(`[TestSystemController] Esecuzione Jest completata!`);
@@ -126,7 +158,7 @@ async runUnitTests(req, res) {
                     });
                     
                     // Salva i risultati nel database
-                    await this._saveTestResults('unit', results, testFile || testPath);
+                    await this._saveTestResults('unit', results, testFile || methodName || testPath);
                     
                     console.log(`[TestSystemController] Invio risposta al client...`);
                     
@@ -164,7 +196,7 @@ async runUnitTests(req, res) {
                 });
                 
                 // Salva i risultati nel database
-                await this._saveTestResults('unit', results, testFile || testPath);
+                await this._saveTestResults('unit', results, testFile || methodName || testPath);
                 
                 console.log(`[TestSystemController] Invio risposta al client...`);
                 
@@ -207,7 +239,7 @@ async runUnitTests(req, res) {
                     });
                     
                     // Salva anche i risultati falliti nel database
-                    await this._saveTestResults('unit', errorResults, testFile || testPath);
+                    await this._saveTestResults('unit', errorResults, testFile || methodName || testPath);
                     
                     return this.sendResponse(res, errorResults);
                 }
@@ -238,7 +270,7 @@ async runUnitTests(req, res) {
             });
             
             // Salva anche i risultati falliti nel database
-            await this._saveTestResults('unit', errorResults, testFile || testPath);
+            await this._saveTestResults('unit', errorResults, testFile || methodName || testPath);
             
             return this.sendResponse(res, errorResults);
         }
@@ -462,67 +494,171 @@ async runUnitTests(req, res) {
         }
     }
 
-    /**
-     * Utility privata per ottenere informazioni sui test disponibili
-     * @param {String} testType - Tipo di test ('unit' o 'integration')
-     * @returns {Array} - Informazioni sui test
-     * @private
-     */
-    async _getTestsInfo(testType) {
+/**
+ * Utility privata per ottenere informazioni sui test disponibili
+ * @param {String} testType - Tipo di test ('unit' o 'integration')
+ * @param {String} repository - Repository specifico per filtrare i test (opzionale)
+ * @returns {Array} - Informazioni sui test
+ * @private
+ */
+async _getTestsInfo(testType, repository = null) {
+    try {
+        const rootDir = path.resolve(__dirname, '../../');
+        // Aggiorniamo il percorso per puntare a src/systemTests invece di tests
+        const testsDir = path.join(rootDir, 'src', 'systemTests', testType);
+        
+        // Verifica che la directory dei test esista
         try {
-            const rootDir = path.resolve(__dirname, '../../');
-            // Aggiorniamo il percorso per puntare a src/systemTests invece di tests
-            const testsDir = path.join(rootDir, 'src', 'systemTests', testType);
-            
-            // Verifica che la directory dei test esista
-            try {
-                await fs.access(testsDir);
-            } catch (err) {
-                console.warn(`Tests directory ${testsDir} does not exist or is not accessible`);
-                return []; // Restituisci un array vuoto se la directory non esiste
+            await fs.access(testsDir);
+        } catch (err) {
+            console.warn(`Tests directory ${testsDir} does not exist or is not accessible`);
+            return []; // Restituisci un array vuoto se la directory non esiste
+        }
+        
+        // Scansiona i file di test
+        let testFiles = await this._scanTestFiles(testsDir);
+        
+        // Filtra per repository se specificato
+        if (repository) {
+            console.log(`[TestSystemController] Filtraggio test per repository: ${repository}`);
+            testFiles = testFiles.filter(test => 
+                test.name.includes(repository) || 
+                test.file.includes(repository) || 
+                test.description.includes(repository)
+            );
+        }
+        
+        // Raggruppa i test per file e estrai i metodi testati
+        // Questo permetterà di visualizzare i metodi disponibili per ogni repository
+        const testFilesWithMethods = [];
+        const testFilesMap = new Map();
+        
+        // Primo passaggio: raggruppa i test per file
+        for (const test of testFiles) {
+            if (!testFilesMap.has(test.file)) {
+                testFilesMap.set(test.file, {
+                    ...test,
+                    methods: []
+                });
             }
-            
-            const testFiles = await this._scanTestFiles(testsDir);
-            
-            // Ottieni la cronologia dei risultati dei test per ogni file
-            const testFilesWithHistory = await Promise.all(testFiles.map(async (test) => {
-                const latestResult = await TestResult.findOne({
+        }
+        
+        // Secondo passaggio: analizza ogni file per estrarre i metodi
+        for (const [filePath, fileInfo] of testFilesMap.entries()) {
+            try {
+                // Leggi il contenuto del file per estrarre i metodi
+                const fullPath = path.join(rootDir, 'src', 'systemTests', testType, filePath);
+                const fileContent = await fs.readFile(fullPath, 'utf8');
+                
+                // Pattern per trovare i metodi testati
+                const methodsFound = new Set();
+                
+                // Trova i blocchi describe
+                const describeMatches = fileContent.matchAll(/describe\(['"]([^'"]+)['"]/g);
+                for (const match of describeMatches) {
+                    if (match[1] && !match[1].includes('Repository')) {
+                        methodsFound.add(match[1]);
+                    }
+                }
+                
+                // Trova i test diretti senza describe
+                const testMatches = fileContent.matchAll(/test\(['"]([^:]+): ([^'"]+)['"]/g);
+                for (const match of testMatches) {
+                    if (match[1]) {
+                        methodsFound.add(match[1]);
+                    }
+                }
+                
+                // Aggiungi i metodi trovati
+                fileInfo.methods = Array.from(methodsFound).map(method => ({
+                    id: `${fileInfo.id}-${method}`,
+                    name: method,
+                    description: `Test del metodo ${method}`,
+                    file: fileInfo.file,
+                    repository: fileInfo.name,
+                    isMethodTest: true
+                }));
+                
+                testFilesWithMethods.push(fileInfo);
+            } catch (error) {
+                console.error(`Failed to extract methods from ${filePath}:`, error);
+                // Aggiungi comunque il file anche se non siamo riusciti a estrarre i metodi
+                testFilesWithMethods.push(fileInfo);
+            }
+        }
+        
+        // Ottieni la cronologia dei risultati dei test per ogni file
+        const testFilesWithHistory = await Promise.all(testFilesWithMethods.map(async (test) => {
+            let latestResult;
+            try {
+                latestResult = await TestResult.findOne({
                     'testPath': { $regex: new RegExp(test.file.replace(/\\/g, '\\\\')) }
                 })
                 .sort({ executedAt: -1 })
                 .lean();
+            } catch (error) {
+                console.error(`Failed to get test history for ${test.file}:`, error);
+                latestResult = null;
+            }
+            
+            if (latestResult) {
+                // Se abbiamo un risultato completo, usiamo i dati del database
+                const fileResult = {
+                    ...test,
+                    status: latestResult.success ? 'passed' : 'failed',
+                    duration: latestResult.duration * 1000 || null, // Converti in millisecondi
+                    lastExecuted: latestResult.executedAt,
+                    passedTests: latestResult.passedTests || 0,
+                    failedTests: latestResult.failedTests || 0,
+                    totalTests: latestResult.totalTests || 0,
+                    output: latestResult.rawOutput
+                };
                 
-                if (latestResult) {
-                    // Se abbiamo un risultato completo, usiamo i dati del database
-                    return {
-                        ...test,
-                        status: latestResult.success ? 'passed' : 'failed',
-                        duration: latestResult.duration * 1000 || null, // Converti in millisecondi
-                        lastExecuted: latestResult.executedAt,
-                        passedTests: latestResult.passedTests || 0,
-                        failedTests: latestResult.failedTests || 0,
-                        totalTests: latestResult.totalTests || 0,
-                        output: latestResult.rawOutput
-                    };
+                // Aggiorna anche lo status dei metodi se ci sono risultati dettagliati
+                if (latestResult.results && latestResult.results.length > 0 && fileResult.methods) {
+                    for (const method of fileResult.methods) {
+                        // Cerca i risultati relativi a questo metodo specifico
+                        const methodResults = latestResult.results.filter(r => 
+                            (r.group === method.name) || 
+                            (r.name && r.name.includes(` › ${method.name} › `))
+                        );
+                        
+                        if (methodResults.length > 0) {
+                            const passedMethods = methodResults.filter(r => r.status === 'passed').length;
+                            const failedMethods = methodResults.filter(r => r.status === 'failed').length;
+                            
+                            method.status = failedMethods > 0 ? 'failed' : 'passed';
+                            method.lastExecuted = latestResult.executedAt;
+                            method.passedTests = passedMethods;
+                            method.failedTests = failedMethods;
+                            method.totalTests = methodResults.length;
+                        }
+                    }
                 }
                 
-                return {
-                    ...test,
-                    status: 'pending',
-                    duration: null,
-                    lastExecuted: null,
-                    passedTests: 0,
-                    failedTests: 0,
-                    totalTests: 0
-                };
-            }));
+                return fileResult;
+            }
             
-            return testFilesWithHistory;
-        } catch (error) {
-            console.error(`Failed to get tests info: ${error.message}`, error.stack);
-            throw new Error(`Failed to get tests info: ${error.message}`);
-        }
+            return {
+                ...test,
+                status: 'pending',
+                duration: null,
+                lastExecuted: null,
+                passedTests: 0,
+                failedTests: 0,
+                totalTests: 0
+            };
+        }));
+        
+        // Log dei risultati per debug
+        console.log(`[TestSystemController] Trovati ${testFilesWithHistory.length} file di test con ${testFilesWithHistory.reduce((total, file) => total + (file.methods?.length || 0), 0)} metodi`);
+        
+        return testFilesWithHistory;
+    } catch (error) {
+        console.error(`Failed to get tests info: ${error.message}`, error.stack);
+        throw new Error(`Failed to get tests info: ${error.message}`);
     }
+}
 
     /**
      * Utility privata per scansionare ricorsivamente i file di test
@@ -812,11 +948,20 @@ _extractDetailedResults(output) {
     
     console.log(`[TestSystemController] Analisi dell'output per estrazione dettagli (${lines.length} linee)`);
     
-    // Primo miglioramento: estrazione più accurata dei test con gruppi
-    // Cerca pattern come "UserRepository › findById › should find a user by ID"
-    const testNamePattern = /([^ ]+) › ([^ ]+) › ([^(]+)/;
+    // Pattern completo per estrarre i test con gruppi nidificati
+    // Adesso cerca pattern come:
+    // - "UserRepository › findById › should find a user by ID"
+    // - "SchoolRepository › findOne › should find a school by criteria"
+    // - "ClassRepository › create › should create a new class"
+    const testNamePattern = /([A-Za-z]+Repository) › ([a-zA-Z]+) › ([^(]+)/;
     
-    // 1. Prima cerca i risultati dei test in formato PASS/FAIL con nome completo
+    // Supporto per i test senza struttura nidificata
+    const simpleTestPattern = /([A-Za-z]+Repository): ([^(]+)/;
+    
+    // Pattern alternativo per i test che usano "describe"
+    const describePattern = /describe\(['"](findById|findByEmail|findOne|create|update|deleteWithClasses|findWithFilters|addUser|removeUser|reactivateSection|deactivateSection|setupAcademicYear|findWithUsers|getSectionsWithStudentCount|activateAcademicYear|archiveAcademicYear|getClassesByAcademicYear|changeSchoolType|findByRegion|findAll|exists|findBySchool|findWithDetails|createInitialClasses|promoteStudents)/;
+    
+    // Regex per individuare le righe di risultato dei test
     const passFailRegex = /^(PASS|FAIL)\s+(.*?)(?:\s+\((\d+)\s*ms\))?$/i;
     const testLineRegex = /^\s*(✓|✕)\s+(.*?)(?:\s+\((\d+)\s*ms\))?$/i;
     
@@ -824,23 +969,72 @@ _extractDetailedResults(output) {
     let currentSuite = '';
     let currentDescribe = '';
     
+    // Lista di tutti i repository supportati
+    const repositories = ['UserRepository', 'SchoolRepository', 'ClassRepository', 'StudentRepository'];
+    
+    // Lista completa dei metodi noti per ogni repository
+    const knownMethods = [
+        // UserRepository methods
+        'findById', 'findByEmail', 'create', 'update', 'findWithFilters',
+        // SchoolRepository methods
+        'findOne', 'findById', 'create', 'update', 'addUser', 'findByRegion', 
+        'setupAcademicYear', 'removeUser', 'deactivateSection', 'reactivateSection',
+        'findWithUsers', 'getSectionsWithStudentCount', 'activateAcademicYear',
+        'archiveAcademicYear', 'getClassesByAcademicYear', 'changeSchoolType',
+        'removeManagerFromSchool', 'addManagerToSchool', 'getStudentsBySection',
+        'reactivateAcademicYear', 'updateAcademicYear', 'deleteWithClasses', 'findAll',
+        'syncAssignedSchoolIds',
+        // ClassRepository methods 
+        'create', 'findById', 'update', 'delete', 'find', 'exists', 
+        'findBySchool', 'findWithDetails', 'createInitialClasses', 'promoteStudents'
+    ];
+    
+    let inDescribeBlock = false;
+    let describeMethod = '';
+    
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         
-        // Identifica il blocco della suite di test
-        if (line.startsWith('UserRepository') || line.startsWith('SchoolRepository')) {
-            currentSuite = line.split(' ')[0];
+        // Identificare il blocco describe per supportare test con formati diversi
+        const describeMatch = line.match(describePattern);
+        if (describeMatch) {
+            describeMethod = describeMatch[1];
+            inDescribeBlock = true;
+            // Se troviamo un describe, aggiorniamo il metodo corrente
+            currentDescribe = describeMethod;
+            console.log(`[TestSystemController] Trovato blocco describe per metodo: ${describeMethod}`);
             continue;
         }
         
-        // Identifica i blocchi describe (gruppi di test)
-        if (line.startsWith('findById') || line.startsWith('findByEmail') || 
-            line.startsWith('create') || line.startsWith('update') || 
-            line.startsWith('findWithFilters') || line.startsWith('findOne') ||
-            line.startsWith('addUser') || line.startsWith('removeUser') ||
-            line.startsWith('deactivateSection') || line.startsWith('setupAcademicYear')) {
-            currentDescribe = line.split(' ')[0];
+        // Riconosci la fine di un blocco describe
+        if (inDescribeBlock && line === '});') {
+            inDescribeBlock = false;
+            describeMethod = '';
             continue;
+        }
+        
+        // Identifica il blocco della suite di test (Repository)
+        let foundRepository = false;
+        for (const repo of repositories) {
+            if (line.startsWith(repo) || line.includes(`'${repo}'`) || line.includes(`"${repo}"`)) {
+                currentSuite = repo;
+                foundRepository = true;
+                console.log(`[TestSystemController] Identificato repository: ${repo}`);
+                break;
+            }
+        }
+        if (foundRepository) continue;
+        
+        // Identifica i blocchi describe (gruppi di test per metodo)
+        for (const method of knownMethods) {
+            if (line.startsWith(method) || 
+                line.includes(`describe('${method}`) || 
+                line.includes(`describe("${method}`) ||
+                line.includes(`${method}:`)) {
+                currentDescribe = method;
+                console.log(`[TestSystemController] Identificato metodo: ${method}`);
+                break;
+            }
         }
         
         // Cerca risultati in formato "PASS UserRepository › findById › should find a user by ID"
@@ -864,9 +1058,26 @@ _extractDetailedResults(output) {
                 continue;
             }
             
+            // Prova con il pattern semplificato "UserRepository: should find a user by ID"
+            const simpleMatch = fullName.match(simpleTestPattern);
+            if (simpleMatch) {
+                results.push({
+                    name: fullName,
+                    suite: simpleMatch[1],
+                    group: currentDescribe || 'unknown', // Usa il describe corrente se disponibile
+                    description: simpleMatch[2],
+                    status,
+                    duration
+                });
+                continue;
+            }
+            
             // Se non ha la struttura completa, aggiungi comunque il risultato
             results.push({
                 name: fullName,
+                suite: currentSuite || fullName.split(' ')[0] || 'unknown',
+                group: currentDescribe || 'unknown',
+                description: fullName,
                 status,
                 duration
             });
@@ -881,14 +1092,33 @@ _extractDetailedResults(output) {
             const duration = testLineMatch[3] ? parseInt(testLineMatch[3], 10) : null;
             
             // Se abbiamo informazioni sul contesto attuale, costruisci un nome completo
-            const fullName = currentSuite && currentDescribe 
-                ? `${currentSuite} › ${currentDescribe} › ${testName}`
-                : testName;
+            let fullName;
+            let suite = currentSuite || 'unknown';
+            let group = currentDescribe || 'unknown';
+            
+            // Verifica se il nome del test contiene già informazioni sulla suite/group
+            if (testName.includes(':')) {
+                const parts = testName.split(':');
+                if (parts.length >= 2) {
+                    // Il formato è "SomeRepository: should do something"
+                    if (repositories.includes(parts[0].trim())) {
+                        suite = parts[0].trim();
+                        fullName = testName;
+                    } else if (knownMethods.includes(parts[0].trim())) {
+                        group = parts[0].trim();
+                        fullName = `${suite} › ${group} › ${parts.slice(1).join(':').trim()}`;
+                    } else {
+                        fullName = `${suite} › ${group} › ${testName}`;
+                    }
+                }
+            } else {
+                fullName = `${suite} › ${group} › ${testName}`;
+            }
             
             results.push({
                 name: fullName,
-                suite: currentSuite || undefined,
-                group: currentDescribe || undefined,
+                suite: suite,
+                group: group,
                 description: testName,
                 status,
                 duration
@@ -916,35 +1146,30 @@ _extractDetailedResults(output) {
     
     console.log(`[TestSystemController] Estratti ${results.length} risultati dettagliati`);
     
-    // Se non abbiamo trovato risultati dettagliati, cerchiamo altre informazioni nell'output
-    if (results.length === 0) {
-        // Verifica se ci sono pattern di risultati commentati
-        for (const line of lines) {
-            if (line.includes('should find a user by ID') || 
-                line.includes('should throw error for invalid ID') ||
-                line.includes('should return null for non-existent email') ||
-                line.includes('should create a new user') ||
-                line.includes('should add a user to the school') ||
-                line.includes('should update an existing user')) {
-                
-                const isPassed = !line.includes('✕') && !line.includes('FAIL');
-                
-                results.push({
-                    name: line.trim().replace(/^[^a-zA-Z]+/, ''), // Rimuovi caratteri non alfanumerici all'inizio
-                    status: isPassed ? 'passed' : 'failed',
-                    suite: line.includes('UserRepository') ? 'UserRepository' : 
-                           line.includes('SchoolRepository') ? 'SchoolRepository' : 'unknown',
-                    group: line.includes('findById') ? 'findById' :
-                           line.includes('findByEmail') ? 'findByEmail' :
-                           line.includes('create') ? 'create' :
-                           line.includes('addUser') ? 'addUser' :
-                           line.includes('update') ? 'update' : 'unknown'
-                });
+    // Post-processing per migliorare i risultati
+    return results.map(result => {
+        // Se il gruppo è sconosciuto ma il nome del test contiene indicazioni sul metodo
+        if (result.group === 'unknown') {
+            for (const method of knownMethods) {
+                if (result.description.toLowerCase().includes(method.toLowerCase())) {
+                    result.group = method;
+                    break;
+                }
             }
         }
-    }
-    
-    return results;
+        
+        // Se abbiamo una suite ma non nel formato Repository, correggi
+        if (result.suite && !result.suite.endsWith('Repository')) {
+            for (const repo of repositories) {
+                if (result.name.includes(repo)) {
+                    result.suite = repo;
+                    break;
+                }
+            }
+        }
+        
+        return result;
+    });
 }
 
 /**
@@ -958,6 +1183,75 @@ _extractDuration(output) {
     
     const timeMatch = output.match(/Time:[ \t]*([0-9.]+)[ \t]*s/i);
     return timeMatch ? parseFloat(timeMatch[1]) : 0;
+}
+
+/**
+ * Estrae l'errore dall'output di Jest e fornisce dettagli aggiuntivi per il debug
+ * @param {String} output - Output grezzo del test
+ * @returns {String} - Messaggio di errore dettagliato
+ * @private
+ */
+_extractErrorDetails(output) {
+    if (!output) return 'Nessun dettaglio errore disponibile';
+    
+    try {
+        // Cerca pattern di errori comuni
+        const errorPatterns = [
+            // Errore Mongoose per ID non trovato
+            /Utente non trovato/,
+            // Errore generico Jest
+            /Error: (.*?)(\n|$)/,
+            // Errori di asserzione
+            /expect\((.*?)\)\..*? (.*?)(\n|$)/,
+            // Errori di timeout
+            /Test timeout - Async callback was not invoked within.*?(\n|$)/,
+            // Errori di sintassi
+            /SyntaxError: (.*?)(\n|$)/,
+            // Errori di validazione Mongoose
+            /ValidationError: (.*?)(\n|$)/
+        ];
+        
+        let errorMessage = '';
+        
+        // Cerca ogni pattern nell'output
+        for (const pattern of errorPatterns) {
+            const match = output.match(pattern);
+            if (match) {
+                errorMessage += match[0] + '\n';
+            }
+        }
+        
+        // Se non abbiamo trovato dettagli specifici, estrai il contesto dell'errore
+        if (!errorMessage) {
+            // Cerca il contesto dell'errore (15 righe prima e dopo la parola 'Error')
+            const errorIndex = output.indexOf('Error');
+            if (errorIndex !== -1) {
+                const start = Math.max(0, errorIndex - 300);
+                const end = Math.min(output.length, errorIndex + 300);
+                errorMessage = '... ' + output.substring(start, end) + ' ...';
+            }
+        }
+        
+        // Aggiungi suggerimenti per debug basati sul tipo di errore
+        if (errorMessage.includes('Utente non trovato')) {
+            errorMessage += '\nSuggerimento: Verifica che l\'utente esista nel database. ' +
+                'I test potrebbero eliminare gli utenti prima dei test o usare un ID sbagliato.';
+        } else if (errorMessage.includes('Scuola non trovata')) {
+            errorMessage += '\nSuggerimento: Verifica che la scuola esista nel database. ' +
+                'I test potrebbero eliminare le scuole prima dei test o usare un ID sbagliato.';
+        } else if (errorMessage.includes('Classe non trovata')) {
+            errorMessage += '\nSuggerimento: Verifica che la classe esista nel database. ' +
+                'I test potrebbero eliminare le classi prima dei test o usare un ID sbagliato.';
+        } else if (errorMessage.includes('timeout')) {
+            errorMessage += '\nSuggerimento: Il test ha impiegato troppo tempo. ' +
+                'Verifica eventuali operazioni asincrone bloccate o operazioni troppo pesanti.';
+        }
+        
+        return errorMessage || 'Dettagli errore non disponibili';
+    } catch (error) {
+        console.error('[TestSystemController] Errore nell\'estrazione dei dettagli dell\'errore:', error);
+        return 'Errore nell\'analisi dei dettagli dell\'errore';
+    }
 }
 
 /**
