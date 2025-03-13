@@ -161,7 +161,6 @@ const userController = new UserController(userService, authService);
 const schoolController = new SchoolController(schoolRepository, userService);
 const classController = new ClassController(classRepository, schoolRepository, userService);
 const studentController = new StudentController(studentRepository, classRepository, schoolRepository);
-const testController = new TestController(testRepository, studentRepository, classRepository);
 const studentBulkImportController = new StudentBulkImportController(
     studentBulkImportRepository,
     bulkImportValidation
@@ -219,6 +218,8 @@ const initializeCSIDependencies = async () => {
             scorerVersion: csiDependencies.csiScorer?.version
         });
 
+        
+
         // Inizializza e monta le routes CSI
         const csiRoutes = createCSIRoutes({
             authMiddleware,
@@ -257,6 +258,9 @@ const initializeCSIDependencies = async () => {
     }
 };
 
+let testController;
+
+
 // Gestione connessione DB e avvio server
 const startServer = async () => {
     try {
@@ -274,6 +278,22 @@ const startServer = async () => {
         // Inizializza le dipendenze CSI
         const { csiController, csiQuestionController, csiDependencies } = 
             await initializeCSIDependencies();
+
+        if (!csiController) {
+            throw new Error('CSIController non inizializzato correttamente');
+        }
+
+        // Inizializza testController con tutte le dipendenze necessarie
+        testController = new TestController(
+            testRepository,
+            csiController // Passa il CSIController come dipendenza
+        );
+
+        logger.debug('TestController initialized:', {
+            hasRepository: !!testController.repository,
+            hasCsiController: !!testController.csiController
+        });
+
         // Crea oggetto con tutte le dipendenze
         const dependencies = {
             // Controllers

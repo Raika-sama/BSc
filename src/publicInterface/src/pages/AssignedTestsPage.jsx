@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTest } from '../hooks/TestContext';
 import {
   Box,
@@ -18,13 +19,18 @@ import {
   SimpleGrid,
   Flex,
   Stack,
-  Skeleton
+  Skeleton,
+  useToast,
+  Tooltip
 } from '@chakra-ui/react';
-import { AccessTimeIcon, AssignmentIcon, FaSchool, FaCalendar, FaPlay } from 'react-icons/fa';
 import { TbSchool } from 'react-icons/tb';
-import { MdAssignment, MdAccessTime, MdEvent, MdPlayArrow } from 'react-icons/md';
+import { MdAssignment, MdAccessTime, MdEvent, MdPlayArrow, MdPlayCircleOutline } from 'react-icons/md';
+import { Global, css } from '@emotion/react';
 
 const AssignedTestsPage = () => {
+  const navigate = useNavigate();
+  const toast = useToast();
+  
   const { 
     assignedTests, 
     selectedTest,
@@ -50,15 +56,66 @@ const AssignedTestsPage = () => {
     selectTest(test);
   };
 
+  const canStartTest = useCallback((test) => {
+    // Se questo test è già in corso o completato, non può essere avviato
+    if (test.status !== 'pending') {
+      return false;
+    }
+    
+    // Verifica se ci sono altri test dello stesso tipo in corso
+    const activeTestsSameType = assignedTests.filter(
+      t => t.tipo === test.tipo && t.status === 'in_progress'
+    );
+    
+    return activeTestsSameType.length === 0;
+  }, [assignedTests]);
+  
   // Gestore dell'avvio di un test
   const handleStartTest = async (testId) => {
     setStartingTestId(testId);
     try {
       const result = await startTest(testId);
       if (result.success) {
-        // In futuro, qui si potrebbe reindirizzare alla pagina del test
-        alert('Test avviato con successo! In futuro questa azione aprirà la pagina del test.');
+        // Naviga alla pagina del test runner
+        navigate(`/test/${result.testType.toLowerCase()}/${result.token}`);
+      } else {
+        throw new Error(result.error || "Impossibile avviare il test");
       }
+    } catch (error) {
+      // Creiamo un messaggio toast più dettagliato
+      let title = "Impossibile avviare il test";
+      let description = error.message;
+      let status = "error";
+      let duration = 5000;
+      
+      // Se abbiamo dettagli sul perché il test non è disponibile
+      if (error.details?.reason) {
+        switch (error.details.reason) {
+          case 'COOLDOWN_PERIOD':
+            title = "Periodo di attesa richiesto";
+            description = "È necessario attendere prima di poter svolgere nuovamente questo test";
+            if (error.details.nextAvailableDate) {
+              const nextDate = new Date(error.details.nextAvailableDate);
+              description += `. Disponibile dal ${formatDate(nextDate)}`;
+            }
+            status = "warning";
+            duration = 7000;
+            break;
+          case 'ACTIVE_TEST_EXISTS':
+            title = "Test già in corso";
+            description = "Hai già un test attivo di questo tipo";
+            status = "info";
+            break;
+        }
+      }
+      
+      toast({
+        title: title,
+        description: description,
+        status: status,
+        duration: duration,
+        isClosable: true,
+      });
     } finally {
       setStartingTestId(null);
     }
@@ -120,6 +177,22 @@ const AssignedTestsPage = () => {
       display="flex"
       flexDirection="column"
     >
+      <Global
+        styles={css`
+          @keyframes pulse {
+            0% {
+              box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7);
+            }
+            70% {
+              box-shadow: 0 0 0 10px rgba(72, 187, 120, 0);
+            }
+            100% {
+              box-shadow: 0 0 0 0 rgba(72, 187, 120, 0);
+            }
+          }
+        `}
+      />
+      
       <Heading as="h1" size="lg" mb={3} fontWeight="bold">
         Test Assegnati
       </Heading>
@@ -188,6 +261,7 @@ const AssignedTestsPage = () => {
                     _hover={{ bg: 'gray.50' }}
                     bg={selectedTest && selectedTest._id === test._id ? 'gray.50' : 'white'}
                     p={3}
+                    position="relative"
                   >
                     <Box>
                       <Text fontWeight={500}>
@@ -206,6 +280,20 @@ const AssignedTestsPage = () => {
                         </Flex>
                       </Flex>
                     </Box>
+                    
+                    {/* Indicatore per test con stato attivo */}
+                    {test.status === 'in_progress' && (
+                      <Box 
+                        position="absolute"
+                        right={2}
+                        top={2}
+                        borderRadius="full"
+                        bg="green.400"
+                        w={3}
+                        h={3}
+                        animation="pulse 1.5s infinite"
+                      />
+                    )}
                   </ListItem>
                   <Divider />
                 </React.Fragment>
@@ -351,6 +439,7 @@ const AssignedTestsPage = () => {
                 )}
               </Box>
               
+              {/* Pulsanti per l'azione del test */}
               {selectedTest.status === 'pending' && (
                 <Box 
                   p={2} 
@@ -359,13 +448,53 @@ const AssignedTestsPage = () => {
                   display="flex"
                   justifyContent="flex-end"
                 >
+                  <Tooltip 
+                    isDisabled={canStartTest(selectedTest)}
+                    hasArrow
+                    label={
+                      !canStartTest(selectedTest) 
+                        ? "Hai già un test dello stesso tipo in corso. Completa quello prima di avviarne un altro."
+                        : ""
+                    }
+                    placement="top"
+                  >
+                    <Button
+                      colorScheme="blue"
+                      size="md"
+                      leftIcon={<Box as={MdPlayArrow} />}
+                      onClick={() => handleStartTest(selectedTest._id)}
+                      isLoading={loading.test || startingTestId === selectedTest._id}
+                      loadingText="Avvio..."
+                      minWidth="150px"
+                      isDisabled={!canStartTest(selectedTest)}
+                      boxShadow="sm"
+                      _hover={{
+                        transform: 'translateY(-2px)',
+                        boxShadow: 'md'
+                      }}
+                      transition="all 0.2s ease"
+                    >
+                      Inizia Test
+                    </Button>
+                  </Tooltip>
+                </Box>
+              )}
+              
+              {selectedTest.status === 'in_progress' && (
+                <Box 
+                  p={2} 
+                  borderTop="1px solid" 
+                  borderColor="gray.200"
+                  display="flex"
+                  justifyContent="flex-end"
+                >
                   <Button
-                    colorScheme="blue"
+                    colorScheme="green"
                     size="md"
-                    leftIcon={<Box as={MdPlayArrow} />}
-                    onClick={() => handleStartTest(selectedTest._id)}
-                    isLoading={loading.test || startingTestId === selectedTest._id}
-                    loadingText="Avvio..."
+                    leftIcon={<Box as={MdPlayCircleOutline} />}
+                    onClick={() => navigate(`/test/${selectedTest.tipo.toLowerCase()}/${selectedTest.currentToken}`)}
+                    isLoading={loading.test}
+                    loadingText="Caricamento..."
                     minWidth="150px"
                     boxShadow="sm"
                     _hover={{
@@ -374,7 +503,7 @@ const AssignedTestsPage = () => {
                     }}
                     transition="all 0.2s ease"
                   >
-                    Inizia Test
+                    Continua Test
                   </Button>
                 </Box>
               )}

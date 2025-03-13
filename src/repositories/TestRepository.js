@@ -22,6 +22,38 @@ class TestRepository {
     async findById(id) {
         try {
             const test = await Test.findById(id);
+            
+            if (test && test.tipo === 'CSI') {
+                // Get active version from config
+                const CSIConfig = mongoose.model('CSIConfig');
+                const activeConfig = await CSIConfig.findOne({ active: true });
+                
+                if (!activeConfig) {
+                    throw createError(
+                        ErrorTypes.RESOURCE.NOT_FOUND,
+                        'Nessuna configurazione CSI attiva trovata'
+                    );
+                }
+
+                // Get questions for the active version
+                const CSIQuestion = mongoose.model('CSIQuestion');
+                const questions = await CSIQuestion.find({ 
+                    active: true,
+                    version: activeConfig.version
+                }).lean();
+
+                // Assign questions to test
+                test.domande = questions.map((q, index) => ({
+                    questionRef: q._id,
+                    questionModel: 'CSIQuestion',
+                    originalQuestion: q,
+                    order: index + 1,
+                    version: q.version
+                }));
+
+                await test.save();
+            }
+
             return test;
         } catch (error) {
             return handleRepositoryError(
@@ -75,6 +107,25 @@ class TestRepository {
                 throw createError(
                     ErrorTypes.VALIDATION.INVALID_INPUT,
                     'Tipo di test non supportato'
+                );
+            }
+
+            // NUOVA VERIFICA: Controlla se lo studente ha già un test non completato dello stesso tipo
+            const existingTests = await Test.find({
+                studentId,
+                tipo: testData.tipo,
+                status: { $ne: 'completed' }, // Qualsiasi stato diverso da completed
+                active: true
+            });
+
+            if (existingTests.length > 0) {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_OPERATION,
+                    `Lo studente ha già un test ${testData.tipo} assegnato che non è ancora stato completato`,
+                    { 
+                        existingTestId: existingTests[0]._id,
+                        existingTestStatus: existingTests[0].status 
+                    }
                 );
             }
 
@@ -142,133 +193,83 @@ class TestRepository {
 
     /**
      * Assegna un test a tutti gli studenti di una classe
-     * @param {Object} testData - Dati del test da assegnare
-     * @param {string} classId - ID della classe
-     * @param {string} assignedBy - ID dell'utente che assegna il test
-     * @returns {Promise<Object>} Risultato dell'operazione
+     * @route POST /tests/assign-to-class
      */
-    async assignTestToClass(testData, classId, assignedBy) {
-        // Utilizziamo una sessione per garantire l'atomicità dell'operazione
-        const session = await mongoose.startSession();
-        session.startTransaction();
-        
+    async assignTestToClass(req, res) {
         try {
-            // 1. Verifica che la classe esista
-            const Class = mongoose.model('Class');
-            const classDoc = await Class.findById(classId).session(session);
+            const { testType, config, classId } = req.body;
+            const assignedBy = req.user.id;
             
-            if (!classDoc) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Classe non trovata'
-                );
-            }
-            
-            // 2. Recupera tutti gli studenti attivi della classe
-            const students = await Student.find({
-                classId: classId,
-                status: 'active',
-                isActive: true
-            }).session(session);
-            
-            if (!students.length) {
-                throw createError(
-                    ErrorTypes.VALIDATION.INVALID_INPUT,
-                    'Nessuno studente attivo trovato nella classe'
-                );
-            }
-            
-            logger.debug('Found students for class test assignment:', {
+            logger.debug('Assigning test to class:', {
+                testType,
                 classId,
-                studentsCount: students.length
+                assignedBy,
+                config: config ? 'present' : 'not present'
             });
             
-            // 3. Verifica tipo di test supportato
-            if (testData.tipo !== 'CSI') {
+            // Validazione input
+            if (!testType || !classId) {
                 throw createError(
-                    ErrorTypes.VALIDATION.INVALID_INPUT,
-                    'Tipo di test non supportato'
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'I campi testType e classId sono obbligatori'
                 );
             }
             
-            // 4. Per i test CSI, recupera la configurazione attiva
-            let csiConfigId = null;
-            if (testData.tipo === 'CSI') {
-                const CSIConfig = mongoose.model('CSIConfig');
-                const activeConfig = await CSIConfig.findOne({ active: true }).session(session);
-                
-                if (!activeConfig) {
-                    throw createError(
-                        ErrorTypes.RESOURCE.NOT_FOUND,
-                        'Nessuna configurazione CSI attiva trovata'
-                    );
-                }
-                
-                csiConfigId = activeConfig._id;
+            // Verifica permessi
+            if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
+                throw createError(
+                    ErrorTypes.AUTH.FORBIDDEN,
+                    'Non autorizzato ad assegnare test a una classe'
+                );
             }
             
-            // 5. Crea un test per ogni studente
-            const tests = [];
-            const testPromises = students.map(async (student) => {
-                const test = new Test({
-                    nome: `Test ${testData.tipo} per ${student.firstName} ${student.lastName}`,
-                    tipo: testData.tipo,
-                    descrizione: `Test ${testData.tipo} assegnato a ${student.firstName} ${student.lastName} (classe ${classDoc.year}${classDoc.section})`,
-                    configurazione: {
-                        ...testData.configurazione,
-                        questionVersion: '1.0.0'
-                    },
-                    studentId: student._id,
-                    assignedBy,
-                    assignedAt: new Date(),
-                    status: 'pending',
-                    attempts: 0,
-                    active: true,
-                    csiConfig: csiConfigId
-                });
-                
-                await test.save({ session });
-                tests.push(test);
-                
-                logger.debug('Assigned test to student in class:', {
-                    testId: test._id,
-                    studentId: student._id,
-                    studentName: `${student.firstName} ${student.lastName}`
-                });
-                
-                return test;
-            });
-            
-            await Promise.all(testPromises);
-            
-            // 6. Commit della transazione
-            await session.commitTransaction();
-            
-            // 7. Log del risultato
-            logger.info('Tests assigned to all students in class:', {
+            // Assegna il test attraverso il repository
+            const result = await this.repository.assignTestToClass(
+                {
+                    tipo: testType,
+                    configurazione: config || {}
+                },
                 classId,
-                testsCount: tests.length,
+                assignedBy
+            );
+            
+            // Verifica se ci sono stati errori parziali di assegnazione
+            if (result.failedAssignments && result.failedAssignments.length > 0) {
+                logger.warn('Some test assignments failed:', {
+                    classId,
+                    failedCount: result.failedAssignments.length,
+                    totalStudents: result.testsAssigned + result.failedAssignments.length
+                });
+                
+                // Invia una risposta di successo parziale con dettagli sugli errori
+                return this.sendResponse(res, { 
+                    success: result.testsAssigned > 0,
+                    message: `Test assegnati a ${result.testsAssigned} studenti. ${result.failedAssignments.length} assegnazioni fallite.`,
+                    data: {
+                        testsAssigned: result.testsAssigned,
+                        failedAssignments: result.failedAssignments,
+                        students: result.students
+                    }
+                }, 207); // 207 Multi-Status
+            }
+            
+            logger.info('Tests assigned successfully to class:', {
+                classId,
+                testsCount: result.testsAssigned,
                 assignedBy
             });
-            
-            return {
+
+            this.sendResponse(res, { 
                 success: true,
-                testsAssigned: tests.length,
-                students: students.map(s => ({
-                    id: s._id,
-                    name: `${s.firstName} ${s.lastName}`
-                }))
-            };
+                message: `${result.testsAssigned} test assegnati agli studenti della classe`,
+                data: result
+            }, 201);
         } catch (error) {
-            await session.abortTransaction();
-            return handleRepositoryError(
-                error,
-                'assignTestToClass',
-                { testData, classId, assignedBy },
-                'TestRepository'
-            );
-        } finally {
-            session.endSession();
+            logger.error('Error in class test assignment:', {
+                error: error.message,
+                stack: error.stack
+            });
+            this.sendError(res, error);
         }
     }
 
@@ -590,68 +591,90 @@ async getAssignedTests(studentId, assignedBy = null) {
     }
 
     /**
-     * Verifica la disponibilità di un test per uno studente
-     * @param {string} studentId - ID dello studente
-     * @param {string} testType - Tipo di test
-     * @returns {Promise<Object>} Stato di disponibilità
-     */
-    async checkTestAvailability(studentId, testType) {
-        try {
-            // Verifica se ci sono test attivi dello stesso tipo
-            const activeTests = await Test.find({
-                studentId,
-                tipo: testType,
-                status: { $in: ['pending', 'in_progress'] },
-                active: true
-            });
+ * Verifica la disponibilità di un test per uno studente
+ * @param {string} studentId - ID dello studente
+ * @param {string} testType - Tipo di test
+ * @returns {Promise<Object>} Stato di disponibilità
+ */
+async checkTestAvailability(studentId, testType) {
+    try {
+        // Verifica se ci sono test attivi dello stesso tipo
+        const activeTests = await Test.find({
+            studentId,
+            tipo: testType,
+            status: 'in_progress',  // Solo in_progress
+            active: true
+        });
 
-            if (activeTests.length > 0) {
-                return {
-                    available: false,
-                    reason: 'ACTIVE_TEST_EXISTS',
-                    activeTest: activeTests[0]._id
-                };
-            }
+        if (activeTests.length > 0) {
+            return {
+                available: false,
+                reason: 'ACTIVE_TEST_EXISTS',
+                activeTest: activeTests[0]._id
+            };
+        }
 
-            // Verifica il cooldown period
-            const latestCompletedTest = await Test.findOne({
-                studentId,
-                tipo: testType,
-                status: 'completed',
-                active: true
-            }).sort({ 'dataCompletamento': -1 });
+        // Verifica il cooldown period
+        const latestCompletedTest = await Test.findOne({
+            studentId,
+            tipo: testType,
+            status: 'completed',
+            active: true
+        }).sort({ 'dataCompletamento': -1 });
 
-            if (latestCompletedTest) {
-                // Recupera la configurazione del cooldown period
-                const cooldownPeriod = latestCompletedTest.configurazione?.cooldownPeriod || 0; // in giorni
+        if (latestCompletedTest) {
+            // Recupera la configurazione del cooldown period
+            const cooldownPeriod = latestCompletedTest.configurazione?.cooldownPeriod || 0; // in giorni
+            
+            if (cooldownPeriod > 0) {
+                const completionDate = new Date(latestCompletedTest.dataCompletamento);
+                const cooldownEndDate = new Date(completionDate);
+                cooldownEndDate.setDate(cooldownEndDate.getDate() + cooldownPeriod);
                 
-                if (cooldownPeriod > 0) {
-                    const completionDate = new Date(latestCompletedTest.dataCompletamento);
-                    const cooldownEndDate = new Date(completionDate);
-                    cooldownEndDate.setDate(cooldownEndDate.getDate() + cooldownPeriod);
-                    
-                    if (cooldownEndDate > new Date()) {
-                        return {
-                            available: false,
-                            reason: 'COOLDOWN_PERIOD',
-                            nextAvailableDate: cooldownEndDate
-                        };
-                    }
+                if (cooldownEndDate > new Date()) {
+                    return {
+                        available: false,
+                        reason: 'COOLDOWN_PERIOD',
+                        nextAvailableDate: cooldownEndDate,
+                        cooldownPeriod: cooldownPeriod
+                    };
                 }
             }
-
-            return {
-                available: true
-            };
-        } catch (error) {
-            return handleRepositoryError(
-                error,
-                'checkTestAvailability',
-                { studentId, testType },
-                'TestRepository'
-            );
         }
+
+        // Verifiche sui tentativi massimi
+        // Nota: qui non facciamo più riferimento a un testId specifico
+        const pendingTests = await Test.find({
+            studentId,
+            tipo: testType,
+            status: 'pending',
+            active: true
+        });
+
+        if (pendingTests.length > 0) {
+            const test = pendingTests[0];
+            if (test.configurazione?.tentativiMax && test.attempts >= test.configurazione.tentativiMax) {
+                return {
+                    available: false,
+                    reason: 'MAX_ATTEMPTS_REACHED',
+                    maxAttempts: test.configurazione.tentativiMax,
+                    currentAttempts: test.attempts
+                };
+            }
+        }
+
+        return {
+            available: true
+        };
+    } catch (error) {
+        logger.error('Error checking test availability:', {
+            error: error.message,
+            studentId, 
+            testType
+        });
+        throw error;
     }
+}
 
     /**
      * Aggiorna lo stato di un test

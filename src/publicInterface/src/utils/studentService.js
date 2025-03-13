@@ -239,6 +239,164 @@ const studentService = {
   },
   
   /**
+   * Avvia un test assegnato allo studente
+   * @param {string} testId - ID del test da avviare
+   * @returns {Promise} Promise con i dati del test avviato
+   */
+startAssignedTest: async (testId) => {
+  try {
+    console.log('Avvio test assegnato:', testId);
+    
+    const response = await axiosInstance.post(`/tests/start-assigned/${testId}`);
+    
+    console.log('Risposta avvio test:', response.data);
+    
+    // Invalida la cache dopo aver avviato un test
+    studentService.clearCache();
+    
+    return {
+      status: 'success',
+      data: response.data
+    };
+  } catch (error) {
+    console.error('Errore durante l\'avvio del test:', error);
+    
+    // Miglioriamo la gestione degli errori per catturare tutti i dettagli possibili
+    const errorObj = { 
+      error: 'Errore nell\'avvio del test',
+      details: {}
+    };
+    
+    // Estrai informazioni dettagliate dall'oggetto error
+    if (error.response && error.response.data) {
+      if (error.response.data.error) {
+        errorObj.error = error.response.data.error.message || error.response.data.error;
+        errorObj.details = error.response.data.error.details || {};
+        errorObj.code = error.response.data.error.code;
+      } else {
+        errorObj.error = error.response.data.message || error.message;
+      }
+    }
+    
+    // Log dell'oggetto errore prima di lanciarlo
+    console.log('Dettagli errore formattati:', errorObj);
+    
+    throw errorObj;
+  }
+},
+  
+
+  /**
+   * Verifica un token di test
+   * @param {string} token - Token del test da verificare
+   * @param {string} testType - Tipo di test
+   * @returns {Promise} Promise con i dati di verifica del token
+   */
+  verifyTestToken: async (testId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/tests/csi/verify/${testId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Dettagli errore verifica token:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        headers: error.response?.headers
+      });
+      throw {
+        error: error.response?.data?.error || 'Errore nella verifica del token',
+        details: error.response?.data?.details || {},
+        status: error.response?.statusdun
+      };
+    }
+  },
+  
+  /**
+   * Inizia un test con un token valido
+   * @param {string} token - Token del test da iniziare
+   * @param {string} testType - Tipo di test
+   * @returns {Promise} Promise con i dati di inizio del test
+   */
+  startTest: async (token, testType) => {
+    try {
+      console.log(`Inizio test ${testType} con token:`, token);
+      
+      const response = await axiosInstance.post(`/tests/${testType.toLowerCase()}/${token}/start`);
+      
+      return {
+        status: 'success',
+        data: response.data.data
+      };
+    } catch (error) {
+      console.error('Errore durante l\'inizio del test:', error);
+      throw { 
+        error: error.response?.data?.error?.message || 'Errore nell\'avvio del test',
+        details: error.response?.data || error.message
+      };
+    }
+  },
+  
+  /**
+   * Invia una risposta per un test
+   * @param {string} token - Token del test
+   * @param {string} testType - Tipo di test
+   * @param {Object} answerData - Dati della risposta
+   * @returns {Promise} Promise con i dati di risposta
+   */
+  submitTestAnswer: async (token, testType, answerData) => {
+    try {
+      console.log(`Invio risposta per test ${testType}:`, answerData);
+      
+      const response = await axiosInstance.post(
+        `/tests/${testType.toLowerCase()}/${token}/answer`,
+        answerData
+      );
+      
+      return {
+        status: 'success',
+        data: response.data.data
+      };
+    } catch (error) {
+      console.error('Errore durante l\'invio della risposta:', error);
+      throw { 
+        error: error.response?.data?.error?.message || 'Errore nell\'invio della risposta',
+        details: error.response?.data || error.message
+      };
+    }
+  },
+  
+  /**
+   * Completa un test
+   * @param {string} token - Token del test
+   * @param {string} testType - Tipo di test
+   * @returns {Promise} Promise con i dati di completamento del test
+   */
+  completeTest: async (token, testType) => {
+    try {
+      console.log(`Completamento test ${testType} con token:`, token);
+      
+      const response = await axiosInstance.post(`/tests/${testType.toLowerCase()}/${token}/complete`);
+      
+      // Invalida la cache dopo aver completato un test
+      studentService.clearCache();
+      
+      return {
+        status: 'success',
+        data: response.data.data
+      };
+    } catch (error) {
+      console.error('Errore durante il completamento del test:', error);
+      throw { 
+        error: error.response?.data?.error?.message || 'Errore nel completamento del test',
+        details: error.response?.data || error.message
+      };
+    }
+  },
+  
+  /**
    * Forza un refresh dei dati in cache
    */
   clearCache: () => {

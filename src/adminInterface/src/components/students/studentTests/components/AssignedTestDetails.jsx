@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -39,6 +39,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SchoolIcon from '@mui/icons-material/School';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import WarningIcon from '@mui/icons-material/Warning';
 import { axiosInstance } from '../../../../services/axiosConfig';
 
 const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
@@ -48,9 +49,11 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
   const [fullTestData, setFullTestData] = useState(null);
   const [loadingFullData, setLoadingFullData] = useState(false);
   const [error, setError] = useState(null);
+  const [warning, setWarning] = useState(null);
   const [revokeButtonDisabled, setRevokeButtonDisabled] = useState(false);
   const [currentTestId, setCurrentTestId] = useState(null);
   const [isConfirmingRevoke, setIsConfirmingRevoke] = useState(false);
+  const [otherTests, setOtherTests] = useState([]);
 
   // Aggiungiamo un effetto per tenere traccia dell'ID del test corrente
   useEffect(() => {
@@ -59,6 +62,8 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
       // Reset dello stato quando cambia il test
       setRevokeButtonDisabled(false);
       setShowRevokeDialog(false);
+      setWarning(null);
+      setOtherTests([]);
     }
   }, [test, currentTestId]);
 
@@ -70,6 +75,70 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
       setFullTestData(null);
     }
   }, [test, fullTestData]);
+  
+  // Funzione per controllare se lo studente ha altri test dello stesso tipo
+  const checkForOtherTests = useCallback(async (studentId, testType, currentTestId) => {
+    if (!studentId || !testType || !currentTestId) {
+      return [];
+    }
+    
+    try {
+      console.debug('Checking for other tests', {
+        studentId,
+        testType,
+        currentTestId
+      });
+      
+      // Chiamata API per ottenere tutti i test assegnati allo studente
+      const response = await axiosInstance.get(`/tests/assigned/student/${studentId}`);
+      
+      if (response.data && response.data.data) {
+        // Estrai i test dalla risposta
+        const allTests = Array.isArray(response.data.data) ? 
+          response.data.data : 
+          (response.data.data.tests || []);
+        
+        // Filtra i test dello stesso tipo escludendo quello corrente e solo quelli non completati
+        const filteredTests = allTests.filter(t => 
+          t.tipo === testType && 
+          t._id !== currentTestId && 
+          t.status !== 'completed' &&
+          t.active === true);
+        
+        console.debug('Found other active tests:', {
+          count: filteredTests.length,
+          tests: filteredTests.map(t => ({ id: t._id, status: t.status }))
+        });
+        
+        return filteredTests;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error checking for other tests:', error);
+      return [];
+    }
+  }, []);
+  
+  // Effetto per verificare la presenza di altri test attivi
+  useEffect(() => {
+    if (test && test.studentId && test.tipo) {
+      checkForOtherTests(test.studentId, test.tipo, test._id)
+        .then(tests => {
+          setOtherTests(tests);
+          
+          if (tests.length > 0) {
+            const otherTest = tests[0];
+            const statusText = otherTest.status === 'pending' ? 'in attesa' : 
+                              otherTest.status === 'in_progress' ? 'in corso' : 
+                              otherTest.status;
+            
+            setWarning(`Attenzione: lo studente ha un altro test ${test.tipo} ${statusText} (ID: ${otherTest._id.substring(0, 8)}...)`);
+          } else {
+            setWarning(null);
+          }
+        });
+    }
+  }, [test, checkForOtherTests]);
   
   // Funzione per caricare i dati completi del test
   const fetchFullTestData = async (testId) => {
@@ -297,6 +366,32 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
+        </Alert>
+      )}
+      
+      {/* Mostra avvisi per altri test attivi */}
+      {warning && (
+        <Alert 
+          severity="warning" 
+          sx={{ mb: 2 }}
+          icon={<WarningIcon />}
+          action={
+            otherTests.length > 0 && (
+              <Button 
+                color="inherit" 
+                size="small"
+                onClick={() => {
+                  // Funzione per visualizzare il test alternativo
+                  // Qui potresti implementare una navigazione
+                  console.log('Visualizza altro test:', otherTests[0]);
+                }}
+              >
+                Dettagli
+              </Button>
+            )
+          }
+        >
+          {warning}
         </Alert>
       )}
       
@@ -720,7 +815,7 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
                       fullWidth
                       startIcon={<DeleteOutlineIcon />}
                       onClick={handleOpenRevokeDialog}
-                      disabled={revokeButtonDisabled} // Aggiungiamo il disabilitato anche qui
+                      disabled={revokeButtonDisabled || otherTests.length > 0} // Disabilita se ci sono altri test
                       sx={{ mb: 1 }}
                     >
                       Revoca test
@@ -730,6 +825,14 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
                         ? 'Lo studente non ha ancora iniziato il test' 
                         : 'Lo studente ha iniziato il test ma non lo ha completato'}
                     </Typography>
+                    
+                    {/* Avviso per altri test */}
+                    {otherTests.length > 0 && (
+                      <Alert severity="info" sx={{ mt: 2, fontSize: '0.8rem' }}>
+                        Esistono altri test dello stesso tipo per questo studente. 
+                        Il pulsante di revoca è disabilitato per evitare conflitti.
+                        </Alert>
+                    )}
                   </Box>
                 )}
               </CardContent>
@@ -760,6 +863,12 @@ const AssignedTestDetails = ({ test, onRevokeTest, loading = false }) => {
                   Lo studente può accedere al test assegnato dopo aver effettuato l'accesso alla 
                   piattaforma. Il test rimarrà disponibile fino al completamento o alla revoca.
                 </Typography>
+                {otherTests.length > 0 && (
+                  <Alert severity="warning" sx={{ mt: 2, fontSize: '0.8rem' }}>
+                    A uno studente non può essere assegnato più di un test dello stesso tipo contemporaneamente.
+                    Attendere che lo studente completi il test attivo prima di assegnarne un altro.
+                  </Alert>
+                )}
               </CardContent>
             </Card>
           </Stack>

@@ -6,9 +6,14 @@ const logger = require('../utils/errors/logger/logger');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
 
 class TestController extends BaseController {
-    constructor(testRepository) {
+    constructor(testRepository, csiController) {
         super(testRepository);
         this.repository = testRepository;
+        this.csiController = csiController;
+
+        if (!this.csiController) {
+            throw new Error('CSIController is required for TestController');
+        }
 
         // Binding dei metodi
         this.assignTest = this.assignTest.bind(this);
@@ -17,11 +22,16 @@ class TestController extends BaseController {
         this.assignTestToClass = this.assignTestToClass.bind(this);
         this.getAssignedTestsByClass = this.getAssignedTestsByClass.bind(this);
         this.revokeClassTests = this.revokeClassTests.bind(this);
-        
+        this.assignTest = this.assignTest.bind(this);
+        this.startAssignedTest = this.startAssignedTest.bind(this);
+
         // Log repository details for debugging
         logger.debug('TestController initialized with repository:', {
             hasRepository: !!this.repository,
             repositoryType: this.repository?.constructor?.name,
+            hasStudentRepository: !!this.studentRepository,
+            hasClassRepository: !!this.classRepository,
+            hasCsiController: !!this.csiController,
             modelName: this.repository?.model?.modelName
         });
     }
@@ -436,7 +446,22 @@ class TestController extends BaseController {
             const { studentId, testType } = req.body;
             
             logger.debug('Starting new test:', { studentId, testType });
+
+            // Per i test CSI, deleghiamo al CSIController
+            if (testType === 'CSI') {
+                const testInit = await this.csiController.initializeCSITest(studentId);
+                const testUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/test/csi/${testInit.token}`;
+                
+                return this.sendResponse(res, {
+                    token: testInit.token,
+                    url: testUrl,
+                    expiresAt: testInit.expiresAt,
+                    config: testInit.config,
+                    testType
+                }, 201);
+            }
     
+            // Per altri tipi di test, usa la logica esistente
             // Verifica disponibilità
             const availability = await this.repository.checkTestAvailability(studentId, testType);
             if (!availability.available) {
@@ -445,33 +470,59 @@ class TestController extends BaseController {
                     message: 'Test non disponibile al momento',
                     code: 'TEST_NOT_AVAILABLE',
                     details: {
-                        nextAvailableDate: availability.nextAvailableDate
+                        nextAvailableDate: availability.nextAvailableDate,
+                        reason: availability.reason
                     }
                 });
             }
     
             let testData;
-            // Se è un test CSI, usa il controller specifico
-            if (testType === 'CSI') {
-                testData = await this.csiController.initializeCSITest(studentId);
-            } else {
-                // Gestione altri tipi di test...
-                throw new Error('Tipo test non supportato');
-            }
+            
+            // Inizializzazione diretta invece di usare un controller specifico
+            // Tutti i test usano la stessa struttura di risposta
+            const test = await this.repository.assignTestToStudent(
+                {
+                    tipo: testType,
+                    configurazione: {
+                        tempoLimite: 30,
+                        questionVersion: '1.0.0'
+                    }
+                },
+                studentId,
+                null // nessun assegnatore, è auto-iniziato
+            );
+            
+            // Imposta lo stato a in_progress
+            await this.repository.updateTestStatus(
+                test._id,
+                'in_progress',
+                {
+                    attempts: 1,
+                    lastStarted: new Date()
+                }
+            );
+            
+            // Prepara la risposta
+            testData = {
+                token: test._id,
+                expiresAt: new Date(Date.now() + (24 * 60 * 60 * 1000)), // 24 ore di validità
+                config: test.configurazione || {}
+            };
     
-            const testUrl = `${process.env.FRONTEND_URL}/test/${testType.toLowerCase()}/${testData.token}`;
+            const testUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/test/${testType.toLowerCase()}/${testData.token}`;
     
             this.sendResponse(res, { 
                 token: testData.token,
                 url: testUrl,
                 expiresAt: testData.expiresAt,
-                config: testData.config
+                config: testData.config,
+                testType
             }, 201);
     
         } catch (error) {
             logger.error('Error starting test:', {
                 error: error.message,
-                studentId: req.body.studentId
+                studentId: req.body?.studentId
             });
             this.sendError(res, error);
         }
@@ -484,9 +535,14 @@ class TestController extends BaseController {
         try {
             const { testId } = req.params;
             const studentId = req.student.id;
-
+    
+            logger.debug('Starting assigned test:', {
+                testId,
+                studentId
+            });
+    
             const test = await this.repository.findById(testId);
-
+    
             if (!test || test.studentId.toString() !== studentId) {
                 throw createError(
                     ErrorTypes.AUTH.FORBIDDEN,
@@ -494,29 +550,96 @@ class TestController extends BaseController {
                 );
             }
 
+            // Per i test CSI, verifichiamo e avviamo il test
+            if (test.tipo === 'CSI') {
+                // Prima di avviare il test, verifichiamo la disponibilità
+                const availability = await this.repository.checkTestAvailability(
+                    studentId,
+                    'CSI'
+                );
+
+                if (!availability.available) {
+                    logger.debug('CSI test non disponibile:', {
+                        studentId,
+                        testId,
+                        reason: availability.reason,
+                        nextAvailableDate: availability.nextAvailableDate
+                    });
+                    
+                    return this.sendError(res, {
+                        statusCode: 400,
+                        message: 'Test CSI non disponibile al momento',
+                        code: 'TEST_NOT_AVAILABLE',
+                        details: {
+                            reason: availability.reason,
+                            nextAvailableDate: availability.nextAvailableDate,
+                            cooldownPeriod: availability.cooldownPeriod
+                        }
+                    });
+                }
+
+                // Aggiorna lo stato del test
+                await this.repository.updateTestStatus(
+                    testId,
+                    'in_progress',
+                    {
+                        attempts: (test.attempts || 0) + 1,
+                        lastStarted: new Date()
+                    }
+                );
+
+                // Recupera la configurazione CSI attiva
+                const CSIConfig = mongoose.model('CSIConfig');
+                const config = await CSIConfig.findOne({ active: true });
+                
+                if (!config) {
+                    throw createError(
+                        ErrorTypes.RESOURCE.NOT_FOUND,
+                        'Nessuna configurazione CSI attiva trovata'
+                    );
+                }
+
+                // Prepara il testUrl
+                const testUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/test/csi/${testId}`;
+
+                return this.sendResponse(res, {
+                    token: testId,
+                    url: testUrl,
+                    testType: 'CSI',
+                    config: {
+                        timeLimit: config.validazione.tempoMassimoDomanda,
+                        minQuestions: config.validazione.numeroMinimoDomande,
+                        instructions: config.interfaccia.istruzioni
+                    }
+                }, 201);
+            }
+    
+            // Per altri tipi di test, usa la logica esistente
             // Verifica disponibilità
             const availability = await this.repository.checkTestAvailability(studentId, test.tipo);
+            logger.debug('Test availability check result:', JSON.stringify(availability, null, 2));
+    
             if (!availability.available) {
+                logger.debug('Test non disponibile:', {
+                    studentId,
+                    testId: testId,
+                    reason: availability.reason,
+                    nextAvailableDate: availability.nextAvailableDate
+                });
+                
                 return this.sendError(res, {
                     statusCode: 400,
                     message: 'Test non disponibile al momento',
                     code: 'TEST_NOT_AVAILABLE',
                     details: {
-                        nextAvailableDate: availability.nextAvailableDate
+                        reason: availability.reason,
+                        nextAvailableDate: availability.nextAvailableDate,
+                        cooldownPeriod: availability.cooldownPeriod
                     }
                 });
             }
-
-            let testData;
-            // Se è un test CSI, usa il controller specifico
-            if (test.tipo === 'CSI') {
-                testData = await this.csiController.initializeCSITest(studentId);
-            } else {
-                // Gestione altri tipi di test...
-                throw new Error('Tipo test non supportato');
-            }
-
-            // Aggiorna lo stato del test
+    
+            // Aggiorna lo stato del test a "in_progress"
             await this.repository.updateTestStatus(
                 testId,
                 'in_progress',
@@ -525,22 +648,36 @@ class TestController extends BaseController {
                     lastStarted: new Date()
                 }
             );
-
-            // Costruisci l'URL del test
-            const testUrl = `${process.env.FRONTEND_URL}/test/${test.tipo.toLowerCase()}/${testData.token}`;
-
+    
+            // Per i test CSI, recuperiamo eventuali configurazioni specifiche
+            let config = {
+                tempoLimite: test.configurazione?.tempoLimite || 30,
+                questionVersion: test.configurazione?.questionVersion || '1.0.0'
+            };
+    
+            // Costruisci l'URL del test (ora possiamo usare direttamente l'ID del test)
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+            const testUrl = `${frontendUrl}/test/${test.tipo.toLowerCase()}/${testId}`;
+    
+            logger.info('Test started successfully:', {
+                testId,
+                studentId
+            });
+    
+            // Invia una risposta semplificata con l'URL del test e la configurazione
             this.sendResponse(res, { 
-                token: testData.token,
+                token: testId, // Utilizziamo l'ID del test come token
                 url: testUrl,
-                expiresAt: testData.expiresAt,
-                config: testData.config
+                testType: test.tipo,
+                config
             }, 201);
-
+    
         } catch (error) {
             logger.error('Error starting assigned test:', {
                 error: error.message,
+                stack: error.stack,
                 testId: req.params.testId,
-                studentId: req.student.id
+                studentId: req.student?.id
             });
             this.sendError(res, error);
         }

@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import AssignedTestsPage from './pages/AssignedTestsPage';
+import TestRunner from './pages/TestRunner';
 import PrivateRoute from './components/PrivateRoute';
 import { ImpostazioniProvider, useImpostazioni } from './hooks/ImpostazioniContext';
 import { TestProvider } from './hooks/TestContext';
@@ -42,7 +43,12 @@ function App() {
           {/* Public route */}
           <Route path="/login" element={<LoginPage />} />
           
-          {/* Protected routes */}
+          {/* Test Runner route - funziona al di fuori del layout principale */}
+          <Route element={<PrivateRoute />}>
+            <Route path="/test/:testType/:token" element={<TestRunner />} />
+          </Route>
+          
+          {/* Protected routes with layout */}
           <Route element={<PrivateRoute />}>
             <Route element={<Layout menuPosition={menuPosition} />}>
               <Route path="/" element={<HomePage />} />

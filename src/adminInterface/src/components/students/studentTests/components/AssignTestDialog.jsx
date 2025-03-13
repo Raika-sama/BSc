@@ -63,7 +63,7 @@ const AssignTestDialog = ({ open, onClose, studentId, onTestAssigned }) => {
     setError(null);
   };
 
-// Gestisce l'assegnazione del test - migliorata
+// Gestisce l'assegnazione del test - migliorata con gestione errori dettagliata
 const handleAssignTest = async () => {
   if (!selectedTestType) {
       setError('Seleziona un tipo di test da assegnare.');
@@ -106,10 +106,41 @@ const handleAssignTest = async () => {
       }
   } catch (error) {
       console.error('Errore nell\'assegnazione del test:', error);
-      setError(
-          error.response?.data?.error?.message || 
-          'Si è verificato un errore durante l\'assegnazione del test.'
-      );
+      
+      // Raccogliamo i dettagli dell'errore
+      const errorDetails = error.response?.data;
+      
+      // Definiamo un messaggio di errore predefinito
+      let errorMessage = 'Si è verificato un errore durante l\'assegnazione del test.';
+      
+      // Verifica specifica per test già assegnato
+      if (
+          errorDetails?.code === 'TEST_ALREADY_ASSIGNED' || 
+          errorDetails?.error?.code === 'TEST_ALREADY_ASSIGNED' ||
+          errorDetails?.error?.message?.includes('già un test') ||
+          errorDetails?.message?.includes('già un test')
+      ) {
+          errorMessage = `Lo studente ha già un test ${selectedTestType} assegnato che non è stato completato. ` +
+              `Attendi che lo studente completi il test prima di assegnarne un altro dello stesso tipo.`;
+      } 
+      // Verifica per errore di validazione
+      else if (
+          errorDetails?.code === 'BAD_REQUEST' || 
+          errorDetails?.error?.code === 'BAD_REQUEST'
+      ) {
+          errorMessage = 'Dati non validi: ' + (
+              errorDetails.error?.message || 
+              errorDetails.message || 
+              'Verifica i dati inseriti.'
+          );
+      }
+      // Errore generico ma con messaggio
+      else if (errorDetails?.error?.message || errorDetails?.message) {
+          errorMessage = errorDetails.error?.message || errorDetails.message;
+      }
+      
+      // Imposta il messaggio di errore
+      setError(errorMessage);
   } finally {
       setLoading(false);
   }
