@@ -107,66 +107,17 @@ class CSIController {
                     'Il token è scaduto'
                 );
             }
-    
-            if (test.completato) {
-                throw createError(
-                    ErrorTypes.VALIDATION.TEST_COMPLETED,
-                    'Il test è già stato completato'
-                );
-            }
-    
-            // Carica le domande
-            const questions = await this.questionService.getTestQuestions();
-            if (!questions || questions.length === 0) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Nessuna domanda trovata per il test'
-                );
-            }
-    
-            // Carica la configurazione
-            const config = await this.configModel.findOne({ active: true }).lean();
-            if (!config) {
-                throw createError(
-                    ErrorTypes.RESOURCE.NOT_FOUND,
-                    'Nessuna configurazione CSI attiva trovata'
-                );
-            }
-    
-            // Aggiorna il test con le domande se necessario
-            if (!test.domande || test.domande.length === 0) {
-                const testDoc = await mongoose.model('Test').findById(test.testRef);
-                if (testDoc) {
-                    testDoc.domande = questions.map((q, index) => ({
-                        questionRef: q._id,
-                        questionModel: 'CSIQuestion',
-                        originalQuestion: q,
-                        order: index + 1,
-                        version: q.version
-                    }));
-                    await testDoc.save();
-                }
-            }
-    
-            res.status(200).json({
+
+            // Formatta la risposta nel formato corretto atteso dal frontend
+            res.json({
                 status: 'success',
                 data: {
                     valid: true,
-                    test: {
-                        id: test._id,
-                        studentId: test.studentId,
-                        risposte: test.risposte || [],
-                        config: test.config
-                    },
-                    questions,
-                    config: {
-                        timeLimit: config.validazione.tempoMassimoDomanda,
-                        minQuestions: config.validazione.numeroMinimoDomande,
-                        instructions: config.interfaccia.istruzioni
-                    }
+                    test: test,
+                    expiresAt: test.expiresAt
                 }
             });
-    
+            
         } catch (error) {
             logger.error('Error verifying CSI token:', {
                 error: error.message,

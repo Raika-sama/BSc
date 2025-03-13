@@ -166,22 +166,21 @@ export const TestProvider = ({ children }) => {
   const verifyAndLoadTestData = useCallback(async (token, testType) => {
     try {
       // Verifica che token e testType non siano undefined o null
-      if (!token) {
-        throw new Error('Token mancante per la verifica del test');
-      }
-      
-      if (!testType) {
-        throw new Error('Tipo di test mancante per la verifica');
+      if (!token || !testType) {
+        console.error('Token o tipo test mancante:', { token, testType });
+        throw new Error('Parametri mancanti per la verifica del test');
       }
       
       console.log(`Verifica del test: type=${testType}, token=${token}`);
       
+      // Verifica il token con il servizio studente
       const response = await studentService.verifyTestToken(token, testType);
       
-      if (!response.data || !response.data.valid) {
+      if (!response || !response.data || !response.data.valid) {
         throw new Error('Token non valido o test non trovato');
       }
-      
+
+      // Imposta lo stato del test attivo
       dispatch({ 
         type: 'SET_ACTIVE_TEST', 
         payload: {

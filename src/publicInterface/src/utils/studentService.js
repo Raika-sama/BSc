@@ -292,14 +292,25 @@ startAssignedTest: async (testId) => {
    * @param {string} testType - Tipo di test
    * @returns {Promise} Promise con i dati di verifica del token
    */
-  verifyTestToken: async (testId) => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/tests/csi/verify/${testId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+  verifyTestToken: async (token, testType) => {
+    if (!token || !testType) {
+      console.error('Token o tipo test mancante:', { token, testType });
+      throw {
+        error: 'Parametri mancanti per la verifica del token',
+        details: {
+          hasToken: !!token,
+          hasType: !!testType
         }
-      });
-      return response.data;
+      };
+    }
+
+    try {
+      // Correzione del percorso API
+      const response = await axiosInstance.get(`/tests/csi/verify/${token}`);
+      return {
+        status: 'success',
+        data: response.data
+      };
     } catch (error) {
       console.error('Dettagli errore verifica token:', {
         status: error.response?.status,
@@ -307,13 +318,13 @@ startAssignedTest: async (testId) => {
         headers: error.response?.headers
       });
       throw {
-        error: error.response?.data?.error || 'Errore nella verifica del token',
+        error: error.response?.data?.error?.message || 'Errore nella verifica del token',
         details: error.response?.data?.details || {},
-        status: error.response?.statusdun
+        status: error.response?.status
       };
     }
   },
-  
+
   /**
    * Inizia un test con un token valido
    * @param {string} token - Token del test da iniziare
