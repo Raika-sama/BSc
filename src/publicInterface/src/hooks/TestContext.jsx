@@ -162,95 +162,150 @@ export const TestProvider = ({ children }) => {
   }, []);
   
   // Verifica e carica i dati del test
-  // IMPORTANTE: Definiamo questa funzione prima di startTest per evitare problemi di inizializzazione
   const verifyAndLoadTestData = useCallback(async (token, testType) => {
     try {
-      // Verifica che token e testType non siano undefined o null
-      if (!token || !testType) {
-        console.error('Token o tipo test mancante:', { token, testType });
-        throw new Error('Parametri mancanti per la verifica del test');
+      // Debug #1 - Inizio verifica
+      console.log('[DEBUG] Inizio verifyAndLoadTestData:', { 
+        token, 
+        testType,
+        activeTest: state.activeTest,
+        timestamp: new Date().toISOString()
+      });
+
+      // Verifica che token e testType siano validi
+      if (!token || token === "undefined" || !testType) {
+        console.error('[DEBUG] Token o tipo test non valido:', { 
+          token, 
+          testType,
+          isTokenUndefined: token === "undefined",
+          stack: new Error().stack 
+        });
+        throw new Error('Token non valido o tipo test mancante');
       }
       
-      console.log(`Verifica del test: type=${testType}, token=${token}`);
+      dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: true } });
       
+      // Debug #2 - Prima della chiamata API
+      console.log('[DEBUG] Chiamo verifyTestToken:', {
+        token,
+        testType: testType.toLowerCase(),
+        timestamp: new Date().toISOString()
+      });
+
       // Verifica il token con il servizio studente
       const response = await studentService.verifyTestToken(token, testType);
       
-      if (!response || !response.data || !response.data.valid) {
+      // Debug #3 - Dopo la chiamata API
+      console.log('[DEBUG] Risposta verifyTestToken:', {
+        success: response?.status === 'success',
+        hasData: !!response?.data,
+        data: response?.data,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (!response?.data || !response.data.valid) {
+        console.error('[DEBUG] Token non valido:', {
+          response,
+          stack: new Error().stack
+        });
         throw new Error('Token non valido o test non trovato');
       }
 
-      // Imposta lo stato del test attivo
+      // Debug #4 - Prima di SET_ACTIVE_TEST
+      console.log('[DEBUG] Imposto stato attivo:', {
+        token,
+        testType,
+        questions: response.data.questions?.length || 0,
+        testData: response.data.test,
+        timestamp: new Date().toISOString()
+      });
+
+      // Imposta lo stato del test attivo con i dati verificati
       dispatch({ 
         type: 'SET_ACTIVE_TEST', 
         payload: {
+          token,
+          testType,
           questions: response.data.questions || [],
           testData: response.data.test,
           currentQuestion: 0,
-          questionStartTime: Date.now(),
-          startTime: Date.now(),
+          questionStartTime: null,
+          startTime: null,
           answers: {}
         }
       });
       
+      dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: false } });
       return response.data;
     } catch (error) {
-      console.error('Errore nella verifica del token:', error);
+      // Debug - In caso di errore
+      console.error('[DEBUG] Errore in verifyAndLoadTestData:', {
+        error: error.message,
+        originalError: error,
+        stack: error.stack,
+        timestamp: new Date().toISOString()
+      });
+      
       dispatch({ 
         type: 'SET_ERROR', 
         payload: error.error || error.message || 'Errore nella verifica del token' 
       });
+      dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: false } });
       throw error;
     }
   }, []);
 
   const verifyToken = async (testId) => {
     try {
-      const result = await verifyTestToken(testId);
+      // Ensure we have a test ID
+      if (!testId) {
+        throw new Error('Test ID is required');
+      }
+
+      const test = state.activeTest;
+      if (!test.token) {
+        throw new Error('No active test token found');
+      }
+
+      const result = await studentService.verifyTestToken(test.token, test.testType);
       if (!result || !result.success) {
-        console.error('Verifica token fallita:', result);
-        throw new Error(result?.error || 'Verifica token fallita');
+        console.error('Token verification failed:', result);
+        throw new Error(result?.error || 'Token verification failed');
       }
       return result;
     } catch (error) {
-      console.error('Errore durante la verifica:', error);
+      console.error('Error during token verification:', error);
       throw error;
     }
   };
 
   // Inizia un test assegnato
   const startTest = useCallback(async (testId) => {
-    dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: true } });
     try {
-      // Chiamata API per avviare il test assegnato
-      console.log('Avvio test con ID:', testId);
+      dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: true } });
+      
+      // Debug log per tracciare l'ID del test
+      console.log('Avviando il test con ID:', testId);
+      
       const response = await studentService.startAssignedTest(testId);
-      console.log('Risposta completa dal server:', response);
-
+      
+      // Debug log per la risposta del server
+      console.log('Risposta dal server per startAssignedTest:', response);
+      
+      // Verifica che la risposta sia valida
       if (!response || response.status !== 'success') {
-        throw new Error('Nessuna risposta valida dal server');
-      }
-
-      // Estrai i dati del test dalla risposta
-      // Il token e altri dati potrebbero essere in response.data o in response.data.data
-      const responseData = response.data || {};
-      console.log('Dati della risposta:', responseData);
-      
-      // Gestione automatica della struttura nidificata
-      let extractedData = responseData;
-      
-      // Se i dati sono annidati in un campo data, estraiamoli
-      if (responseData.data && typeof responseData.data === 'object') {
-        extractedData = responseData.data;
-        console.log('Dati estratti dal livello annidato:', extractedData);
+        throw new Error('Risposta non valida dal server');
       }
       
-      const { token, url, expiresAt, config, testType } = extractedData;
+      // Correggiamo l'accesso ai dati - response.data può contenere un altro livello data
+      const responseData = response.data.data || response.data;
+      console.log('Dati estratti dalla risposta:', responseData);
       
-      console.log('Token estratto:', token);
+      const { token, testType, url, expiresAt, config } = responseData;
       
+      // Verifica che il token sia presente
       if (!token) {
-        console.error('Token mancante nella risposta:', response);
+        console.error('Token mancante nella risposta estratta:', responseData);
         throw new Error('Token non trovato nella risposta del server');
       }
       
@@ -273,71 +328,23 @@ export const TestProvider = ({ children }) => {
         }
       });
       
-      // Recupera i dati del test specifici per il tipo
-      try {
-        if (token && actualTestType) {
-          await verifyAndLoadTestData(token, actualTestType);
-        } else {
-          console.warn(`Non è possibile verificare il test: token=${token}, testType=${actualTestType}`);
-        }
-      } catch (testDataError) {
-        console.error('Errore nel caricamento dei dati specifici del test:', testDataError);
-        // Anche se c'è un errore qui, proseguiamo perché il test è già stato avviato
-      }
+      // Non carichiamo i dati qui - lasciamo che TestRunner lo faccia quando si naviga alla pagina
       
-      // Aggiorna la lista dei test assegnati
-      getAssignedTests(true);
+      dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: false } });
       
-      return { success: true, token, testType: actualTestType };
+      return {
+        success: true,
+        token,
+        testType: actualTestType,
+        url
+      };
     } catch (error) {
       console.error('Errore nell\'avvio del test:', error);
-      
-      // Miglioriamo il messaggio di errore
-      let errorMessage = error.error || error.message || 'Errore nell\'avvio del test';
-      let errorDetails = error.details || {};
-      
-      // Formattazione per messaggi specifici basati sul codice di errore
-      if (errorDetails.nextAvailableDate) {
-        const nextDate = new Date(errorDetails.nextAvailableDate);
-        errorMessage += ` - Disponibile dal ${formatDate(nextDate)}`;
-      }
-      
-      if (errorDetails.reason) {
-          switch (errorDetails.reason) {
-            case 'ACTIVE_TEST_EXISTS':
-              // Verifica se abbiamo l'ID del test attivo
-              if (errorDetails.activeTest) {
-                // Cerca il test attivo nell'elenco dei test assegnati
-                const activeTest = state.assignedTests.find(test => test._id === errorDetails.activeTest);
-                if (activeTest) {
-                  errorMessage = `Hai già il test "${activeTest.nome}" in corso. Completa quello prima di avviarne un altro.`;
-                } else {
-                  errorMessage = `Hai già un test CSI in corso (ID: ${errorDetails.activeTest}). Completa quello prima di avviarne un altro.`;
-                }
-              } else {
-                errorMessage = 'Hai già un test attivo dello stesso tipo. Completa quello prima di avviarne un altro.';
-              }
-              break;
-          case 'COOLDOWN_PERIOD':
-            errorMessage = `Periodo di attesa richiesto tra i test`;
-            if (errorDetails.nextAvailableDate) {
-              errorMessage += ` - Potrai riprovare dal ${formatDate(new Date(errorDetails.nextAvailableDate))}`;
-            }
-            break;
-          case 'MAX_ATTEMPTS_REACHED':
-            errorMessage = 'Hai raggiunto il numero massimo di tentativi per questo test';
-            break;
-        }
-      }
-      
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: errorMessage
-      });
+      dispatch({ type: 'SET_ERROR', payload: error.error || error.message || 'Errore nell\'avvio del test' });
       dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: false } });
-      return { success: false, error: errorMessage, details: errorDetails };
+      throw error;
     }
-  }, [state.selectedTest, formatDate, getAssignedTests, verifyAndLoadTestData]);
+  }, [state.selectedTest?.tipo]);
   
   // Inizia il test effettivo
   const startActiveTest = useCallback(async () => {
@@ -471,7 +478,8 @@ export const TestProvider = ({ children }) => {
     verifyAndLoadTestData,
     formatDate,
     clearError,
-    verifyToken
+    verifyToken,
+    dispatch  // Add dispatch to the exposed context value
   };
 
   return (

@@ -293,32 +293,69 @@ startAssignedTest: async (testId) => {
    * @returns {Promise} Promise con i dati di verifica del token
    */
   verifyTestToken: async (token, testType) => {
-    if (!token || !testType) {
-      console.error('Token o tipo test mancante:', { token, testType });
-      throw {
+    // Debug #1 - Validazione input
+    if (!token || token === "undefined" || !testType) {
+      const error = {
         error: 'Parametri mancanti per la verifica del token',
         details: {
           hasToken: !!token,
-          hasType: !!testType
+          tokenValue: token,
+          hasType: !!testType,
+          timestamp: new Date().toISOString()
         }
       };
+      console.error('[DEBUG-SERVICE] Validazione fallita:', error);
+      throw error;
     }
 
     try {
-      // Correzione del percorso API
-      const response = await axiosInstance.get(`/tests/csi/verify/${token}`);
+      // Debug #2 - Prima della chiamata API
+      const endpoint = `${API_URL}/tests/${testType.toLowerCase()}/verify/${token}`;
+      console.log('[DEBUG-SERVICE] Eseguo chiamata API:', {
+        endpoint,
+        headers: axiosInstance.defaults.headers,
+        timestamp: new Date().toISOString()
+      });
+
+      const response = await axiosInstance.get(`/tests/${testType.toLowerCase()}/verify/${token}`);
+      
+      // Debug #3 - Risposta ricevuta
+      console.log('[DEBUG-SERVICE] Risposta API ricevuta:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        data: response.data,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (!response.data?.status === 'success' || !response.data?.data) {
+        // Debug #4 - Risposta non valida
+        console.error('[DEBUG-SERVICE] Risposta non valida dal server:', {
+          response: response.data,
+          timestamp: new Date().toISOString()
+        });
+        throw new Error('Risposta non valida dal server');
+      }
+
       return {
         status: 'success',
-        data: response.data
+        data: response.data.data
       };
     } catch (error) {
-      console.error('Dettagli errore verifica token:', {
+      // Debug #5 - Errore durante la chiamata
+      console.error('[DEBUG-SERVICE] Errore durante verifyTestToken:', {
+        errorMessage: error.message,
+        errorName: error.name,
         status: error.response?.status,
-        data: error.response?.data,
-        headers: error.response?.headers
+        statusText: error.response?.statusText,
+        responseData: error.response?.data,
+        responseHeaders: error.response?.headers,
+        stack: error.stack,
+        timestamp: new Date().toISOString()
       });
+      
       throw {
-        error: error.response?.data?.error?.message || 'Errore nella verifica del token',
+        error: error.response?.data?.error?.message || error.message || 'Errore nella verifica del token',
         details: error.response?.data?.details || {},
         status: error.response?.status
       };

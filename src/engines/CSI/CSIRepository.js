@@ -345,15 +345,47 @@ async findByToken(token) {
     try {
         logger.debug('Finding test by token:', { 
             token: token.substring(0, 10) + '...',
-            modelName: this.resultModel.modelName
+            modelName: this.resultModel.modelName,
+            hasModel: !!this.resultModel,
+            discriminator: this.resultModel?.schema?.discriminatorKey
+        });
+
+        if (!token) {
+            logger.error('Token is null or undefined');
+            return null;
+        }
+
+        // Ricerca più ampia per debug - ignoriamo scadenza e tipo per vedere tutti i risultati possibili
+        const allTokenMatches = await this.resultModel.find({ token })
+            .select('token tipo expiresAt used')
+            .lean();
+
+        logger.debug('Token debug search results:', {
+            tokenToMatch: token,
+            totalResults: allTokenMatches.length,
+            results: allTokenMatches.map(r => ({
+                token: r.token,
+                tipo: r.tipo,
+                isExpired: r.expiresAt < new Date(),
+                used: r.used,
+                expiresAt: r.expiresAt
+            }))
+        });
+
+        // Debug della query prima di eseguirla
+        logger.debug('Executing query with criteria:', {
+            token,
+            tipo: 'CSI',
+            expirationCheck: { $gt: new Date() }
         });
 
         // Usa una query diretta senza populate
         const result = await this.resultModel
             .findOne({ 
                 token,
-                tipo: 'CSI',
-                expiresAt: { $gt: new Date() }
+                tipo: 'CSI'
+                // Commentiamo il controllo di scadenza per debug
+                // expiresAt: { $gt: new Date() }
             })
             .select({
                 _id: 1,
@@ -364,24 +396,75 @@ async findByToken(token) {
                 completato: 1,
                 dataInizio: 1,
                 expiresAt: 1,
-                tipo: 1
+                tipo: 1,
+                config: 1,
+                used: 1
             })
             .lean()
             .exec();
 
         if (!result) {
-            logger.debug('No result found for token');
+            // Debug perché non abbiamo trovato il risultato
+            logger.error('No result found with main query. Trying additional queries:', { token });
+            
+            // Try different queries to understand the issue
+            const exactTokenMatch = await this.resultModel.findOne({ token }).lean();
+            const anyTypeMatch = await this.resultModel.findOne({ 
+                token,
+                tipo: { $exists: true }
+            }).lean();
+            const expiredMatch = await this.resultModel.findOne({ 
+                token,
+                expiresAt: { $lt: new Date() } 
+            }).lean();
+            const usedMatch = await this.resultModel.findOne({ 
+                token,
+                used: true
+            }).lean();
+            
+            logger.debug('Debug query results:', {
+                exactTokenExists: !!exactTokenMatch,
+                exactTokenData: exactTokenMatch ? {
+                    tipo: exactTokenMatch.tipo,
+                    expired: exactTokenMatch.expiresAt < new Date(),
+                    used: exactTokenMatch.used
+                } : null,
+                anyTypeExists: !!anyTypeMatch,
+                anyTypeData: anyTypeMatch ? anyTypeMatch.tipo : null,
+                expiredExists: !!expiredMatch,
+                usedExists: !!usedMatch
+            });
+            
             return null;
         }
 
-        logger.debug('Find by token result:', {
+        logger.debug('Found result by token:', {
             found: true,
             testId: result._id,
             testRef: result.testRef,
             testToken: result.token,
+            testType: result.tipo,
             expires: result.expiresAt,
+            isExpired: result.expiresAt < new Date(),
+            used: result.used,
             fields: Object.keys(result)
         });
+
+        // Se il token è scaduto, logging ma restituiamo comunque il risultato
+        if (result.expiresAt < new Date()) {
+            logger.warn('Token is expired but returning result anyway for debugging:', {
+                token: token.substring(0, 10) + '...',
+                expiresAt: result.expiresAt,
+                now: new Date()
+            });
+        }
+
+        // Se il token è già stato usato, logging ma restituiamo comunque il risultato
+        if (result.used) {
+            logger.warn('Token is already used but returning result anyway for debugging:', {
+                token: token.substring(0, 10) + '...'
+            });
+        }
 
         return result;
 

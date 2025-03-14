@@ -73,3 +73,41 @@
 {"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:35:35.297Z","token":"67d3418e00..."}
 {"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:35:35.369Z","token":"67d3418e00..."}
 {"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:35:35.399Z","token":"67d3418e00..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:36:48.622Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:36:48.648Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:39:08.991Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:39:09.019Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:40:42.694Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:40:42.745Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:44:01.993Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:44:02.017Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:45:24.107Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:45:24.133Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:46:41.364Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:46:41.392Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:48:12.971Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:49:30.987Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:49:31.011Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:50:15.977Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:50:16.002Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:51:51.710Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:51:51.747Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:55:01.060Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"Error verifying CSI token:","timestamp":"2025-03-13T20:55:01.085Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"[DEBUG-CONTROLLER] Errore in verifyTestToken:","timestamp":"2025-03-13T20:56:37.740Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"[DEBUG-CONTROLLER] Errore in verifyTestToken:","timestamp":"2025-03-13T20:56:37.775Z","token":"undefined..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"[DEBUG-CONTROLLER] Errore in verifyTestToken:","timestamp":"2025-03-13T21:06:19.609Z","token":"67d348c22d..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"[DEBUG-CONTROLLER] Errore in verifyTestToken:","timestamp":"2025-03-13T21:24:03.021Z","token":"67d34cec0b..."}
+{"error":"Token non valido o test non trovato","level":"error","message":"[DEBUG-CONTROLLER] Errore in verifyTestToken:","timestamp":"2025-03-13T21:24:03.070Z","token":"67d34cec0b..."}
+{"level":"error","message":"No result found with main query. Trying additional queries:","timestamp":"2025-03-13T21:27:57.468Z","token":"67d34dd4748a29b3038a780d"}
+{"error":"Token non valido o test non trovato","level":"error","message":"[DEBUG-CONTROLLER] Errore in verifyTestToken:","timestamp":"2025-03-13T21:27:57.541Z","token":"67d34dd474..."}
+{"level":"error","message":"No result found with main query. Trying additional queries:","timestamp":"2025-03-13T21:27:57.593Z","token":"67d34dd4748a29b3038a780d"}
+{"error":"Token non valido o test non trovato","level":"error","message":"[DEBUG-CONTROLLER] Errore in verifyTestToken:","timestamp":"2025-03-13T21:27:57.668Z","token":"67d34dd474..."}
+{"level":"error","message":"No result found with main query. Trying additional queries:","timestamp":"2025-03-13T21:32:36.443Z","token":"67d34eed748a29b3038a7976"}
+{"error":"Token non valido o test non trovato","level":"error","message":"[DEBUG-CONTROLLER] Errore in verifyTestToken:","timestamp":"2025-03-13T21:32:36.518Z","token":"67d34eed74..."}
+{"level":"error","message":"No result found with main query. Trying additional queries:","timestamp":"2025-03-13T21:32:36.573Z","token":"67d34eed748a29b3038a7976"}
+{"error":"Token non valido o test non trovato","level":"error","message":"[DEBUG-CONTROLLER] Errore in verifyTestToken:","timestamp":"2025-03-13T21:32:36.646Z","token":"67d34eed74..."}
+{"level":"error","message":"No result found with main query. Trying additional queries:","timestamp":"2025-03-13T21:36:58.361Z","token":"67d34fe7748a29b3038a7ac6"}
+{"error":"Token non valido o test non trovato","level":"error","message":"[DEBUG-CONTROLLER] Errore in verifyTestToken:","timestamp":"2025-03-13T21:36:58.435Z","token":"67d34fe774..."}
+{"level":"error","message":"No result found with main query. Trying additional queries:","timestamp":"2025-03-13T21:36:58.488Z","token":"67d34fe7748a29b3038a7ac6"}
+{"error":"Token non valido o test non trovato","level":"error","message":"[DEBUG-CONTROLLER] Errore in verifyTestToken:","timestamp":"2025-03-13T21:36:58.560Z","token":"67d34fe774..."}

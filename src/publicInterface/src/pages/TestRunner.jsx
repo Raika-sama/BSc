@@ -20,54 +20,57 @@ import {
   AlertDescription,
   Spinner,
   Flex,
-  Badge
+  Badge,
+  useToast
 } from '@chakra-ui/react';
 
 const TestRunner = () => {
-  const { testType, token } = useParams();
+  const { token, testType } = useParams();
+  const { activeTest, verifyAndLoadTestData, startActiveTest, submitAnswer, completeTest, clearError, loading, error } = useTest();
   const navigate = useNavigate();
-  const {
-    activeTest,
-    verifyAndLoadTestData,
-    startActiveTest,
-    submitAnswer,
-    completeTest,
-    loading,
-    error,
-    clearError
-  } = useTest();
+  const toast = useToast();
   
-  const [testStep, setTestStep] = useState('loading'); // loading, intro, test, completed, error
-  const [responseValue, setResponseValue] = useState(null);
-  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [testStep, setTestStep] = useState('loading');
   const timerRef = useRef(null);
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [responseValue, setResponseValue] = useState(null);
   
-  // Carica i dati del test quando il componente è montato
   useEffect(() => {
+    // Debug log per i parametri ricevuti
+    console.log('TestRunner - Parametri ricevuti:', { token, testType });
+    
+    // Funzione per caricare i dati del test
     const loadTest = async () => {
       try {
-        if (!token || !testType) {
-          throw new Error('Parametri del test mancanti');
+        if (!token || token === "undefined" || !testType) {
+          console.log('Parametri test non validi:', { token, testType });
+          throw new Error('Parametri del test non validi o mancanti');
         }
         
-        // Verifica e carica i dati del test
-        await verifyAndLoadTestData(token, testType);
-        setTestStep('intro');
+        // Assicuriamoci che verifyAndLoadTestData prenda token e testType corretti
+        const result = await verifyAndLoadTestData(token, testType);
+        if (result) {
+          console.log('Test caricato con successo:', result);
+          setTestStep('intro');
+        } else {
+          throw new Error('Impossibile caricare i dati del test');
+        }
       } catch (error) {
         console.error('Errore nel caricamento del test:', error);
+        toast({
+          title: "Errore",
+          description: error.message || "Impossibile caricare il test",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
         setTestStep('error');
       }
     };
     
+    // Carica i dati del test all'avvio
     loadTest();
-    
-    // Cleanup del timer quando il componente viene smontato
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [token, testType, verifyAndLoadTestData]);
+  }, [token, testType, verifyAndLoadTestData, toast]);
   
   // Gestisce l'aggiornamento del timer
   useEffect(() => {

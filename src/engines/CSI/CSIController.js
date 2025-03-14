@@ -79,19 +79,39 @@ class CSIController {
         const { token } = req.params;
         
         try {
-            logger.debug('Verifying CSI token and searching test:', { 
-                token: token.substring(0, 10) + '...'
+            // Debug #1 - Inizio verifica
+            logger.debug('[DEBUG-CONTROLLER] Inizio verifica token:', { 
+                token: token?.substring(0, 10) + '...',
+                hasRepository: !!this.repository,
+                hasQuestionService: !!this.questionService,
+                timestamp: new Date().toISOString()
+            });
+
+            if (!token || token === "undefined") {
+                throw createError(
+                    ErrorTypes.VALIDATION.INVALID_TOKEN,
+                    'Token mancante o non valido'
+                );
+            }
+    
+            // Debug #2 - Prima della ricerca test
+            logger.debug('[DEBUG-CONTROLLER] Repository che verrà usato:', {
+                type: this.repository?.constructor?.name,
+                modelName: this.repository?.resultModel?.modelName,
+                methods: Object.getOwnPropertyNames(Object.getPrototypeOf(this.repository))
             });
     
             // Cerca il test
             const test = await this.repository.findByToken(token);
             
-            logger.debug('Test found:', {
+            // Debug #3 - Dopo findByToken
+            logger.debug('[DEBUG-CONTROLLER] Risultato findByToken:', {
                 found: !!test,
                 testId: test?._id,
                 testToken: test?.token,
                 expiresAt: test?.expiresAt,
-                isExpired: test?.expiresAt < new Date()
+                isExpired: test?.expiresAt ? test.expiresAt < new Date() : null,
+                fields: test ? Object.keys(test) : []
             });
     
             if (!test) {
@@ -101,34 +121,64 @@ class CSIController {
                 );
             }
     
-            if (test.expiresAt < new Date()) {
+            if (test.expiresAt && test.expiresAt < new Date()) {
                 throw createError(
                     ErrorTypes.VALIDATION.EXPIRED_TOKEN,
                     'Il token è scaduto'
                 );
             }
 
-            // Formatta la risposta nel formato corretto atteso dal frontend
+            // Debug #4 - Prima di caricare le domande
+            logger.debug('[DEBUG-CONTROLLER] Carico domande del test:', {
+                testId: test._id,
+                questionService: {
+                    type: this.questionService?.constructor?.name,
+                    isAvailable: !!this.questionService
+                }
+            });
+
+            // Carica le domande del test
+            const questions = await this.questionService.getTestQuestions();
+
+            // Debug #5 - Rispondi con successo
+            logger.debug('[DEBUG-CONTROLLER] Invio risposta:', {
+                testId: test._id,
+                questionsCount: questions?.length,
+                testValid: true
+            });
+
             res.json({
                 status: 'success',
                 data: {
                     valid: true,
-                    test: test,
-                    expiresAt: test.expiresAt
+                    test: {
+                        id: test._id,
+                        token: test.token,
+                        tipo: 'CSI',
+                        expiresAt: test.expiresAt,
+                        config: test.config
+                    },
+                    questions
                 }
             });
             
         } catch (error) {
-            logger.error('Error verifying CSI token:', {
+            // Debug #7 - In caso di errore
+            logger.error('[DEBUG-CONTROLLER] Errore in verifyTestToken:', {
                 error: error.message,
-                token: token.substring(0, 10) + '...'
+                code: error.code,
+                type: error.type,
+                name: error.name,
+                stack: error.stack,
+                token: token?.substring(0, 10) + '...',
+                timestamp: new Date().toISOString()
             });
             
-            res.status(400).json({
+            res.status(error.statusCode || 400).json({
                 status: 'error',
                 error: {
-                    message: error.message,
-                    code: error.code || 'VERIFY_TOKEN_ERROR'
+                    message: error.message || 'Errore nella verifica del token',
+                    code: error.code || error.type || 'VERIFY_TOKEN_ERROR'
                 }
             });
         }

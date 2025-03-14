@@ -29,27 +29,28 @@ import { Global, css } from '@emotion/react';
 
 const AssignedTestsPage = () => {
   const navigate = useNavigate();
-  const toast = useToast();
-  
-  const { 
-    assignedTests, 
+  const {
+    assignedTests,
     selectedTest,
+    getAssignedTests,
     selectTest,
     startTest,
-    loading, 
-    error, 
-    formatDate,
-    getAssignedTests,
-    clearError
+    loading,
+    error,
+    clearError,
+    formatDate
   } = useTest();
   
-  // Stato per gestire l'avvio di un test
-  const [startingTestId, setStartingTestId] = useState(null);
+  const [isStartModalOpen, setIsStartModalOpen] = useState(false);
+  const toast = useToast();
 
-  // Effetto per ricaricare i test quando la pagina viene montata
+  // Carica i test assegnati all'avvio
   useEffect(() => {
     getAssignedTests();
   }, [getAssignedTests]);
+
+  // Stato per gestire l'avvio di un test
+  const [startingTestId, setStartingTestId] = useState(null);
 
   // Gestore della selezione di un test
   const handleSelectTest = (test) => {
@@ -70,54 +71,39 @@ const AssignedTestsPage = () => {
     return activeTestsSameType.length === 0;
   }, [assignedTests]);
   
-  // Gestore dell'avvio di un test
+  // Avvia un test
   const handleStartTest = async (testId) => {
-    setStartingTestId(testId);
     try {
+      console.log('Avvio test con ID:', testId);
       const result = await startTest(testId);
+      
+      console.log('Risposta completa dal server:', result);
+      
       if (result.success) {
-        // Naviga alla pagina del test runner
-        navigate(`/test/${result.testType.toLowerCase()}/${result.token}`);
+        // Correzione qui: navigazione diretta all'URL del test con il token
+        const { token, testType } = result;
+        console.log(`Navigazione al test di tipo ${testType} con token: ${token}`);
+        
+        if (!token || !testType) {
+          throw new Error('Token o tipo test mancanti nella risposta');
+        }
+        
+        // Usa direttamente la navigazione con i parametri corretti
+        navigate(`/test/${testType.toLowerCase()}/${token}`);
       } else {
-        throw new Error(result.error || "Impossibile avviare il test");
+        throw new Error(result.error || 'Errore nell\'avvio del test');
       }
     } catch (error) {
-      // Creiamo un messaggio toast più dettagliato
-      let title = "Impossibile avviare il test";
-      let description = error.message;
-      let status = "error";
-      let duration = 5000;
-      
-      // Se abbiamo dettagli sul perché il test non è disponibile
-      if (error.details?.reason) {
-        switch (error.details.reason) {
-          case 'COOLDOWN_PERIOD':
-            title = "Periodo di attesa richiesto";
-            description = "È necessario attendere prima di poter svolgere nuovamente questo test";
-            if (error.details.nextAvailableDate) {
-              const nextDate = new Date(error.details.nextAvailableDate);
-              description += `. Disponibile dal ${formatDate(nextDate)}`;
-            }
-            status = "warning";
-            duration = 7000;
-            break;
-          case 'ACTIVE_TEST_EXISTS':
-            title = "Test già in corso";
-            description = "Hai già un test attivo di questo tipo";
-            status = "info";
-            break;
-        }
-      }
-      
+      console.error('Errore nell\'avvio del test:', error);
       toast({
-        title: title,
-        description: description,
-        status: status,
-        duration: duration,
+        title: "Errore",
+        description: error.message || "Impossibile avviare il test",
+        status: "error",
+        duration: 5000,
         isClosable: true,
       });
     } finally {
-      setStartingTestId(null);
+      setIsStartModalOpen(false);
     }
   };
 
