@@ -535,29 +535,29 @@ class TestController extends BaseController {
         try {
             const { testId } = req.params;
             const studentId = req.student.id;
-    
+            
             logger.debug('Starting assigned test:', {
                 testId,
                 studentId
             });
-    
+            
             const test = await this.repository.findById(testId);
-    
+            
             if (!test || test.studentId.toString() !== studentId) {
                 throw createError(
                     ErrorTypes.AUTH.FORBIDDEN,
                     'Test non trovato o non autorizzato'
                 );
             }
-
-            // Per i test CSI, verifichiamo e avviamo il test
+            
+            // Per i test CSI, deleghiamo completamente al CSIController
             if (test.tipo === 'CSI') {
                 // Prima di avviare il test, verifichiamo la disponibilità
                 const availability = await this.repository.checkTestAvailability(
                     studentId,
                     'CSI'
                 );
-
+            
                 if (!availability.available) {
                     logger.debug('CSI test non disponibile:', {
                         studentId,
@@ -577,7 +577,7 @@ class TestController extends BaseController {
                         }
                     });
                 }
-
+            
                 // Aggiorna lo stato del test
                 await this.repository.updateTestStatus(
                     testId,
@@ -587,32 +587,20 @@ class TestController extends BaseController {
                         lastStarted: new Date()
                     }
                 );
-
-                // Recupera la configurazione CSI attiva
-                const CSIConfig = mongoose.model('CSIConfig');
-                const config = await CSIConfig.findOne({ active: true });
+            
+                // Passa esplicitamente l'ID del test esistente
+                const testInit = await this.csiController.initializeCSITest(studentId, testId);
+                const testUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/test/csi/${testInit.token}`;
                 
-                if (!config) {
-                    throw createError(
-                        ErrorTypes.RESOURCE.NOT_FOUND,
-                        'Nessuna configurazione CSI attiva trovata'
-                    );
-                }
-
-                // Prepara il testUrl
-                const testUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/test/csi/${testId}`;
-
                 return this.sendResponse(res, {
-                    token: testId,
+                    token: testInit.token,
                     url: testUrl,
                     testType: 'CSI',
-                    config: {
-                        timeLimit: config.validazione.tempoMassimoDomanda,
-                        minQuestions: config.validazione.numeroMinimoDomande,
-                        instructions: config.interfaccia.istruzioni
-                    }
+                    config: testInit.config
                 }, 201);
             }
+            
+            // Per altri tipi di test, continua con la logica esistente...
     
             // Per altri tipi di test, usa la logica esistente
             // Verifica disponibilità

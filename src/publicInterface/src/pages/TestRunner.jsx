@@ -31,6 +31,7 @@ const TestRunner = () => {
   const toast = useToast();
   
   const [testStep, setTestStep] = useState('loading');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const timerRef = useRef(null);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [responseValue, setResponseValue] = useState(null);
@@ -107,6 +108,7 @@ const TestRunner = () => {
     if (responseValue === null) return; // Nessuna risposta selezionata
     
     try {
+      setIsSubmitting(true);
       const result = await submitAnswer(responseValue);
       if (result.success) {
         setResponseValue(null); // Reset della risposta selezionata
@@ -120,12 +122,22 @@ const TestRunner = () => {
       }
     } catch (error) {
       console.error('Errore nell\'invio della risposta:', error);
+      toast({
+        title: "Errore",
+        description: error.message || "Si è verificato un errore nell'invio della risposta",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
   // Completa il test
   const handleCompleteTest = async () => {
     try {
+      setIsSubmitting(true);
       const result = await completeTest();
       if (result.success) {
         setTestStep('completed');
@@ -134,12 +146,27 @@ const TestRunner = () => {
       }
     } catch (error) {
       console.error('Errore nel completamento del test:', error);
+      toast({
+        title: "Errore",
+        description: error.message || "Si è verificato un errore durante il completamento del test",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
   // Torna alla pagina dei test assegnati
   const handleBackToTests = () => {
-    navigate('/test-assegnati');
+    navigate('/test-assegnati', { 
+      state: { 
+        fromTest: true, 
+        testCompleted: testStep === 'completed' ? true : false,
+        testId: activeTest.testData?._id || null
+      } 
+    });
   };
   
   // Funzione per formattare il tempo
@@ -263,7 +290,7 @@ const TestRunner = () => {
   return (
     <Box maxW="800px" mx="auto" p={5}>
       <Card borderRadius="lg" overflow="hidden" boxShadow="lg">
-        <CardHeader bg="blue.500" color="white">
+      <CardHeader bg="blue.500" color="white">
           <Flex justify="space-between" align="center">
             <Heading size="md">{activeTest.testData?.nome || `Test ${testType.toUpperCase()}`}</Heading>
             <Flex align="center" gap={2}>
@@ -305,7 +332,7 @@ const TestRunner = () => {
                 <Radio
                   key={option.value}
                   value={option.value.toString()}
-                  isDisabled={loading.submitting}
+                  isDisabled={isSubmitting}
                   colorScheme="blue"
                   size="lg"
                 >
@@ -336,7 +363,7 @@ const TestRunner = () => {
           <Button 
             onClick={handleSubmitAnswer} 
             colorScheme="blue" 
-            isLoading={loading.submitting}
+            isLoading={isSubmitting}
             isDisabled={responseValue === null}
           >
             {activeTest.currentQuestion === activeTest.questions.length - 1 ? 'Completa il test' : 'Avanti'}
@@ -348,3 +375,4 @@ const TestRunner = () => {
 };
 
 export default TestRunner;
+          

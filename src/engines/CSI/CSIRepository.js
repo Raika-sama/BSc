@@ -195,59 +195,112 @@ class CSIRepository extends TestRepository {
         }
     }
 
-  /**
-     * Override del metodo saveTestToken per gestire specifiche CSI
-     */
  /**
  * Override del metodo saveTestToken per gestire specifiche CSI
  */
  async saveTestToken(testData) {
     try {
         logger.debug('Saving CSI test token:', { 
-            studentId: testData.studentId 
+            studentId: testData.studentId,
+            existingTestId: testData.testId 
         });
 
         const token = crypto.randomBytes(32).toString('hex');
         
-        // 1. Recupera configurazione e domande
-        const [activeConfig, questions] = await Promise.all([
-            mongoose.model('CSIConfig').findOne({ active: true }),
-            mongoose.model('CSIQuestion').find({ active: true }).lean()
-        ]);
-
+        // 1. Recupera configurazione attiva
+        const activeConfig = await mongoose.model('CSIConfig').findOne({ active: true });
         if (!activeConfig) {
             throw new Error('No active CSI configuration found');
         }
 
-        // 2. Crea il test base
-        const newTest = await mongoose.model('Test').create({
-            tipo: 'CSI',
-            studentId: testData.studentId,
-            domande: questions.map(q => ({
-                questionRef: q._id,
-                questionModel: 'CSIQuestion',
-                order: q.id,
-                version: '1.0.0'
-            })),
-            configurazione: {
-                tempoLimite: activeConfig.validazione.tempoMassimoDomanda,
-                tentativiMax: 1,
-                cooldownPeriod: 24 * 60 * 60 * 1000, // 24 ore
-                randomizzaDomande: false,
-                mostraRisultatiImmediati: false,
-                istruzioni: activeConfig.interfaccia.istruzioni,
-                questionVersion: '1.0.0'
-            },
-            csiConfig: activeConfig._id,
-            active: true,
-            versione: '1.0.0'
-        });
+        // 2. Usa il test esistente o creane uno nuovo
+        let testRef;
+        
+        if (testData.testId) {
+            // Se è fornito un ID test, usa quel test esistente
+            logger.debug('Looking for existing test:', { testId: testData.testId });
+            
+            const existingTest = await mongoose.model('Test').findById(testData.testId);
+            if (!existingTest) {
+                throw new Error(`Test with ID ${testData.testId} not found`);
+            }
+            
+            testRef = existingTest._id;
+            logger.debug('Using existing test:', { testId: testRef });
+        } else {
+            // Se non è fornito un testId, verifica se esiste già un test attivo per questo studente
+            const existingTest = await mongoose.model('Test').findOne({
+                studentId: testData.studentId,
+                tipo: 'CSI',
+                active: true,
+                status: { $in: ['pending', 'in_progress'] }
+            });
+            
+            if (existingTest) {
+                // Se esiste già un test attivo, usa quello
+                testRef = existingTest._id;
+                logger.debug('Found existing active test for student:', { 
+                    testId: testRef,
+                    status: existingTest.status
+                });
+            } else {
+                // Se non esiste, creane uno nuovo
+                logger.debug('Creating new test for student:', { studentId: testData.studentId });
+                
+                const questions = await mongoose.model('CSIQuestion').find({ active: true }).lean();
+                
+                const newTest = await mongoose.model('Test').create({
+                    tipo: 'CSI',
+                    studentId: testData.studentId,
+                    nome: `Test CSI per ${testData.studentName || 'Studente'}`,
+                    descrizione: `Test CSI generato automaticamente`,
+                    domande: questions.map(q => ({
+                        questionRef: q._id,
+                        questionModel: 'CSIQuestion',
+                        order: q.id,
+                        version: '1.0.0'
+                    })),
+                    configurazione: {
+                        tempoLimite: activeConfig.validazione.tempoMassimoDomanda,
+                        tentativiMax: 1,
+                        cooldownPeriod: 24 * 60 * 60 * 1000, // 24 ore
+                        randomizzaDomande: false,
+                        mostraRisultatiImmediati: false,
+                        istruzioni: activeConfig.interfaccia.istruzioni,
+                        questionVersion: '1.0.0'
+                    },
+                    csiConfig: activeConfig._id,
+                    active: true,
+                    versione: '1.0.0'
+                });
+                
+                testRef = newTest._id;
+                logger.debug('Created new test:', { testId: testRef });
+            }
+        }
 
-        logger.debug('Created new test:', { 
-            testId: newTest._id 
+        // 3. Controlla se esiste già un Result non completato per questo test
+        const existingResult = await this.resultModel.findOne({
+            testRef: testRef,
+            completato: false
         });
+        
+        if (existingResult) {
+            logger.debug('Found existing result for test:', {
+                resultId: existingResult._id,
+                token: existingResult.token
+            });
+            
+            // Se esiste già un result, restituiscilo
+            return {
+                token: existingResult.token,
+                expiresAt: existingResult.expiresAt,
+                testId: testRef,
+                resultId: existingResult._id
+            };
+        }
 
-        // 3. Crea il risultato CSI usando il discriminator
+        // 4. Crea un nuovo Result se non ne esiste uno
         if (!this.resultModel) {
             throw new Error('CSI Result model not properly initialized');
         }
@@ -256,12 +309,13 @@ class CSIRepository extends TestRepository {
             tipo: 'CSI',
             studentId: testData.studentId,
             token,
-            testRef: newTest._id,
+            testRef,
             config: activeConfig._id,
             expiresAt: new Date(Date.now() + (24 * 60 * 60 * 1000)), // 24 ore
             risposte: [],
             completato: false,
-            dataInizio: new Date()
+            dataInizio: new Date(),
+            accessMethod: 'account'
         });
 
         logger.debug('Created new CSI result:', {
@@ -272,7 +326,7 @@ class CSIRepository extends TestRepository {
         return {
             token,
             expiresAt: newResult.expiresAt,
-            testId: newTest._id,
+            testId: testRef,
             resultId: newResult._id
         };
 
@@ -282,10 +336,70 @@ class CSIRepository extends TestRepository {
             stack: error.stack,
             data: testData
         });
-        throw new Error('Errore nel salvataggio del token CSI');
+        throw new Error(`Errore nel salvataggio del token CSI: ${error.message}`);
     }
 }
 
+
+/**
+ * Marca un token come utilizzato
+ * @param {string} token - Token da marcare
+ * @returns {Promise<Object>} Il risultato aggiornato
+ */
+async markTokenAsUsed(token) {
+    try {
+        logger.debug('Marking token as used:', { 
+            token: token.substring(0, 10) + '...',
+            modelName: this.resultModel?.modelName 
+        });
+
+        if (!token) {
+            logger.error('Token is null or undefined in markTokenAsUsed');
+            throw new Error('Token is required');
+        }
+
+        if (!this.resultModel) {
+            logger.error('Result model not initialized in markTokenAsUsed');
+            throw new Error('Result model not initialized');
+        }
+
+        // Trova e aggiorna il risultato
+        const result = await this.resultModel.findOneAndUpdate(
+            { token, used: false },
+            { 
+                $set: { 
+                    used: true,
+                    startedAt: new Date()
+                }
+            },
+            { new: true }
+        );
+
+        if (!result) {
+            logger.error('Token not found or already used:', {
+                token: token.substring(0, 10) + '...'
+            });
+            throw createError(
+                ErrorTypes.VALIDATION.INVALID_TOKEN,
+                'Token non valido o già utilizzato'
+            );
+        }
+
+        logger.debug('Token marked as used successfully:', {
+            resultId: result._id,
+            token: token.substring(0, 10) + '...'
+        });
+
+        return result;
+    } catch (error) {
+        logger.error('Error marking token as used:', {
+            error: error.message,
+            stack: error.stack,
+            token: token ? token.substring(0, 10) + '...' : 'undefined'
+        });
+        throw error;
+    }
+}
 
 /**
      * Recupera la configurazione attiva
@@ -334,12 +448,6 @@ async checkAvailability(studentId) {
         throw error;
     }
 }
-
-
-
-
-
-
 
 async findByToken(token) {
     try {
@@ -724,7 +832,7 @@ _generateRecommendations(scores) {
 async update(token, updateData) {
     try {
         logger.debug('Updating CSI result:', { 
-            token,
+            token: token.substring(0, 10) + '...',
             updateData: {
                 isCompleted: updateData.completato,
                 hasScores: !!updateData.punteggiDimensioni,
@@ -732,18 +840,9 @@ async update(token, updateData) {
             }
         });
         
-        // Valida la struttura dei punteggi prima dell'aggiornamento
-        if (updateData.punteggiDimensioni) {
-            ['elaborazione', 'creativita', 'preferenzaVisiva', 'decisione', 'autonomia'].forEach(dim => {
-                const score = updateData.punteggiDimensioni[dim];
-                if (!score || typeof score.score !== 'number') {
-                    throw new Error(`Invalid score structure for dimension ${dim}`);
-                }
-            });
-        }
-
+        // Usa findOneAndUpdate per aggiornare il documento esistente
         const result = await this.resultModel.findOneAndUpdate(
-            { token },
+            { token },  // Trova per token
             updateData,
             { 
                 new: true,
@@ -752,7 +851,7 @@ async update(token, updateData) {
         );
 
         if (!result) {
-            logger.error('Result not found for token:', { token });
+            logger.error('Result not found for token:', { token: token.substring(0, 10) + '...' });
             throw createError(
                 ErrorTypes.RESOURCE.NOT_FOUND,
                 'Risultato non trovato'
@@ -770,7 +869,7 @@ async update(token, updateData) {
         logger.error('Error updating CSI result:', {
             error: error.message,
             stack: error.stack,
-            token
+            token: token.substring(0, 10) + '...'
         });
         throw error;
     }

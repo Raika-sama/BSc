@@ -422,18 +422,20 @@ startAssignedTest: async (testId) => {
    * @param {string} testType - Tipo di test
    * @returns {Promise} Promise con i dati di completamento del test
    */
-  completeTest: async (token, testType) => {
+  completeTest: async (token, testType, answers) => {
     try {
       console.log(`Completamento test ${testType} con token:`, token);
       
-      const response = await axiosInstance.post(`/tests/${testType.toLowerCase()}/${token}/complete`);
+      const response = await axiosInstance.post(`/tests/${testType.toLowerCase()}/${token}/complete`, {
+        answers: answers
+      });
       
       // Invalida la cache dopo aver completato un test
       studentService.clearCache();
       
       return {
         status: 'success',
-        data: response.data.data
+        data: response.data
       };
     } catch (error) {
       console.error('Errore durante il completamento del test:', error);
@@ -442,7 +444,7 @@ startAssignedTest: async (testId) => {
         details: error.response?.data || error.message
       };
     }
-  },
+},
   
   /**
    * Forza un refresh dei dati in cache

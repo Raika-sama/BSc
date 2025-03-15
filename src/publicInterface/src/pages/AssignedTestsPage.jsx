@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTest } from '../hooks/TestContext';
 import {
   Box,
@@ -10,6 +10,8 @@ import {
   Spinner,
   Alert,
   AlertIcon,
+  AlertTitle,
+  AlertDescription,
   Button,
   Divider,
   Badge,
@@ -24,11 +26,12 @@ import {
   Tooltip
 } from '@chakra-ui/react';
 import { TbSchool } from 'react-icons/tb';
-import { MdAssignment, MdAccessTime, MdEvent, MdPlayArrow, MdPlayCircleOutline } from 'react-icons/md';
+import { MdAssignment, MdAccessTime, MdEvent, MdPlayArrow, MdPlayCircleOutline, MdCheckCircle } from 'react-icons/md';
 import { Global, css } from '@emotion/react';
 
 const AssignedTestsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     assignedTests,
     selectedTest,
@@ -42,12 +45,24 @@ const AssignedTestsPage = () => {
   } = useTest();
   
   const [isStartModalOpen, setIsStartModalOpen] = useState(false);
+  const [lastCompleted, setLastCompleted] = useState(null);
   const toast = useToast();
 
   // Carica i test assegnati all'avvio
   useEffect(() => {
     getAssignedTests();
   }, [getAssignedTests]);
+
+  // Effetto per aggiornare i dati quando si arriva da un test completato
+  useEffect(() => {
+    const fromTest = location.state?.fromTest;
+    const testCompleted = location.state?.testCompleted;
+    
+    if (fromTest && testCompleted && testCompleted !== lastCompleted) {
+      getAssignedTests(true);  // Forza l'aggiornamento
+      setLastCompleted(testCompleted);
+    }
+  }, [location, getAssignedTests, lastCompleted]);
 
   // Stato per gestire l'avvio di un test
   const [startingTestId, setStartingTestId] = useState(null);
@@ -74,6 +89,7 @@ const AssignedTestsPage = () => {
   // Avvia un test
   const handleStartTest = async (testId) => {
     try {
+      setStartingTestId(testId);
       console.log('Avvio test con ID:', testId);
       const result = await startTest(testId);
       
@@ -103,6 +119,7 @@ const AssignedTestsPage = () => {
         isClosable: true,
       });
     } finally {
+      setStartingTestId(null);
       setIsStartModalOpen(false);
     }
   };
@@ -280,6 +297,18 @@ const AssignedTestsPage = () => {
                         animation="pulse 1.5s infinite"
                       />
                     )}
+                    
+                    {/* Indicatore per test completati */}
+                    {test.status === 'completed' && (
+                      <Box 
+                        as={MdCheckCircle}
+                        position="absolute"
+                        right={2}
+                        top={2}
+                        color="green.500"
+                        size="20px"
+                      />
+                    )}
                   </ListItem>
                   <Divider />
                 </React.Fragment>
@@ -363,6 +392,23 @@ const AssignedTestsPage = () => {
                     </CardBody>
                   </Card>
                   
+                  {/* Card per la data di completamento se il test è completato */}
+                  {selectedTest.status === 'completed' && selectedTest.dataCompletamento && (
+                    <Card variant="outline">
+                      <CardBody py={3}>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Data di completamento
+                        </Text>
+                        <Flex align="center">
+                          <Box as={MdCheckCircle} mr={2} color="green.500" />
+                          <Text>
+                            {formatDate(selectedTest.dataCompletamento)}
+                          </Text>
+                        </Flex>
+                      </CardBody>
+                    </Card>
+                  )}
+                  
                   {selectedTest.configurazione && selectedTest.configurazione.tempoLimite && (
                     <Card variant="outline">
                       <CardBody py={3}>
@@ -425,7 +471,42 @@ const AssignedTestsPage = () => {
                 )}
               </Box>
               
-              {/* Pulsanti per l'azione del test */}
+              {/* Sezione per test completati */}
+              {selectedTest.status === 'completed' && (
+                <Box 
+                  p={2} 
+                  borderTop="1px solid" 
+                  borderColor="gray.200"
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  gap={2}
+                  bg="green.50"
+                >
+                  <Alert status="success" variant="subtle" borderRadius="md">
+                    <AlertIcon />
+                    <Box>
+                      <AlertTitle>Test completato con successo!</AlertTitle>
+                      <AlertDescription>
+                        Hai completato questo test in data {formatDate(selectedTest.dataCompletamento || selectedTest.updatedAt)}.
+                      </AlertDescription>
+                    </Box>
+                  </Alert>
+                  
+                  {/* Opzionale: pulsante per visualizzare i risultati se implementi questa funzionalità */}
+                  <Button
+                    colorScheme="green"
+                    leftIcon={<Box as={MdAssignment} />}
+                    onClick={() => navigate(`/risultati-test/${selectedTest._id}`)}
+                    size="md"
+                    isDisabled={true} // Abilita quando implementi la pagina dei risultati
+                  >
+                    Visualizza Risultati
+                  </Button>
+                </Box>
+              )}
+              
+              {/* Pulsanti per l'azione del test - Inizia Test */}
               {selectedTest.status === 'pending' && (
                 <Box 
                   p={2} 
@@ -466,6 +547,7 @@ const AssignedTestsPage = () => {
                 </Box>
               )}
               
+              {/* Pulsanti per l'azione del test - Continua Test */}
               {selectedTest.status === 'in_progress' && (
                 <Box 
                   p={2} 

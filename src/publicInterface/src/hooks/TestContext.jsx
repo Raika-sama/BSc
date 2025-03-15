@@ -131,6 +131,7 @@ export const TestProvider = ({ children }) => {
       const response = await studentService.getAssignedTests();
       // Trasforma i dati se necessario e li ordina per data di assegnazione
       const tests = response.data || [];
+
       const sortedTests = [...tests].sort((a, b) => {
         const dateA = a.assignedAt ? new Date(a.assignedAt) : new Date(0);
         const dateB = b.assignedAt ? new Date(b.assignedAt) : new Date(0);
@@ -143,6 +144,14 @@ export const TestProvider = ({ children }) => {
       const currentState = stateRef.current;
       if (!currentState.selectedTest && sortedTests.length > 0) {
         dispatch({ type: 'SET_SELECTED_TEST', payload: sortedTests[0] });
+      } else if (currentState.selectedTest) {
+        // Aggiorna il test selezionato con i nuovi dati, se presente
+        const updatedSelectedTest = sortedTests.find(
+          test => test._id === currentState.selectedTest._id
+        );
+        if (updatedSelectedTest) {
+          dispatch({ type: 'SET_SELECTED_TEST', payload: updatedSelectedTest });
+        }
       }
       
       return sortedTests;
@@ -421,40 +430,41 @@ export const TestProvider = ({ children }) => {
   }, [state.activeTest]);
   
   // Completa il test
-  const completeTest = useCallback(async () => {
-    const { token, testType } = state.activeTest;
+const completeTest = useCallback(async () => {
+  const { token, testType, answers } = state.activeTest;
+  
+  if (!token || !testType) {
+    dispatch({ 
+      type: 'SET_ERROR', 
+      payload: 'Nessun test attivo da completare' 
+    });
+    return { success: false };
+  }
+  
+  dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: true } });
+  
+  try {
+    // Invia tutte le risposte al server
+    const response = await studentService.completeTest(token, testType, answers);
     
-    if (!token || !testType) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: 'Nessun test attivo da completare' 
-      });
-      return { success: false };
-    }
+    // Reset dello stato del test attivo
+    dispatch({ type: 'RESET_ACTIVE_TEST' });
     
-    dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: true } });
+    // Aggiorna la lista dei test
+    getAssignedTests(true);
     
-    try {
-      const response = await studentService.completeTest(token, testType);
-      
-      // Reset dello stato del test attivo
-      dispatch({ type: 'RESET_ACTIVE_TEST' });
-      
-      // Aggiorna la lista dei test
-      getAssignedTests(true);
-      
-      dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: false } });
-      return { success: true, data: response.data };
-    } catch (error) {
-      console.error('Errore nel completamento del test:', error);
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: error.error || error.message || 'Errore nel completamento del test' 
-      });
-      dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: false } });
-      return { success: false };
-    }
-  }, [state.activeTest, getAssignedTests]);
+    dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: false } });
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('Errore nel completamento del test:', error);
+    dispatch({ 
+      type: 'SET_ERROR', 
+      payload: error.error || error.message || 'Errore nel completamento del test' 
+    });
+    dispatch({ type: 'SET_LOADING', payload: { type: 'test', status: false } });
+    return { success: false };
+  }
+}, [state.activeTest, getAssignedTests]);
 
   // Cancella un errore
   const clearError = useCallback(() => {

@@ -1,0 +1,44 @@
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-14T07:28:32.640Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-14T07:28:32.646Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-14T07:28:32.699Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-14T07:28:33.648Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-14T07:28:33.649Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-14T07:28:33.652Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-14T07:28:34.019Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-14T07:28:34.027Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-14T07:28:34.028Z"}
+{"assignedBy":"677bfe44f6789c907c9f3766","csiConfigId":"67a65a423218fb8ab7bbc040","level":"info","message":"Test assigned to student:","studentId":"67c4908d647e9de1d9422ed8","testId":"67d3db0e49d97e88f679d0f6","testType":"CSI","timestamp":"2025-03-14T07:30:22.945Z"}
+{"assignedBy":"677bfe44f6789c907c9f3766","level":"info","message":"Test assigned successfully:","studentId":"67c4908d647e9de1d9422ed8","testId":"67d3db0e49d97e88f679d0f6","timestamp":"2025-03-14T07:30:22.946Z"}
+{"error":"this.repository.markTokenAsUsed is not a function","level":"error","message":"Error starting CSI test:","timestamp":"2025-03-14T07:31:18.987Z","token":"1c52bd5171..."}
+{"duration":"7ms","ip":"::1","level":"warn","message":"Risposta inviata","method":"POST","requestId":"req_1741937478982_ul5i5hmq9","responseSize":"116 Bytes","statusCode":400,"timestamp":"2025-03-14T07:31:18.989Z","url":"/api/v1/tests/csi/1c52bd5171c8b374082af7daad3ab1b090b79d3a99445a445ca9f2eec9dabc44/start","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-14T07:34:02.881Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-14T07:34:02.885Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-14T07:34:02.937Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.4nf56.mongodb.net","timestamp":"2025-03-14T07:34:03.886Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-14T07:34:03.888Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-14T07:34:03.889Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-14T07:34:04.269Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-14T07:34:04.273Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-14T07:34:04.274Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-14T07:36:26.711Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-14T07:36:26.715Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-14T07:36:26.746Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.4nf56.mongodb.net","timestamp":"2025-03-14T07:36:27.399Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-14T07:36:27.401Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-14T07:36:27.402Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-14T07:36:27.696Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-14T07:36:27.700Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-14T07:36:27.701Z"}
+{"assignedBy":"677bfe44f6789c907c9f3766","csiConfigId":"67a65a423218fb8ab7bbc040","level":"info","message":"Test assigned to student:","studentId":"67c4908d647e9de1d9422ed8","testId":"67d3dcf9a460a369e928c02e","testType":"CSI","timestamp":"2025-03-14T07:38:33.930Z"}
+{"assignedBy":"677bfe44f6789c907c9f3766","level":"info","message":"Test assigned successfully:","studentId":"67c4908d647e9de1d9422ed8","testId":"67d3dcf9a460a369e928c02e","timestamp":"2025-03-14T07:38:33.931Z"}
+{"level":"warn","message":"Mongoose not connected when initializing models","timestamp":"2025-03-14T07:41:56.457Z"}
+{"connectionState":0,"existingModels":["CSIQuestion","Test","Student","CSIConfig"],"level":"info","message":"Initializing models...","timestamp":"2025-03-14T07:41:56.461Z"}
+{"level":"info","message":"Model validation successful - all required models registered","timestamp":"2025-03-14T07:41:56.505Z"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.4nf56.mongodb.net","timestamp":"2025-03-14T07:41:57.340Z"}
+{"level":"info","message":"Database connesso con successo","timestamp":"2025-03-14T07:41:57.341Z"}
+{"level":"info","message":"Tutti i modelli richiesti sono registrati correttamente","timestamp":"2025-03-14T07:41:57.343Z"}
+{"environment":"development","level":"info","message":"Routes initialized:","protected":["/classes","/schools","/users","/students","/tests","/system-tests"],"public":["/auth","/student-auth","/tests/csi/public"],"timestamp":"2025-03-14T07:41:57.647Z"}
+{"level":"info","message":"Server in esecuzione su localhost:5000","timestamp":"2025-03-14T07:41:57.652Z"}
+{"level":"info","message":"Ambiente: development","timestamp":"2025-03-14T07:41:57.653Z"}
+{"assignedBy":"677bfe44f6789c907c9f3766","csiConfigId":"67a65a423218fb8ab7bbc040","level":"info","message":"Test assigned to student:","studentId":"67c4908d647e9de1d9422ed8","testId":"67d3ddd400b5e6c5eda0139e","testType":"CSI","timestamp":"2025-03-14T07:42:12.987Z"}
+{"assignedBy":"677bfe44f6789c907c9f3766","level":"info","message":"Test assigned successfully:","studentId":"67c4908d647e9de1d9422ed8","testId":"67d3ddd400b5e6c5eda0139e","timestamp":"2025-03-14T07:42:12.988Z"}

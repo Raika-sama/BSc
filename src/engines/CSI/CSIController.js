@@ -72,6 +72,7 @@ class CSIController {
         });
     }
 
+
     /**
      * Verifica token test CSI
      */
@@ -188,34 +189,62 @@ class CSIController {
      * Metodo interno per avviare un test CSI
      */
     async _startTest(token) {
-        logger.debug('Starting CSI test internally:', { 
-            token: token ? token.substring(0, 10) + '...' : 'undefined'
-        });
-
-        // Marca il token come usato
-        const result = await this.repository.markTokenAsUsed(token);
-        
-        // Carica domande e configurazione
-        const [questions, config] = await Promise.all([
-            this.questionService.getTestQuestions(),
-            this.configModel.findOne({ active: true })
-        ]);
-
-        if (!config) {
-            throw createError(
-                ErrorTypes.RESOURCE.NOT_FOUND,
-                'Nessuna configurazione CSI attiva trovata'
-            );
-        }
-
-        return {
-            questions,
-            config: {
-                timeLimit: config.validazione.tempoMassimoDomanda,
-                minQuestions: config.validazione.numeroMinimoDomande,
-                instructions: config.interfaccia.istruzioni
+        try {
+            logger.debug('Starting CSI test internally:', { 
+                token: token ? token.substring(0, 10) + '...' : 'undefined'
+            });
+    
+            if (!token) {
+                throw new Error('Token is required to start test');
             }
-        };
+    
+            // Verifica il repository
+            if (!this.repository) {
+                throw new Error('Repository not initialized');
+            }
+    
+            // Marca il token come usato
+            const result = await this.repository.markTokenAsUsed(token);
+            
+            if (!result) {
+                throw new Error('Failed to mark token as used');
+            }
+            
+            // Carica domande e configurazione
+            const [questions, config] = await Promise.all([
+                this.questionService.getTestQuestions(),
+                this.configModel.findOne({ active: true })
+            ]);
+    
+            if (!config) {
+                throw createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Nessuna configurazione CSI attiva trovata'
+                );
+            }
+    
+            logger.debug('Test started successfully:', {
+                token: token.substring(0, 10) + '...',
+                questionsCount: questions.length,
+                configId: config._id
+            });
+    
+            return {
+                questions,
+                config: {
+                    timeLimit: config.validazione.tempoMassimoDomanda,
+                    minQuestions: config.validazione.numeroMinimoDomande,
+                    instructions: config.interfaccia.istruzioni
+                }
+            };
+        } catch (error) {
+            logger.error('Error in _startTest:', {
+                error: error.message,
+                stack: error.stack,
+                token: token ? token.substring(0, 10) + '...' : 'undefined'
+            });
+            throw error;
+        }
     }
 
     /**
@@ -243,27 +272,32 @@ class CSIController {
                 }
             });
         }
-    };
+    }
 
-    async initializeCSITest(studentId) {
+    async initializeCSITest(studentId, testId = null) {
         try {
-            logger.debug('Initializing CSI test for student:', { studentId });
-
+            logger.debug('Initializing CSI test for student:', { 
+                studentId,
+                existingTestId: testId 
+            });
+    
             // Verifica che il repository sia disponibile
             if (!this.repository) {
                 throw new Error('Repository not initialized');
             }
-
-            // 1. Verifica disponibilità
-            const availability = await this.repository.checkAvailability(studentId);
-            if (!availability.available) {
-                throw createError(
-                    ErrorTypes.VALIDATION.NOT_ALLOWED,
-                    'Test CSI non disponibile al momento',
-                    { nextAvailableDate: availability.nextAvailableDate }
-                );
+    
+            // 1. Verifica disponibilità (solo se non abbiamo un testId)
+            if (!testId) {
+                const availability = await this.repository.checkAvailability(studentId);
+                if (!availability.available) {
+                    throw createError(
+                        ErrorTypes.VALIDATION.NOT_ALLOWED,
+                        'Test CSI non disponibile al momento',
+                        { nextAvailableDate: availability.nextAvailableDate }
+                    );
+                }
             }
-
+    
             // 2. Recupera configurazione attiva
             const config = await this.configModel.findOne({ active: true });
             if (!config) {
@@ -272,22 +306,36 @@ class CSIController {
                     'Nessuna configurazione CSI attiva trovata'
                 );
             }
-
-            // 3. Prepara i dati del test
+    
+            // 3. Recupera il nome dello studente se disponibile (per il nome del test)
+            let studentName = null;
+            try {
+                const student = await mongoose.model('Student').findById(studentId);
+                if (student) {
+                    studentName = `${student.firstName} ${student.lastName}`;
+                }
+            } catch (e) {
+                logger.warn('Could not retrieve student name:', { error: e.message });
+            }
+    
+            // 4. Prepara i dati del test
             const testData = {
                 studentId,
                 tipo: 'CSI',
-                config: config._id
+                config: config._id,
+                testId, // Passa l'ID del test esistente
+                studentName // Aggiungi il nome dello studente
             };
-
-            // 4. Genera il token usando il repository
+    
+            // 5. Genera il token usando il repository
             const tokenData = await this.repository.saveTestToken(testData);
             
             logger.debug('Test token generated:', {
-                tokenId: tokenData._id,
-                hasToken: !!tokenData.token
+                tokenId: tokenData.resultId,
+                hasToken: !!tokenData.token,
+                testId: tokenData.testId
             });
-
+    
             return {
                 token: tokenData.token,
                 expiresAt: tokenData.expiresAt,
@@ -297,7 +345,7 @@ class CSIController {
                     instructions: config.interfaccia.istruzioni
                 }
             };
-
+    
         } catch (error) {
             logger.error('Error initializing CSI test:', {
                 error: error.message,
@@ -307,7 +355,6 @@ class CSIController {
             throw error;
         }
     }
-
 
     /**
      * Processa risposta test CSI
@@ -457,17 +504,6 @@ completeTest = async (req, res) => {
             };
         }).filter(r => r !== null);
 
-        logger.debug('Prepared answers for scoring:', {
-            totalAnswers: risposteComplete.length,
-            questionsFound: questions.length,
-            sampleAnswer: risposteComplete[0],
-            mappingStats: {
-                totalRisposte: result.risposte.length,
-                mappedRisposte: risposteComplete.length,
-                categories: [...new Set(risposteComplete.map(r => r.domanda.categoria))]
-            }
-        });
-
         // 4. Verifica numero minimo di risposte
         const config = await this.configModel.findOne({ active: true }).lean();
         if (!config) {
@@ -487,12 +523,6 @@ completeTest = async (req, res) => {
         // 5. Calcola i risultati usando CSIScorer
         const testResults = this.scorer.calculateTestResult(risposteComplete);
         
-        logger.debug('Test results calculated:', {
-            dimensions: Object.keys(testResults.punteggiDimensioni),
-            hasPattern: !!testResults.metadataCSI?.pattern,
-            hasProfile: !!testResults.metadataCSI?.profiloCognitivo
-        });
-
         // 6. Aggiungi metriche aggiuntive ai metadata
         const metadataCompleto = {
             ...testResults.metadataCSI,
@@ -510,41 +540,34 @@ completeTest = async (req, res) => {
         const updateData = {
             completato: true,
             dataCompletamento: new Date(),
-            punteggiDimensioni: {
-                elaborazione: testResults.punteggiDimensioni.elaborazione,
-                creativita: testResults.punteggiDimensioni.creativita,
-                preferenzaVisiva: testResults.punteggiDimensioni.preferenzaVisiva,
-                decisione: testResults.punteggiDimensioni.decisione,
-                autonomia: testResults.punteggiDimensioni.autonomia
-            },
-            metadataCSI: {
-                ...testResults.metadataCSI,
-                tempoTotaleDomande: risposteComplete.reduce((sum, r) => sum + r.timeSpent, 0),
-                tempoMedioRisposta: risposteComplete.reduce((sum, r) => sum + r.timeSpent, 0) / risposteComplete.length,
-                completamentoPercentuale: (risposteComplete.length / test.domande.length) * 100,
-                versioneAlgoritmo: testResults.metadataCSI.versioneAlgoritmo,
-                calcolatoIl: testResults.metadataCSI.calcolatoIl,
-                sessioneTest: {
-                    iniziata: result.dataInizio,
-                    completata: new Date(),
-                    durataTotale: new Date() - result.dataInizio
-                }
-            }
+            punteggiDimensioni: testResults.punteggiDimensioni,
+            metadataCSI: metadataCompleto
         };
         
-        logger.debug('Preparing update data:', {
-            hasScores: !!updateData.punteggiDimensioni,
-            scoresSample: updateData.punteggiDimensioni.elaborazione,
-            metadata: {
-                tempoTotale: updateData.metadataCSI.tempoTotaleDomande,
-                tempoMedio: updateData.metadataCSI.tempoMedioRisposta,
-                completamento: updateData.metadataCSI.completamentoPercentuale
-            }
+        logger.debug('Updating result document:', {
+            resultId: result._id,
+            isCompleted: true,
+            hasScores: true
         });
         
+        // Modifica qui: Aggiorna il result esistente invece di crearne uno nuovo
         const completedResult = await this.repository.update(token, updateData);
 
-        // 8. Prepara la risposta con i risultati elaborati
+        // 8. IMPORTANTE: Aggiorna anche il modello Test per cambiare lo stato
+        logger.debug('Updating test status to completed:', {
+            testId: test._id,
+            currentStatus: test.status
+        });
+        
+        await mongoose.model('Test').findByIdAndUpdate(
+            test._id,
+            {
+                status: 'completed',
+                dataCompletamento: new Date()
+            }
+        );
+
+        // 9. Prepara la risposta con i risultati elaborati
         res.json({
             status: 'success',
             data: {
@@ -555,7 +578,7 @@ completeTest = async (req, res) => {
                 profilo: testResults.metadataCSI.profiloCognitivo,
                 validita: {
                     pattern: testResults.metadataCSI.pattern,
-                    avvertimenti: testResults.metadataCSI.pattern.warnings
+                    avvertimenti: testResults.metadataCSI.pattern?.warnings || []
                 }
             }
         });
