@@ -28,6 +28,49 @@ class ClassController extends BaseController {
         this.updateMainTeacher = this.updateMainTeacher.bind(this);
         this.addTeacher = this.addTeacher.bind(this);
         this.removeTeacher = this.removeTeacher.bind(this);
+        this.getClassTestsAggregation = this.getClassTestsAggregation.bind(this);
+    }
+
+    /**
+     * Ottiene i dati aggregati dei test degli studenti di una classe
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     * @param {Function} next - Next middleware
+     */
+    async getClassTestsAggregation(req, res, next) {
+        try {
+            const { classId } = req.params;
+            const { testType = 'CSI' } = req.query;
+
+            logger.info('Richiesta dati aggregati test classe', { 
+                classId, 
+                testType,
+                userId: req.user?.id
+            });
+
+            if (!classId) {
+                return next(createError(
+                    ErrorTypes.VALIDATION.BAD_REQUEST,
+                    'ID classe richiesto'
+                ));
+            }
+
+            // Ottiene i dati aggregati dal repository
+            const aggregatedData = await this.repository.getClassTestsAggregation(classId, testType);
+
+            if (!aggregatedData) {
+                return next(createError(
+                    ErrorTypes.RESOURCE.NOT_FOUND,
+                    'Nessun dato disponibile per questa classe'
+                ));
+            }
+
+            this.sendResponse(res, aggregatedData);
+
+        } catch (error) {
+            logger.error('Errore nel recupero dei dati aggregati dei test della classe:', error);
+            next(error);
+        }
     }
 
  /**

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Box,
     Typography,
@@ -34,6 +35,7 @@ const StudentsList = ({
     onNavigateToTests,
     fetchData
 }) => {
+    const navigate = useNavigate();
     const { removeStudentsFromClass } = useClass();
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -123,7 +125,12 @@ const StudentsList = ({
                     </Tooltip>
                     <Tooltip title="Visualizza Dettagli">
                         <IconButton 
-                            onClick={() => onViewDetails(params.row)}
+                            onClick={() => navigate(`/admin/students/${params.row.id}`, {
+                                state: { 
+                                    from: 'class',
+                                    classId: classData._id
+                                }
+                            })}
                             size="small"
                         >
                             <VisibilityIcon fontSize="small" />
@@ -140,7 +147,7 @@ const StudentsList = ({
                 </Box>
             )
         }
-    ], [onNavigateToTests, onViewDetails, onEdit]);
+    ], [onNavigateToTests, navigate, onEdit, classData._id]);
 
     // Preparazione dei dati
     const rows = useMemo(() => 

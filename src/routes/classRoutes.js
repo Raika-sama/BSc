@@ -83,6 +83,17 @@ const createClassRouter = ({ authMiddleware, classController }) => {
         asyncHandler(classController.getBySchool.bind(classController))
     );
 
+    /**
+     * @route GET /api/v1/classes/:classId/tests-aggregation
+     * @description Recupera i dati aggregati dei test degli studenti di una classe
+     * @access Private - Richiede autenticazione
+     */
+    router.get('/:classId/tests-aggregation',
+        hasPermission('classes', 'read'),
+        hasPermission('tests', 'read'),
+        asyncHandler(classController.getClassTestsAggregation.bind(classController))
+    );
+
     // ------------------------------------------------------------------
     // ROTTE AMMINISTRATIVE
     // ------------------------------------------------------------------

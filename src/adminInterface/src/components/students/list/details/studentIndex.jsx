@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
     Box,
     Paper,
@@ -66,8 +66,8 @@ const getStatusConfig = (status) => {
 
 const StudentIndex = ({ initialTab = 'info' }) => {
     const { id } = useParams();
-    console.log('StudentIndex received ID:', id); // Debug log
     const navigate = useNavigate();
+    const location = useLocation();
     const { showNotification } = useNotification();
     const { getStudentById, loading, error } = useStudent();
 
@@ -130,6 +130,14 @@ const handleStudentUpdate = (updatedData) => {
             loadStudent();
         }
     }, [id]);
+
+    const handleBackClick = () => {
+        if (location.state?.from === 'class') {
+            navigate(`/admin/classes/${location.state.classId}`);
+        } else {
+            navigate('/admin/students');
+        }
+    };
 
     if (loadingStudent) {
         return (
@@ -201,10 +209,10 @@ const handleStudentUpdate = (updatedData) => {
                     <Button
                         variant="outlined"
                         startIcon={<ArrowBackIcon />}
-                        onClick={() => navigate('/admin/students')}
+                        onClick={handleBackClick}
                         size="small"
                     >
-                        Torna alla lista
+                        {location.state?.from === 'class' ? 'Torna alla classe' : 'Torna alla lista'}
                     </Button>
                 </Stack>
 

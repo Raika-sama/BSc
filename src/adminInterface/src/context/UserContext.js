@@ -110,15 +110,34 @@ const getUsers = useCallback(async (filters = {}) => {
             
             console.log('UserContext: Raw response:', response.data);
     
-            if (response.data.status === 'success' && response.data.data?.data?.user) {
-                // Estraiamo l'oggetto user corretto dalla struttura nidificata
-                const userData = response.data.data.data.user;
-                console.log('UserContext: Processed user data:', userData);
-                return userData;
-            } else {
-                console.error('UserContext: Invalid response structure:', response.data);
-                throw new Error('Dati utente non trovati nella risposta');
+            // Handle different possible response structures
+            let userData = null;
+            
+            if (response.data.status === 'success') {
+                // Case 1: response.data.data.data.user (original expected structure)
+                if (response.data.data?.data?.user) {
+                    userData = response.data.data.data.user;
+                    console.log('UserContext: Found user in data.data.data.user');
+                }
+                // Case 2: response.data.data.user (structure seen in the error)
+                else if (response.data.data?.user) {
+                    userData = response.data.data.user;
+                    console.log('UserContext: Found user in data.data.user');
+                }
+                // Case 3: response.data.data is the user object directly
+                else if (response.data.data && response.data.data._id) {
+                    userData = response.data.data;
+                    console.log('UserContext: Found user in data.data');
+                }
+                
+                if (userData) {
+                    console.log('UserContext: Processed user data:', userData);
+                    return userData;
+                }
             }
+            
+            console.error('UserContext: Invalid response structure:', response.data);
+            throw new Error('Dati utente non trovati nella risposta');
         } catch (error) {
             console.error('UserContext: Error fetching user details:', error);
             const errorMessage = error.response?.data?.error?.message || 

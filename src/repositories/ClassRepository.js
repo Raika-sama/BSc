@@ -12,6 +12,307 @@ class ClassRepository extends BaseRepository {
         this.repositoryName = 'ClassRepository';
     }
 
+    /**
+     * Ottiene i dati aggregati dei test per una classe
+     * @param {string} classId - ID della classe
+     * @param {string} testType - Tipo di test (es. 'CSI')
+     * @returns {Promise<Object>} Dati aggregati dei test
+     */
+    async getClassTestsAggregation(classId, testType = 'CSI') {
+        try {
+            logger.debug('Getting aggregated test data for class', { 
+                classId, 
+                testType 
+            });
+
+            // Ottieni gli studenti della classe
+            const classData = await this.model.findById(classId)
+                .populate({
+                    path: 'students.studentId',
+                    select: '_id firstName lastName'
+                })
+                .lean();
+
+            if (!classData || !classData.students) {
+                return null;
+            }
+
+            // Estrai gli ID degli studenti
+            const studentIds = classData.students
+                .filter(s => s && s.studentId)
+                .map(s => s.studentId._id || s.studentId);
+
+            if (!studentIds.length) {
+                logger.debug('No students found in class', { classId });
+                return {
+                    totalStudents: 0,
+                    totalCompletedTests: 0,
+                    message: 'Nessuno studente trovato in questa classe',
+                    classId
+                };
+            }
+
+            logger.debug('Found students in class', { 
+                classId, 
+                studentCount: studentIds.length 
+            });
+
+            // Ottieni i test completati per questi studenti
+            const testModel = mongoose.model('Test');
+            const completedTests = await testModel.find({
+                studentId: { $in: studentIds },
+                type: testType,
+                status: 'completed'
+            })
+            .select('results studentId type')
+            .lean();
+
+            logger.debug('Completed tests found', { 
+                count: completedTests.length,
+                testType
+            });
+
+            if (!completedTests.length) {
+                return {
+                    totalStudents: studentIds.length,
+                    totalCompletedTests: 0,
+                    message: 'Nessun test completato per questa classe',
+                    classId
+                };
+            }
+
+            // Aggrega i dati dei test
+            return this._aggregateTestData(completedTests, studentIds.length);
+
+        } catch (error) {
+            throw handleRepositoryError(
+                error,
+                'getClassTestsAggregation',
+                { classId, testType },
+                this.repositoryName
+            );
+        }
+    }
+
+    /**
+     * Aggrega i dati dai test completati degli studenti di una classe
+     * @private
+     * @param {Array} completedTests - Array di test completati
+     * @param {Number} totalStudents - Numero totale di studenti nella classe
+     * @returns {Object} Dati aggregati dei test
+     */
+    _aggregateTestData(completedTests, totalStudents) {
+        const dimensions = ['elaborazione', 'creativita', 'preferenzaVisiva', 'decisione', 'autonomia'];
+        
+        // Inizializza oggetti per l'aggregazione
+        const scores = {};
+        const dimensionDistribution = {};
+        const dominantStylesDistribution = {};
+        
+        dimensions.forEach(dim => {
+            scores[dim] = [];
+            dimensionDistribution[dim] = { basso: 0, medio: 0, alto: 0 };
+            dominantStylesDistribution[dim] = 0;
+        });
+
+        // Raccogli dati dai test
+        completedTests.forEach(test => {
+            if (!test.results) return;
+
+            // Per ogni dimensione, raccogli i punteggi e le categorie
+            dimensions.forEach(dimension => {
+                const score = test.results[dimension]?.score;
+                const level = test.results[dimension]?.level;
+                
+                if (typeof score === 'number') {
+                    scores[dimension].push(score);
+                }
+                
+                if (level) {
+                    dimensionDistribution[dimension][level.toLowerCase()]++;
+                }
+            });
+
+            // Determina lo stile dominante per questo test (maggior punteggio)
+            let dominantStyle = null;
+            let maxScore = -1;
+
+            dimensions.forEach(dimension => {
+                const score = test.results[dimension]?.score;
+                if (typeof score === 'number' && score > maxScore) {
+                    maxScore = score;
+                    dominantStyle = dimension;
+                }
+            });
+
+            if (dominantStyle) {
+                dominantStylesDistribution[dominantStyle] = (dominantStylesDistribution[dominantStyle] || 0) + 1;
+            }
+        });
+
+        // Calcola medie e deviazioni standard
+        const averageScores = {};
+        const standardDeviations = {};
+
+        dimensions.forEach(dim => {
+            if (scores[dim].length > 0) {
+                // Calcola la media
+                const sum = scores[dim].reduce((acc, val) => acc + val, 0);
+                const avg = sum / scores[dim].length;
+                averageScores[dim] = avg;
+
+                // Calcola la deviazione standard
+                const squaredDifferencesSum = scores[dim].reduce((acc, val) => {
+                    const diff = val - avg;
+                    return acc + (diff * diff);
+                }, 0);
+                standardDeviations[dim] = Math.sqrt(squaredDifferencesSum / scores[dim].length);
+            } else {
+                averageScores[dim] = 0;
+                standardDeviations[dim] = 0;
+            }
+        });
+
+        // Trova lo stile dominante nella classe
+        let mostCommonStyle = null;
+        let maxCount = -1;
+
+        Object.entries(dominantStylesDistribution).forEach(([style, count]) => {
+            if (count > maxCount) {
+                maxCount = count;
+                mostCommonStyle = style;
+            }
+        });
+
+        // Calcola indice di diversità (Shannon Entropy normalizzato)
+        let diversityIndex = 0;
+        const totalTests = completedTests.length;
+
+        if (totalTests > 0) {
+            let entropy = 0;
+            
+            Object.values(dominantStylesDistribution).forEach(count => {
+                if (count > 0) {
+                    const p = count / totalTests;
+                    entropy -= p * Math.log(p);
+                }
+            });
+            
+            // Normalizza l'entropia (dividi per il valore massimo possibile)
+            const maxEntropy = Math.log(dimensions.length);
+            diversityIndex = entropy / maxEntropy;
+        }
+
+        // Genera raccomandazioni in base ai risultati
+        const recommendations = this._generateRecommendations(averageScores, dominantStylesDistribution, totalTests);
+        
+        // Interpreta il profilo della classe
+        const classInterpretation = this._generateClassInterpretation(averageScores, diversityIndex, mostCommonStyle);
+
+        return {
+            totalStudents,
+            totalCompletedTests: completedTests.length,
+            mostCommonStyle,
+            diversityIndex,
+            averageScores,
+            standardDeviations,
+            dimensionDistribution,
+            dominantStylesDistribution,
+            classInterpretation,
+            recommendations
+        };
+    }
+    
+    /**
+     * Genera raccomandazioni didattiche in base ai dati aggregati
+     * @private
+     * @param {Object} averageScores - Punteggi medi per dimensione
+     * @param {Object} dominantStylesCount - Conteggio degli stili dominanti
+     * @param {Number} totalTests - Numero totale di test completati
+     * @returns {Array} Raccomandazioni didattiche
+     */
+    _generateRecommendations(averageScores, dominantStylesCount, totalTests) {
+        const recommendations = [];
+
+        // Raccomandazione in base agli stili dominanti
+        if (dominantStylesCount.elaborazione > totalTests * 0.33) {
+            recommendations.push("Alternare metodologie di insegnamento per coinvolgere sia studenti analitici che globali");
+        }
+
+        if (dominantStylesCount.creativita > totalTests * 0.33) {
+            recommendations.push("Proporre attività che bilancino approcci sistematici e intuitivi alla risoluzione dei problemi");
+        }
+
+        if (dominantStylesCount.preferenzaVisiva > totalTests * 0.4) {
+            recommendations.push("Utilizzare supporti visivi per migliorare la comprensione dei concetti");
+        }
+
+        if (dominantStylesCount.decisione > totalTests * 0.3) {
+            recommendations.push("Fornire materiali di studio strutturati per supportare gli studenti con stile riflessivo");
+        }
+
+        if (dominantStylesCount.autonomia > totalTests * 0.3) {
+            recommendations.push("Incoraggiare lavori di gruppo che favoriscano l'interdipendenza positiva");
+        }
+
+        // Raccomandazioni generali
+        recommendations.push("Variare gli approcci didattici per coinvolgere studenti con diversi stili cognitivi");
+        recommendations.push("Incoraggiare attività di gruppo che favoriscano la discussione tra studenti con stili cognitivi diversi");
+
+        // Raccomandazioni in base ai punteggi medi
+        if (averageScores.elaborazione > 65) {
+            recommendations.push("Privilegiare l'apprendimento per scoperta e le esperienze di apprendimento olistiche");
+        } else if (averageScores.elaborazione < 35) {
+            recommendations.push("Strutturare le lezioni in modo sequenziale e organizzato, con chiare suddivisioni degli argomenti");
+        }
+
+        if (averageScores.preferenzaVisiva > 70) {
+            recommendations.push("Utilizzare diagrammi, mappe concettuali e rappresentazioni visive per supportare l'apprendimento");
+        } else if (averageScores.preferenzaVisiva < 30) {
+            recommendations.push("Supportare l'apprendimento con spiegazioni verbali dettagliate e discussioni guidate");
+        }
+
+        return recommendations.slice(0, 5); // Limita a 5 raccomandazioni
+    }
+
+    /**
+     * Genera un'interpretazione del profilo cognitivo della classe
+     * @private
+     * @param {Object} averageScores - Punteggi medi per dimensione
+     * @param {Number} diversityIndex - Indice di diversità 
+     * @param {String} mostCommonStyle - Stile dominante più comune
+     * @returns {String} Interpretazione del profilo di classe
+     */
+    _generateClassInterpretation(averageScores, diversityIndex, mostCommonStyle) {
+        let interpretation = "Il profilo cognitivo di questa classe ";
+
+        // Interpretazione basata sulla diversità
+        if (diversityIndex > 0.8) {
+            interpretation += "mostra una significativa varietà di stili cognitivi, suggerendo un gruppo eterogeneo. ";
+        } else if (diversityIndex < 0.4) {
+            interpretation += "evidenzia una certa omogeneità negli stili cognitivi, con una minore variabilità tra gli studenti. ";
+        } else {
+            interpretation += "presenta un buon equilibrio tra omogeneità e diversità di stili cognitivi. ";
+        }
+
+        // Interpretazione basata sullo stile dominante
+        if (mostCommonStyle) {
+            const styleDescriptions = {
+                elaborazione: "La classe tende a preferire un approccio globale all'apprendimento, considerando il quadro generale prima dei dettagli.",
+                creativita: "Gli studenti mostrano una preferenza per l'approccio intuitivo nella risoluzione dei problemi.",
+                preferenzaVisiva: "Si nota una forte preferenza per l'apprendimento visivo e l'uso di supporti grafici.",
+                decisione: "Emerge un approccio riflessivo nella presa di decisioni, con tendenza all'analisi approfondita.",
+                autonomia: "Gli studenti mostrano una inclinazione verso l'autonomia nell'apprendimento."
+            };
+
+            interpretation += styleDescriptions[mostCommonStyle] || "";
+        }
+
+        // Aggiungi raccomandazione finale
+        interpretation += " L'analisi dettagliata aiuta a personalizzare le strategie didattiche per ottimizzare l'esperienza di apprendimento per tutti gli studenti.";
+
+        return interpretation;
+    }
 
     async exists(criteria) {
         try {
