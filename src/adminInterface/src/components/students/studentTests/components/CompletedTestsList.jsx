@@ -7,29 +7,34 @@ import {
   Typography,
   Chip,
   Divider,
-  Button,
   Box,
-  alpha
+  alpha,
+  Badge
 } from '@mui/material';
-import QuizIcon from '@mui/icons-material/Quiz';
 import { useTheme } from '@mui/material/styles';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 
 const CompletedTestsList = ({
   tests = [],
   selectedTest,
   onTestSelect,
-  onCreateTest
 }) => {
   const theme = useTheme();
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString('it-IT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleString('it-IT', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      console.warn('Error formatting date:', e);
+      return 'Data non valida';
+    }
   };
 
   return (
@@ -50,30 +55,24 @@ const CompletedTestsList = ({
           bgcolor: alpha(theme.palette.primary.main, 0.02)
         }}
       >
-        <Typography 
-          variant="h6" 
-          sx={{ 
-            mb: 2,
-            color: 'primary.main',
-            fontWeight: 600
-          }}
-        >
-          Test Disponibili
-        </Typography>
-        <Button
-          fullWidth
-          variant="contained"
-          startIcon={<QuizIcon />}
-          onClick={onCreateTest}
-          sx={{
-            boxShadow: 'none',
-            '&:hover': {
-              boxShadow: 'none'
-            }
-          }}
-        >
-          Somministra CSI
-        </Button>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              color: 'primary.main',
+              fontWeight: 600
+            }}
+          >
+            Test Completati
+          </Typography>
+          {tests.length > 0 && (
+            <Badge 
+              badgeContent={tests.length} 
+              color="success"
+              sx={{ ml: 1.5 }}
+            />
+          )}
+        </Box>
       </Box>
 
       {/* Lista test */}
@@ -104,6 +103,21 @@ const CompletedTestsList = ({
               key={test._id}
               selected={selectedTest?._id === test._id}
               onClick={() => onTestSelect(test)}
+              sx={{
+                position: 'relative',
+                overflow: 'hidden',
+                mb: 1,
+                '&::before': selectedTest?._id === test._id ? {
+                  content: '""',
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: '4px',
+                  backgroundColor: 'success.main',
+                  borderRadius: '4px 0 0 4px'
+                } : {}
+              }}
             >
               <ListItemText
                 primary={
@@ -120,14 +134,15 @@ const CompletedTestsList = ({
                         color: selectedTest?._id === test._id ? 'primary.main' : 'text.primary'
                       }}
                     >
-                      Test {test.tipo}
+                      {test.nome || `Test ${test.tipo}`}
                     </Typography>
                     <Chip 
                       label="Completato"
                       size="small"
                       color="success"
+                      icon={<AssignmentTurnedInIcon fontSize="small" />}
                       sx={{ 
-                        height: 20,
+                        height: 24,
                         '& .MuiChip-label': {
                           px: 1,
                           fontSize: '0.75rem'
@@ -142,7 +157,7 @@ const CompletedTestsList = ({
                     color="text.secondary"
                     sx={{ display: 'block' }}
                   >
-                    {formatDate(test.dataCompletamento)}
+                    {formatDate(test.dataCompletamento || test.updatedAt)}
                   </Typography>
                 }
               />
@@ -153,11 +168,22 @@ const CompletedTestsList = ({
             sx={{ 
               p: 3, 
               textAlign: 'center',
-              color: 'text.secondary'
+              color: 'text.secondary',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              backgroundColor: alpha(theme.palette.background.default, 0.4),
+              borderRadius: 1,
             }}
           >
-            <Typography variant="body2">
+            <AssignmentTurnedInIcon sx={{ fontSize: 40, color: alpha(theme.palette.text.secondary, 0.5), mb: 2 }} />
+            <Typography variant="body1" gutterBottom>
               Nessun test completato
+            </Typography>
+            <Typography variant="body2">
+              I test completati appariranno qui
             </Typography>
           </Box>
         )}

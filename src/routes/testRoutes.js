@@ -191,6 +191,18 @@ const createTestRouter = ({ authMiddleware, testController }) => {
         asyncHandler(testController.getTestStats.bind(testController))
     );
 
+    router.get('/:testId/with-results', 
+        protect,
+        hasPermission('tests', 'read'),
+        asyncHandler(testController.getTestWithResults.bind(testController))
+    );
+    
+    router.get('/:testId/results', 
+        protect,
+        hasPermission('tests', 'read'),
+        asyncHandler(testController.getTestResults.bind(testController))
+    );
+    
     /**  Rotte per modificare configurazione dei test (solo admin/developer)
     router.post('/configure', 
         protect,

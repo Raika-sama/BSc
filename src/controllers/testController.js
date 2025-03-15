@@ -4,6 +4,7 @@ const BaseController = require('./baseController');
 const mongoose = require('mongoose'); // Add this import
 const logger = require('../utils/errors/logger/logger');
 const { createError, ErrorTypes } = require('../utils/errors/errorTypes');
+const Test = require('../models/Test'); // Aggiungi questa riga
 
 class TestController extends BaseController {
     constructor(testRepository, csiController) {
@@ -24,6 +25,9 @@ class TestController extends BaseController {
         this.revokeClassTests = this.revokeClassTests.bind(this);
         this.assignTest = this.assignTest.bind(this);
         this.startAssignedTest = this.startAssignedTest.bind(this);
+        this.getTestWithResults = this.getTestWithResults.bind(this);
+        this.getTestResults = this.getTestResults.bind(this);
+        this.getCompletedTests = this.getCompletedTests.bind(this);
 
         // Log repository details for debugging
         logger.debug('TestController initialized with repository:', {
@@ -827,6 +831,139 @@ class TestController extends BaseController {
             }
         });
     }
+
+    /**
+     * Ottiene i dettagli completi di un test completato, compresi i risultati
+     */
+    async getTestWithResults(req, res) {
+        try {
+        const testId = req.params.testId;
+        
+        // Log per debug
+        logger.debug('getTestWithResults chiamato:', {
+            testId,
+            params: req.params,
+            path: req.path,
+            originalUrl: req.originalUrl
+        });
+        
+        // Verifica che l'ID sia valido
+        if (!mongoose.Types.ObjectId.isValid(testId)) {
+            return res.status(400).json({
+            status: 'error',
+            error: {
+                code: 'INVALID_ID',
+                message: 'ID test non valido'
+            }
+            });
+        }
+        
+        // Cerca il test nel database usando il repository invece di accedere direttamente al modello
+        const test = await this.repository.findById(testId);
+        
+        if (!test) {
+            return res.status(404).json({
+            status: 'error',
+            error: {
+                code: 'TEST_NOT_FOUND',
+                message: 'Test non trovato'
+            }
+            });
+        }
+        
+        // Cerca il risultato associato al test
+        const { Result } = require('../models/Result').getModels();
+        const result = await Result.findOne({ testRef: testId });
+        
+        if (!result) {
+            return res.status(200).json({
+            status: 'success',
+            data: {
+                test,
+                result: null
+            }
+            });
+        }
+        
+        // Restituisci test e risultato
+        return res.status(200).json({
+            status: 'success',
+            data: {
+            test,
+            result
+            }
+        });
+        } catch (error) {
+        logger.error('Error in getTestWithResults:', error);
+        return res.status(500).json({
+            status: 'error',
+            error: {
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Errore interno del server'
+            }
+        });
+        }
+    }
+    
+    /**
+     * Ottiene i risultati di un test specifico
+     */
+    async getTestResults(req, res) {
+        try {
+        const testId = req.params.testId;
+        
+        // Log per debug
+        logger.debug('getTestResults chiamato:', {
+            testId,
+            params: req.params,
+            path: req.path,
+            originalUrl: req.originalUrl
+        });
+        
+        // Verifica che l'ID sia valido
+        if (!mongoose.Types.ObjectId.isValid(testId)) {
+            return res.status(400).json({
+            status: 'error',
+            error: {
+                code: 'INVALID_ID',
+                message: 'ID test non valido'
+            }
+            });
+        }
+        
+        // Cerca il risultato associato al test
+        const { Result } = require('../models/Result').getModels();
+        const result = await Result.findOne({ testRef: testId });
+        
+        if (!result) {
+            return res.status(404).json({
+            status: 'error',
+            error: {
+                code: 'RESULTS_NOT_FOUND',
+                message: 'Risultati non trovati per questo test'
+            }
+            });
+        }
+        
+        // Restituisci solo il risultato
+        return res.status(200).json({
+            status: 'success',
+            data: {
+            result
+            }
+        });
+        } catch (error) {
+        logger.error('Error in getTestResults:', error);
+        return res.status(500).json({
+            status: 'error',
+            error: {
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Errore interno del server'
+            }
+        });
+        }
+    }
+    
 }
 
 module.exports = TestController;
